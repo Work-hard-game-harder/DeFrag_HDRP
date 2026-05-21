@@ -33,6 +33,9 @@ public class PatrolRobotAI : MonoBehaviour
 
     void Update()
     {
+        if (currentState == State.Inspect && isInspecting == false && agent.isStopped) return; 
+        // (가장 확실하게 하려면 아래 OnCollisionEnter에서 아예 이 스크립트를 꺼버릴 겁니다)
+
         // 1단계: 플레이어 감지 (항상 최신 결과 유지)
         bool seesPlayer = CanSeePlayer();
 
@@ -54,7 +57,7 @@ public class PatrolRobotAI : MonoBehaviour
         switch (currentState)
         {
             case State.Patrol:
-                visionLight.color = Color.yellow; // 노란불
+                visionLight.color = Color.green; // 초록불
                 agent.isStopped = false; // 이동 보장
                 
                 // 순찰 지점 도착 시 두리번거리기
@@ -93,7 +96,6 @@ public class PatrolRobotAI : MonoBehaviour
         }
     }
 
-    // NavMesh 위에서 무작위 목적지를 찾는 핵심 로직
     // NavMesh 위에서 무작위 목적지를 찾는 핵심 로직 (수정본)
     void SetRandomPatrolDestination()
     {
@@ -128,7 +130,6 @@ public class PatrolRobotAI : MonoBehaviour
     }
 
     // 시야 감지 로직
-    // 수정된 시각 감지 로직 (더욱 정밀하고 버그 없는 버전)
     // 수정된 시각 감지 로직 (디버그 모드 + 정밀 타격)
     bool CanSeePlayer()
     {
@@ -229,9 +230,24 @@ public class PatrolRobotAI : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.CompareTag("Player"))
+        // 자식 오브젝트나 루트 오브젝트 중 하나라도 Player 태그를 가지고 있다면
+        if (collision.gameObject.CompareTag("Player") || collision.transform.root.CompareTag("Player"))
         {
-            Debug.Log("Game Over! 플레이어가 로봇에게 잡혔습니다.");
+            Debug.Log("🚨 [GAME OVER] 플레이어가 로봇에게 완전히 붙잡혔습니다!");
+
+            // 1. 유니티 시간 흐름을 0으로 만들어 물리/애니메이션을 사진처럼 완전히 얼려버립니다.
+            Time.timeScale = 0f;
+
+            // 2. 로봇의 내비게이션 경로와 가속도를 즉시 제로로 리셋하고 멈춥니다.
+            if (agent != null)
+            {
+                agent.velocity = Vector3.zero;
+                agent.isStopped = true;
+                agent.ResetPath(); 
+            }
+
+            // 3. 이 스크립트(AI 두뇌) 자체를 강제로 꺼버려서 Update문이 실행되는 것을 원천 차단합니다.
+            this.enabled = false;
         }
     }
     // 수정된 StopChase 함수 (플레이어를 놓쳤을 때)
