@@ -23,7 +23,6 @@ public class ButtonClickManager : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Escape) && PausePanel != null)
         {
-            // 열려있으면 닫고, 닫혀있으면 열기
             PausePanel.SetActive(!PausePanel.activeSelf);
         }
     }
