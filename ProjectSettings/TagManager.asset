@@ -4,6 +4,9 @@
 TagManager:
   serializedVersion: 3
   tags: []
+  tags:
+  - SettingPanel
+  - CinemachineTarget
   layers:
   - Default
   - TransparentFX
@@ -11,8 +14,13 @@ TagManager:
   - Ground
   - Water
   - UI
+<<<<<<< HEAD
   - MyCharacter
   - OtherCharacter
+=======
+  - NoNevMesh
+  - Player
+>>>>>>> main
   - 
   - 
   - 
