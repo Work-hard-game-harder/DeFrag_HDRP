@@ -29,7 +29,7 @@ public class ButtonClickManager : MonoBehaviour
     public void SelectedLobbyScene()
     {
         AudioManager.Instance.PlaySFX("Button1");
-        SceneManager.LoadScene("LobbyScene", LoadSceneMode.Single);
+        SceneManager.LoadScene("CreateLobby", LoadSceneMode.Single);
     }
 
     public void SelectedCodePanel()
