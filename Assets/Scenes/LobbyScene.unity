@@ -1649,10 +1649,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 426046807}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b4d98b01f7b182d47931a332e06079fc, type: 3}
+  m_Script: {fileID: 11500000, guid: 8ef7be1c625941f7ba8ed7cc71718c0d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DisplayCode
-  lobbyCodeText: {fileID: 716662024}
+  BenchmarkType: 0
+  canvas: {fileID: 1165513584}
+  TMProFont: {fileID: 11400000, guid: 8d3019094b1de0d4f945de276623be45, type: 2}
+  TextMeshFont: {fileID: 12800000, guid: b635ea2c9ae8035449edf0dfe9f24bea, type: 3}
 --- !u!4 &426046809
 Transform:
   m_ObjectHideFlags: 0
