@@ -2120,7 +2120,7 @@ GameObject:
   - component: {fileID: 2942851167787401791}
   - component: {fileID: 8545321298905678768}
   m_Layer: 5
-  m_Name: Dropdown
+  m_Name: Resoluiton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4248,11 +4248,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 4396547730106158387}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 79a2f2cb0f12da441a14d32f5a99b927, type: 3}
+  m_Script: {fileID: 11500000, guid: b33116821b6086249b22fdb32f756e2a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SettingManager
   settingPanel: {fileID: 2984019486961117269}
-  settingCanvas: {fileID: 0}
+  settingCanvas: {fileID: 8002659288668171232}
   bgmSlider: {fileID: 6640975121172941736}
   sfxSlider: {fileID: 8953583298973456163}
   mouseSensitivitySlider: {fileID: 886010659618322042}
@@ -5503,7 +5503,7 @@ GameObject:
   - component: {fileID: 337648736367762234}
   - component: {fileID: 6278369120492306341}
   m_Layer: 5
-  m_Name: Dropdown
+  m_Name: Display
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
