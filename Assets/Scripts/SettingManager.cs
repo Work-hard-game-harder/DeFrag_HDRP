@@ -39,8 +39,8 @@ public class SettingManager : MonoBehaviour
     // ──────────────────────────────────────────────
     // 기본값 상수
     // ──────────────────────────────────────────────
-    private const float DEFAULT_BGM = 0.5f;
-    private const float DEFAULT_SFX = 0.5f;
+    private const float DEFAULT_BGM = 1.0f;
+    private const float DEFAULT_SFX = 1.0f;
     private const float DEFAULT_MOUSE_SENSITIVITY = 0.5f;
     private const float DEFAULT_BRIGHTNESS = 0f;
     private const float DEFAULT_MIC_VOLUME = 10f;  // MicVolumeController 기본값과 동일

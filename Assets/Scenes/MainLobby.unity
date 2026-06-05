@@ -1509,7 +1509,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
   m_PlayOnAwake: 0
-  m_Volume: 0.5
+  m_Volume: 1
   m_Pitch: 1
   Loop: 0
   Mute: 0
@@ -1846,9 +1846,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 938323644}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2b3c9b43e291f9249909933a03684480, type: 3}
+  m_Script: {fileID: 11500000, guid: 3ebe07eeb3595534389697816c503fa4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LobbyManager
+  joinCodeText: {fileID: 0}
 --- !u!4 &938323646
 Transform:
   m_ObjectHideFlags: 0
@@ -3082,16 +3083,16 @@ MonoBehaviour:
   sfxSource: {fileID: 751665836}
   sceneBGMList:
   - sceneName: MainLobby
-    clip: {fileID: 8300000, guid: d006db24b6ee9814da7f1e8262991bbb, type: 3}
+    clip: {fileID: 8300000, guid: 8ee79e0a45de302478c9c998a4176ab8, type: 3}
   - sceneName: CreateLobby
-    clip: {fileID: 8300000, guid: c7c3c1b508b48c448be2df688e5d421c, type: 3}
+    clip: {fileID: 8300000, guid: b80f6f798b473aa4386023bff6415522, type: 3}
   sfxClipList:
   - sfxName: Button1
-    clip: {fileID: 8300000, guid: 654e5e6ff84a7b64199dc89a21da9218, type: 3}
+    clip: {fileID: 8300000, guid: 2ddb4c344b38aca4da4dbe07c2ade7a5, type: 3}
   - sfxName: StageCheck
-    clip: {fileID: 8300000, guid: 118368d1418588042ac1cec743b91863, type: 3}
+    clip: {fileID: 8300000, guid: c40025268488bb84a86af3bc35afb3a2, type: 3}
   - sfxName: StageSelect
-    clip: {fileID: 8300000, guid: 661e13cb9a196be46be8471895ffa3e1, type: 3}
+    clip: {fileID: 8300000, guid: 9c22e4a3d74ce344bbac39af8da4b529, type: 3}
 --- !u!4 &1545539460
 Transform:
   m_ObjectHideFlags: 0
@@ -3465,7 +3466,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
   m_PlayOnAwake: 0
-  m_Volume: 0.5
+  m_Volume: 1
   m_Pitch: 1
   Loop: 0
   Mute: 0
@@ -3912,7 +3913,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2120930179696178111, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2120930179696178111, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
       propertyPath: m_AnchorMax.y
@@ -3972,7 +3973,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2671442810469671178, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2671442810469671178, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
       propertyPath: m_AnchorMax.y
@@ -3980,7 +3981,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2671442810469671178, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2719756319463163206, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
       propertyPath: m_AnchorMax.x
@@ -4012,7 +4013,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4212754775310372180, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4212754775310372180, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
       propertyPath: m_AnchorMax.y
@@ -4020,7 +4021,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4212754775310372180, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4396547730106158387, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
       propertyPath: m_Name
@@ -4064,7 +4065,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6220409803570025507, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0.5
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6220409803570025507, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
       propertyPath: m_AnchorMax.y
@@ -4072,6 +4073,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6357204772170250898, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
       propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6640975121172941736, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
+      propertyPath: m_Value
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8002659288668171232, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
@@ -4129,6 +4134,10 @@ PrefabInstance:
     - target: {fileID: 8672542363498249209, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
       propertyPath: sceneBGMList.Array.data[0].sceneName
       value: MainLobby
+      objectReference: {fileID: 0}
+    - target: {fileID: 8953583298973456163, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
+      propertyPath: m_Value
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 4365335953104002477, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
