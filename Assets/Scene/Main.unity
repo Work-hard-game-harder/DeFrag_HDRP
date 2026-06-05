@@ -470,13 +470,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 152490764}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.00000087264925, y: 0, z: 0.00000043958426}
+  m_LocalRotation: {x: 0.33265492, y: 0, z: 0, w: 0.94304866}
+  m_LocalPosition: {x: -0.08, y: -0.04, z: 0.81}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 1979117700}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 38.86, y: 0, z: 0}
 --- !u!108 &152490766
 Light:
   m_ObjectHideFlags: 0
@@ -486,15 +486,15 @@ Light:
   m_GameObject: {fileID: 152490764}
   m_Enabled: 1
   serializedVersion: 13
-  m_Type: 0
+  m_Type: 5
   m_Color: {r: 1, g: 0, b: 0.19160938, a: 1}
-  m_Intensity: 1591549.4
-  m_Range: 20
-  m_SpotAngle: 120
-  m_InnerSpotAngle: 1
+  m_Intensity: 3264191.5
+  m_Range: 27.83
+  m_SpotAngle: 61
+  m_InnerSpotAngle: 104.687775
   m_CookieSize2D: {x: 0.5, y: 0.5}
   m_Shadows:
-    m_Type: 0
+    m_Type: 1
     m_Resolution: -1
     m_CustomResolution: -1
     m_Strength: 1
@@ -502,24 +502,24 @@ Light:
     m_NormalBias: 0.4
     m_NearPlane: 0.2
     m_CullingMatrixOverride:
-      e00: 1
+      e00: 0.77166504
       e01: 0
       e02: 0
       e03: 0
       e10: 0
-      e11: 1
+      e11: 1.6976631
       e12: 0
       e13: 0
       e20: 0
       e21: 0
-      e22: 1
-      e23: 0
+      e22: 1.0071865
+      e23: -0.20071866
       e30: 0
       e31: 0
-      e32: 0
-      e33: 1
-    m_UseCullingMatrixOverride: 0
-  m_Cookie: {fileID: 0}
+      e32: 1
+      e33: 0
+    m_UseCullingMatrixOverride: 1
+  m_Cookie: {fileID: 2800000, guid: 4169ffab5fad4d1489c695bdc44fd509, type: 3}
   m_DrawHalo: 0
   m_Flare: {fileID: 0}
   m_RenderMode: 0
@@ -527,14 +527,14 @@ Light:
     serializedVersion: 2
     m_Bits: 4294967295
   m_RenderingLayerMask: 1
-  m_Lightmapping: 4
+  m_Lightmapping: 2
   m_LightShadowCasterMode: 2
-  m_AreaSize: {x: 1, y: 1}
-  m_BounceIntensity: 1
+  m_AreaSize: {x: 2.2, y: 1}
+  m_BounceIntensity: 0
   m_ColorTemperature: 6570
-  m_UseColorTemperature: 1
-  m_BoundingSphereOverride: {x: -1.5777217e-30, y: 0, z: 2.69e-43, w: 0}
-  m_UseBoundingSphereOverride: 0
+  m_UseColorTemperature: 0
+  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 27.83}
+  m_UseBoundingSphereOverride: 1
   m_UseViewFrustumForShadowCasterCull: 1
   m_ForceVisible: 0
   m_ShapeRadius: 0
@@ -581,7 +581,7 @@ MonoBehaviour:
   m_NonLightmappedOnly: 0
   m_SoftnessScale: 1
   m_UseCustomSpotLightShadowCone: 0
-  m_CustomSpotLightShadowCone: 30
+  m_CustomSpotLightShadowCone: 16
   m_MaxSmoothness: 0.99
   m_ApplyRangeAttenuation: 1
   m_DisplayAreaLightEmissiveMesh: 0
@@ -15483,9 +15483,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 2855393961608065924}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7a5ac11cc976e418e8d13136b07e1f52, type: 3}
+  m_Script: {fileID: 11500000, guid: 3ebe07eeb3595534389697816c503fa4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshSurface
+  joinCodeText: {fileID: 0}
 --- !u!1001 &6301752794591072324
 PrefabInstance:
   m_ObjectHideFlags: 0
