@@ -170,17 +170,18 @@ public class SettingManager : MonoBehaviour
     private IEnumerator ReconnectCamera()
     {
         yield return null;
-        while (Camera.main == null)
+        Camera uiCamera = GameObject.Find("UICamera")?.GetComponent<Camera>();
+        if (uiCamera != null && settingCanvas != null)
         {
-            yield return null;
+            settingCanvas.worldCamera = uiCamera;
+            Debug.Log($"[SettingManager] UI 카메라 재연결 완료: {uiCamera.name}");
         }
-
-        if (settingCanvas != null)
+        else
         {
-            settingCanvas.worldCamera = Camera.main;
-            Debug.Log($"[SettingManager] Camera 재연결 완료: {Camera.main.name}");
+            Debug.LogWarning("[SettingManager] UI 카메라를 찾을 수 없습니다.");
         }
     }
+
 
     // ──────────────────────────────────────────────
     // 초기화
