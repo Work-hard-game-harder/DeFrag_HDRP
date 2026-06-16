@@ -6,6 +6,7 @@ using System.Collections;
 public class SceneChange : MonoBehaviour
 {
     public string sceneName;
+    public Scene[] scenelist;
     public GameObject floorCanvas;
 
     public void Start()

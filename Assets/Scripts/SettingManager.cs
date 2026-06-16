@@ -139,6 +139,7 @@ public class SettingManager : MonoBehaviour
 
         CacheColorAdjustments();
         SceneManager.sceneLoaded += OnSceneLoaded;
+        InitFloorUnlock();
     }
 
     private void Start()
@@ -152,6 +153,8 @@ public class SettingManager : MonoBehaviour
         ApplyAllSettings();       // 불러온 값 UI + 실제 적용
         RegisterUICallbacks();    // UI 이벤트 연결
         InitDisplayModeDropdown(); // DisplayMode 초기화
+
+
     }
 
     private void OnDestroy()
@@ -162,6 +165,9 @@ public class SettingManager : MonoBehaviour
     // 씬 전환 시 Camera 재연결 (Screen Space - Camera 대응)
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        Debug.Log($"[SettingManager] OnSceneLoaded: {scene.name}");
+        Debug.Log($"[SettingManager] Unlocked_MainLobby: {PlayerPrefs.GetInt("Unlocked_MainLobby", 0)}");
+
         ClosePanel();
         AudioManager.Instance?.PlayBGMForScene(scene.name);
         StartCoroutine(ReconnectCamera());
@@ -496,6 +502,7 @@ public class SettingManager : MonoBehaviour
 
     private void ClearSettingsPrefs()
     {
+#if UNITY_EDITOR
         PlayerPrefs.DeleteKey(KEY_BGM);
         PlayerPrefs.DeleteKey(KEY_SFX);
         PlayerPrefs.DeleteKey(KEY_MOUSE_SENSITIVITY);
@@ -505,6 +512,9 @@ public class SettingManager : MonoBehaviour
         PlayerPrefs.DeleteKey(KEY_MIC_INDEX);
         PlayerPrefs.DeleteKey(KEY_RESOLUTION_INDEX);
         PlayerPrefs.DeleteKey(KEY_INVERT_Y);
+        foreach (var floor in floorOrder)
+            PlayerPrefs.DeleteKey("Unlocked_" + floor);
+#endif
     }
     public void ResetUI()
     {
@@ -567,5 +577,63 @@ public class SettingManager : MonoBehaviour
     private void SetToggleWithoutNotify(Toggle t, bool isOn)
     {
         if (t != null) t.SetIsOnWithoutNotify(isOn);
+    }
+
+    // ─────────────────────────────────────
+    // 층 해금 관리
+    // ─────────────────────────────────────
+
+    private readonly string[] floorOrder = new string[]
+    {
+    "LobbyF",
+    "B1F",
+    "B2F",
+    "B3F",
+    "B4F",
+    "B5F"
+    };
+
+    private void InitFloorUnlock()
+    {
+        if (PlayerPrefs.GetInt("Unlocked_LobbyF", 0) == 0)
+        {
+            PlayerPrefs.SetInt("Unlocked_LobbyF", 1);
+            PlayerPrefs.Save();
+        }
+    }
+
+    public void UnlockNextFloor(string currentFloorName)
+    {
+        int currentIndex = System.Array.IndexOf(floorOrder, currentFloorName);
+
+        if (currentIndex == -1)
+        {
+            Debug.LogWarning($"[SettingManager] {currentFloorName} 을 floorOrder에서 찾을 수 없음");
+            return;
+        }
+
+        int nextIndex = currentIndex + 1;
+
+        if (nextIndex >= floorOrder.Length)
+        {
+            Debug.Log("[SettingManager] 모든 층 해금 완료!");
+            return;
+        }
+
+        string nextKey = "Unlocked_" + floorOrder[nextIndex];
+        PlayerPrefs.SetInt(nextKey, 1);
+        PlayerPrefs.Save();
+        Debug.Log($"[SettingManager] {floorOrder[nextIndex]} 해금!");
+    }
+
+    public bool IsUnlocked(string floorName)
+    {
+        return PlayerPrefs.GetInt("Unlocked_" + floorName, 0) == 1;
+    }
+    public void ClearCurrentFloorAndReturn()
+    {
+        string currentScene = SceneManager.GetActiveScene().name;
+        UnlockNextFloor(currentScene);
+        SceneManager.LoadScene("SelectedFloor", LoadSceneMode.Single);
     }
 }
