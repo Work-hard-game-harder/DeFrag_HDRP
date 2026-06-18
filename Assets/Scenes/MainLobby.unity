@@ -1685,7 +1685,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 608422605}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -1693,11 +1693,11 @@ RectTransform:
   - {fileID: 2102501134}
   - {fileID: 603235197}
   - {fileID: 372185676}
-  m_Father: {fileID: 874978600}
+  m_Father: {fileID: 1513369351}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0.00018310547, y: 0.000061035156}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &608422607
@@ -1822,8 +1822,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: ButtonClickManager, Assembly-CSharp
+      - m_Target: {fileID: 5793175791291739024}
+        m_TargetAssemblyTypeName: SettingManager, Assembly-CSharp
         m_MethodName: BackMainScene
         m_Mode: 1
         m_Arguments:
@@ -2395,9 +2395,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: ButtonClickManager, Assembly-CSharp
-        m_MethodName: ExitPausePanel
+      - m_Target: {fileID: 5793175791291739024}
+        m_TargetAssemblyTypeName: SettingManager, Assembly-CSharp
+        m_MethodName: ClosePausePanel
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -2604,109 +2604,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 872233231}
   m_CullTransparentMesh: 1
---- !u!1 &874978596
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 874978600}
-  - component: {fileID: 874978599}
-  - component: {fileID: 874978598}
-  - component: {fileID: 874978597}
-  m_Layer: 5
-  m_Name: PauseCanvas
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &874978597
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 874978596}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.GraphicRaycaster
-  m_IgnoreReversedGraphics: 1
-  m_BlockingObjects: 0
-  m_BlockingMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
---- !u!114 &874978598
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 874978596}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
-  m_UiScaleMode: 1
-  m_ReferencePixelsPerUnit: 100
-  m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 1920, y: 1080}
-  m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 0
-  m_PhysicalUnit: 3
-  m_FallbackScreenDPI: 96
-  m_DefaultSpriteDPI: 96
-  m_DynamicPixelsPerUnit: 1
-  m_PresetInfoIsWorld: 0
---- !u!223 &874978599
-Canvas:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 874978596}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_RenderMode: 1
-  m_Camera: {fileID: 0}
-  m_PlaneDistance: 100
-  m_PixelPerfect: 1
-  m_ReceivesEvents: 1
-  m_OverrideSorting: 0
-  m_OverridePixelPerfect: 0
-  m_SortingBucketNormalizedSize: 0
-  m_VertexColorAlwaysGammaSpace: 0
-  m_UseReflectionProbes: 0
-  m_AdditionalShaderChannelsFlag: 25
-  m_UpdateRectTransformForStandalone: 0
-  m_SortingLayerID: 0
-  m_SortingOrder: 0
-  m_TargetDisplay: 0
---- !u!224 &874978600
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 874978596}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0, y: 0, z: 0}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 608422606}
-  m_Father: {fileID: 5793175791291739023}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0, y: 0}
 --- !u!1 &901860045
 GameObject:
   m_ObjectHideFlags: 0
@@ -4202,9 +4099,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: ButtonClickManager, Assembly-CSharp
-        m_MethodName: SelectedSettingPanel
+      - m_Target: {fileID: 5793175791291739024}
+        m_TargetAssemblyTypeName: SettingManager, Assembly-CSharp
+        m_MethodName: OpenPanel
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -4547,6 +4444,11 @@ CanvasRenderer:
 --- !u!223 &1513369350 stripped
 Canvas:
   m_CorrespondingSourceObject: {fileID: 8002659288668171232, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
+  m_PrefabInstance: {fileID: 5793175791291739021}
+  m_PrefabAsset: {fileID: 0}
+--- !u!224 &1513369351 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 5846141109809748659, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
   m_PrefabInstance: {fileID: 5793175791291739021}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &1531567475
@@ -5837,10 +5739,10 @@ PrefabInstance:
     - target: {fileID: 3869075633479499981, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 5793175791291739022}
+      objectReference: {fileID: 5793175791291739024}
     - target: {fileID: 3869075633479499981, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: 
+      value: ResetUI
       objectReference: {fileID: 0}
     - target: {fileID: 4212754775310372180, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
       propertyPath: m_AnchorMax.x
@@ -5857,6 +5759,18 @@ PrefabInstance:
     - target: {fileID: 4396547730106158387, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
       propertyPath: m_Name
       value: SettingManager
+      objectReference: {fileID: 0}
+    - target: {fileID: 4874259351313580747, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
+      propertyPath: m_UiScaleMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4874259351313580747, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
+      propertyPath: m_ReferenceResolution.x
+      value: 1920
+      objectReference: {fileID: 0}
+    - target: {fileID: 4874259351313580747, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
+      propertyPath: m_ReferenceResolution.y
+      value: 1080
       objectReference: {fileID: 0}
     - target: {fileID: 4964893252733200430, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
       propertyPath: m_Color.b
@@ -5916,7 +5830,7 @@ PrefabInstance:
       objectReference: {fileID: 1232015127}
     - target: {fileID: 8002659288668171232, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
       propertyPath: m_PixelPerfect
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8002659288668171232, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
       propertyPath: m_SortingOrder
@@ -5924,7 +5838,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8002659288668171232, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
       propertyPath: m_SortingLayerID
-      value: 0
+      value: 1048864563
       objectReference: {fileID: 0}
     - target: {fileID: 8142867772525194198, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
       propertyPath: m_OnValueChanged.m_PersistentCalls.m_Calls.Array.size
@@ -5950,6 +5864,10 @@ PrefabInstance:
       propertyPath: bgmSource
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 8672542363498249209, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
+      propertyPath: PausePanel
+      value: 
+      objectReference: {fileID: 608422605}
     - target: {fileID: 8672542363498249209, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
       propertyPath: settingCanvas
       value: 
@@ -5998,9 +5916,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2372403171145164238, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1232015130}
-    - targetCorrespondingSourceObject: {fileID: 2372403171145164238, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 874978600}
+    - targetCorrespondingSourceObject: {fileID: 5846141109809748659, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
+      insertIndex: 0
+      addedObject: {fileID: 608422606}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
 --- !u!1 &5793175791291739022 stripped
@@ -6013,6 +5931,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2372403171145164238, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
   m_PrefabInstance: {fileID: 5793175791291739021}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &5793175791291739024 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8672542363498249209, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
+  m_PrefabInstance: {fileID: 5793175791291739021}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5793175791291739022}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b33116821b6086249b22fdb32f756e2a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SettingManager
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

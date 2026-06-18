@@ -84,6 +84,9 @@ public class SettingManager : MonoBehaviour
     [Header("Audio Mixer")]
     [SerializeField] private AudioMixer audioMixer;          // MicVolumeController의 audioMixer
 
+    [Header("Pause Panel")]
+    [SerializeField]private GameObject PausePanel;
+
     // ──────────────────────────────────────────────
     // 현재 설정값 프로퍼티 (외부 읽기 전용)
     // ──────────────────────────────────────────────
@@ -141,7 +144,22 @@ public class SettingManager : MonoBehaviour
         SceneManager.sceneLoaded += OnSceneLoaded;
         InitFloorUnlock();
     }
+    void Update()
+    {
+        string currentSceneName = SceneManager.GetActiveScene().name;
 
+        // MainLobby 씬에서는 ESC 입력 무시
+        if (currentSceneName == "MainLobby")
+        {
+            return; // 여기서 바로 빠져나감
+        }
+
+        // 다른 씬에서는 ESC 입력 처리
+        if (Input.GetKeyDown(KeyCode.Escape) && PausePanel != null)
+        {
+            PausePanel.SetActive(!PausePanel.activeSelf);
+        }
+    }   
     private void Start()
     {
         InitResolutionDropdown(); // 해상도 목록 먼저 구성 (optimal 인덱스 계산)
@@ -154,7 +172,8 @@ public class SettingManager : MonoBehaviour
         RegisterUICallbacks();    // UI 이벤트 연결
         InitDisplayModeDropdown(); // DisplayMode 초기화
 
-
+        if (PausePanel != null)
+            PausePanel.SetActive(false);
     }
 
     private void OnDestroy()
@@ -635,5 +654,20 @@ public class SettingManager : MonoBehaviour
         string currentScene = SceneManager.GetActiveScene().name;
         UnlockNextFloor(currentScene);
         SceneManager.LoadScene("SelectedFloor", LoadSceneMode.Single);
+    }
+
+    //Pause Panel 관련
+    public void BackMainScene()
+    {
+        AudioManager.Instance.PlaySFX("Button1");
+        SceneManager.LoadScene("MainLobby", LoadSceneMode.Single);
+    }
+    public void ClosePausePanel()
+    {
+        if (PausePanel != null)
+        {
+            AudioManager.Instance.PlaySFX("Button1");
+            PausePanel.SetActive(false);
+        }
     }
 }
