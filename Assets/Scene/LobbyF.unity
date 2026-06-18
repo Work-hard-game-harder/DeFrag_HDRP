@@ -2253,7 +2253,7 @@ Canvas:
   serializedVersion: 3
   m_RenderMode: 1
   m_Camera: {fileID: 963194227}
-  m_PlaneDistance: 4.2
+  m_PlaneDistance: 0.5
   m_PixelPerfect: 1
   m_ReceivesEvents: 1
   m_OverrideSorting: 0
@@ -14896,7 +14896,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 8672542363498249209, guid: 315c029895f68d44c84a7c42dbc0ecfd, type: 3}
+      - m_Target: {fileID: 6307445311900134363, guid: 693fd3fb27cd2e24d8d7b83289f0e9cb, type: 3}
         m_TargetAssemblyTypeName: SettingManager, Assembly-CSharp
         m_MethodName: ClearCurrentFloorAndReturn
         m_Mode: 1

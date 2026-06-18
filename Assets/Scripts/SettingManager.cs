@@ -653,7 +653,9 @@ public class SettingManager : MonoBehaviour
     {
         string currentScene = SceneManager.GetActiveScene().name;
         UnlockNextFloor(currentScene);
-        SceneManager.LoadScene("SelectedFloor", LoadSceneMode.Single);
+        SceneManager.LoadScene("LobbyScene", LoadSceneMode.Single);
+        Debug.Log($"SelectedFloor로 이동");
+
     }
 
     //Pause Panel 관련
