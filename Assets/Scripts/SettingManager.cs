@@ -151,12 +151,14 @@ public class SettingManager : MonoBehaviour
         // MainLobby 씬에서는 ESC 입력 무시
         if (currentSceneName == "MainLobby")
         {
-            return; // 여기서 바로 빠져나감
+            Debug.Log("MainLobby 씬에서는 ESC 입력이 무시됩니다.");
+            return;
         }
 
         // 다른 씬에서는 ESC 입력 처리
         if (Input.GetKeyDown(KeyCode.Escape) && PausePanel != null)
         {
+            Debug.Log("ESC 입력됨");
             PausePanel.SetActive(!PausePanel.activeSelf);
         }
     }   
