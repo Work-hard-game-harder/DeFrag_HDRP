@@ -33,6 +33,8 @@ public class PatrolRobotAI : MonoBehaviour
 
     void Update()
     {
+        if (!agent.isOnNavMesh || !agent.enabled) 
+            return;
         // 1단계: 플레이어 감지 (항상 최신 결과 유지)
         bool seesPlayer = CanSeePlayer();
 

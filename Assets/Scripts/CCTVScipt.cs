@@ -76,15 +76,12 @@ public class CCTVScript : MonoBehaviour
     void DetectPlayer()
     {
         Vector3 origin = pivot != null ? pivot.position : transform.position;
-
         Collider[] hits = Physics.OverlapSphere(origin, detectionRange);
         foreach (var hit in hits)
         {
             if (!HasPlayerTag(hit.transform)) continue;
-
             Vector3 dirToPlayer = (hit.transform.position - origin).normalized;
             float angle = Vector3.Angle(spotLight.transform.forward, dirToPlayer);
-
             if (angle < detectionAngle)
             {
                 if (Physics.Raycast(spotLight.transform.position, dirToPlayer,
