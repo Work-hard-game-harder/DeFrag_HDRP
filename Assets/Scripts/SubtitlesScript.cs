@@ -53,6 +53,7 @@ public class SubtitlesScript : MonoBehaviour
 
     void NextSubtitle()
     {
+
         if (index < subtitles.Length - 1)
         {
             index++;

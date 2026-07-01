@@ -77,21 +77,36 @@ public class CCTVScript : MonoBehaviour
     {
         Vector3 origin = pivot != null ? pivot.position : transform.position;
         Collider[] hits = Physics.OverlapSphere(origin, detectionRange);
+
         foreach (var hit in hits)
         {
             if (!HasPlayerTag(hit.transform)) continue;
-            Vector3 dirToPlayer = (hit.transform.position - origin).normalized;
-            float angle = Vector3.Angle(spotLight.transform.forward, dirToPlayer);
+
+            Vector3 targetPos = new Vector3(
+                hit.bounds.center.x,
+                hit.bounds.max.y,
+                hit.bounds.center.z
+            );
+
+            Vector3 lightDir = spotLight.transform.forward;
+            Vector3 dirToPlayer = (targetPos - spotLight.transform.position).normalized;
+            float angle = Vector3.Angle(lightDir, dirToPlayer);
+
+            Debug.Log($"[CCTV] 각도: {angle:F1} | 한계: {detectionAngle}");
+
             if (angle < detectionAngle)
             {
+                int layerMask = ~LayerMask.GetMask("Player");
+
                 if (Physics.Raycast(spotLight.transform.position, dirToPlayer,
-                    out RaycastHit rayHit, detectionRange))
+                    out RaycastHit rayHit, detectionRange, layerMask))
                 {
-                    if (HasPlayerTag(rayHit.transform))
-                    {
-                        OnPlayerDetected();
-                        return;
-                    }
+                    Debug.Log($"[CCTV] 시야 차단: {rayHit.collider.name}");
+                }
+                else
+                {
+                    OnPlayerDetected();
+                    return;
                 }
             }
         }
@@ -104,11 +119,15 @@ public class CCTVScript : MonoBehaviour
 
         Collider playerCollider = player.GetComponentInChildren<Collider>();
         Vector3 targetPos = playerCollider != null
-            ? playerCollider.bounds.center
+            ? new Vector3(
+                playerCollider.bounds.center.x,
+                playerCollider.bounds.max.y,
+                playerCollider.bounds.center.z)
             : player.transform.position;
 
+        Vector3 lightDir = spotLight.transform.forward;
         Vector3 dirToPlayer = (targetPos - spotLight.transform.position).normalized;
-        float angle = Vector3.Angle(spotLight.transform.forward, dirToPlayer);
+        float angle = Vector3.Angle(lightDir, dirToPlayer);
         float distance = Vector3.Distance(spotLight.transform.position, targetPos);
 
         bool outOfRange = distance > detectionRange;
@@ -177,7 +196,7 @@ public class CCTVScript : MonoBehaviour
     void DrawDetectionCone(Color color, Vector3 origin)
     {
         Gizmos.color = color;
-        Vector3 forward = spotLight.transform.forward;
+        Vector3 forward = spotLight.transform.forward; //
         Vector3 up = spotLight.transform.up;
 
         int segments = 30;
