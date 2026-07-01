@@ -116,6 +116,8 @@ public class PlayerInteraction : MonoBehaviour
         myClueCount++;
         Debug.Log($"단서 획득! 현재 단서 수: {myClueCount} / 6");
 
+        QuestManager.Instance.AddClue(); // QuestManager에 단서 획득 알림
+
         targetItem.isInteracted = true;
 
         //NetworkRoomManager.Instance.PickUPItem(targetItem.itemName);
