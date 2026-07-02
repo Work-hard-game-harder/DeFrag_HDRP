@@ -394,5 +394,39 @@ namespace StarterAssets
 
             }
         }
+
+        public override void OnNetworkSpawn()
+        {
+            // 1. 내가 이 캐릭터의 주인(로컬 플레이어)일 때만 위치 변경 작업 수행
+            if (IsOwner)
+            {
+                // SpawnPoint 태그 가진 오브젝트들 찾기
+                GameObject[] spawnPoints = GameObject.FindGameObjectsWithTag("SpawnPoint");
+
+                if (spawnPoints.Length > 0)
+                {
+                    // 2. 내 고유 ClientId 번호에 맞춰 겹치지 않게 스폰포인트를 배정
+                    // (ex. 0번 클라이언트는 0번 스폰포인트, 1번 클라이언트는 1번 스폰포인트)
+                    int index = (int)NetworkManager.Singleton.LocalClientId % spawnPoints.Length;
+                    Transform targetPoint = spawnPoints[index].transform;
+
+                    // 3. CharacterController 컴포넌트가 켜져 있으면 위치 변경이 되지 않을 수 있음
+                    // 따라서 CharacterController 컴포넌트를 잠시 비활성화
+                    CharacterController cc = GetComponent<CharacterController>();
+                    if (cc != null) cc.enabled = false;
+
+                    // 4. 지정 스폰 포인트로 스폰(위치, 회전값)
+                    transform.position = targetPoint.position;
+                    transform.rotation = targetPoint.rotation;
+
+                    // 5. 이동이 끝났으므로 다시 CharacterController 활성화
+                    if (cc != null) cc.enabled = true;
+                }
+                else
+                {
+                    Debug.LogWarning("씬에 'SpawnPoint' 태그를 가진 오브젝트가 하나도 없습니다! (0,0,0)에 스폰됩니다.");
+                }
+            }
+        }
     }
 }

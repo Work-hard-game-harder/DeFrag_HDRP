@@ -540,9 +540,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1531567477}
-        m_TargetAssemblyTypeName: ButtonClickManager, Assembly-CSharp
-        m_MethodName: SelectedLobbyScene
+      - m_Target: {fileID: 938323645}
+        m_TargetAssemblyTypeName: LobbyManager, Assembly-CSharp
+        m_MethodName: StartHostWithRelay
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1425,7 +1425,7 @@ MonoBehaviour:
   NetworkConfig:
     ProtocolVersion: 0
     NetworkTransport: {fileID: 543645607}
-    PlayerPrefab: {fileID: 5815417615061203712, guid: 860909bf771adcc41a4d7743fe540b37, type: 3}
+    PlayerPrefab: {fileID: 8628133643110585351, guid: 7efe8505741782948b7e79c6eedc993c, type: 3}
     Prefabs:
       NetworkPrefabsLists:
       - {fileID: 11400000, guid: 51ba5c921b2830341b3fd71ee63118ae, type: 2}
