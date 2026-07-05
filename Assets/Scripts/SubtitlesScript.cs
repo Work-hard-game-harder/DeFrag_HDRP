@@ -4,11 +4,14 @@ using UnityEngine;
 
 public class SubtitlesScript : MonoBehaviour
 {
+    private System.Action onFinished;
     public TextMeshProUGUI subtitlesText;
     public GameObject subtitlesPanel;
     public float subtitlesSpeed;
     private string[] subtitles;
     private int index = 0;
+
+    private bool ignoreClick = false;
 
     void Start()
     {
@@ -18,8 +21,8 @@ public class SubtitlesScript : MonoBehaviour
 
     void Update()
     {
-        if (subtitles == null) return; // 자막 없으면 무시
-
+        if (subtitles == null) return;
+        if (ignoreClick) return;
         if (Input.GetMouseButtonDown(0))
         {
             if (subtitlesText.text == subtitles[index])
@@ -32,14 +35,24 @@ public class SubtitlesScript : MonoBehaviour
         }
     }
 
-    // 트리거에서 호출
-    public void PlaySubtitles(string[] newSubtitles)
+    // callback = null 기본값 추가, StopAllCoroutines 순서 수정
+    public void PlaySubtitles(string[] newSubtitles, System.Action callback = null)
     {
         subtitles = newSubtitles;
         index = 0;
+        onFinished = callback;
         subtitlesText.text = string.Empty;
         subtitlesPanel.SetActive(true);
+        StopAllCoroutines();
         StartCoroutine(TypeLine());
+        StartCoroutine(IgnoreClickThisFrame()); // 이번 프레임 클릭 무시
+    }
+
+    IEnumerator IgnoreClickThisFrame()
+    {
+        ignoreClick = true;
+        yield return null; // 한 프레임 대기
+        ignoreClick = false;
     }
 
     IEnumerator TypeLine()
@@ -53,7 +66,6 @@ public class SubtitlesScript : MonoBehaviour
 
     void NextSubtitle()
     {
-
         if (index < subtitles.Length - 1)
         {
             index++;
@@ -64,6 +76,7 @@ public class SubtitlesScript : MonoBehaviour
         {
             subtitlesPanel.SetActive(false);
             subtitles = null;
+            onFinished?.Invoke();
         }
     }
 }

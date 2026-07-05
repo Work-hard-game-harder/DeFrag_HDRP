@@ -15,4 +15,14 @@ public class SubtitleTrigger : MonoBehaviour
             subtitlesScript.PlaySubtitles(mySubtitles); // 자막 실행
         }
     }
+    private void OnMouseDown()
+    {
+        if (hasTriggered) return;
+        if (CompareTag("Item"))
+        {
+            hasTriggered = true;
+            subtitlesScript.PlaySubtitles(mySubtitles);
+            gameObject.SetActive(false); // 자막 끝나면 비활성화
+        }
+    }
 }
