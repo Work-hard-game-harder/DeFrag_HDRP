@@ -21,7 +21,12 @@ public class FloorButtonManager : MonoBehaviour
     {
         foreach (var fb in floorButtons)
         {
-            bool result = SettingManager.Instance.IsUnlocked(fb.floorName);
+            //원래 코드
+            // bool result = SettingManager.Instance.IsUnlocked(fb.floorName);
+
+            // 테스트용(항상 true)
+            bool result = true;
+
             Debug.Log($"[FloorButtonManager] floorName: '{fb.floorName}' → isUnlocked: {result} / PlayerPrefs key: 'Unlocked_{fb.floorName}' = {PlayerPrefs.GetInt("Unlocked_" + fb.floorName, 0)}");
         }
 
@@ -32,7 +37,11 @@ public class FloorButtonManager : MonoBehaviour
     {
         foreach (var fb in floorButtons)
         {
-            bool isUnlocked = SettingManager.Instance.IsUnlocked(fb.floorName);
+            //원래 코드
+            //bool isUnlocked = SettingManager.Instance.IsUnlocked(fb.floorName);
+
+            // 테스트용(강제해금)
+            bool isUnlocked = true;
 
             var image = fb.button.GetComponent<Image>();
             if (image != null)

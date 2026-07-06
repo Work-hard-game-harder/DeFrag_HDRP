@@ -623,7 +623,7 @@ public class SettingManager : MonoBehaviour
         }
     }
 
-    public void UnlockNextFloor(string currentFloorName)
+    /* public void UnlockNextFloor(string currentFloorName)
     {
         int currentIndex = System.Array.IndexOf(floorOrder, currentFloorName);
 
@@ -645,7 +645,7 @@ public class SettingManager : MonoBehaviour
         PlayerPrefs.SetInt(nextKey, 1);
         PlayerPrefs.Save();
         Debug.Log($"[SettingManager] {floorOrder[nextIndex]} 해금!");
-    }
+    } 
 
     public bool IsUnlocked(string floorName)
     {
@@ -658,7 +658,7 @@ public class SettingManager : MonoBehaviour
         SceneManager.LoadScene("LobbyScene", LoadSceneMode.Single);
         Debug.Log($"SelectedFloor로 이동");
 
-    }
+    } */
 
     //Pause Panel 관련
     public void BackMainScene()

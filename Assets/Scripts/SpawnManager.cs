@@ -1,34 +1,49 @@
-using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using Unity.Netcode;
 
 public class SpawnManager : MonoBehaviour
 {
-    private void Start()
+    private void OnEnable()
     {
-        NetworkManager.Singleton.OnClientConnectedCallback += HandleClientConnected;
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
-    private void HandleClientConnected(ulong clientId)
+    private void OnDisable()
     {
-        // 씬에서 "SpawnPoint" 태그를 가진 오브젝트들을 모두 찾기
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        // 로비씬은 자동 스폰 + PlayerController.OnNetworkSpawn으로 처리
+        if (scene.name == "LobbyScene") return;
+
+        // 다른 씬에서는 새로 생성
         GameObject[] spawnPoints = GameObject.FindGameObjectsWithTag("SpawnPoint");
+        if (spawnPoints.Length == 0) return;
 
-        if (spawnPoints.Length == 0)
-        {
-            Debug.LogWarning("SpawnPoint 태그가 붙은 오브젝트가 없습니다!");
-            return;
-        }
-
-        // 랜덤으로 하나 선택 (원하면 순차적으로도 가능)
         int index = Random.Range(0, spawnPoints.Length);
         Vector3 pos = spawnPoints[index].transform.position;
         Quaternion rot = spawnPoints[index].transform.rotation;
 
-        // Player Prefab 가져와서 지정된 위치에 생성
+        // 기존 플레이어 제거
+        var localPlayer = NetworkManager.Singleton.LocalClient.PlayerObject;
+        if (localPlayer != null)
+        {
+            localPlayer.Despawn();
+        }
+
+        // 새 플레이어 생성
         var playerPrefab = NetworkManager.Singleton.NetworkConfig.PlayerPrefab;
         var playerInstance = Instantiate(playerPrefab, pos, rot);
+        playerInstance.GetComponent<NetworkObject>().SpawnAsPlayerObject(NetworkManager.Singleton.LocalClientId);
 
-        // 네트워크에 등록
-        playerInstance.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId);
+        // 데이터 이어받기
+        var stats = playerInstance.GetComponent<PlayerStats>();
+        if (stats != null)
+        {
+            stats.ApplyData(GameDataManager.Instance.Health, GameDataManager.Instance.Inventory);
+        }
     }
 }
