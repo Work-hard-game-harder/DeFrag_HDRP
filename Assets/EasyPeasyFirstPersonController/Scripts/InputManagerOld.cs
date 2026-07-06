@@ -10,5 +10,9 @@ namespace EasyPeasyFirstPersonController
         public bool sprint => Input.GetKey(KeyCode.LeftShift);
         public bool crouch => Input.GetKey(KeyCode.LeftControl);
         public bool slide => Input.GetKey(KeyCode.LeftControl);
+        public bool ledgeGrab => Input.GetKey(KeyCode.E);
+
+        public bool wakietakie => Input.GetKeyDown(KeyCode.G); // G 키를 누르면 true 반환
+
     }
 }

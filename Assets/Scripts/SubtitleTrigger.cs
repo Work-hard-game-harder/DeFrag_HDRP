@@ -1,3 +1,4 @@
+using EasyPeasyFirstPersonController;
 using UnityEngine;
 
 public class SubtitleTrigger : MonoBehaviour
@@ -5,6 +6,7 @@ public class SubtitleTrigger : MonoBehaviour
     public SubtitlesScript subtitlesScript; // SubtitleBox 연결
     public string[] mySubtitles;           // 이 트리거만의 자막 내용
     private bool hasTriggered = false;
+    public GameObject wakietakie; // 아이템 클릭 시 활성화할 오브젝트
 
     private void OnTriggerEnter(Collider other)
     {
@@ -21,8 +23,10 @@ public class SubtitleTrigger : MonoBehaviour
         if (CompareTag("Item"))
         {
             hasTriggered = true;
+            FirstPersonController player = FindAnyObjectByType<FirstPersonController>();
+            if (player != null) player.PickUpWakieTakie();
+            gameObject.SetActive(false);
             subtitlesScript.PlaySubtitles(mySubtitles);
-            gameObject.SetActive(false); // 자막 끝나면 비활성화
         }
     }
 }

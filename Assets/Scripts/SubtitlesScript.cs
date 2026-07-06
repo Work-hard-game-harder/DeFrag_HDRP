@@ -21,6 +21,7 @@ public class SubtitlesScript : MonoBehaviour
 
     void Update()
     {
+
         if (subtitles == null) return;
         if (ignoreClick) return;
         if (Input.GetMouseButtonDown(0))
@@ -43,6 +44,7 @@ public class SubtitlesScript : MonoBehaviour
         onFinished = callback;
         subtitlesText.text = string.Empty;
         subtitlesPanel.SetActive(true);
+        GameState.isCutscene = true;
         StopAllCoroutines();
         StartCoroutine(TypeLine());
         StartCoroutine(IgnoreClickThisFrame()); // 이번 프레임 클릭 무시
@@ -74,6 +76,7 @@ public class SubtitlesScript : MonoBehaviour
         }
         else
         {
+            GameState.isCutscene = false;
             subtitlesPanel.SetActive(false);
             subtitles = null;
             onFinished?.Invoke();

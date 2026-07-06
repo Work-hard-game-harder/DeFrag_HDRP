@@ -73,6 +73,10 @@ namespace EasyPeasyFirstPersonController
         public LayerMask waterMask;
         [HideInInspector] public bool isInWater;
 
+        [Header("WakieTakie Settings")]
+        public GameObject wakieTakie;
+        [HideInInspector] public bool hasWakieTakie = false;
+
         [Header("Visual Preferences")]
         public bool useFovKick = true;
         public bool useHeadBob = true;
@@ -111,12 +115,29 @@ namespace EasyPeasyFirstPersonController
         private void Update()
         {
             isGrounded = Physics.CheckSphere(groundCheck.position, 0.2f, groundMask, QueryTriggerInteraction.Ignore);
+            if (Input.GetKeyDown(KeyCode.G) && hasWakieTakie)
+            {
+                if (currentState is not PlayerWakieTakieState)
+                {
+                    currentState = states.WakieTakie();
+                    currentState.EnterState();
+                }
+            }
+            if (GameState.isCutscene && currentState is not PlayerSubtitleState)
+            {
+                currentState = states.Subtitle();
+                currentState.EnterState();
+            }
 
             currentState.UpdateState();
             HandleRotation();
             UpdateVisuals();
         }
-
+        public void PickUpWakieTakie()
+        {
+            hasWakieTakie = true;
+            wakieTakie.SetActive(true); 
+        }
         private void HandleRotation()
         {
             float mouseX = input.lookInput.x * mouseSensitivity;
