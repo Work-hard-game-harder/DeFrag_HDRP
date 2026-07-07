@@ -3,10 +3,10 @@ using UnityEngine;
 
 public class SubtitleTrigger : MonoBehaviour
 {
-    public SubtitlesScript subtitlesScript; // SubtitleBox ¿¬°á
-    public string[] mySubtitles;           // ÀÌ Æ®¸®°Å¸¸ÀÇ ÀÚ¸· ³»¿ë
+    public SubtitlesScript subtitlesScript; // SubtitleBox ï¿½ï¿½ï¿½ï¿½
+    public string[] mySubtitles;           // ï¿½ï¿½ Æ®ï¿½ï¿½ï¿½Å¸ï¿½ï¿½ï¿½ ï¿½Ú¸ï¿½ ï¿½ï¿½ï¿½ï¿½
     private bool hasTriggered = false;
-    public GameObject wakietakie; // ¾ÆÀÌÅÛ Å¬¸¯ ½Ã È°¼ºÈ­ÇÒ ¿ÀºêÁ§Æ®
+    public GameObject wakietakie; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Å¬ï¿½ï¿½ ï¿½ï¿½ È°ï¿½ï¿½È­ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ®
 
     private void OnTriggerEnter(Collider other)
     {
@@ -14,9 +14,11 @@ public class SubtitleTrigger : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             hasTriggered = true;
-            subtitlesScript.PlaySubtitles(mySubtitles); // ÀÚ¸· ½ÇÇà
+            subtitlesScript.PlaySubtitles(mySubtitles); // ï¿½Ú¸ï¿½ ï¿½ï¿½ï¿½ï¿½
         }
     }
+
+    /*
     private void OnMouseDown()
     {
         if (hasTriggered) return;
@@ -29,4 +31,6 @@ public class SubtitleTrigger : MonoBehaviour
             subtitlesScript.PlaySubtitles(mySubtitles);
         }
     }
+
+    */
 }

@@ -436,13 +436,24 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 1493343013}
     m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 9156347144824098803, guid: c82236c16aae9d34fbd437f8dea6e2c9, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1584541672}
     - targetCorrespondingSourceObject: {fileID: 9156347143994207886, guid: c82236c16aae9d34fbd437f8dea6e2c9, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1858621224}
+    - targetCorrespondingSourceObject: {fileID: 9156347143994207886, guid: c82236c16aae9d34fbd437f8dea6e2c9, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1858621227}
   m_SourcePrefab: {fileID: 100100000, guid: c82236c16aae9d34fbd437f8dea6e2c9, type: 3}
+--- !u!114 &75132146 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 9156347144040445544, guid: c82236c16aae9d34fbd437f8dea6e2c9, type: 3}
+  m_PrefabInstance: {fileID: 75132145}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2922308556bc98e4898cb3309250e781, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &103334515 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3312077838417172531, guid: c8e0bab957a39704d8fe7c82a38efdf2, type: 3}
@@ -4583,21 +4594,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 652032180750411716, guid: c8e0bab957a39704d8fe7c82a38efdf2, type: 3}
   m_PrefabInstance: {fileID: 2855393961608065923}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &594993763
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 594993762}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b7a31090088b42444ae707bf48f9a0d3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
-  itemName: "\uD558\uC597\uAC8C \uBE5B\uB098\uB294 \uBAA8\uB2C8\uD130"
-  hintSprite: {fileID: 21300000, guid: 3aba9ec66b723b045aa0c7d6a18a06a6, type: 3}
-  isInteracted: 0
 --- !u!65 &594993764
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4619,6 +4615,22 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.7335548, y: 2.22151, z: 3.0016136}
   m_Center: {x: -29.296553, y: 1.1177776, z: 40.523827}
+--- !u!114 &594993768
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 594993762}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bc83410cc53e0c4e8f4bcfe67aa83e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HintItem
+  itemName: "\uD558\uC580\uC0C9\uC73C\uB85C \uBE5B\uB098\uB294 \uD654\uBA74"
+  hintSprite: {fileID: 21300000, guid: 3aba9ec66b723b045aa0c7d6a18a06a6, type: 3}
+  isHoldInteraction: 1
+  isInteracted: 0
 --- !u!1 &606252712
 GameObject:
   m_ObjectHideFlags: 0
@@ -5875,9 +5887,10 @@ GameObject:
   - component: {fileID: 853698899}
   - component: {fileID: 853698898}
   - component: {fileID: 853698901}
-  m_Layer: 0
+  - component: {fileID: 853698902}
+  m_Layer: 9
   m_Name: walkie-talkie
-  m_TagString: Item
+  m_TagString: Interactable
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -5916,7 +5929,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
+  m_Size: {x: 3, y: 5, z: 2}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!23 &853698899
 MeshRenderer:
@@ -5991,6 +6004,36 @@ MonoBehaviour:
   mySubtitles:
   - "\uBB34\uC804\uAE30\uC778 \uAC83 \uAC19\uB2E4."
   wakietakie: {fileID: 1493343012}
+--- !u!114 &853698902
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 853698896}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30910fe2b41b2714c8ded351b66cd57e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WorldQuestItem
+  itemName: "\uBB34\uC804\uAE30"
+  isHoldInteraction: 0
+  onInteractEvent:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 75132146}
+        m_TargetAssemblyTypeName: EasyPeasyFirstPersonController.FirstPersonController,
+          Assembly-CSharp
+        m_MethodName: PickUpWakieTakie
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &859363214
 GameObject:
   m_ObjectHideFlags: 0
@@ -6153,8 +6196,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::QuestManager
   questContainerPanel: {fileID: 44169963}
   questProgressText: {fileID: 382950325}
-  totalCluesNeeded: 6
-  isClueQuestActive: 0
+  questList:
+  - questTitle: "\uBB34\uC804\uAE30\uB97C \uCC3E\uC73C\uC2DC\uC624"
+    targetCount: 1
+    currentCount: 0
+  - questTitle: "\uC9C0\uD558 1\uCE35\uC73C\uB85C \uB0B4\uB824\uAC08 \uBC29\uBC95\uC744
+      \uCC3E\uC544\uB77C"
+    targetCount: 1
+    currentCount: 0
+  - questTitle: "\uC5D8\uB808\uBCA0\uC774\uD130 \uBCF4\uC548 \uCF54\uB4DC\uC758 \uB2E8\uC11C\uB97C
+      \uBAA8\uC544\uB77C "
+    targetCount: 6
+    currentCount: 0
+  - questTitle: "\uC5D8\uB808\uBCA0\uC774\uD130\uB85C \uB3CC\uC544\uAC00 \uC9C0\uD558\uB85C
+      \uB0B4\uB824\uAC00\uAE30"
+    targetCount: 1
+    currentCount: 0
 --- !u!4 &878033522
 Transform:
   m_ObjectHideFlags: 0
@@ -11309,7 +11366,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1288539351
 RectTransform:
   m_ObjectHideFlags: 0
@@ -11396,6 +11453,10 @@ PrefabInstance:
       value: Files
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: b7b4e1c4fbdcba44b908624e6d12b4f5, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: b7b4e1c4fbdcba44b908624e6d12b4f5, type: 3}
       propertyPath: m_TagString
       value: Interactable
       objectReference: {fileID: 0}
@@ -11405,31 +11466,16 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: b7b4e1c4fbdcba44b908624e6d12b4f5, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1303857777}
+      addedObject: {fileID: 1303857778}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: b7b4e1c4fbdcba44b908624e6d12b4f5, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1303857778}
+      addedObject: {fileID: 1303857782}
   m_SourcePrefab: {fileID: 100100000, guid: b7b4e1c4fbdcba44b908624e6d12b4f5, type: 3}
 --- !u!1 &1303857776 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: b7b4e1c4fbdcba44b908624e6d12b4f5, type: 3}
   m_PrefabInstance: {fileID: 1303857775}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1303857777
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1303857776}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b7a31090088b42444ae707bf48f9a0d3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
-  itemName: "\uC758\uBB38\uC758 \uBCF4\uB77C\uC0C9 \uBB38\uC11C"
-  hintSprite: {fileID: 21300000, guid: f8543d340d9b5e54db50cc24745995f9, type: 3}
-  isInteracted: 0
 --- !u!65 &1303857778
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -11456,6 +11502,22 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: b7b4e1c4fbdcba44b908624e6d12b4f5, type: 3}
   m_PrefabInstance: {fileID: 1303857775}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1303857782
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1303857776}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bc83410cc53e0c4e8f4bcfe67aa83e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HintItem
+  itemName: "\uC758\uBB38\uC758 \uBCF4\uB77C\uC0C9 \uBB38\uC11C"
+  hintSprite: {fileID: 21300000, guid: f8543d340d9b5e54db50cc24745995f9, type: 3}
+  isHoldInteraction: 1
+  isInteracted: 0
 --- !u!1 &1315114308
 GameObject:
   m_ObjectHideFlags: 0
@@ -12695,6 +12757,10 @@ PrefabInstance:
       value: Memo2
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 8dd164ba8a14c9141b9035cca3f5b723, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 8dd164ba8a14c9141b9035cca3f5b723, type: 3}
       propertyPath: m_TagString
       value: Interactable
       objectReference: {fileID: 0}
@@ -12703,32 +12769,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 8dd164ba8a14c9141b9035cca3f5b723, type: 3}
-      insertIndex: 1
-      addedObject: {fileID: 1452537629}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 8dd164ba8a14c9141b9035cca3f5b723, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1452537630}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 8dd164ba8a14c9141b9035cca3f5b723, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1452537634}
   m_SourcePrefab: {fileID: 100100000, guid: 8dd164ba8a14c9141b9035cca3f5b723, type: 3}
 --- !u!1 &1452537628 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 8dd164ba8a14c9141b9035cca3f5b723, type: 3}
   m_PrefabInstance: {fileID: 1452537627}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1452537629
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1452537628}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b7a31090088b42444ae707bf48f9a0d3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
-  itemName: "\uB178\uB780\uC0C9 \uCABD\uC9C0"
-  hintSprite: {fileID: 21300000, guid: 86f8e0d5c0cd0634c841e7402ba4e4e0, type: 3}
-  isInteracted: 0
 --- !u!65 &1452537630
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -12755,6 +12806,22 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 8dd164ba8a14c9141b9035cca3f5b723, type: 3}
   m_PrefabInstance: {fileID: 1452537627}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1452537634
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1452537628}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bc83410cc53e0c4e8f4bcfe67aa83e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HintItem
+  itemName: "\uB178\uB780\uC0C9 \uCABD\uC9C0"
+  hintSprite: {fileID: 21300000, guid: 86f8e0d5c0cd0634c841e7402ba4e4e0, type: 3}
+  isHoldInteraction: 1
+  isInteracted: 0
 --- !u!1 &1454508163
 GameObject:
   m_ObjectHideFlags: 0
@@ -14411,31 +14478,6 @@ MonoBehaviour:
   - "\uC5EC\uAE30\uAC00 \uC801\uC758 \uBCF8\uAC70\uC9C0\uC778\uAC00.."
   - "\uC77C\uB2E8 \uBB34\uC804\uAE30\uBD80\uD130 \uCC3E\uC790"
   wakietakie: {fileID: 0}
---- !u!1 &1584541670 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 9156347144824098803, guid: c82236c16aae9d34fbd437f8dea6e2c9, type: 3}
-  m_PrefabInstance: {fileID: 75132145}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1584541672
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1584541670}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ce20a2967fefef468c3730e9b539f8a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerInteraction
-  interactionDistance: 3
-  interactionHUD: {fileID: 1288539350}
-  itemText: {fileID: 797010713}
-  progressCircle: {fileID: 606252714}
-  hintPanel: {fileID: 2030258349}
-  hintImage: {fileID: 1666902324}
-  playerMovementScript: {fileID: 0}
-  mouseLookScript: {fileID: 0}
 --- !u!1 &1592068219
 GameObject:
   m_ObjectHideFlags: 0
@@ -16748,6 +16790,27 @@ MonoBehaviour:
       data1: 0
       data2: 0
   defaultFrameSettings: 0
+--- !u!114 &1858621227
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1858621220}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ce20a2967fefef468c3730e9b539f8a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerInteraction
+  maxDistance: 7
+  sphereRadius: 0.3
+  interactionHUD: {fileID: 1288539350}
+  itemText: {fileID: 797010713}
+  progressCircle: {fileID: 606252714}
+  hintPanel: {fileID: 2030258349}
+  hintImage: {fileID: 1666902324}
+  playerMovementScript: {fileID: 0}
+  mouseLookScript: {fileID: 0}
 --- !u!1 &1866212025
 GameObject:
   m_ObjectHideFlags: 0
@@ -18610,36 +18673,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 6001378479549595824, guid: c8e0bab957a39704d8fe7c82a38efdf2, type: 3}
   m_PrefabInstance: {fileID: 2855393961608065923}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &2064822292
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2064822290}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b7a31090088b42444ae707bf48f9a0d3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
-  itemName: "\uBB34\uC5B8\uAC00 \uC368\uC838 \uC788\uB294 \uD654\uC774\uD2B8\uBCF4\uB4DC"
-  hintSprite: {fileID: 21300000, guid: 3d9b05d777b33624c8fc74940184fe27, type: 3}
-  isInteracted: 0
---- !u!114 &2064822293
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2064822291}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b7a31090088b42444ae707bf48f9a0d3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
-  itemName: "\uBE68\uAC04 \uD654\uBA74\uC758 \uBAA8\uB2C8\uD130"
-  hintSprite: {fileID: 21300000, guid: 2aab1c4329b42c74bb566659914c9e51, type: 3}
-  isInteracted: 0
 --- !u!65 &2064822294
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -18682,6 +18715,38 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 4.9590683, y: 3.33, z: 0.91}
   m_Center: {x: -71.70589, y: 3.6590323, z: -12.076359}
+--- !u!114 &2064822299
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2064822290}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bc83410cc53e0c4e8f4bcfe67aa83e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HintItem
+  itemName: "\uBB34\uC5B8\uAC00 \uC368\uC838 \uC788\uB294 \uD654\uC774\uD2B8\uBCF4\uB4DC"
+  hintSprite: {fileID: 21300000, guid: 3d9b05d777b33624c8fc74940184fe27, type: 3}
+  isHoldInteraction: 1
+  isInteracted: 0
+--- !u!114 &2064822302
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2064822291}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bc83410cc53e0c4e8f4bcfe67aa83e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HintItem
+  itemName: "\uBE68\uAC04 \uD654\uBA74\uC758 \uBAA8\uB2C8\uD130"
+  hintSprite: {fileID: 21300000, guid: 2aab1c4329b42c74bb566659914c9e51, type: 3}
+  isHoldInteraction: 1
+  isInteracted: 0
 --- !u!1001 &2071330171
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -19111,6 +19176,10 @@ PrefabInstance:
       value: Memo1
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: a549807a2569b2a4cbcd44b1e3ece78c, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: a549807a2569b2a4cbcd44b1e3ece78c, type: 3}
       propertyPath: m_TagString
       value: Interactable
       objectReference: {fileID: 0}
@@ -19120,7 +19189,7 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a549807a2569b2a4cbcd44b1e3ece78c, type: 3}
       insertIndex: 1
-      addedObject: {fileID: 2099599997}
+      addedObject: {fileID: 2099600002}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a549807a2569b2a4cbcd44b1e3ece78c, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2099599998}
@@ -19130,21 +19199,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: a549807a2569b2a4cbcd44b1e3ece78c, type: 3}
   m_PrefabInstance: {fileID: 2099599995}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &2099599997
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2099599996}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b7a31090088b42444ae707bf48f9a0d3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
-  itemName: "\uC758\uBB38\uC758 \uCD08\uB85D\uC0C9 \uCABD\uC9C0"
-  hintSprite: {fileID: 21300000, guid: 70d57acd800dfe34ca9eb53e7ca521ab, type: 3}
-  isInteracted: 0
 --- !u!65 &2099599998
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -19171,6 +19225,22 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: a549807a2569b2a4cbcd44b1e3ece78c, type: 3}
   m_PrefabInstance: {fileID: 2099599995}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &2099600002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2099599996}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bc83410cc53e0c4e8f4bcfe67aa83e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HintItem
+  itemName: "\uCD08\uB85D\uC0C9 \uCABD\uC9C0"
+  hintSprite: {fileID: 21300000, guid: 70d57acd800dfe34ca9eb53e7ca521ab, type: 3}
+  isHoldInteraction: 1
+  isInteracted: 0
 --- !u!1001 &2102612295
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -19426,6 +19496,10 @@ PrefabInstance:
       value: Desk_A_Hint
       objectReference: {fileID: 0}
     - target: {fileID: 652032180750411716, guid: c8e0bab957a39704d8fe7c82a38efdf2, type: 3}
+      propertyPath: m_Layer
+      value: 9
+      objectReference: {fileID: 0}
+    - target: {fileID: 652032180750411716, guid: c8e0bab957a39704d8fe7c82a38efdf2, type: 3}
       propertyPath: m_TagString
       value: Interactable
       objectReference: {fileID: 0}
@@ -19492,6 +19566,10 @@ PrefabInstance:
     - target: {fileID: 2202143928447784093, guid: c8e0bab957a39704d8fe7c82a38efdf2, type: 3}
       propertyPath: m_Name
       value: WhiteBoard_Wall_Hint
+      objectReference: {fileID: 0}
+    - target: {fileID: 2202143928447784093, guid: c8e0bab957a39704d8fe7c82a38efdf2, type: 3}
+      propertyPath: m_Layer
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 2202143928447784093, guid: c8e0bab957a39704d8fe7c82a38efdf2, type: 3}
       propertyPath: m_TagString
@@ -19600,6 +19678,10 @@ PrefabInstance:
     - target: {fileID: 6001378479549595824, guid: c8e0bab957a39704d8fe7c82a38efdf2, type: 3}
       propertyPath: m_Name
       value: SmartTV_Hint
+      objectReference: {fileID: 0}
+    - target: {fileID: 6001378479549595824, guid: c8e0bab957a39704d8fe7c82a38efdf2, type: 3}
+      propertyPath: m_Layer
+      value: 9
       objectReference: {fileID: 0}
     - target: {fileID: 6001378479549595824, guid: c8e0bab957a39704d8fe7c82a38efdf2, type: 3}
       propertyPath: m_TagString
@@ -19839,7 +19921,7 @@ PrefabInstance:
       addedObject: {fileID: 2855393961608065925}
     - targetCorrespondingSourceObject: {fileID: 652032180750411716, guid: c8e0bab957a39704d8fe7c82a38efdf2, type: 3}
       insertIndex: 1
-      addedObject: {fileID: 594993763}
+      addedObject: {fileID: 594993768}
     - targetCorrespondingSourceObject: {fileID: 652032180750411716, guid: c8e0bab957a39704d8fe7c82a38efdf2, type: 3}
       insertIndex: -1
       addedObject: {fileID: 594993764}
@@ -19857,16 +19939,16 @@ PrefabInstance:
       addedObject: {fileID: 2855393961608065928}
     - targetCorrespondingSourceObject: {fileID: 6001378479549595824, guid: c8e0bab957a39704d8fe7c82a38efdf2, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 2064822293}
+      addedObject: {fileID: 2064822294}
     - targetCorrespondingSourceObject: {fileID: 6001378479549595824, guid: c8e0bab957a39704d8fe7c82a38efdf2, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 2064822294}
-    - targetCorrespondingSourceObject: {fileID: 2202143928447784093, guid: c8e0bab957a39704d8fe7c82a38efdf2, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 2064822292}
+      addedObject: {fileID: 2064822302}
     - targetCorrespondingSourceObject: {fileID: 2202143928447784093, guid: c8e0bab957a39704d8fe7c82a38efdf2, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2064822295}
+    - targetCorrespondingSourceObject: {fileID: 2202143928447784093, guid: c8e0bab957a39704d8fe7c82a38efdf2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2064822299}
   m_SourcePrefab: {fileID: 100100000, guid: c8e0bab957a39704d8fe7c82a38efdf2, type: 3}
 --- !u!1 &2855393961608065924 stripped
 GameObject:
@@ -20418,7 +20500,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ce20a2967fefef468c3730e9b539f8a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInteraction
-  interactionDistance: 3
+  maxDistance: 7
+  sphereRadius: 0.3
   interactionHUD: {fileID: 1288539350}
   itemText: {fileID: 797010713}
   progressCircle: {fileID: 606252714}
