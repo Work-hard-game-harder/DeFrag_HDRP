@@ -48,6 +48,8 @@ namespace EasyPeasyFirstPersonController
         [HideInInspector] public float currentBobIntensity;
         [HideInInspector] public float currentBobSpeed;
         [HideInInspector] public float targetTilt;
+        [HideInInspector] public Animator wakieTakieAnimator;
+
 
         private float bobTimer;
         private float fovVelocity;
@@ -75,6 +77,7 @@ namespace EasyPeasyFirstPersonController
 
         [Header("WakieTakie Settings")]
         public GameObject wakieTakie;
+        public GameObject wakieTakieSubscrition;
         [HideInInspector] public bool hasWakieTakie = false;
 
         [Header("Visual Preferences")]
@@ -115,14 +118,36 @@ namespace EasyPeasyFirstPersonController
         private void Update()
         {
             isGrounded = Physics.CheckSphere(groundCheck.position, 0.2f, groundMask, QueryTriggerInteraction.Ignore);
+
             if (Input.GetKeyDown(KeyCode.G) && hasWakieTakie)
             {
-                if (currentState is not PlayerWakieTakieState)
+                if (Input.GetKeyDown(KeyCode.G) && hasWakieTakie)
                 {
-                    currentState = states.WakieTakie();
-                    currentState.EnterState();
+                    if (currentState is PlayerWakieTakieState)
+                    {
+                        currentState.ExitState();
+                        currentState = states.Grounded();
+                        currentState.EnterState();
+                        CurrentState = currentState;
+                    }
+                    else
+                    {
+                        currentState.ExitState();
+                        currentState = states.WakieTakie();
+                        currentState.EnterState();
+                        CurrentState = currentState;
+                    }
                 }
             }
+
+            if (wakieTakieSubscrition != null && wakieTakieSubscrition.activeSelf)
+            {
+                if (Input.GetMouseButtonDown(0))
+                {
+                    Destroy(wakieTakieSubscrition);
+                }
+            }
+
             if (GameState.isCutscene && currentState is not PlayerSubtitleState)
             {
                 currentState = states.Subtitle();
@@ -133,10 +158,12 @@ namespace EasyPeasyFirstPersonController
             HandleRotation();
             UpdateVisuals();
         }
+
         public void PickUpWakieTakie()
         {
             hasWakieTakie = true;
-            wakieTakie.SetActive(true); 
+            wakieTakieSubscrition.SetActive(true);
+            wakieTakieAnimator = wakieTakie.GetComponent<Animator>();
         }
         private void HandleRotation()
         {
@@ -224,6 +251,5 @@ namespace EasyPeasyFirstPersonController
                 isInWater = false;
             }
         }
-
     }
 }
