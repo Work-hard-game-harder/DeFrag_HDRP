@@ -16,6 +16,9 @@ public class QuestManager : MonoBehaviour
 
     private int currentStepIndex = 0;
 
+    public System.Action onQuestStepChanged; // 퀘스트 단계가 바뀔 때 호출되는 이벤트
+    public int GetCurrentStepIndex() => currentStepIndex; // 현재 진행 중인 퀘스트 단계 인덱스를 반환하는 함수
+
     void Awake()
     {
         Instance = this;
@@ -50,6 +53,7 @@ public class QuestManager : MonoBehaviour
         if (CurrentStep.IsCompleted())
         {
             NextQuestStep();
+            onQuestStepChanged?.Invoke();
         }
         else
         {

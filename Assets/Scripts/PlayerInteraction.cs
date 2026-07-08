@@ -23,6 +23,19 @@ public class PlayerInteraction : MonoBehaviour
 
     void Update()
     {
+        // 1. 만약 힌트 패널이 화면에 켜져 있는 상태라면?
+        if (hintPanel != null && hintPanel.activeSelf)
+        {
+            // 2. 플레이어가 마우스 좌클릭(0)을 하는 순간!
+            if (Input.GetMouseButtonDown(0))
+            {
+                CloseAllUI(); // 이미 만들어 두신 이 함수를 여기서 실행해 주는 겁니다!
+                TogglePlayerControl(true); 
+            }
+            return; // 힌트창이 열려있을 땐 아래 레이저(조준) 연산을 안 하도록 막아줌
+        }
+
+        // 힌트 패널이 꺼져있을 때만 정상적으로 조준 레이저 작동
         CheckInteractable();
         HandleInteractionInput();
     }
