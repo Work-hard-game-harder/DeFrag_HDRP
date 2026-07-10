@@ -16,6 +16,7 @@ public class InventoryItem : MonoBehaviour, IInteractable
 
     public void Interact(PlayerInteraction player)
     {
+        
         Debug.Log($"[인벤토리 추가] '{itemName}' 수집완료. ID: {itemID}");
 
         // 1. 퀘스트 매니저 카운트 증가
@@ -26,12 +27,12 @@ public class InventoryItem : MonoBehaviour, IInteractable
 
         // 2. ★ 인벤토리 팀원 코드 연동 구역
         // 나중에 팀원의 인벤토리 매니저 클래스가 나오면 주석을 풀고 연결하세요.
-        /*
+        
         if (InventoryManager.Instance != null)
         {
             InventoryManager.Instance.AddItem(itemID);
         }
-        */
+        
 
         // 3. UI 닫아주고 오브젝트 파괴
         player.CloseAllUI();
