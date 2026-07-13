@@ -130,7 +130,6 @@ namespace StarterAssets
 
         private void Awake()
         {
-            // get a reference to our main camera
             if (_mainCamera == null)
             {
                 _mainCamera = GameObject.FindGameObjectWithTag("MainCamera");
@@ -162,7 +161,7 @@ namespace StarterAssets
         private void Update()
         {
             // 현재 활성화된 씬이 LobbyScene일 경우, 움직임 및 점프 로직 차단
-            if (SceneManager.GetActiveScene().name == "LobbyScene") return;
+            // if (SceneManager.GetActiveScene().name == "LobbyScene") return;
 
             // 내 화면에 생성된 다른 사람의 캐릭터라면 여기서 조작 로직 통과 차단
             if (!IsOwner) return;
@@ -177,7 +176,7 @@ namespace StarterAssets
         private void LateUpdate()
         {
             // 마우스 움직임에 따라 시야 회전 로직도 차단
-            if (SceneManager.GetActiveScene().name == "LobbyScene") return;
+            // if (SceneManager.GetActiveScene().name == "LobbyScene") return;
             // 다른 사람 캐릭터의 카메라는 내가 마우스를 돌려도 안 움직이게 차단
             if (!IsOwner) return;
             CameraRotation();
@@ -214,18 +213,18 @@ namespace StarterAssets
             {
                 float deltaTimeMultiplier = IsCurrentDeviceMouse ? 1.0f : Time.deltaTime;
 
-                // 1. [좌우 회전] 마우스 좌우 입력(x)에 맞춰 캐릭터 몸통(transform)을 회전시킵니다.
+                // 1. 좌우 회전 - 마우스 좌우 입력으로 캐릭터 몸통 회전
                 float rotationVelocity = _input.look.x * deltaTimeMultiplier;
                 transform.Rotate(Vector3.up * rotationVelocity);
 
-                // 2. [상하 회전] 마우스 위아래 입력(y)을 누적하여 고개 각도(Pitch)를 계산합니다.
+                // 2. 상하 회전 - 마우스 위아래 입력으로 고개 각도 계산
                 _cinemachineTargetPitch += _input.look.y * deltaTimeMultiplier;
             }
 
-            // 위아래 시야각 제한 (Clamp)
+            // 위아래 시야각 제한
             _cinemachineTargetPitch = ClampAngle(_cinemachineTargetPitch, BottomClamp, TopClamp);
 
-            // 3. [최종 적용] 내가 직접 심은 1인칭 카메라 오브젝트가 존재한다면 그 카메라를 직접 위아래로 돌려줍니다!
+            // 3. 최종 적용 - 1인칭 카메라 오브젝트가 존재한다면 그 카메라를 직접 위아래로 회전
             if (_customFirstPersonCamera != null)
             {
                 _customFirstPersonCamera.transform.localRotation = Quaternion.Euler(_cinemachineTargetPitch + CameraAngleOverride, 0.0f, 0.0f);
@@ -250,7 +249,7 @@ namespace StarterAssets
             float speedOffset = 0.1f;
             float inputMagnitude = _input.analogMovement ? _input.move.magnitude : 1f;
 
-            // 가속 및 감속 부드럽게 보간 (Lerp)
+            // 가속 및 감속 보간
             if (currentHorizontalSpeed < targetSpeed - speedOffset ||
         currentHorizontalSpeed > targetSpeed + speedOffset)
             {
@@ -268,14 +267,14 @@ namespace StarterAssets
             _animationBlend = Mathf.Lerp(_animationBlend, targetSpeed, Time.deltaTime * SpeedChangeRate);
             if (_animationBlend < 0.01f) _animationBlend = 0f;
 
-            // --- [1인칭 핵심 핵심 수정] 카메라 뱡향 기준이 아닌, 내 몸통(정면/우측) 기준으로 이동 방향을 결정합니다 ---
+            // 카메라 뱡향 기준이 아닌 내 몸통 기준으로 이동 방향 결정
             Vector3 targetDirection = transform.forward * _input.move.y + transform.right * _input.move.x;
 
             // 플레이어 최종 이동 컴포넌트 호출
             _controller.Move(targetDirection.normalized * (_speed * Time.deltaTime) +
               new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
 
-            // 애니메이터에 연동된 안정적인 3인칭 걷기/뛰기 파라미터 업데이트
+            // 애니메이터에 연동된 3인칭 걷기/뛰기 파라미터 업데이트
             if (_hasAnimator)
             {
                 _animator.SetFloat(_animIDSpeed, _animationBlend);
@@ -397,7 +396,7 @@ namespace StarterAssets
 
         public override void OnNetworkSpawn()
         {
-            // 1. 내가 이 캐릭터의 주인(로컬 플레이어)일 때만 위치 변경 작업 수행
+            // 내가 이 캐릭터의 주인(로컬 플레이어)일 때만 위치 변경 작업 수행
             if (IsOwner)
             {
                 // SpawnPoint 태그 가진 오브젝트들 찾기
@@ -405,21 +404,20 @@ namespace StarterAssets
 
                 if (spawnPoints.Length > 0)
                 {
-                    // 2. 내 고유 ClientId 번호에 맞춰 겹치지 않게 스폰포인트를 배정
-                    // (ex. 0번 클라이언트는 0번 스폰포인트, 1번 클라이언트는 1번 스폰포인트)
+                    // 내 고유 ClientId 번호에 맞춰 겹치지 않게 스폰포인트 배정
                     int index = (int)NetworkManager.Singleton.LocalClientId % spawnPoints.Length;
                     Transform targetPoint = spawnPoints[index].transform;
 
-                    // 3. CharacterController 컴포넌트가 켜져 있으면 위치 변경이 되지 않을 수 있음
+                    // CharacterController 컴포넌트가 켜져 있으면 위치 변경이 되지 않을 수 있음
                     // 따라서 CharacterController 컴포넌트를 잠시 비활성화
                     CharacterController cc = GetComponent<CharacterController>();
                     if (cc != null) cc.enabled = false;
 
-                    // 4. 지정 스폰 포인트로 스폰(위치, 회전값)
+                    // 지정 스폰 포인트로 스폰
                     transform.position = targetPoint.position;
                     transform.rotation = targetPoint.rotation;
 
-                    // 5. 이동이 끝났으므로 다시 CharacterController 활성화
+                    // 이동이 끝났으므로 다시 CharacterController 활성화
                     if (cc != null) cc.enabled = true;
                 }
                 else
