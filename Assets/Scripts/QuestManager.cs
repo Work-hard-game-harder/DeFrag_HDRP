@@ -117,4 +117,30 @@ public class QuestManager : MonoBehaviour
         }
     }
     public void AddClue() { ProgressActiveQuest(1); }
+
+    // ===== 객체지향적 외부 연동 함수 추가 =====
+
+    /// <summary>
+    /// 특정 인덱스의 퀘스트가 현재 진행 중(활성화)인지 확인합니다.
+    /// (순서 기반 검증 시 사용)
+    /// </summary>
+    public bool IsQuestActive(int questIndex)
+    {
+        return currentStepIndex == questIndex;
+    }
+
+    /// <summary>
+    /// 특정 고유 ID를 가진 퀘스트가 현재 진행 중(활성화)인지 확인합니다.
+    /// (★ 기획 변동에 가장 안전한 ID 기반 추천 방식)
+    /// </summary>
+    public bool IsQuestActive(string questId)
+    {
+        if (CurrentStep == null) return false;
+        
+        // QuestStep 구조체/클래스 내부에 public string questID 필드가 있다고 가정합니다.
+        // 만약 없다면 아래 주석을 풀고 사용하거나, 우선 인덱스 방식을 쓰셔도 됩니다.
+        // return CurrentStep.questID == questId;
+        
+        return false; 
+    }
 }

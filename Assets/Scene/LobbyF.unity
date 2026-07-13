@@ -251,7 +251,10 @@ MonoBehaviour:
   errorText: {fileID: 7490060760147142153}
   correctPassword: 7H36BE
   nextSceneName: B2F
-  interactionText: "\uD0A4\uD328\uB4DC \uC5F4\uAE30(E)"
+  requiredQuestIndex: 3
+  activeInteractionText: "\uD0A4\uD328\uB4DC \uC5F4\uAE30 (E)"
+  lockedInteractionText: "\uC5D8\uB9AC\uBCA0\uC774\uD130\uB97C \uC870\uC0AC\uD560
+    \uC218 \uC5C6\uB2E4."
 --- !u!65 &103334521
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -17963,8 +17966,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SubtitleTrigger
   subtitlesScript: {fileID: 8430087059669167798}
   mySubtitles:
-  - "\uC800 \uBA40\uB9AC\uC5D0 \uC5D8\uB808\uBCA0\uC774\uD130\uAC00 \uBCF4\uC778\uB2E4..\uAC00\uAE4C\uC774
-    \uAC00\uBCFC\uAE4C?"
+  - "\uC800 \uBA40\uB9AC\uC5D0 \uC5D8\uB808\uBCA0\uC774\uD130\uAC00 \uBCF4\uC778\uB2E4"
+  - "\uAC00\uAE4C\uC774 \uAC00\uBCFC\uAE4C?"
   wakietakie: {fileID: 0}
 --- !u!33 &4649553521230411870
 MeshFilter:
@@ -20065,7 +20068,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SubtitleTrigger
   subtitlesScript: {fileID: 8430087059669167798}
   mySubtitles:
-  - "\uC5EC\uAE30\uAC00 \uC801\uC758 \uBCF8\uAC70\uC9C0\uC778\uAC00.."
+  - "\uB9C8\uCE58 \uC77C\uBC18\uC801\uC778 \uD68C\uC0AC\uC778 \uAC83\uCC98\uB7FC
+    \uC704\uC7A5\uD574\uB1A8\uAD70"
   - "\uC77C\uB2E8 \uBB34\uC804\uAE30\uBD80\uD130 \uCC3E\uC790"
   wakietakie: {fileID: 0}
 --- !u!1 &8769696929454587188

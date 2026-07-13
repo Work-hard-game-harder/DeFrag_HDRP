@@ -28,12 +28,6 @@ public class RobotSpawnTrigger : MonoBehaviour
         isTriggered = true;
         SpawnRobots();
 
-        // 퀘스트 매니저에 신호 보내기 (통과 퀘스트 완료 처리)
-        if (QuestManager.Instance != null)
-        {
-            QuestManager.Instance.ProgressActiveQuest(1);
-        }
-
         // 트리거 오브젝트 비활성화 (혹은 Destroy(gameObject)로 아예 삭제 가능)
         gameObject.SetActive(false);
     }
