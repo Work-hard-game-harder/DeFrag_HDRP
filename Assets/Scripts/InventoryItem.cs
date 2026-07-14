@@ -3,8 +3,8 @@ using UnityEngine;
 public class InventoryItem : MonoBehaviour, IInteractable
 {
     [Header("인벤토리 아이템 설정")]
-    public string itemName = "보안실 키카드";
-    public string itemID = "KEYCARD_LV1";  // 인벤토리 시스템이 인식할 고유 ID
+    public string itemName;
+    public string itemID;  // 인벤토리 시스템이 인식할 고유 ID
     public bool isHoldInteraction = false;
 
     public string GetInteractionText()
