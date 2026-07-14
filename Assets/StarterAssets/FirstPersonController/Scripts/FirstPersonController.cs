@@ -147,14 +147,16 @@ namespace StarterAssets
 
         private void Update()
 		{
+            if (!IsOwner) return;
+
 			JumpAndGravity();
 			GroundedCheck();
 			Move();
-            if (!IsOwner) return;
         }
 
 		private void LateUpdate()
 		{
+
 			CameraRotation();
 		}
 

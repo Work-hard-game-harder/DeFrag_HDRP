@@ -1,29 +1,45 @@
 ﻿using UnityEngine;
 
-public class GetItem : MonoBehaviour
+public class GetItem : MonoBehaviour, IInteractable
 {
-    public ItemData item;
+    [Header("인벤토리 아이템 설정")]
+    public ItemData itemName;
+    public string itemID;
+    public bool isHoldInteraction = false;
 
-    private void OnTriggerEnter(Collider collision)
+    public string GetInteractionText()
     {
-        // 충돌한 오브젝트의 태그가 Player인지 확인
-        if (collision.CompareTag("Player"))
+        return isHoldInteraction ? $"{itemName.itemName} 줍기 (E 꾹 누르기)" : $"{itemName.itemName} 줍기 (E)";
+    }
+
+    public bool IsHoldInteraction() => isHoldInteraction;
+
+     public void Interact(PlayerInteraction player)
+    {
+        
+        Debug.Log($"[인벤토리 추가] '{itemName}' 수집완료. ID: {itemID}");
+
+        /* //필요시 퀘스트 아이템으로써 증가를 노릴 수도 있다.
+        if (QuestManager.Instance != null)
         {
-            InventoryManager.Instance.AddItem(item);
-
-            //맵에서 오브젝트 삭제
-            Destroy(gameObject);
+            QuestManager.Instance.ProgressActiveQuest(1);
         }
-
-
-        // 4. 데이터 세이브 (인벤토리 및 스탯 백업)
-        PlayerStats playerStats = collision.GetComponent<PlayerStats>();
+        */
+        
+        if (InventoryManager.Instance != null)
+        {
+            InventoryManager.Instance.AddItem(itemID);
+        }
+        
+        PlayerStats playerStats = player.GetComponent<PlayerStats>();
         if (playerStats != null)
         {
             playerStats.SaveData();
+
         }
 
-        // 획득했으므로 필드에서 아이템 오브젝트 삭제
+        // 3. UI 닫아주고 오브젝트 파괴
+        player.CloseAllUI();
         Destroy(gameObject);
     }
 }
