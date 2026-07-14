@@ -80,6 +80,10 @@ namespace EasyPeasyFirstPersonController
         public GameObject wakieTakieSubscrition;
         [HideInInspector] public bool hasWakieTakie = false;
 
+        [Header("Hiding Settings")]
+        [HideInInspector] public bool IsHiding = false;
+        [HideInInspector] public bool isCrouching = false;
+
         [Header("Visual Preferences")]
         public bool useFovKick = true;
         public bool useHeadBob = true;

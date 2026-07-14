@@ -18,13 +18,24 @@ namespace EasyPeasyFirstPersonController
         {
             CheckSwitchStates();
             HandleCrouchMovement();
-
             ctx.targetCameraY = ctx.crouchingCameraHeight;
+
+            // 움직임이 없을 때 숨기 상태로 전환
+            bool isNotMoving = ctx.input.moveInput.magnitude < 0.1f;
+            if (isNotMoving && !ctx.IsHiding)
+            {
+                ctx.IsHiding = true;
+            }
+            else if (!isNotMoving && ctx.IsHiding)
+            {
+                ctx.IsHiding = false;
+            }
         }
 
         public override void ExitState()
         {
-
+            // 크라우치 해제 시 숨기 상태도 해제
+            ctx.IsHiding = false;
         }
 
         public override void CheckSwitchStates()
@@ -47,6 +58,7 @@ namespace EasyPeasyFirstPersonController
 
             if (ctx.isGrounded) ctx.moveDirection.y = -10;
             else ctx.moveDirection.y = 0;
+
             ctx.characterController.Move(new Vector3(0, ctx.moveDirection.y, 0) * Time.deltaTime);
         }
     }
