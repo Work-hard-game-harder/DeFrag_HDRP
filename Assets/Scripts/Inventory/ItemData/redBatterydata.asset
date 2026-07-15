@@ -16,6 +16,10 @@ MonoBehaviour:
   icon: {fileID: -155193768, guid: a4b6a94f7425cdf49a7e5ef630309114, type: 3}
   type: 0
   itemID: redBATTERY
+  itemPrefab: {fileID: 5648317206521548112, guid: 39b14f9c0367bdc43866efea45616ef4, type: 3}
+  impactSound: {fileID: 8300000, guid: ff697d3070687ce4583faa0561a145a2, type: 3}
+  impactVolume: 1
+  impactNoiseRadius: 15
   description: "\uC9C0\uD558 \uC5F0\uAD6C\uC18C \uBE44\uC0C1 \uBC1C\uC804\uAE30\uC5D0
     \uC0AC\uC6A9\uB418\uB294 \uBC30\uD130\uB9AC.\n\uC794\uB7C9\uC774 \uC5BC\uB9C8
     \uB0A8\uC9C0 \uC54A\uC558\uB2E4."

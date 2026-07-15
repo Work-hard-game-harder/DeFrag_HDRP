@@ -16,6 +16,10 @@ MonoBehaviour:
   icon: {fileID: -1526509687, guid: 5199b8c4e6d68a144815084838663678, type: 3}
   type: 1
   itemID: KEYCARD_LV1
+  itemPrefab: {fileID: 13873830543793212, guid: 2e46e32a65ffcab4eb0716525fd74f6b, type: 3}
+  impactSound: {fileID: 8300000, guid: ff697d3070687ce4583faa0561a145a2, type: 3}
+  impactVolume: 1
+  impactNoiseRadius: 15
   description: "\uC9C0\uD558\uC2E4 \uC5F4\uC1E0. \uD53C\uAC00 \uBB3B\uC5B4 \uC788\uB2E4."
   triggerSubtitleOnPickup: 0
   pickupSubtitles: []

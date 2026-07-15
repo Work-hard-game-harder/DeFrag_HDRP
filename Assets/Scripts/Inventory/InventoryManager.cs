@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// µ¥ÀÌÅÍ ±¸Á¶ ÅëÀÏ
 [System.Serializable]
 public class InventoryInfo
 {
@@ -12,88 +11,71 @@ public class InventoryInfo
 public class InventoryManager : MonoBehaviour
 {
     public static InventoryManager Instance;
-    public InventoryUI inventoryUI;
 
+    [Header("Inventory")]
+    [Min(1)] public int maxSlots = 4;
+    public InventoryUI inventoryUI;
     public List<InventoryInfo> items = new List<InventoryInfo>();
 
-    [Header("ÃßÈÄ ¸Å´ÏÀú¿¡¼­ °ü¸®ÇÒ ¼ö ÀÖµµ·Ï ¾ÆÀÌÅÛ µ¥ÀÌÅÍ º£ÀÌ½º »ı¼º")]
+    [Header("Item Database")]
     public List<ItemData> itemDatabase = new List<ItemData>();
 
+    private void Awake() => Instance = this;
 
-    private void Awake()
+    public bool AddItem(ItemData item)
     {
-        Instance = this;
-    }
-
-    public void AddItem(ItemData item)
-    {
-        Debug.Log("È¹µæ : " + item.itemName);
-        foreach (InventoryInfo Info in items)
+        if (item == null)
         {
-            if (Info.itemData==item)
-            {
-                Info.count++;
-                inventoryUI.UpdateUI();
-                SyncPlayerStats();
-                return;
-            }
+            Debug.LogWarning("[Inventory] null ItemDataëŠ” ì¶”ê°€í•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
+            return false;
         }
 
-        InventoryInfo newItem = new InventoryInfo();
-        newItem.itemData = item;
-        newItem.count = 1;
-        items.Add(newItem);
+        InventoryInfo existingItem = items.Find(info => info.itemData == item);
+        if (existingItem != null)
+        {
+            existingItem.count++;
+            RefreshInventory();
+            return true;
+        }
 
-        inventoryUI.UpdateUI();
-        SyncPlayerStats();
-    }
-    public void AddItem(string id)
-    {
-        // 1. µ¥ÀÌÅÍº£ÀÌ½º(È¤Àº ¸Å´ÏÀú)¿¡¼­ string id¿Í ÀÌ¸§ÀÌ ÀÏÄ¡ÇÏ´Â ItemData¸¦ Á¶È¸ÇÔ
-        ItemData foundItem = FindItemById(id);
+        if (items.Count >= maxSlots)
+        {
+            Debug.Log($"[Inventory] ìŠ¬ë¡¯ì´ ê°€ë“ ì°¨ì„œ '{item.itemName}'ì„(ë¥¼) íšë“í•˜ì§€ ëª»í–ˆìŠµë‹ˆë‹¤.");
+            return false;
+        }
 
-        if (foundItem != null)
-        {
-            // 2. Ã£¾Ò´Ù¸é ±âÁ¸¿¡ Àß ¸¸µé¾îµĞ AddItem(ItemData item)À» ÀçÈ°¿ëÇØ¼­ ÀÎº¥Åä¸®¿¡ ÀåÂø!
-            AddItem(foundItem);
-        }
-        else
-        {
-            Debug.LogWarning($"[Inventory] µ¥ÀÌÅÍº£ÀÌ½º¿¡¼­ ID '{id}'¿¡ ÇØ´çÇÏ´Â ¾ÆÀÌÅÛÀ» Ã£À» ¼ö ¾ø½À´Ï´Ù.");
-        }
-    }
-    // ¿ÀºêÁ§Æ® ÀÚÃ¼¸¦ ³Ñ°Ü¹Ş¾Æ »èÁ¦ÇÒ ¼ö ÀÖµµ·Ï ¼öÁ¤
-    public void RemoveItem(InventoryInfo item)
-    {
-        if (items.Contains(item))
-        {
-            item.count--;
-            if (item.count <= 0)
-            {
-                items.Remove(item);
-            }
-            inventoryUI.UpdateUI();
-        }
-    }
-    private ItemData FindItemById(string id)
-    {
-        foreach (ItemData data in itemDatabase)
-        {
-            // ¿©±â¼­´Â itemDataÀÇ itemNameÀÌ³ª ¿¡¼Â ÀÌ¸§À» ºñ±³ÇØ
-            if (data != null && data.itemID == id)
-            {
-                return data;
-            }
-        }
-        return null;
+        items.Add(new InventoryInfo { itemData = item, count = 1 });
+        RefreshInventory();
+        return true;
     }
 
-    private void SyncPlayerStats()
+    public bool AddItem(string id)
     {
+        ItemData foundItem = itemDatabase.Find(data => data != null && data.itemID == id);
+        if (foundItem == null)
+        {
+            Debug.LogWarning($"[Inventory] ID '{id}'ì— í•´ë‹¹í•˜ëŠ” ItemDataë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
+            return false;
+        }
+
+        return AddItem(foundItem);
+    }
+
+    public bool RemoveItem(InventoryInfo item)
+    {
+        if (item == null || !items.Contains(item)) return false;
+
+        item.count--;
+        if (item.count <= 0) items.Remove(item);
+
+        RefreshInventory();
+        return true;
+    }
+
+    private void RefreshInventory()
+    {
+        inventoryUI?.UpdateUI();
         PlayerStats playerStats = FindAnyObjectByType<PlayerStats>();
-        if (playerStats != null)
-        {
-            playerStats.UpdateInventoryList();
-        }
+        playerStats?.UpdateInventoryList();
     }
 }

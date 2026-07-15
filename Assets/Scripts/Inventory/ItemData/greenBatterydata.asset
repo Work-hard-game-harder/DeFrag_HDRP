@@ -16,6 +16,10 @@ MonoBehaviour:
   icon: {fileID: 2103112048, guid: 4519f099c2c7c7e4f9024fa90fc7beef, type: 3}
   type: 0
   itemID: ' greenBATTERY'
+  itemPrefab: {fileID: 6645019521418296178, guid: f161c0901ae09f34eb0e86bee8fe3b2e, type: 3}
+  impactSound: {fileID: 8300000, guid: ff697d3070687ce4583faa0561a145a2, type: 3}
+  impactVolume: 1
+  impactNoiseRadius: 15
   description: "\uCD08\uB85D \uBC30\uD130\uB9AC\uC785\uB2C8\uB2E4"
   triggerSubtitleOnPickup: 0
   pickupSubtitles: []

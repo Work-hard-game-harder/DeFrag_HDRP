@@ -1,4 +1,4 @@
-using EasyPeasyFirstPersonController;
+ï»¿using EasyPeasyFirstPersonController;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -20,8 +20,8 @@ public class MonsterAI : MonoBehaviour
     public float lostPlayerTime = 3f;
 
     [Header("Investigate Settings")]
-    public float investigateDuration = 10f;     // ¼ö»ö À¯Áö ½Ã°£
-    public float investigateRadius = 5f;         // ¼ö»ö ¹İ°æ
+    public float investigateDuration = 10f;     // ìˆ˜ìƒ‰ ìœ ì§€ ì‹œê°„
+    public float investigateRadius = 5f;         // ìˆ˜ìƒ‰ ë°˜ê²½
 
     [Header("Speed Settings")]
     public float walkSpeed = 2f;
@@ -44,7 +44,7 @@ public class MonsterAI : MonoBehaviour
     [Header("Animation")]
     public Animator animator;
 
-    // ¾Ö´Ï¸ŞÀÌÅÍ ÆÄ¶ó¹ÌÅÍ Ä³½Ì
+    // ì• ë‹ˆë©”ì´í„° íŒŒë¼ë¯¸í„° ìºì‹±
     private static readonly int IsIdle = Animator.StringToHash("isIdle");
     private static readonly int IsWalking = Animator.StringToHash("isWalking");
     private static readonly int IsRunning = Animator.StringToHash("isRunning");
@@ -60,6 +60,16 @@ public class MonsterAI : MonoBehaviour
     private Vector3 lastPosition;
     private bool canSeePlayer = false;
     private SoundEmitter playerSoundEmitter;
+
+    private void OnEnable()
+    {
+        WorldNoiseSystem.NoiseEmitted += OnWorldNoiseHeard;
+    }
+
+    private void OnDisable()
+    {
+        WorldNoiseSystem.NoiseEmitted -= OnWorldNoiseHeard;
+    }
 
     void Start()
     {
@@ -100,7 +110,7 @@ public class MonsterAI : MonoBehaviour
 
             if (distToPlayer <= attackRange)
                 ChangeState(MonsterState.Attack);
-            else if (distToPlayer <= chaseRange || hearsPlayer) // ¼Ò¸® µé¸®¸é Chase
+            else if (distToPlayer <= chaseRange || hearsPlayer) // ì†Œë¦¬ ë“¤ë¦¬ë©´ Chase
                 ChangeState(MonsterState.Chase);
         }
         else
@@ -139,10 +149,10 @@ public class MonsterAI : MonoBehaviour
         }
     }
 
-    // ÇÃ·¹ÀÌ¾î ¼û±â »óÅÂ Ã¼Å©
+    // í”Œë ˆì´ì–´ ìˆ¨ê¸° ìƒíƒœ ì²´í¬
     bool IsPlayerHiding()
     {
-        // PlayerHiding ÄÄÆ÷³ÍÆ®·Î ¼û±â »óÅÂ È®ÀÎ
+        // PlayerHiding ì»´í¬ë„ŒíŠ¸ë¡œ ìˆ¨ê¸° ìƒíƒœ í™•ì¸
         FirstPersonController playerController = player.GetComponentInParent<FirstPersonController>();
         return playerController != null && playerController.IsHiding;
     }
@@ -167,8 +177,24 @@ public class MonsterAI : MonoBehaviour
 
         float distToPlayer = Vector3.Distance(transform.position, player.position);
 
-        // ÇÃ·¹ÀÌ¾îÀÇ ÇöÀç ¼Ò¸® ¹üÀ§ ¾È¿¡ ¸ó½ºÅÍ°¡ ÀÖ´ÂÁö Ã¼Å©
+        // í”Œë ˆì´ì–´ì˜ í˜„ì¬ ì†Œë¦¬ ë²”ìœ„ ì•ˆì— ëª¬ìŠ¤í„°ê°€ ìˆëŠ”ì§€ ì²´í¬
         return distToPlayer <= Mathf.Min(playerSoundEmitter.CurrentSoundRange, soundDetectionRange);
+    }
+
+    private void OnWorldNoiseHeard(Vector3 noisePosition, float noiseRadius)
+    {
+        if (agent == null || !agent.isOnNavMesh) return;
+
+        float audibleRange = Mathf.Min(noiseRadius, soundDetectionRange);
+        if (Vector3.Distance(transform.position, noisePosition) > audibleRange) return;
+
+        lastKnownPlayerPos = noisePosition;
+        investigateTimer = 0f;
+
+        if (currentState != MonsterState.Investigate)
+            ChangeState(MonsterState.Investigate);
+        else
+            SetRandomDestinationNear(lastKnownPlayerPos, investigateRadius);
     }
     void HandleIdle()
     {
@@ -214,20 +240,20 @@ public class MonsterAI : MonoBehaviour
     {
         investigateTimer += Time.deltaTime;
 
-        // ¸¶Áö¸· À§Ä¡ ±ÙÃ³¸¦ µ¹¾Æ´Ù´Ô
+        // ë§ˆì§€ë§‰ ìœ„ì¹˜ ê·¼ì²˜ë¥¼ ëŒì•„ë‹¤ë‹˜
         if (!agent.pathPending && agent.hasPath && agent.remainingDistance < 0.5f)
             SetRandomDestinationNear(lastKnownPlayerPos, investigateRadius);
 
         RotateTowardsMoveDirection();
 
-        // 10ÃÊ ÈÄ Search·Î º¹±Í
+        // 10ì´ˆ í›„ Searchë¡œ ë³µê·€
         if (investigateTimer >= investigateDuration)
         {
             investigateTimer = 0f;
             ChangeState(MonsterState.Search);
         }
 
-        // ¼û±â »óÅÂ°¡ ÇØÁ¦µÇ¸é Áï½Ã Chase·Î ÀüÈ¯
+        // ìˆ¨ê¸° ìƒíƒœê°€ í•´ì œë˜ë©´ ì¦‰ì‹œ Chaseë¡œ ì „í™˜
         if (!IsPlayerHiding() && canSeePlayer)
         {
             investigateTimer = 0f;
@@ -256,7 +282,7 @@ public class MonsterAI : MonoBehaviour
         SetRandomDestinationNear(transform.position, searchRadius);
     }
 
-    // Æ¯Á¤ À§Ä¡ ±ÙÃ³¿¡¼­ ·£´ı ¸ñÀûÁö ¼³Á¤ (Àç»ç¿ë °¡´ÉÇÏµµ·Ï ºĞ¸®)
+    // íŠ¹ì • ìœ„ì¹˜ ê·¼ì²˜ì—ì„œ ëœë¤ ëª©ì ì§€ ì„¤ì • (ì¬ì‚¬ìš© ê°€ëŠ¥í•˜ë„ë¡ ë¶„ë¦¬)
     void SetRandomDestinationNear(Vector3 center, float radius)
     {
         for (int i = 0; i < 30; i++)

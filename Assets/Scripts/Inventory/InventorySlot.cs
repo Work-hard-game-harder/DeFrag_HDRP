@@ -1,20 +1,43 @@
-using TMPro;
+ï»¿using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class InventorySlot : MonoBehaviour
 {
-    private InventoryInfo currentItem; // InventoryItem--> InventoryInfo·Î º¯°æ(Ãæµ¹³²)
+    private InventoryInfo currentItem; // InventoryItem--> InventoryInfoë¡œ ë³€ê²½(ì¶©ëŒë‚¨)
     public Image icon;
     public Image countImage;
     public Sprite[] numberSprites;
+    [SerializeField] private GameObject selectedFrame;
+    [SerializeField] private Color selectedOutlineColor = Color.red;
+    [SerializeField] private Vector2 selectedOutlineDistance = new Vector2(3f, -3f);
+
+    private Outline selectionOutline;
+
+    private void Awake()
+    {
+        if (selectedFrame == null)
+        {
+            Graphic slotGraphic = GetComponent<Graphic>();
+            if (slotGraphic != null)
+            {
+                selectionOutline = GetComponent<Outline>();
+                if (selectionOutline == null) selectionOutline = gameObject.AddComponent<Outline>();
+
+                selectionOutline.effectColor = selectedOutlineColor;
+                selectionOutline.effectDistance = selectedOutlineDistance;
+                selectionOutline.useGraphicAlpha = false;
+                selectionOutline.enabled = false;
+            }
+        }
+    }
 
     public void SetItem(InventoryInfo item)
     {
         this.currentItem = item;
 
-        // µ¥ÀÌÅÍ°¡ ¾øÀ¸¸é ½½·Ô ºñ¿ì±â
+        // ë°ì´í„°ê°€ ì—†ìœ¼ë©´ ìŠ¬ë¡¯ ë¹„ìš°ê¸°
         if (item == null || item.itemData == null)
         {
             Clear();
@@ -22,7 +45,7 @@ public class InventorySlot : MonoBehaviour
         }
 
         icon.sprite = item.itemData.icon;
-        icon.color = Color.white; // ¾ËÆÄ ÄÑ±â
+        icon.color = Color.white; // ì•ŒíŒŒ ì¼œê¸°
 
         if (item.count <= 1)
         {
@@ -42,11 +65,29 @@ public class InventorySlot : MonoBehaviour
     {
         icon.sprite = null;
         currentItem = null;
-        icon.color = new Color(1, 1, 1, 0); // ¿ÏÀü Åõ¸íÈ­
+        icon.color = new Color(1, 1, 1, 0); // ì™„ì „ íˆ¬ëª…í™”
 
         countImage.gameObject.SetActive(false);
         countImage.sprite = null;
+}
 
+    public void SetSelected(bool selected)
+    {
+        if (selectedFrame != null)
+        {
+            selectedFrame.SetActive(selected);
+        }
+        else if (selectionOutline != null)
+        {
+            selectionOutline.enabled = selected;
+        }
+    }
+
+    // Existing slot Button events already call this method.
+    public void UseItem()
+    {
+        InventoryUI inventoryUI = FindAnyObjectByType<InventoryUI>();
+        inventoryUI?.SelectSlot(this);
     }
 }
 
