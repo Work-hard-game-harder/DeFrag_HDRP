@@ -31,6 +31,8 @@ namespace EasyPeasyFirstPersonController
         private float xRotation = 0f;
         private float currentTilt;
         private float tiltVelocity;
+        private Animator _animator; //애니메이터용
+        private float _animBlendSpeed; // 부드러운 애니메이션 전환을 위한 변수
 
         public PlayerBaseState CurrentState { get => currentState; set => currentState = value; }
 
@@ -99,6 +101,13 @@ namespace EasyPeasyFirstPersonController
                 GUILayout.Label("Current State: " + currentState.GetType().Name);
         }
 
+        void Start()
+        {
+            _animator = GetComponent<Animator>(); //애니메이터 파라미터를 넘겨주는 코드
+            if (_animator != null)
+                _animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
+        }
+
         private void Awake()
         {
             cam = playerCamera.GetComponent<Camera>();
@@ -161,6 +170,8 @@ namespace EasyPeasyFirstPersonController
             currentState.UpdateState();
             HandleRotation();
             UpdateVisuals();
+
+            UpdateAnimation(); //애니메이션 업데이트
         }
 
         public void PickUpWakieTakie()
@@ -253,6 +264,33 @@ namespace EasyPeasyFirstPersonController
             if (((1 << other.gameObject.layer) & waterMask) != 0)
             {
                 isInWater = false;
+            }
+        }
+
+        // FirstPersonController.cs 내부에 추가
+        private void UpdateAnimation()
+        {
+            if (_animator != null && input != null)
+            {
+                // 1. 키보드 입력값(WASD)의 크기를 가져옵니다. (안 누르면 0, 누르면 1에 가까운 값)
+                float inputMagnitude = input.moveInput.magnitude;
+
+                // 2. 입력값이 있으면 걷기/달리기 속도, 없으면 0을 타겟으로 잡습니다.
+                bool isMoving = inputMagnitude > 0.1f;
+                float targetSpeed = isMoving ? (input.sprint ? 6f : 2f) : 0f;
+                
+                // 만약 기존 애니메이터가 대시(Sprint) 속도를 별도로 받았다면 대시 키 입력 여부도 체크해줍니다.
+                // (예: input.sprint가 true면 targetSpeed를 2.0f 정도로 설정)
+
+                // 3. 값이 0에서 1로 변할 때 뚝 끊기지 않고 부드럽게 변하도록 보간(Lerp)해줍니다.
+                _animBlendSpeed = Mathf.Lerp(_animBlendSpeed, targetSpeed, Time.deltaTime * 10.0f);
+
+                // 4. 부드럽게 가공된 값을 애니메이터에 넘겨줍니다.
+                _animator.SetFloat("Speed", _animBlendSpeed);
+                _animator.SetFloat("MotionSpeed", isMoving ? inputMagnitude : 1f);
+                
+                // 5. 땅에 안정적으로 닿아있다고 강제 주입해봅니다 (Grounded가 튀는 현상 방지)
+                _animator.SetBool("Grounded", isGrounded); 
             }
         }
     }
