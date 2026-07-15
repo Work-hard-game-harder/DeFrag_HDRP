@@ -9,6 +9,7 @@ public class InventorySlot : MonoBehaviour
     public Image icon;
     public Image countImage;
     public Sprite[] numberSprites;
+    [SerializeField] private TMP_Text countText;
     [SerializeField] private GameObject selectedFrame;
     [SerializeField] private Color selectedOutlineColor = Color.red;
     [SerializeField] private Vector2 selectedOutlineDistance = new Vector2(3f, -3f);
@@ -49,15 +50,27 @@ public class InventorySlot : MonoBehaviour
 
         if (item.count <= 1)
         {
-            countImage.gameObject.SetActive(false);
-            countImage.sprite = null;
+            if (countImage != null)
+            {
+                countImage.gameObject.SetActive(false);
+                countImage.sprite = null;
+            }
+            if (countText != null) countText.gameObject.SetActive(false);
         }
         else
         {
-            countImage.gameObject.SetActive(true);
-            countImage.color = Color.white;
-            int index = Mathf.Clamp(item.count - 1, 0, numberSprites.Length - 1);
-            countImage.sprite = numberSprites[index];
+            if (countImage != null && numberSprites != null && numberSprites.Length > 0)
+            {
+                countImage.gameObject.SetActive(true);
+                countImage.color = Color.white;
+                int index = Mathf.Clamp(item.count - 1, 0, numberSprites.Length - 1);
+                countImage.sprite = numberSprites[index];
+            }
+            if (countText != null)
+            {
+                countText.gameObject.SetActive(true);
+                countText.text = item.count.ToString();
+            }
         }
     }
 
@@ -67,9 +80,19 @@ public class InventorySlot : MonoBehaviour
         currentItem = null;
         icon.color = new Color(1, 1, 1, 0); // 완전 투명화
 
-        countImage.gameObject.SetActive(false);
-        countImage.sprite = null;
+        if (countImage != null)
+        {
+            countImage.gameObject.SetActive(false);
+            countImage.sprite = null;
+        }
+        if (countText != null) countText.gameObject.SetActive(false);
 }
+
+    public void Configure(Image itemIcon, TMP_Text itemCountText)
+    {
+        icon = itemIcon;
+        countText = itemCountText;
+    }
 
     public void SetSelected(bool selected)
     {

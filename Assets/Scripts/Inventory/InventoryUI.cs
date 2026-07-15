@@ -12,6 +12,11 @@ public class InventoryUI : MonoBehaviour
     public InventorySlot[] quickSlots;
     private EquipmentController equipmentController;
 
+    public void SetQuickSlotsPanel(GameObject panel)
+    {
+        quickSlotsPanel = panel;
+    }
+
     private void Start()
     {
         if (quickSlotsPanel != null) quickSlotsPanel.SetActive(true);

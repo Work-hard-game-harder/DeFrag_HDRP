@@ -1,4 +1,4 @@
-using System.Collections;
+Ôªøusing System.Collections;
 using UnityEngine;
 
 public class CCTVScript : MonoBehaviour
@@ -92,7 +92,7 @@ public class CCTVScript : MonoBehaviour
             Vector3 dirToPlayer = (targetPos - spotLight.transform.position).normalized;
             float angle = Vector3.Angle(lightDir, dirToPlayer);
 
-            Debug.Log($"[CCTV] ∞¢µµ: {angle:F1} | «—∞Ë: {detectionAngle}");
+            Debug.Log($"[CCTV] Í∞ÅÎèÑ: {angle:F1} | ÌïúÍ≥Ñ: {detectionAngle}");
 
             if (angle < detectionAngle)
             {
@@ -101,11 +101,11 @@ public class CCTVScript : MonoBehaviour
                 if (Physics.Raycast(spotLight.transform.position, dirToPlayer,
                     out RaycastHit rayHit, detectionRange, layerMask))
                 {
-                    Debug.Log($"[CCTV] Ω√æﬂ ¬˜¥‹: {rayHit.collider.name}");
+                    Debug.Log($"[CCTV] ÏãúÏïº Ï∞®Îã®: {rayHit.collider.name}");
                 }
                 else
                 {
-                    OnPlayerDetected();
+                    OnPlayerDetected(targetPos);
                     return;
                 }
             }
@@ -144,11 +144,44 @@ public class CCTVScript : MonoBehaviour
         if (outOfRange || outOfAngle || blocked) OnPlayerLost();
     }
 
-    void OnPlayerDetected()
+    void OnPlayerDetected(Vector3 detectedPosition)
     {
         if (currentState == CCTVState.Detected) return;
         currentState = CCTVState.Detected;
         if (!audioSource.isPlaying) audioSource.Play();
+        ReportToNearestRobot(detectedPosition);
+    }
+
+    void ReportToNearestRobot(Vector3 detectedPosition)
+    {
+        PatrolRobotAI[] robots = FindObjectsByType<PatrolRobotAI>(
+            FindObjectsInactive.Exclude,
+            FindObjectsSortMode.None);
+
+        PatrolRobotAI nearestRobot = null;
+        float nearestSqrDistance = float.MaxValue;
+
+        foreach (PatrolRobotAI robot in robots)
+        {
+            if (robot == null || !robot.enabled || !robot.gameObject.activeInHierarchy)
+                continue;
+
+            float sqrDistance = (robot.transform.position - detectedPosition).sqrMagnitude;
+            if (sqrDistance >= nearestSqrDistance) continue;
+
+            nearestSqrDistance = sqrDistance;
+            nearestRobot = robot;
+        }
+
+        if (nearestRobot != null)
+        {
+            nearestRobot.ReceiveCCTVReport(detectedPosition);
+            Debug.Log($"[CCTV] {nearestRobot.name} is responding to the alarm.");
+        }
+        else
+        {
+            Debug.LogWarning("[CCTV] No active patrol robot can respond to the alarm.");
+        }
     }
 
     void OnPlayerLost()

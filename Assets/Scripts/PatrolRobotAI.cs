@@ -14,6 +14,11 @@ public class PatrolRobotAI : MonoBehaviour
     public Transform eyeLocation;    
     public LayerMask obstacleMask;   
 
+    [Header("Chase Settings")]
+    [SerializeField] private float patrolSpeed = 3.5f;
+    [SerializeField] private float chaseSpeed = 5.5f;
+    [SerializeField] private float lostSightGraceTime = 3f;
+
     [Header("Random Patrol Settings")]
     public float patrolRadius = 20f;       // 로봇이 한 번에 탐색할 최대 반경 (너무 크면 멀리 감)
     public float minPatrolDistance = 7f;   // 최소 이동 거리 (제자리걸음 방지용, 적당히 먼 곳)
@@ -24,19 +29,32 @@ public class PatrolRobotAI : MonoBehaviour
     private NavMeshAgent agent;
     private bool isInspecting = false;
     private Vector3 lastKnownPlayerPos;
+    private float lastSeenPlayerTime = float.NegativeInfinity;
+    private float nextPlayerSearchTime;
+    private const float PlayerSearchInterval = 0.5f;
 
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
+        agent.speed = patrolSpeed;
+        FindClosestPlayer();
         SetRandomPatrolDestination(); // 시작하자마자 랜덤한 곳으로 출발
     }
 
     void Update()
     {
+        if (player == null || player.root == transform.root || Time.time >= nextPlayerSearchTime)
+            FindClosestPlayer();
+
         if (!agent.isOnNavMesh || !agent.enabled) 
             return;
         // 1단계: 플레이어 감지 (항상 최신 결과 유지)
         bool seesPlayer = CanSeePlayer();
+        if (seesPlayer)
+        {
+            lastSeenPlayerTime = Time.time;
+            lastKnownPlayerPos = player.position;
+        }
 
         // 2단계: 강력한 상태 전환 논리 (detection 결과에 따라 '즉시' 전환)
         // [규칙 1] 플레이어를 발견하면, '어떤 상태든' 즉시 추격(빨간불)으로 전환합니다.
@@ -46,7 +64,8 @@ public class PatrolRobotAI : MonoBehaviour
             return; // 전환 완료, 행동은 다음 프레임부터 실행
         }
         // [규칙 2] 플레이어를 추격 중이다가 놓치면, 즉시 경계(주황불)로 전환합니다.
-        else if (!seesPlayer && currentState == State.Chase)
+        else if (!seesPlayer && currentState == State.Chase
+            && Time.time - lastSeenPlayerTime >= lostSightGraceTime)
         {
             StopChase();
             return; // 전환 완료, 행동은 다음 프레임부터 실행
@@ -80,6 +99,7 @@ public class PatrolRobotAI : MonoBehaviour
                 {
                     Debug.Log("플레이어 수색 실패. 다시 순찰 모드로 복귀합니다.");
                     currentState = State.Patrol;
+                    agent.speed = patrolSpeed;
                     SetRandomPatrolDestination(); // 새로운 순찰 지점으로 이동
                 }
                 break;
@@ -88,9 +108,8 @@ public class PatrolRobotAI : MonoBehaviour
                 visionLight.color = Color.red; // 빨간불
                 agent.isStopped = false; // 이동 보장
 
-                // 플레이어를 향해 무조건 이동
-                lastKnownPlayerPos = player.position; // 마지막 위치 업데이트 (다음 Alert를 위해)
-                agent.SetDestination(player.position);
+                // 시야를 잠깐 벗어나도 마지막 목격 위치까지 압박합니다.
+                agent.SetDestination(seesPlayer ? player.position : lastKnownPlayerPos);
                 break;
         }
     }
@@ -133,6 +152,67 @@ public class PatrolRobotAI : MonoBehaviour
     // 수정된 시각 감지 로직 (더욱 정밀하고 버그 없는 버전)
     // 수정된 시각 감지 로직 (디버그 모드 + 정밀 타격)
     bool CanSeePlayer()
+    {
+        if (player == null || eyeLocation == null) return false;
+
+        Vector3 targetPos = player.position + Vector3.up;
+        Vector3 direction = targetPos - eyeLocation.position;
+        float distance = direction.magnitude;
+        if (distance > viewDistance || distance <= Mathf.Epsilon) return false;
+
+        direction /= distance;
+        if (Vector3.Angle(transform.forward, direction) >= viewAngle * 0.5f) return false;
+
+        RaycastHit[] hits = Physics.RaycastAll(
+            eyeLocation.position,
+            direction,
+            distance,
+            obstacleMask,
+            QueryTriggerInteraction.Ignore);
+        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+        foreach (RaycastHit hit in hits)
+        {
+            if (hit.collider.transform.root == transform.root) continue;
+            return HasPlayerTag(hit.collider.transform);
+        }
+
+        return false;
+    }
+
+    private void FindClosestPlayer()
+    {
+        nextPlayerSearchTime = Time.time + PlayerSearchInterval;
+        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+        Transform closest = null;
+        float closestSqrDistance = float.MaxValue;
+
+        foreach (GameObject candidate in players)
+        {
+            if (candidate == null || !candidate.activeInHierarchy) continue;
+            if (candidate.transform.root == transform.root) continue;
+
+            float sqrDistance = (candidate.transform.position - transform.position).sqrMagnitude;
+            if (sqrDistance >= closestSqrDistance) continue;
+            closestSqrDistance = sqrDistance;
+            closest = candidate.transform;
+        }
+
+        player = closest;
+    }
+
+    private static bool HasPlayerTag(Transform target)
+    {
+        while (target != null)
+        {
+            if (target.CompareTag("Player")) return true;
+            target = target.parent;
+        }
+        return false;
+    }
+
+    // Kept temporarily for comparison while the new self-filtering vision is tested.
+    bool LegacyCanSeePlayer()
     {
         Vector3 targetPos = player.position + Vector3.up * 1.0f; // 가슴 높이 조준
         Vector3 dirToPlayer = (targetPos - eyeLocation.position).normalized;
@@ -213,17 +293,22 @@ public class PatrolRobotAI : MonoBehaviour
         if(isInspecting) { StopAllCoroutines(); isInspecting = false; }
         
         currentState = State.Chase; // 추격 모드(빨간불)로 전환
+        agent.speed = chaseSpeed;
         Debug.Log("삐빅! 플레이어 발견! 추격합니다.");
         agent.isStopped = false; // 이동 재개
     }
     
     public void ReceiveCCTVReport(Vector3 targetLocation)
     {
+        if (agent == null) agent = GetComponent<NavMeshAgent>();
+        if (agent == null || !agent.enabled || !agent.isOnNavMesh) return;
+
         StopAllCoroutines();
         isInspecting = false;
         agent.isStopped = false;
         
         currentState = State.Alert; 
+        agent.speed = chaseSpeed;
         lastKnownPlayerPos = targetLocation;
         agent.SetDestination(targetLocation);
         Debug.Log("CCTV 보고 접수! 해당 위치로 이동합니다.");
@@ -240,6 +325,7 @@ public class PatrolRobotAI : MonoBehaviour
     void StopChase()
     {
         currentState = State.Alert; // 경계 모드(주황불)로 전환
+        agent.speed = patrolSpeed;
         Debug.Log("플레이어를 놓쳤습니다. 마지막으로 본 위치를 수색합니다.");
 
         // 안전장치: lastKnownPlayerPos가 유효한지 확인하고, 유효하지 않다면 일단 현재 위치를 수색합니다.
