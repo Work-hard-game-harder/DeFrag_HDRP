@@ -58,8 +58,8 @@ public class PlayerItemDropper : MonoBehaviour
     {
         if (Keyboard.current == null || inventoryUI == null) return;
 
-        // G always belongs to the walkie-talkie while the player owns it.
-        if (Keyboard.current.gKey.wasPressedThisFrame && !HasWalkieTalkie())
+        // R always belongs to the walkie-talkie while the player owns it.
+        if (Keyboard.current.rKey.wasPressedThisFrame && !HasWalkieTalkie())
             SpawnSelectedItem(false);
 
         if (Keyboard.current.qKey.wasPressedThisFrame) SpawnSelectedItem(true);

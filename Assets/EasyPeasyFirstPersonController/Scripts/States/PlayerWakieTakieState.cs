@@ -10,12 +10,18 @@ namespace EasyPeasyFirstPersonController
         public override void EnterState()
         {
             if (ctx.wakieTakie != null)
+            {
                 ctx.wakieTakie.SetActive(true);
+
+                if (ctx.wakieTakieAnimator == null)
+                    ctx.wakieTakieAnimator = ctx.wakieTakie.GetComponentInChildren<Animator>(true); // includeInactive: true
+            }
         }
 
 
         public override void UpdateState()
         {
+
             if (ctx.wakieTakieAnimator != null)
             {
                 if (Input.GetMouseButton(0))

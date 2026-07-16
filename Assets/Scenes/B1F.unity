@@ -358,10 +358,15 @@ PrefabInstance:
       value: PlayerCharacter
       objectReference: {fileID: 0}
     - target: {fileID: 8916423859403885125, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
-      propertyPath: m_IsActive
-      value: 1
+      propertyPath: m_Layer
+      value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    - target: {fileID: 8916423859403885125, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 2764680782753964517, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -1526,7 +1531,7 @@ PrefabInstance:
       addedObject: {fileID: 877255003}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7706eba48e01a0741b896835b52e270c, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 877255008}
+      addedObject: {fileID: 877255010}
   m_SourcePrefab: {fileID: 100100000, guid: 7706eba48e01a0741b896835b52e270c, type: 3}
 --- !u!1 &877255002 stripped
 GameObject:
@@ -1615,7 +1620,7 @@ MonoBehaviour:
   stuckThreshold: 0.1
   soundDetectionRange: 25
   animator: {fileID: 877255003}
---- !u!81 &877255008
+--- !u!81 &877255010
 AudioListener:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2648,7 +2653,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1894161398}
   - component: {fileID: 1894161397}
-  - component: {fileID: 1894161396}
   - component: {fileID: 1894161399}
   m_Layer: 0
   m_Name: Main Camera
@@ -2657,14 +2661,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 0
---- !u!81 &1894161396
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1894161395}
-  m_Enabled: 1
 --- !u!20 &1894161397
 Camera:
   m_ObjectHideFlags: 0
@@ -3206,7 +3202,7 @@ SceneRoots:
   - {fileID: 909327726}
   - {fileID: 975668000}
   - {fileID: 4609237498574060724}
-  - {fileID: 448420130}
   - {fileID: 2090376762}
+  - {fileID: 448420130}
   - {fileID: 909534061}
   - {fileID: 1822663241}
