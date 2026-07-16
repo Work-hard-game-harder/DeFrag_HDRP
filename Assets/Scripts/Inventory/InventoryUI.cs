@@ -199,6 +199,17 @@ public sealed class EquipmentController : MonoBehaviour
         }
 
         PrepareAsHeldVisual(heldVisual);
+
+        if (data.supportsCloseInspection)
+        {
+            HackingPadHeldController heldController =
+                heldVisual.GetComponent<HackingPadHeldController>();
+            if (heldController == null)
+                heldController = heldVisual.AddComponent<HackingPadHeldController>();
+
+            // Capture only after the equipment pose has been fully applied.
+            heldController.CaptureNormalPose();
+        }
     }
 
     private void EnsureHandPoint(Transform cameraTransform)

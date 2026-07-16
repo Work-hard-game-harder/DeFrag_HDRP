@@ -27,6 +27,8 @@ public class ItemData : ScriptableObject
     public Vector3 heldLocalPosition = new Vector3(0.35f, -0.3f, 0.65f);
     public Vector3 heldLocalEulerAngles;
     public Vector3 heldLocalScale = Vector3.one;
+    [Tooltip("Adds the reusable close-inspection behaviour to the equipped visual.")]
+    public bool supportsCloseInspection;
 
     [Header("Thrown Impact")]
     public AudioClip impactSound;
