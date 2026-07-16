@@ -80,7 +80,7 @@ namespace EasyPeasyFirstPersonController
         [Header("WakieTakie Settings")]
         public GameObject wakieTakie;
         public GameObject wakieTakieSubscrition;
-        [HideInInspector] public bool hasWakieTakie = false;
+        public bool hasWakieTakie = false; // [HideInInspector] 임시로 제거
 
         [Header("Hiding Settings")]
         [HideInInspector] public bool IsHiding = false;
@@ -132,9 +132,9 @@ namespace EasyPeasyFirstPersonController
         {
             isGrounded = Physics.CheckSphere(groundCheck.position, 0.2f, groundMask, QueryTriggerInteraction.Ignore);
 
-            if (Input.GetKeyDown(KeyCode.G) && hasWakieTakie)
+            if (Input.GetKeyDown(KeyCode.R) && hasWakieTakie)
             {
-                if (Input.GetKeyDown(KeyCode.G) && hasWakieTakie)
+                if (Input.GetKeyDown(KeyCode.R) && hasWakieTakie)
                 {
                     if (currentState is PlayerWakieTakieState)
                     {

@@ -18,6 +18,7 @@ public class MonsterAI : MonoBehaviour
 
     [Header("Chase Settings")]
     public float lostPlayerTime = 3f;
+    public float lostPlayerUpdateInterval = 1f;
 
     [Header("Investigate Settings")]
     public float investigateDuration = 10f;     // 수색 유지 시간
@@ -33,6 +34,11 @@ public class MonsterAI : MonoBehaviour
 
     [Header("Rotation Settings")]
     public float rotationSpeed = 10f;
+
+    [Header("Chase Detour Settings")]
+    public int detourSampleCount = 8;
+    public float detourSampleRadius = 6f;
+    public float detourRecheckInterval = 0.4f;
 
     [Header("Stuck Settings")]
     public float stuckCheckInterval = 1f;
@@ -51,15 +57,18 @@ public class MonsterAI : MonoBehaviour
     private static readonly int IsAttacking = Animator.StringToHash("isAttacking");
 
     private NavMeshAgent agent;
+    private ChaseDetourNavigator chaseNavigator;
     private float idleTimer = 0f;
     private float idleDuration = 0f;
     private float lostPlayerTimer = 0f;
+    private float lostPlayerUpdateTimer = 0f;
     private float investigateTimer = 0f;
     private float stuckTimer = 0f;
     private Vector3 lastKnownPlayerPos;
     private Vector3 lastPosition;
     private bool canSeePlayer = false;
     private SoundEmitter playerSoundEmitter;
+
 
     private void OnEnable()
     {
@@ -78,6 +87,9 @@ public class MonsterAI : MonoBehaviour
         lastPosition = transform.position;
         if (player != null)
             playerSoundEmitter = player.GetComponentInChildren<SoundEmitter>();
+
+        chaseNavigator = new ChaseDetourNavigator(agent, detourSampleCount, detourSampleRadius, detourRecheckInterval);
+
         ChangeState(MonsterState.Search);
     }
 
@@ -99,7 +111,7 @@ public class MonsterAI : MonoBehaviour
         if (canSeePlayer || hearsPlayer)
         {
             lastKnownPlayerPos = player.position;
-            lostPlayerTimer = 0f;
+            lostPlayerTimer = 0f;   // 다시 보이면 유예 타이머 리셋
 
             if (IsPlayerHiding())
             {
@@ -110,19 +122,22 @@ public class MonsterAI : MonoBehaviour
 
             if (distToPlayer <= attackRange)
                 ChangeState(MonsterState.Attack);
-            else if (distToPlayer <= chaseRange || hearsPlayer) // 소리 들리면 Chase
+            else if (distToPlayer <= chaseRange || hearsPlayer)
                 ChangeState(MonsterState.Chase);
         }
         else
         {
+            // 놓친 상태에서도 Chase를 유지한 채 lastKnownPlayerPos를 계속 추적
             if (currentState == MonsterState.Chase || currentState == MonsterState.Attack)
             {
                 lostPlayerTimer += Time.deltaTime;
-                if (lostPlayerTimer >= lostPlayerTime)
+
+                if (lostPlayerTimer >= lostPlayerTime)   // 3초 경과 시에만 Search로 전환
                 {
                     lostPlayerTimer = 0f;
                     ChangeState(MonsterState.Search);
                 }
+                // 3초 이내라면 상태를 바꾸지 않고 Chase 유지 → HandleChase가 계속 lastKnownPlayerPos로 이동
             }
         }
     }
@@ -207,19 +222,33 @@ public class MonsterAI : MonoBehaviour
     {
         RotateTowardsMoveDirection();
         CheckIfStuck();
-
         if (!agent.pathPending && agent.hasPath && agent.remainingDistance < 0.5f)
             ChangeState(MonsterState.Idle);
     }
 
     void HandleChase()
     {
-        Vector3 destination = canSeePlayer ? player.position : lastKnownPlayerPos;
-        agent.SetDestination(destination);
-        RotateTowardsTarget(destination);
+        if (canSeePlayer)
+        {
+            // 실시간으로 보이는 동안은 매 프레임 정확히 갱신
+            lastKnownPlayerPos = player.position;
+            lostPlayerUpdateTimer = 0f;
+        }
+        else
+        {
+            // 놓친 상태 -> 일정 주기마다만 위치를 재추적 (완전한 실시간 추적 아님)
+            lostPlayerUpdateTimer += Time.deltaTime;
+            if (lostPlayerUpdateTimer >= lostPlayerUpdateInterval)
+            {
+                lastKnownPlayerPos = player.position;
+                lostPlayerUpdateTimer = 0f;
+            }
+        }
+
+        chaseNavigator.MoveTowards(lastKnownPlayerPos);
+        RotateTowardsMovement();
         CheckIfStuck();
     }
-
     void HandleAttack()
     {
         float distToPlayer = Vector3.Distance(transform.position, player.position);
@@ -261,21 +290,6 @@ public class MonsterAI : MonoBehaviour
         }
     }
 
-    void CheckIfStuck()
-    {
-        stuckTimer += Time.deltaTime;
-        if (stuckTimer >= stuckCheckInterval)
-        {
-            float movedDistance = Vector3.Distance(transform.position, lastPosition);
-            if (movedDistance < stuckThreshold && agent.hasPath)
-            {
-                agent.ResetPath();
-                SetRandomDestination();
-            }
-            lastPosition = transform.position;
-            stuckTimer = 0f;
-        }
-    }
 
     void SetRandomDestination()
     {
@@ -323,7 +337,31 @@ public class MonsterAI : MonoBehaviour
         Quaternion targetRotation = Quaternion.LookRotation(direction);
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
     }
-
+    void RotateTowardsMovement()
+    {
+        if (agent.desiredVelocity.sqrMagnitude > 0.01f)
+        {
+            Vector3 moveDir = agent.desiredVelocity.normalized;
+            moveDir.y = 0f;
+            if (moveDir != Vector3.zero)
+                RotateTowards(moveDir);
+        }
+    }
+    void CheckIfStuck()
+    {
+        stuckTimer += Time.deltaTime;
+        if (stuckTimer >= stuckCheckInterval)
+        {
+            float movedDistance = Vector3.Distance(transform.position, lastPosition);
+            if (movedDistance < stuckThreshold && agent.hasPath)
+            {
+                agent.ResetPath();
+                SetRandomDestination();
+            }
+            lastPosition = transform.position;
+            stuckTimer = 0f;
+        }
+    }
     void ChangeState(MonsterState newState)
     {
         if (currentState == newState) return;
@@ -349,6 +387,8 @@ public class MonsterAI : MonoBehaviour
             case MonsterState.Chase:
                 agent.speed = runSpeed;
                 animator.SetBool(IsRunning, true);
+                chaseNavigator.Reset();
+                lostPlayerUpdateTimer = 0f;   // 추가: 새로 Chase에 들어올 때마다 주기 초기화
                 break;
 
             case MonsterState.Attack:
