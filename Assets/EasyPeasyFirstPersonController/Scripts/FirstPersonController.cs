@@ -131,6 +131,24 @@ namespace EasyPeasyFirstPersonController
         private void Update()
         {
             isGrounded = Physics.CheckSphere(groundCheck.position, 0.2f, groundMask, QueryTriggerInteraction.Ignore);
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                if (currentState is not PlayerSubtitleState)
+                {
+                    currentState = states.Subtitle();
+                    currentState.EnterState();
+                    Cursor.lockState = CursorLockMode.None;
+                    Cursor.visible = true;
+                }
+                else if (currentState is PlayerSubtitleState)
+                {
+                    currentState.ExitState();
+                    currentState = states.Grounded();
+                    currentState.EnterState();
+                    Cursor.lockState = CursorLockMode.Locked;
+                    Cursor.visible = false;
+                }
+            }
 
             if (Input.GetKeyDown(KeyCode.R) && hasWakieTakie)
             {
@@ -173,6 +191,7 @@ namespace EasyPeasyFirstPersonController
 
             UpdateAnimation(); //애니메이션 업데이트
         }
+
 
         public void PickUpWakieTakie()
         {
@@ -278,7 +297,7 @@ namespace EasyPeasyFirstPersonController
                 // 2. 입력값이 있으면 걷기/달리기 속도, 없으면 0을 타겟으로 잡습니다.
                 bool isMoving = inputMagnitude > 0.1f;
                 float targetSpeed = isMoving ? (input.sprint ? 6f : 2f) : 0f;
-                
+
                 // 만약 기존 애니메이터가 대시(Sprint) 속도를 별도로 받았다면 대시 키 입력 여부도 체크해줍니다.
                 // (예: input.sprint가 true면 targetSpeed를 2.0f 정도로 설정)
 
@@ -288,9 +307,9 @@ namespace EasyPeasyFirstPersonController
                 // 4. 부드럽게 가공된 값을 애니메이터에 넘겨줍니다.
                 _animator.SetFloat("Speed", _animBlendSpeed);
                 _animator.SetFloat("MotionSpeed", isMoving ? inputMagnitude : 1f);
-                
+
                 // 5. 땅에 안정적으로 닿아있다고 강제 주입해봅니다 (Grounded가 튀는 현상 방지)
-                _animator.SetBool("Grounded", isGrounded); 
+                _animator.SetBool("Grounded", isGrounded);
             }
         }
 

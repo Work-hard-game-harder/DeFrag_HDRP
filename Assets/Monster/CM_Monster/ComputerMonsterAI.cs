@@ -40,6 +40,11 @@ public class MonsterAI : MonoBehaviour
     public float detourSampleRadius = 6f;
     public float detourRecheckInterval = 0.4f;
 
+    [Header("Catch Up Settings")]
+    public float maxChaseDistance = 25f;      // 이 거리를 넘으면 캐치업 텔레포트 발동
+    public float catchUpRadius = 6f;          // 플레이어 주변 이 반경 안에 랜덤 배치
+    public float catchUpCooldown = 8f;        // 연속 텔레포트 방지용 쿨다운
+
     [Header("Stuck Settings")]
     public float stuckCheckInterval = 1f;
     public float stuckThreshold = 0.1f;
@@ -58,6 +63,7 @@ public class MonsterAI : MonoBehaviour
 
     private NavMeshAgent agent;
     private ChaseDetourNavigator chaseNavigator;
+    private CatchUpNavigator catchUpNavigator;
     private float idleTimer = 0f;
     private float idleDuration = 0f;
     private float lostPlayerTimer = 0f;
@@ -89,6 +95,7 @@ public class MonsterAI : MonoBehaviour
             playerSoundEmitter = player.GetComponentInChildren<SoundEmitter>();
 
         chaseNavigator = new ChaseDetourNavigator(agent, detourSampleCount, detourSampleRadius, detourRecheckInterval);
+        catchUpNavigator = new CatchUpNavigator(agent, maxChaseDistance, catchUpRadius, catchUpCooldown);
 
         ChangeState(MonsterState.Search);
     }
@@ -99,7 +106,12 @@ public class MonsterAI : MonoBehaviour
 
         canSeePlayer = CheckPlayerVisibility();
         float distToPlayer = Vector3.Distance(transform.position, player.position);
+        bool isPursuing = currentState == MonsterState.Chase
+                || currentState == MonsterState.Attack
+                || currentState == MonsterState.Investigate;
 
+        if (catchUpNavigator.TryCatchUp(transform.position, player.position, isPursuing))
+            lastKnownPlayerPos = player.position;
         UpdateStateMachine(distToPlayer);
         ExecuteCurrentState();
     }

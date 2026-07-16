@@ -4,9 +4,12 @@ namespace EasyPeasyFirstPersonController
 
     public class PlayerWakieTakieState : PlayerBaseState
     {
+        private SoundEmitter soundEmitter;
+        private MicVolumeUI micVolumeUI;
         public PlayerWakieTakieState(FirstPersonController currentContext, PlayerStateFactory playerStateFactory)
             : base(currentContext, playerStateFactory) { }
 
+        
         public override void EnterState()
         {
             if (ctx.wakieTakie != null)
@@ -15,12 +18,26 @@ namespace EasyPeasyFirstPersonController
 
                 if (ctx.wakieTakieAnimator == null)
                     ctx.wakieTakieAnimator = ctx.wakieTakie.GetComponentInChildren<Animator>(true); // includeInactive: true
+
+                soundEmitter = ctx.GetComponentInChildren<SoundEmitter>();
+
+                micVolumeUI = Object.FindAnyObjectByType<MicVolumeUI>();
+                micVolumeUI?.ShowUI();
+
             }
         }
 
 
         public override void UpdateState()
         {
+            if (soundEmitter != null)
+            {
+                // 마우스 클릭 시 마이크 켜기/끄기
+                if (Input.GetMouseButtonDown(0))
+                    soundEmitter.StartMic();
+                else if (Input.GetMouseButtonUp(0))
+                    soundEmitter.StopMic();
+            }
 
             if (ctx.wakieTakieAnimator != null)
             {
@@ -54,6 +71,9 @@ namespace EasyPeasyFirstPersonController
 
         public override void ExitState()
         {
+            if (soundEmitter != null)
+                soundEmitter.StopMic();
+
             if (ctx.wakieTakie != null)
                 ctx.wakieTakie.SetActive(false);
         }

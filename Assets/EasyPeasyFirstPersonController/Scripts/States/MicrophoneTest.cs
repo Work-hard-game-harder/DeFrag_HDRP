@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,7 +7,7 @@ public class MicrophoneTest : MonoBehaviour
 {
     private AudioSource audioSource; // 마이크 입력을 받을 AudioSource 컴포넌트
     public Image soundImage; // 소리 크기를 시각화할 UI Image (fillAmount로 사용)
-
+    public float sensitivity = 1.0f; // 소리 감도 조절 변수
     void Start()
     {
         audioSource = GetComponent<AudioSource>(); // AudioSource 컴포넌트를 가져옴
@@ -23,7 +20,6 @@ public class MicrophoneTest : MonoBehaviour
 
             // 마이크 입력을 AudioSource에 연결 (10초짜리 루프 녹음, 샘플레이트 44100Hz)
             audioSource.clip = Microphone.Start(mic, true, 10, 44100);
-            audioSource.loop = true; // 반복 재생 설정
 
             // 마이크가 시작될 때까지 대기
             while (!(Microphone.GetPosition(mic) > 0)) { }

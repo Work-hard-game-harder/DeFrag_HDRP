@@ -81,11 +81,13 @@ public class SettingManager : MonoBehaviour
     [Header("Post Processing")]
     [SerializeField] private Volume globalVolume;
 
-    [Header("Audio Mixer")]
+    [Header("MIC Control")]
+    [SerializeField] private AudioSource micAudioSource; // 마이크 입력용 AudioSource
+    [SerializeField] private AudioMixerGroup micMixerGroup; // AudioMixer 그룹 연결
     [SerializeField] private AudioMixer audioMixer;          // MicVolumeController의 audioMixer
 
     [Header("Pause Panel")]
-    [SerializeField]private GameObject PausePanel;
+    [SerializeField] private GameObject PausePanel;
 
     // ──────────────────────────────────────────────
     // 현재 설정값 프로퍼티 (외부 읽기 전용)
@@ -102,6 +104,8 @@ public class SettingManager : MonoBehaviour
 
     // MicSelectScript.selectedMic 대체 — 외부에서 참조 가능
     public string SelectedMic { get; private set; }
+
+    public PlayerVoice playerVoice;
 
     // ──────────────────────────────────────────────
     // 내부 캐시
@@ -150,18 +154,15 @@ public class SettingManager : MonoBehaviour
 
         // MainLobby 씬에서는 ESC 입력 무시
         if (currentSceneName == "MainLobby")
-        {
-            Debug.Log("MainLobby 씬에서는 ESC 입력이 무시됩니다.");
             return;
-        }
+
 
         // 다른 씬에서는 ESC 입력 처리
         if (Input.GetKeyDown(KeyCode.Escape) && PausePanel != null)
         {
-            Debug.Log("ESC 입력됨");
             PausePanel.SetActive(!PausePanel.activeSelf);
         }
-    }   
+    }
     private void Start()
     {
         InitResolutionDropdown(); // 해상도 목록 먼저 구성 (optimal 인덱스 계산)
@@ -275,6 +276,7 @@ public class SettingManager : MonoBehaviour
             int savedIndex = PlayerPrefs.GetInt(KEY_MIC_INDEX, DEFAULT_MIC_INDEX);
             MicIndex = Mathf.Clamp(savedIndex, 0, devices.Length - 1);
             SelectedMic = devices[MicIndex];
+            InitMicInput();
         }
         else
         {
@@ -292,7 +294,31 @@ public class SettingManager : MonoBehaviour
         SetDropdownWithoutNotify(displayModeDropdown, DisplayModeIndex);
         ApplyDisplayMode(DisplayModeIndex);
     }
+    private void InitMicInput()
+    {
+        if (SelectedMic == null) return;
 
+        if (micAudioSource == null)
+        {
+            Debug.LogWarning("[SettingManager] micAudioSource가 연결되지 않았습니다.");
+            return;
+        }
+
+        // 기존 마이크 입력 중지
+        if (Microphone.IsRecording(SelectedMic))
+            Microphone.End(SelectedMic);
+
+        // 새 마이크 입력 시작
+        micAudioSource.outputAudioMixerGroup = micMixerGroup;
+        micAudioSource.clip = Microphone.Start(SelectedMic, true, 10, AudioSettings.outputSampleRate);
+        micAudioSource.loop = true;
+
+        // 입력 시작 후 재생
+        while (!(Microphone.GetPosition(SelectedMic) > 0)) { }
+        micAudioSource.Play();
+
+        Debug.Log($"[SettingManager] 마이크 입력 시작: {SelectedMic}");
+    }
     // ──────────────────────────────────────────────
     // 설정값 저장
     // ──────────────────────────────────────────────
