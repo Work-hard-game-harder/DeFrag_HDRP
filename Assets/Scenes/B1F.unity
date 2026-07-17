@@ -2848,6 +2848,79 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 3767290237451070875, guid: 43dde35a5cb6f8d4cacd7d469c4d460b, type: 3}
+--- !u!1001 &1281905815
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -19.67
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.094
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -47.62
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
+      propertyPath: m_Name
+      value: TvMonster
+      objectReference: {fileID: 0}
+    - target: {fileID: 5866666021909216657, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: a262d500b6406094dace400a49b71e1d, type: 2}
+    - target: {fileID: 5866666021909216657, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
+      propertyPath: m_WarningMessage
+      value: "\nBinding warning: Some generic clip(s) animate transforms that are
+        already bound by a Humanoid avatar. These transforms can only be changed
+        by Humanoid clips.\n\tTransform 'mixamorig:Hips'\n\tTransform 'mixamorig:LeftFoot'\n\tTransform
+        'mixamorig:LeftHandIndex1'\n\tTransform 'mixamorig:Spine1'\n\tTransform 'mixamorig:LeftToeBase'\n\tTransform
+        'mixamorig:RightArm'\n\tTransform 'mixamorig:LeftLeg'\n\tTransform 'mixamorig:LeftShoulder'\n\tTransform
+        'mixamorig:RightHandIndex3'\n\tTransform 'mixamorig:RightFoot'\n\tand more
+        ...\n\tFrom animation clip 'Walking'\n\tFrom animation clip 'Standard Run'\n\tFrom
+        animation clip 'Parying'\n\tFrom animation clip 'Zombie Attack'\n\tFrom animation
+        clip 'Crouch To Stand'"
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
 --- !u!64 &1298456647
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -4096,3 +4169,4 @@ SceneRoots:
   - {fileID: 1822663241}
   - {fileID: 398466057}
   - {fileID: 122585109}
+  - {fileID: 1281905815}
