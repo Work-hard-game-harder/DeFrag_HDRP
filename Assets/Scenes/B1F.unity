@@ -515,6 +515,14 @@ PrefabInstance:
       propertyPath: m_RenderMode
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3421043365309591319, guid: 693fd3fb27cd2e24d8d7b83289f0e9cb, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0.00024414062
+      objectReference: {fileID: 0}
+    - target: {fileID: 3421043365309591319, guid: 693fd3fb27cd2e24d8d7b83289f0e9cb, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5800595237051031761, guid: 693fd3fb27cd2e24d8d7b83289f0e9cb, type: 3}
       propertyPath: m_Enabled
       value: 1
@@ -530,6 +538,10 @@ PrefabInstance:
     - target: {fileID: 7814903728574894085, guid: 693fd3fb27cd2e24d8d7b83289f0e9cb, type: 3}
       propertyPath: m_Name
       value: SettingManager
+      objectReference: {fileID: 0}
+    - target: {fileID: 7917590617727384897, guid: 693fd3fb27cd2e24d8d7b83289f0e9cb, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 9039527031088335220, guid: 693fd3fb27cd2e24d8d7b83289f0e9cb, type: 3}
@@ -1973,6 +1985,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Monster
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 7706eba48e01a0741b896835b52e270c, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1982,13 +1998,13 @@ PrefabInstance:
       addedObject: {fileID: 877255005}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7706eba48e01a0741b896835b52e270c, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 877255004}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7706eba48e01a0741b896835b52e270c, type: 3}
-      insertIndex: -1
       addedObject: {fileID: 877255003}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7706eba48e01a0741b896835b52e270c, type: 3}
       insertIndex: -1
       addedObject: {fileID: 877255010}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7706eba48e01a0741b896835b52e270c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 877255012}
   m_SourcePrefab: {fileID: 100100000, guid: 7706eba48e01a0741b896835b52e270c, type: 3}
 --- !u!1 &877255002 stripped
 GameObject:
@@ -2017,28 +2033,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!195 &877255004
-NavMeshAgent:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 877255002}
-  m_Enabled: 1
-  m_AgentTypeID: 0
-  m_Radius: 0.2
-  m_Speed: 0.6
-  m_Acceleration: 1.5
-  avoidancePriority: 50
-  m_AngularSpeed: 2
-  m_StoppingDistance: 2
-  m_AutoTraverseOffMeshLink: 1
-  m_AutoBraking: 1
-  m_AutoRepath: 1
-  m_Height: 2
-  m_BaseOffset: -0.1
-  m_WalkableMask: 4294967295
-  m_ObstacleAvoidanceType: 4
 --- !u!114 &877255005
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2088,6 +2082,28 @@ AudioListener:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 877255002}
   m_Enabled: 1
+--- !u!195 &877255012
+NavMeshAgent:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 877255002}
+  m_Enabled: 1
+  m_AgentTypeID: 0
+  m_Radius: 0.5
+  m_Speed: 3.5
+  m_Acceleration: 8
+  avoidancePriority: 50
+  m_AngularSpeed: 120
+  m_StoppingDistance: 0
+  m_AutoTraverseOffMeshLink: 1
+  m_AutoBraking: 1
+  m_AutoRepath: 1
+  m_Height: 2
+  m_BaseOffset: 0
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 4
 --- !u!64 &886407336
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -2288,6 +2304,10 @@ PrefabInstance:
       propertyPath: 'volumeBars.Array.data[5]'
       value: 
       objectReference: {fileID: 978495315}
+    - target: {fileID: 5033424110718016459, guid: 2114b4b09cdd1b3419194fef6ae6ace0, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -49.19995
+      objectReference: {fileID: 0}
     - target: {fileID: 5811774466803970287, guid: 2114b4b09cdd1b3419194fef6ae6ace0, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -2858,7 +2878,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -19.67
+      value: -21.01
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
       propertyPath: m_LocalPosition.y
@@ -2866,7 +2886,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -47.62
+      value: -83.3
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
       propertyPath: m_LocalRotation.w
@@ -2903,23 +2923,32 @@ PrefabInstance:
     - target: {fileID: 5866666021909216657, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
       propertyPath: m_Controller
       value: 
-      objectReference: {fileID: 9100000, guid: a262d500b6406094dace400a49b71e1d, type: 2}
+      objectReference: {fileID: 9100000, guid: 97e5abac3ba16654895015d5da76c84a, type: 2}
+    - target: {fileID: 5866666021909216657, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
+      propertyPath: m_CullingMode
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5866666021909216657, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
       propertyPath: m_WarningMessage
-      value: "\nBinding warning: Some generic clip(s) animate transforms that are
-        already bound by a Humanoid avatar. These transforms can only be changed
-        by Humanoid clips.\n\tTransform 'mixamorig:Hips'\n\tTransform 'mixamorig:LeftFoot'\n\tTransform
-        'mixamorig:LeftHandIndex1'\n\tTransform 'mixamorig:Spine1'\n\tTransform 'mixamorig:LeftToeBase'\n\tTransform
-        'mixamorig:RightArm'\n\tTransform 'mixamorig:LeftLeg'\n\tTransform 'mixamorig:LeftShoulder'\n\tTransform
-        'mixamorig:RightHandIndex3'\n\tTransform 'mixamorig:RightFoot'\n\tand more
-        ...\n\tFrom animation clip 'Walking'\n\tFrom animation clip 'Standard Run'\n\tFrom
-        animation clip 'Parying'\n\tFrom animation clip 'Zombie Attack'\n\tFrom animation
-        clip 'Crouch To Stand'"
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5866666021909216657, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
+      propertyPath: m_ApplyRootMotion
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1608967854}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1608967856}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1608967857}
   m_SourcePrefab: {fileID: 100100000, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
 --- !u!64 &1298456647
 MeshCollider:
@@ -3198,6 +3227,87 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 5137495309458054970, guid: de89596c400e9304090ca17bfe008c0a, type: 3}
+--- !u!1 &1608967851 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
+  m_PrefabInstance: {fileID: 1281905815}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &1608967852 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 5866666021909216657, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
+  m_PrefabInstance: {fileID: 1281905815}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1608967854
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1608967851}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55541def24ecabb4e8766a04f250bab3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterAI
+  currentState: 1
+  player: {fileID: 961427581}
+  chaseRange: 10
+  attackRange: 2
+  attackStopDistance: 1.5
+  searchRadius: 20
+  fieldOfView: 120
+  obstacleMask:
+    serializedVersion: 2
+    m_Bits: 1024
+  lostPlayerTime: 3
+  lostPlayerUpdateInterval: 1
+  investigateDuration: 10
+  investigateRadius: 5
+  walkSpeed: 2
+  runSpeed: 5
+  minIdleTime: 2
+  maxIdleTime: 5
+  rotationSpeed: 10
+  detourSampleCount: 8
+  detourSampleRadius: 6
+  detourRecheckInterval: 0.4
+  maxChaseDistance: 25
+  catchUpRadius: 6
+  catchUpCooldown: 8
+  stuckCheckInterval: 1
+  stuckThreshold: 0.1
+  soundDetectionRange: 25
+  animator: {fileID: 1608967852}
+--- !u!81 &1608967856
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1608967851}
+  m_Enabled: 1
+--- !u!195 &1608967857
+NavMeshAgent:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1608967851}
+  m_Enabled: 1
+  m_AgentTypeID: 0
+  m_Radius: 0.5
+  m_Speed: 3.5
+  m_Acceleration: 8
+  avoidancePriority: 50
+  m_AngularSpeed: 120
+  m_StoppingDistance: 0
+  m_AutoTraverseOffMeshLink: 1
+  m_AutoBraking: 1
+  m_AutoRepath: 1
+  m_Height: 2
+  m_BaseOffset: 0
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 4
 --- !u!64 &1689457401
 MeshCollider:
   m_ObjectHideFlags: 0

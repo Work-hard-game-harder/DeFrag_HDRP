@@ -95,13 +95,16 @@ public class MonsterAI : MonoBehaviour
             playerSoundEmitter = player.GetComponentInChildren<SoundEmitter>();
 
         chaseNavigator = new ChaseDetourNavigator(agent, detourSampleCount, detourSampleRadius, detourRecheckInterval);
-        catchUpNavigator = new CatchUpNavigator(agent, maxChaseDistance, catchUpRadius, catchUpCooldown);
+        catchUpNavigator = new CatchUpNavigator(agent, maxChaseDistance, catchUpRadius, catchUpCooldown);   // 이 줄이 있는지 확인
 
+        currentState = MonsterState.Idle;
         ChangeState(MonsterState.Search);
     }
 
     void Update()
     {
+        Debug.Log($"[Search] velocity: {agent.velocity.magnitude}, remainingDistance: {agent.remainingDistance}, hasPath: {agent.hasPath}");
+
         if (player == null || !agent.isOnNavMesh) return;
 
         canSeePlayer = CheckPlayerVisibility();
@@ -323,6 +326,7 @@ public class MonsterAI : MonoBehaviour
                 return;
             }
         }
+        Debug.LogWarning("[Search] SamplePosition 30회 실패, 폴백 경로 사용");
         agent.SetDestination(transform.position + transform.forward * 3f);
     }
 
