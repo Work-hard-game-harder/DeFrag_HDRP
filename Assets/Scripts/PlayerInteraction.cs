@@ -20,6 +20,7 @@ public class PlayerInteraction : MonoBehaviour
     private IInteractable targetInteractable;
     private float currentHoldTime = 0f;
     private float holdTime = 1.5f;
+    private bool interactionEnabled = true;
 
     void Update()
     {
@@ -36,6 +37,12 @@ public class PlayerInteraction : MonoBehaviour
         }
 
         // 힌트 패널이 꺼져있을 때만 정상적으로 조준 레이저 작동
+        if (!interactionEnabled)
+        {
+            ResetTarget();
+            return;
+        }
+
         CheckInteractable();
         HandleInteractionInput();
     }
@@ -46,14 +53,15 @@ public class PlayerInteraction : MonoBehaviour
         Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
         RaycastHit hit;
 
-        int interactableLayer = LayerMask.GetMask("Interactable");
-
         // ★ [디버그 로그 1] 현재 내 눈앞으로 나가는 레이저를 씬(Scene) 창에 녹색 선으로 그립니다.
         // 게임을 켠 상태에서 Scene 창을 보면 내 눈앞에 선이 무전기까지 닿는지 볼 수 있습니다.
         Debug.DrawRay(ray.origin, ray.direction * maxDistance, Color.green);
 
         // 우선 무엇이든 부딪히는지 확인하기 위해 레이어 마스크를 잠시 풀고 체크합니다.
-        if (Physics.SphereCast(ray, sphereRadius, out hit, maxDistance, interactableLayer))
+        int ignoreRaycastLayer = LayerMask.NameToLayer("Ignore Raycast");
+        int collisionMask = ignoreRaycastLayer >= 0 ? ~(1 << ignoreRaycastLayer) : ~0;
+        if (Physics.SphereCast(ray, sphereRadius, out hit, maxDistance, collisionMask,
+            QueryTriggerInteraction.Ignore))
         {
             // ★ [디버그 로그 2] 크로스헤어가 닿는 모든 물체의 이름과 레이어를 유니티 Console 창에 띄웁니다.
             Debug.Log($"[바라보는 중] 이름: {hit.collider.name} | 레이어: {LayerMask.LayerToName(hit.collider.gameObject.layer)}");
@@ -65,6 +73,13 @@ public class PlayerInteraction : MonoBehaviour
 
                 if (interactable != null)
                 {
+                    InteractableItem item = hit.collider.GetComponentInParent<InteractableItem>();
+                    if (item != null && !item.CanInteractFrom(hit, ray.direction))
+                    {
+                        ResetTarget();
+                        return;
+                    }
+
                     targetInteractable = interactable;
 
                     if (interactionHUD != null && !interactionHUD.activeSelf)
@@ -137,7 +152,8 @@ public class PlayerInteraction : MonoBehaviour
 
     public void TogglePlayerControl(bool enable)
     {
-        // 컨트롤러 멈추는 로직이 있다면 여기에 작성
+        interactionEnabled = enable;
+        if (!enable) ResetTarget();
     }
 
     public void CloseAllUI()

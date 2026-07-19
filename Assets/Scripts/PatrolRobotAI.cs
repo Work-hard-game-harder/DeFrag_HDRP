@@ -158,10 +158,22 @@ public class PatrolRobotAI : MonoBehaviour
         Vector3 targetPos = player.position + Vector3.up;
         Vector3 direction = targetPos - eyeLocation.position;
         float distance = direction.magnitude;
-        if (distance > viewDistance || distance <= Mathf.Epsilon) return false;
+        float effectiveDistance = viewDistance;
+        float effectiveAngle = viewAngle;
+        Vector3 visionForward = eyeLocation.forward;
+
+        // Keep detection inside the cone that the player can actually see.
+        if (visionLight != null)
+        {
+            effectiveDistance = Mathf.Min(effectiveDistance, visionLight.range);
+            effectiveAngle = Mathf.Min(effectiveAngle, visionLight.spotAngle);
+            visionForward = visionLight.transform.forward;
+        }
+
+        if (distance > effectiveDistance || distance <= Mathf.Epsilon) return false;
 
         direction /= distance;
-        if (Vector3.Angle(transform.forward, direction) >= viewAngle * 0.5f) return false;
+        if (Vector3.Angle(visionForward, direction) >= effectiveAngle * 0.5f) return false;
 
         RaycastHit[] hits = Physics.RaycastAll(
             eyeLocation.position,

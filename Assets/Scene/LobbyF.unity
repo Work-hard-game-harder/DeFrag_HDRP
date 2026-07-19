@@ -250,7 +250,7 @@ MonoBehaviour:
   passwordText: {fileID: 3629087083423454472}
   errorText: {fileID: 7490060760147142153}
   correctPassword: 7H36BE
-  nextSceneName: B2F
+  nextSceneName: B1F
   requiredQuestIndex: 3
   activeInteractionText: "\uD0A4\uD328\uB4DC \uC5F4\uAE30 (E)"
   lockedInteractionText: "\uC5D8\uB9AC\uBCA0\uC774\uD130\uB97C \uC870\uC0AC\uD560
@@ -564,6 +564,22 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 231487829888649759, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
+      propertyPath: gravity
+      value: 11
+      objectReference: {fileID: 0}
+    - target: {fileID: 231487829888649759, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
+      propertyPath: jumpSpeed
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 231487829888649759, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
+      propertyPath: walkSpeed
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 231487829888649759, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
+      propertyPath: sprintSpeed
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: 231487829888649759, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
       propertyPath: wakieTakieSubscrition
       value: 
@@ -3854,6 +3870,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
   itemName: "\uD558\uC580\uC0C9\uC73C\uB85C \uBE5B\uB098\uB294 \uD654\uBA74"
   isHoldInteraction: 1
+  requireFrontFacing: 1
   hintSprite: {fileID: 21300000, guid: 3aba9ec66b723b045aa0c7d6a18a06a6, type: 3}
   progressesQuest: 1
   questProgressAmount: 1
@@ -9322,6 +9339,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
   itemName: "\uC758\uBB38\uC758 \uBCF4\uB77C\uC0C9 \uBB38\uC11C"
   isHoldInteraction: 1
+  requireFrontFacing: 1
   hintSprite: {fileID: 21300000, guid: f8543d340d9b5e54db50cc24745995f9, type: 3}
   progressesQuest: 1
   questProgressAmount: 1
@@ -10696,6 +10714,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
   itemName: "\uB178\uB780\uC0C9 \uCABD\uC9C0"
   isHoldInteraction: 1
+  requireFrontFacing: 1
   hintSprite: {fileID: 21300000, guid: 86f8e0d5c0cd0634c841e7402ba4e4e0, type: 3}
   progressesQuest: 1
   questProgressAmount: 1
@@ -15291,6 +15310,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
   itemName: "\uBB34\uC5B8\uAC00 \uC368\uC838 \uC788\uB294 \uD654\uC774\uD2B8\uBCF4\uB4DC"
   isHoldInteraction: 1
+  requireFrontFacing: 1
   hintSprite: {fileID: 21300000, guid: 3d9b05d777b33624c8fc74940184fe27, type: 3}
   progressesQuest: 1
   questProgressAmount: 1
@@ -15312,6 +15332,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
   itemName: "\uBE68\uAC04 \uD654\uBA74\uC758 \uBAA8\uB2C8\uD130"
   isHoldInteraction: 1
+  requireFrontFacing: 1
   hintSprite: {fileID: 21300000, guid: 2aab1c4329b42c74bb566659914c9e51, type: 3}
   progressesQuest: 1
   questProgressAmount: 1
@@ -15704,6 +15725,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
   itemName: "\uCD08\uB85D\uC0C9 \uCABD\uC9C0"
   isHoldInteraction: 1
+  requireFrontFacing: 1
   hintSprite: {fileID: 21300000, guid: 70d57acd800dfe34ca9eb53e7ca521ab, type: 3}
   progressesQuest: 1
   questProgressAmount: 1
@@ -18247,7 +18269,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -300}
+  m_AnchoredPosition: {x: 0, y: -200}
   m_SizeDelta: {x: 220, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &5105463738964649718
@@ -19787,7 +19809,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!1 &8786835695341422336
 GameObject:
   m_ObjectHideFlags: 0
@@ -19868,8 +19890,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 50}
-  m_SizeDelta: {x: 1000, y: 600}
+  m_AnchoredPosition: {x: 0, y: 100}
+  m_SizeDelta: {x: 800, y: 500}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1001 &8991135870867256710
 PrefabInstance:

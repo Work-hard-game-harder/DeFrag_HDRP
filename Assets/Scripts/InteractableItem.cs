@@ -6,6 +6,8 @@ public class InteractableItem : MonoBehaviour, IInteractable
     [Header("Interaction")]
     [SerializeField] protected string itemName = "조사 대상";
     [SerializeField] protected bool isHoldInteraction = true;
+    [Tooltip("Prevents screens, papers, and other flat hints from being used from behind.")]
+    [SerializeField] protected bool requireFrontFacing = true;
 
     [Header("Hint")]
     [SerializeField] protected Sprite hintSprite;
@@ -33,6 +35,11 @@ public class InteractableItem : MonoBehaviour, IInteractable
     }
 
     public bool IsHoldInteraction() => !isInteracted && isHoldInteraction;
+
+    public bool CanInteractFrom(RaycastHit hit, Vector3 viewDirection)
+    {
+        return !requireFrontFacing || Vector3.Dot(viewDirection, hit.normal) < -0.1f;
+    }
 
     public void Interact(PlayerInteraction player)
     {

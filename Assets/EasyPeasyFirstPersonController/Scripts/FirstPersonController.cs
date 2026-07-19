@@ -9,7 +9,7 @@ namespace EasyPeasyFirstPersonController
         public float sprintSpeed = 5f;
         public float crouchSpeed = 1.5f;
         public float jumpSpeed = 4f;
-        public float gravity = 9.81f;
+        public float gravity = 12f;
         public float slideDuration = 0.7f;
         public float slideSpeed = 6f;
         public float mouseSensitivity = 2f;

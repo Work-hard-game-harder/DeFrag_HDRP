@@ -137,7 +137,7 @@ public class ElevatorPanel : MonoBehaviour, IInteractable
 
     void AppendCharacter(string ch)
     {
-        if (currentInput.Length >= 6) return;
+        if (currentInput.Length >= correctPassword.Length) return;
         currentInput += ch;
         UpdateDisplay();
     }
@@ -147,7 +147,7 @@ public class ElevatorPanel : MonoBehaviour, IInteractable
         if (passwordText != null)
         {
             passwordText.text = currentInput;
-            int remaining = 6 - currentInput.Length;
+            int remaining = Mathf.Max(0, correctPassword.Length - currentInput.Length);
             for (int i = 0; i < remaining; i++)
             {
                 passwordText.text += " _";
@@ -157,22 +157,52 @@ public class ElevatorPanel : MonoBehaviour, IInteractable
 
     void CheckPassword()
     {
+        if (currentInput.Length != correctPassword.Length)
+        {
+            ShowError("암호를 끝까지 입력해 주세요.");
+            return;
+        }
+
         if (currentInput == correctPassword)
         {
             Debug.Log("암호 일치! 다음 층으로 이동합니다.");
-            SceneManager.LoadScene(nextSceneName);
+            StartCoroutine(ApproveAndLoadRoutine());
         }
         else
         {
             Debug.Log("암호 불일치!");
-            if (errorText != null)
-            {
-                StopAllCoroutines();
-                StartCoroutine(ShowErrorRoutine());
-            }
-            currentInput = "";
-            UpdateDisplay();
+            ShowError("틀린 암호입니다.");
+            // Keep the current entry visible so Backspace can correct it.
         }
+    }
+
+    void ShowError(string message)
+    {
+        if (errorText == null) return;
+        StopAllCoroutines();
+        errorText.text = message;
+        StartCoroutine(HideErrorRoutine());
+    }
+
+    IEnumerator HideErrorRoutine()
+    {
+        errorText.gameObject.SetActive(true);
+        yield return new WaitForSeconds(2f);
+        errorText.gameObject.SetActive(false);
+    }
+
+    IEnumerator ApproveAndLoadRoutine()
+    {
+        isKeypadActive = false;
+
+        if (errorText != null)
+        {
+            errorText.text = "엘리베이터 사용이 승인되었습니다.";
+            errorText.gameObject.SetActive(true);
+        }
+
+        yield return new WaitForSeconds(1.5f);
+        SceneManager.LoadScene(nextSceneName);
     }
 
     IEnumerator ShowErrorRoutine()
