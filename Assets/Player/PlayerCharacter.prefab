@@ -1995,6 +1995,9 @@ GameObject:
   - component: {fileID: 231487829888649759}
   - component: {fileID: 4089493473910277660}
   - component: {fileID: 5779452105091600300}
+  - component: {fileID: 6812459037621148290}
+  - component: {fileID: 3598217460136852094}
+  - component: {fileID: 5079052627790923466}
   m_Layer: 7
   m_Name: PlayerCharacter
   m_TagString: Player
@@ -2303,12 +2306,58 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7592877399013546989}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4894b5bdfa2b74e408d57c6cc9d73474, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerVoice
   micSource: {fileID: 0}
+--- !u!114 &6812459037621148290
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7592877399013546989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b61c0d70e11e40e8ac2a23579bc846fd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StablePlayerVoice
+  micSource: {fileID: 0}
+  monitorLocally: 0
+  targetLatencySamples: 2048
+--- !u!114 &3598217460136852094
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7592877399013546989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7e2904f5a324d61a844af73db89e102, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WalkieTalkieVoiceRecorder
+  maxRecordingSeconds: 5
+  silencePeakThreshold: 0.0005
+  folderName: WalkieTalkieRecordings
+--- !u!114 &5079052627790923466
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7592877399013546989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29c69481b9941a44d8251158a0965e11, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EasyPeasyFirstPersonController.SoundEmitter
+  soundBaseRange: 15
+  soundRangeMultiplier: 10
+  micSensitivity: 100
+  noiseThreshold: 0.01
 --- !u!1 &7902942776951587776
 GameObject:
   m_ObjectHideFlags: 0

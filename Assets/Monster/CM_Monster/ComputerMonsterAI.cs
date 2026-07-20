@@ -4,7 +4,7 @@ using UnityEngine.AI;
 
 public class MonsterAI : MonoBehaviour
 {
-    public enum MonsterState { Idle, Search, Chase, Attack, Investigate }
+    public enum MonsterState { Idle, Search, Chase, Attack, Investigate, Missing }
     public MonsterState currentState = MonsterState.Search;
 
     [Header("Detection Settings")]
@@ -19,6 +19,9 @@ public class MonsterAI : MonoBehaviour
     [Header("Chase Settings")]
     public float lostPlayerTime = 3f;
     public float lostPlayerUpdateInterval = 1f;
+
+    [Header("Missing Settings")]
+    public float missingDuration = 2f;
 
     [Header("Investigate Settings")]
     public float investigateDuration = 10f;     // 수색 유지 시간
@@ -50,7 +53,11 @@ public class MonsterAI : MonoBehaviour
     public float stuckThreshold = 0.1f;
 
     [Header("Sound Detection Settings")]
-    public float soundDetectionRange = 25f;
+    [Min(0f)] public float soundDetectionRange = 60f;
+    [Range(0f, 1f)] public float minimumVoiceVolume = 0.05f;
+    [Min(0f)] public float minimumVoiceDetectionRange = 5f;
+    [Min(0.1f)] public float voiceRangeExponent = 1.35f;
+    [Min(0.05f)] public float voicePositionUpdateInterval = 0.5f;
 
     [Header("Animation")]
     public Animator animator;
@@ -60,6 +67,8 @@ public class MonsterAI : MonoBehaviour
     private static readonly int IsWalking = Animator.StringToHash("isWalking");
     private static readonly int IsRunning = Animator.StringToHash("isRunning");
     private static readonly int IsAttacking = Animator.StringToHash("isAttacking");
+    private static readonly int IsMissing = Animator.StringToHash("isMissing");
+    private static readonly int MissingState = Animator.StringToHash("Base Layer.Missing");
 
     private NavMeshAgent agent;
     private ChaseDetourNavigator chaseNavigator;
@@ -68,12 +77,16 @@ public class MonsterAI : MonoBehaviour
     private float idleDuration = 0f;
     private float lostPlayerTimer = 0f;
     private float lostPlayerUpdateTimer = 0f;
+    private float missingTimer = 0f;
     private float investigateTimer = 0f;
     private float stuckTimer = 0f;
     private Vector3 lastKnownPlayerPos;
     private Vector3 lastPosition;
     private bool canSeePlayer = false;
+    private bool canDetectPlayer = false;
     private SoundEmitter playerSoundEmitter;
+    private float currentVoiceDetectionRange;
+    private float voicePositionUpdateTimer;
 
 
     private void OnEnable()
@@ -103,32 +116,52 @@ public class MonsterAI : MonoBehaviour
 
     void Update()
     {
-        Debug.Log($"[Search] velocity: {agent.velocity.magnitude}, remainingDistance: {agent.remainingDistance}, hasPath: {agent.hasPath}");
-
         if (player == null || !agent.isOnNavMesh) return;
 
         canSeePlayer = CheckPlayerVisibility();
         float distToPlayer = Vector3.Distance(transform.position, player.position);
-        bool isPursuing = currentState == MonsterState.Chase
-                || currentState == MonsterState.Attack
-                || currentState == MonsterState.Investigate;
+        bool hearsPlayer = CheckSoundDetection();
+        bool isActivelyChasing = currentState == MonsterState.Chase
+                || currentState == MonsterState.Attack;
+        bool crouchingOutsideChaseRange = isActivelyChasing
+                && distToPlayer > chaseRange
+                && IsPlayerCrouching();
+        bool isPursuing = isActivelyChasing && !hearsPlayer;
+
+        if (crouchingOutsideChaseRange)
+            isPursuing = false;
 
         if (catchUpNavigator.TryCatchUp(transform.position, player.position, isPursuing))
             lastKnownPlayerPos = player.position;
-        UpdateStateMachine(distToPlayer);
+        UpdateStateMachine(distToPlayer, hearsPlayer);
         ExecuteCurrentState();
     }
 
-    void UpdateStateMachine(float distToPlayer)
+    void UpdateStateMachine(float distToPlayer, bool hearsPlayer)
     {
-        bool hearsPlayer = CheckSoundDetection();
-
-        if (canSeePlayer || hearsPlayer)
+        // Missing은 플레이어를 놓친 사실을 표현하는 전용 상태입니다.
+        // 이 상태가 끝날 때까지 감지 결과로 Chase/Attack에 재진입하지 않고,
+        // HandleMissing에서 반드시 Search로 전환되도록 합니다.
+        if (currentState == MonsterState.Missing)
         {
+            canDetectPlayer = false;
+            return;
+        }
+
+        bool isActivelyChasing = currentState == MonsterState.Chase
+                || currentState == MonsterState.Attack;
+
+        // 시야 감지는 정확한 추적으로, 목소리 감지는 위치 조사로 구분합니다.
+        if (canSeePlayer)
+        {
+            canDetectPlayer = true;
             lastKnownPlayerPos = player.position;
             lostPlayerTimer = 0f;   // 다시 보이면 유예 타이머 리셋
 
-            if (IsPlayerHiding())
+            // 이미 추적 중이고 Chase 범위 안이라면 웅크리거나 정지해도 놓치지 않습니다.
+            bool ignoreCrouchHiding = isActivelyChasing
+                    && distToPlayer <= chaseRange;
+            if (IsPlayerHiding() && !ignoreCrouchHiding)
             {
                 if (currentState != MonsterState.Investigate)
                     ChangeState(MonsterState.Investigate);
@@ -137,23 +170,50 @@ public class MonsterAI : MonoBehaviour
 
             if (distToPlayer <= attackRange)
                 ChangeState(MonsterState.Attack);
-            else if (distToPlayer <= chaseRange || hearsPlayer)
+            else if (distToPlayer <= chaseRange)
                 ChangeState(MonsterState.Chase);
-        }
-        else
-        {
-            // 놓친 상태에서도 Chase를 유지한 채 lastKnownPlayerPos를 계속 추적
-            if (currentState == MonsterState.Chase || currentState == MonsterState.Attack)
-            {
-                lostPlayerTimer += Time.deltaTime;
 
-                if (lostPlayerTimer >= lostPlayerTime)   // 3초 경과 시에만 Search로 전환
-                {
-                    lostPlayerTimer = 0f;
-                    ChangeState(MonsterState.Search);
-                }
-                // 3초 이내라면 상태를 바꾸지 않고 Chase 유지 → HandleChase가 계속 lastKnownPlayerPos로 이동
+            return;
+        }
+
+        if (hearsPlayer)
+        {
+            canDetectPlayer = true;
+            lastKnownPlayerPos = player.position;
+            lostPlayerTimer = 0f;
+
+            if (currentState != MonsterState.Investigate)
+            {
+                voicePositionUpdateTimer = 0f;
+                ChangeState(MonsterState.Investigate);
             }
+            else
+            {
+                voicePositionUpdateTimer += Time.deltaTime;
+                if (voicePositionUpdateTimer >= voicePositionUpdateInterval)
+                {
+                    voicePositionUpdateTimer = 0f;
+                    agent.SetDestination(lastKnownPlayerPos);
+                }
+            }
+
+            return;
+        }
+
+        canDetectPlayer = false;
+        currentVoiceDetectionRange = 0f;
+
+        // 놓친 상태에서도 Chase를 유지한 채 lastKnownPlayerPos를 계속 추적
+        if (currentState == MonsterState.Chase || currentState == MonsterState.Attack)
+        {
+            lostPlayerTimer += Time.deltaTime;
+
+            if (lostPlayerTimer >= lostPlayerTime)
+            {
+                lostPlayerTimer = 0f;
+                ChangeState(MonsterState.Missing);
+            }
+            // 유예 시간 이내에는 Chase를 유지하며 마지막 확인 위치를 추적합니다.
         }
     }
 
@@ -176,6 +236,9 @@ public class MonsterAI : MonoBehaviour
             case MonsterState.Investigate:
                 HandleInvestigate();
                 break;
+            case MonsterState.Missing:
+                HandleMissing();
+                break;
         }
     }
 
@@ -185,6 +248,12 @@ public class MonsterAI : MonoBehaviour
         // PlayerHiding 컴포넌트로 숨기 상태 확인
         FirstPersonController playerController = player.GetComponentInParent<FirstPersonController>();
         return playerController != null && playerController.IsHiding;
+    }
+
+    bool IsPlayerCrouching()
+    {
+        FirstPersonController playerController = player.GetComponentInParent<FirstPersonController>();
+        return playerController != null && playerController.CurrentState is PlayerCrouchingState;
     }
 
     bool CheckPlayerVisibility()
@@ -203,12 +272,21 @@ public class MonsterAI : MonoBehaviour
     }
     bool CheckSoundDetection()
     {
+        currentVoiceDetectionRange = 0f;
         if (playerSoundEmitter == null || !playerSoundEmitter.IsMicActive) return false;
 
-        float distToPlayer = Vector3.Distance(transform.position, player.position);
+        float volume = playerSoundEmitter.CurrentVolume;
+        if (volume < minimumVoiceVolume) return false;
 
-        // 플레이어의 현재 소리 범위 안에 몬스터가 있는지 체크
-        return distToPlayer <= Mathf.Min(playerSoundEmitter.CurrentSoundRange, soundDetectionRange);
+        float normalizedVolume = Mathf.InverseLerp(minimumVoiceVolume, 1f, volume);
+        float volumeFactor = Mathf.Pow(normalizedVolume, voiceRangeExponent);
+        currentVoiceDetectionRange = Mathf.Lerp(
+                minimumVoiceDetectionRange,
+                soundDetectionRange,
+                volumeFactor);
+
+        float distToPlayer = Vector3.Distance(transform.position, player.position);
+        return distToPlayer <= currentVoiceDetectionRange;
     }
 
     private void OnWorldNoiseHeard(Vector3 noisePosition, float noiseRadius)
@@ -243,21 +321,18 @@ public class MonsterAI : MonoBehaviour
 
     void HandleChase()
     {
-        if (canSeePlayer)
+        if (canDetectPlayer)
         {
-            // 실시간으로 보이는 동안은 매 프레임 정확히 갱신
+            // 시야 또는 소리로 실제 감지되는 동안에만 현재 위치를 갱신합니다.
             lastKnownPlayerPos = player.position;
             lostPlayerUpdateTimer = 0f;
         }
         else
         {
-            // 놓친 상태 -> 일정 주기마다만 위치를 재추적 (완전한 실시간 추적 아님)
+            // 감지하지 못한 동안에는 마지막으로 확인한 위치만 추적합니다.
             lostPlayerUpdateTimer += Time.deltaTime;
             if (lostPlayerUpdateTimer >= lostPlayerUpdateInterval)
-            {
-                lastKnownPlayerPos = player.position;
                 lostPlayerUpdateTimer = 0f;
-            }
         }
 
         chaseNavigator.MoveTowards(lastKnownPlayerPos);
@@ -302,6 +377,17 @@ public class MonsterAI : MonoBehaviour
         {
             investigateTimer = 0f;
             ChangeState(MonsterState.Chase);
+        }
+    }
+
+    void HandleMissing()
+    {
+        missingTimer += Time.deltaTime;
+
+        if (missingTimer >= missingDuration)
+        {
+            missingTimer = 0f;
+            ChangeState(MonsterState.Search);
         }
     }
 
@@ -404,6 +490,7 @@ public class MonsterAI : MonoBehaviour
                 agent.speed = runSpeed;
                 animator.SetBool(IsRunning, true);
                 chaseNavigator.Reset();
+                lostPlayerTimer = 0f;
                 lostPlayerUpdateTimer = 0f;   // 추가: 새로 Chase에 들어올 때마다 주기 초기화
                 break;
 
@@ -419,6 +506,16 @@ public class MonsterAI : MonoBehaviour
                 investigateTimer = 0f;
                 SetRandomDestinationNear(lastKnownPlayerPos, investigateRadius);
                 break;
+
+            case MonsterState.Missing:
+                agent.speed = 0f;
+                agent.ResetPath();
+                animator.SetBool(IsMissing, true);
+                animator.CrossFade(MissingState, 0.1f, 0, 0f);
+                lostPlayerTimer = 0f;
+                lostPlayerUpdateTimer = 0f;
+                missingTimer = 0f;
+                break;
         }
     }
 
@@ -428,6 +525,7 @@ public class MonsterAI : MonoBehaviour
         animator.SetBool(IsWalking, false);
         animator.SetBool(IsRunning, false);
         animator.SetBool(IsAttacking, false);
+        animator.SetBool(IsMissing, false);
     }
 
     void OnDrawGizmos()
@@ -437,6 +535,12 @@ public class MonsterAI : MonoBehaviour
 
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, attackRange);
+
+        if (currentVoiceDetectionRange > 0f)
+        {
+            Gizmos.color = Color.blue;
+            Gizmos.DrawWireSphere(transform.position, currentVoiceDetectionRange);
+        }
 
         Gizmos.color = Color.cyan;
         Vector3 leftDir = Quaternion.Euler(0, -fieldOfView * 0.5f, 0) * transform.forward;

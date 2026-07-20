@@ -97,6 +97,8 @@ namespace EasyPeasyFirstPersonController
 
         void OnGUI()
         {
+            if (SettingManager.IsGamePaused) return;
+
             if (currentState != null && Application.isEditor && currentStateDebug)
                 GUILayout.Label("Current State: " + currentState.GetType().Name);
         }
@@ -130,25 +132,19 @@ namespace EasyPeasyFirstPersonController
 
         private void Update()
         {
-            isGrounded = Physics.CheckSphere(groundCheck.position, 0.2f, groundMask, QueryTriggerInteraction.Ignore);
-            if (Input.GetKeyDown(KeyCode.Escape))
+            if (SettingManager.IsGamePaused)
             {
-                if (currentState is not PlayerSubtitleState)
+                moveDirection = Vector3.zero;
+                _animBlendSpeed = 0f;
+                if (_animator != null)
                 {
-                    currentState = states.Subtitle();
-                    currentState.EnterState();
-                    Cursor.lockState = CursorLockMode.None;
-                    Cursor.visible = true;
+                    _animator.SetFloat("Speed", 0f);
+                    _animator.SetFloat("MotionSpeed", 0f);
                 }
-                else if (currentState is PlayerSubtitleState)
-                {
-                    currentState.ExitState();
-                    currentState = states.Grounded();
-                    currentState.EnterState();
-                    Cursor.lockState = CursorLockMode.Locked;
-                    Cursor.visible = false;
-                }
+                return;
             }
+
+            isGrounded = Physics.CheckSphere(groundCheck.position, 0.2f, groundMask, QueryTriggerInteraction.Ignore);
 
             if (Input.GetKeyDown(KeyCode.R) && hasWakieTakie)
             {

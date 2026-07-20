@@ -14,7 +14,6 @@ public class MicLowLatency : MonoBehaviour
     [SerializeField] int micBufferSeconds = 1;
 
     private AudioClip micClip;
-    private bool recording = false;
 
     void Awake()
     {
@@ -41,7 +40,6 @@ public class MicLowLatency : MonoBehaviour
     IEnumerator WaitAndBegin(string dev)
     {
         while (Microphone.GetPosition(dev) <= 0) yield return null;
-        recording = true;
         StartCoroutine(CopyMicToCircularBuffer(dev));
     }
 
@@ -64,7 +62,6 @@ public class MicLowLatency : MonoBehaviour
             }
             yield return new WaitForSecondsRealtime(0.01f);
         }
-        recording = false;
     }
 
     public void StopMic()
@@ -74,6 +71,5 @@ public class MicLowLatency : MonoBehaviour
             string dev = Microphone.devices[CurrentDeviceIndex];
             if (Microphone.IsRecording(dev)) Microphone.End(dev);
         }
-        recording = false;
     }
 }

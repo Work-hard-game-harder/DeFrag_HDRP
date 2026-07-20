@@ -56,7 +56,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -571,6 +571,37 @@ RectTransform:
   m_AnchoredPosition: {x: 649.99976, y: -210}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &9124803604265179031
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7814903728574894085}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4f2e7d96c9b4a51b8e30f7d21c65a0e, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::MicInputLevelMeter
+  size: {x: 180, y: 10}
+  screenMargin: {x: 32, y: 32}
+  backgroundColor: {r: 1, g: 1, b: 1, a: 0.18}
+  fillColor: {r: 1, g: 1, b: 1, a: 1}
+--- !u!114 &7241963051184630275
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7814903728574894085}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61a894db377d45d2b7cc8ff6403e90a1, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::StableMicrophoneInput
+  bufferSizeSamples: 96000
+  transferChunkSize: 256
+  micBufferSeconds: 1
 --- !u!1 &502625115048613559
 GameObject:
   m_ObjectHideFlags: 0
@@ -3705,7 +3736,7 @@ RectTransform:
   m_GameObject: {fileID: 2995922260782692668}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3421043365309591319}
@@ -9425,6 +9456,8 @@ GameObject:
   - component: {fileID: 1648024798571025072}
   - component: {fileID: 6307445311900134363}
   - component: {fileID: 200425833203945067}
+  - component: {fileID: 7241963051184630275}
+  - component: {fileID: 9124803604265179031}
   m_Layer: 0
   m_Name: SettingManager
   m_TagString: SettingPanel
@@ -9477,7 +9510,7 @@ MonoBehaviour:
   micAudioSource: {fileID: 2401598078343449967}
   micMixerGroup: {fileID: -4808670016587676743, guid: 2f73f41f978fecb46a4479e077c1712e, type: 2}
   audioMixer: {fileID: 24100000, guid: 2f73f41f978fecb46a4479e077c1712e, type: 2}
-  micLowLatency: {fileID: 0}
+  micLowLatency: {fileID: 7241963051184630275}
   PausePanel: {fileID: 1166568092301893102}
   playerVoice: {fileID: 0}
 --- !u!82 &200425833203945067

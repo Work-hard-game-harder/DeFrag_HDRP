@@ -14,6 +14,7 @@ using UnityEngine.Rendering.HighDefinition;
 /// BrightnessScript / MicSelectScript / MicVolumeController / ResolutionManager 통합
 /// 모든 설정값은 PlayerPrefs에 string 키로 저장됩니다.
 /// </summary>
+[DefaultExecutionOrder(-10000)]
 public class SettingManager : MonoBehaviour
 {
     // ──────────────────────────────────────────────
@@ -55,6 +56,9 @@ public class SettingManager : MonoBehaviour
     // MicVolumeController 상수
     private const float MIC_VOL_MIN = 0f;
     private const float MIC_VOL_MAX = 20f;
+    private const int MIC_SAMPLE_SIZE = 256;
+    private const float MIC_METER_FLOOR_DB = -60f;
+    private const float MIC_METER_CEILING_DB = -6f;
 
     // ──────────────────────────────────────────────
     // Inspector 연결
@@ -85,9 +89,28 @@ public class SettingManager : MonoBehaviour
     [SerializeField] private AudioSource micAudioSource; // 마이크 입력용 AudioSource
     [SerializeField] private AudioMixerGroup micMixerGroup; // AudioMixer 그룹 연결
     [SerializeField] private AudioMixer audioMixer;          // MicVolumeController의 audioMixer
+    [SerializeField] private StableMicrophoneInput micLowLatency; // 게임 전체에서 유지되는 실제 마이크 캡처
 
     [Header("Pause Panel")]
     [SerializeField] private GameObject PausePanel;
+
+    private const int PAUSE_PANEL_SORTING_ORDER = 32766;
+    private const int SETTING_PANEL_SORTING_ORDER = 32767;
+    private const int MENU_OVERLAY_SORTING_ORDER = 32765;
+    private Canvas pauseCanvas;
+    private Canvas settingPanelCanvas;
+    private Canvas menuOverlayCanvas;
+    private readonly Dictionary<Canvas, CanvasRenderState> overriddenCanvases = new Dictionary<Canvas, CanvasRenderState>();
+
+    private struct CanvasRenderState
+    {
+        public RenderMode renderMode;
+        public Camera worldCamera;
+        public float planeDistance;
+        public bool overrideSorting;
+        public int sortingLayerId;
+        public int sortingOrder;
+    }
 
     // ──────────────────────────────────────────────
     // 현재 설정값 프로퍼티 (외부 읽기 전용)
@@ -105,13 +128,32 @@ public class SettingManager : MonoBehaviour
     // MicSelectScript.selectedMic 대체 — 외부에서 참조 가능
     public string SelectedMic { get; private set; }
 
-    public PlayerVoice playerVoice;
+    /// <summary>0~1로 정규화된 현재 마이크 입력 레벨입니다.</summary>
+    public float MicInputLevel { get; private set; }
+    public bool IsMicPreviewActive { get; private set; }
+    public string MicPreviewStatus { get; private set; } = "Microphone ready";
+
+    /// <summary>슬라이더의 10을 원본 크기(1배)로 사용하는 실제 마이크 게인입니다.</summary>
+    public float MicGain => Mathf.Max(0f, MicVolume / DEFAULT_MIC_VOLUME);
+    public StableMicrophoneInput MicrophoneInput => micLowLatency;
+    public bool IsPausePanelOpen => PausePanel != null && PausePanel.activeSelf;
+    public static bool IsGamePaused => Instance != null && Instance.IsPausePanelOpen;
+
+    public StablePlayerVoice playerVoice;
 
     // ──────────────────────────────────────────────
     // 내부 캐시
     // ──────────────────────────────────────────────
     private ColorAdjustments colorAdjustments;
     private Coroutine smoothBrightnessCoroutine;
+    private Coroutine micPreviewCoroutine;
+    private AudioClip micPreviewClip;
+    private string activeMicDevice;
+    private StableMicrophoneInput sharedMicSource;
+    private Coroutine micRestartCoroutine;
+    private string micDeviceSignature = string.Empty;
+    private float nextMicDevicePollTime;
+    private readonly float[] micSamples = new float[MIC_SAMPLE_SIZE];
 
     // ResolutionManager의 해상도 목록
     private readonly List<Resolution> resolutions = new List<Resolution>
@@ -145,11 +187,24 @@ public class SettingManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         CacheColorAdjustments();
+        ConfigureUICameraForGlobalVolume(settingCanvas != null ? settingCanvas.worldCamera : null);
+        ConfigurePausePanelCanvas();
+        ConfigureSettingPanelCanvas();
         SceneManager.sceneLoaded += OnSceneLoaded;
+        AudioSettings.OnAudioConfigurationChanged += OnAudioConfigurationChanged;
         InitFloorUnlock();
     }
     void Update()
     {
+        UpdateMicInputLevel();
+
+        if (Time.unscaledTime >= nextMicDevicePollTime)
+        {
+            nextMicDevicePollTime = Time.unscaledTime + 1f;
+            CheckForMicDeviceChanges();
+            ConnectPlayerVoiceSources();
+        }
+
         string currentSceneName = SceneManager.GetActiveScene().name;
 
         // MainLobby 씬에서는 ESC 입력 무시
@@ -159,9 +214,13 @@ public class SettingManager : MonoBehaviour
 
         // 다른 씬에서는 ESC 입력 처리
         if (Input.GetKeyDown(KeyCode.Escape) && PausePanel != null)
-        {
-            PausePanel.SetActive(!PausePanel.activeSelf);
-        }
+            SetPausePanelState(!PausePanel.activeSelf);
+    }
+
+    private void LateUpdate()
+    {
+        if (IsPausePanelOpen || (settingPanel != null && settingPanel.activeInHierarchy))
+            KeepMenuPanelsAboveAllCanvases();
     }
     private void Start()
     {
@@ -174,14 +233,23 @@ public class SettingManager : MonoBehaviour
         ApplyAllSettings();       // 불러온 값 UI + 실제 적용
         RegisterUICallbacks();    // UI 이벤트 연결
         InitDisplayModeDropdown(); // DisplayMode 초기화
+        RestartManagedMicrophone();
 
-        if (PausePanel != null)
-            PausePanel.SetActive(false);
+        SetPausePanelState(false);
     }
 
     private void OnDestroy()
     {
+        if (Instance != this) return;
+
+        StopMicPreview();
+        StopManagedMicrophoneSafely();
+        RestoreOverriddenCanvases();
+        if (IsPausePanelOpen)
+            SetPlayerInputLock(false);
+        AudioSettings.OnAudioConfigurationChanged -= OnAudioConfigurationChanged;
         SceneManager.sceneLoaded -= OnSceneLoaded;
+        Instance = null;
     }
 
     // 씬 전환 시 Camera 재연결 (Screen Space - Camera 대응)
@@ -191,17 +259,25 @@ public class SettingManager : MonoBehaviour
         Debug.Log($"[SettingManager] Unlocked_MainLobby: {PlayerPrefs.GetInt("Unlocked_MainLobby", 0)}");
 
         ClosePanel();
+        SetPausePanelState(false);
         AudioManager.Instance?.PlayBGMForScene(scene.name);
         StartCoroutine(ReconnectCamera());
+        StartCoroutine(ReconnectPlayerVoiceSources());
     }
 
     private IEnumerator ReconnectCamera()
     {
         yield return null;
-        Camera uiCamera = GameObject.Find("UICamera")?.GetComponent<Camera>();
+        Camera uiCamera = settingCanvas != null ? settingCanvas.worldCamera : null;
+        if (uiCamera == null)
+            uiCamera = GameObject.Find("UICamera")?.GetComponent<Camera>();
+
         if (uiCamera != null && settingCanvas != null)
         {
+            settingCanvas.renderMode = RenderMode.ScreenSpaceCamera;
             settingCanvas.worldCamera = uiCamera;
+            ConfigureUICameraForGlobalVolume(uiCamera);
+            EnsureMenuOverlayCanvas();
             Debug.Log($"[SettingManager] UI 카메라 재연결 완료: {uiCamera.name}");
         }
         else
@@ -265,23 +341,194 @@ public class SettingManager : MonoBehaviour
     // MicSelectScript.Start() 로직 통합
     private void InitMicDropdown()
     {
-        if (micDropdown == null) return;
-
         string[] devices = Microphone.devices;
-        micDropdown.ClearOptions();
-        micDropdown.AddOptions(new List<string>(devices));
+        micDeviceSignature = string.Join("\n", devices);
+
+        if (micDropdown != null)
+        {
+            micDropdown.ClearOptions();
+            micDropdown.AddOptions(new List<string>(devices));
+        }
 
         if (devices.Length > 0)
         {
             int savedIndex = PlayerPrefs.GetInt(KEY_MIC_INDEX, DEFAULT_MIC_INDEX);
             MicIndex = Mathf.Clamp(savedIndex, 0, devices.Length - 1);
             SelectedMic = devices[MicIndex];
-            InitMicInput();
+            SetDropdownWithoutNotify(micDropdown, MicIndex);
         }
         else
         {
+            SelectedMic = null;
+            MicPreviewStatus = "No microphone detected";
             Debug.LogWarning("[SettingManager] 연결된 마이크 장치가 없습니다.");
         }
+    }
+
+    private void ConfigureUICameraForGlobalVolume(Camera uiCamera)
+    {
+        if (uiCamera == null || settingCanvas == null) return;
+
+        settingCanvas.renderMode = RenderMode.ScreenSpaceCamera;
+        settingCanvas.worldCamera = uiCamera;
+        uiCamera.allowHDR = true;
+
+        HDAdditionalCameraData cameraData = uiCamera.GetComponent<HDAdditionalCameraData>();
+        if (cameraData == null)
+            cameraData = uiCamera.gameObject.AddComponent<HDAdditionalCameraData>();
+
+        cameraData.customRenderingSettings = true;
+        cameraData.renderingPathCustomFrameSettings.SetEnabled(FrameSettingsField.Postprocess, true);
+        cameraData.renderingPathCustomFrameSettingsOverrideMask.mask[(uint)FrameSettingsField.Postprocess] = true;
+
+        if (globalVolume != null)
+        {
+            int volumeLayer = 1 << globalVolume.gameObject.layer;
+            cameraData.volumeLayerMask = cameraData.volumeLayerMask | volumeLayer;
+            cameraData.volumeAnchorOverride = uiCamera.transform;
+        }
+    }
+
+    private void RefreshMicDevicesPreservingSelection()
+    {
+        string previousDevice = SelectedMic;
+        string[] devices = Microphone.devices;
+        micDeviceSignature = string.Join("\n", devices);
+
+        if (micDropdown != null)
+        {
+            micDropdown.ClearOptions();
+            micDropdown.AddOptions(new List<string>(devices));
+        }
+
+        if (devices.Length == 0)
+        {
+            SelectedMic = null;
+            MicIndex = 0;
+            MicPreviewStatus = "No microphone detected";
+            return;
+        }
+
+        int previousIndex = string.IsNullOrEmpty(previousDevice)
+            ? -1
+            : System.Array.IndexOf(devices, previousDevice);
+        MicIndex = previousIndex >= 0 ? previousIndex : Mathf.Clamp(MicIndex, 0, devices.Length - 1);
+        SelectedMic = devices[MicIndex];
+        SetDropdownWithoutNotify(micDropdown, MicIndex);
+    }
+
+    private void CheckForMicDeviceChanges()
+    {
+        string signature = string.Join("\n", Microphone.devices);
+        if (signature != micDeviceSignature)
+        {
+            RefreshMicDevicesPreservingSelection();
+            RestartManagedMicrophone();
+            return;
+        }
+
+        // 장치명은 그대로지만 출력 장치 재설정으로 캡처만 끊긴 경우도 복구합니다.
+        if (micRestartCoroutine == null && micLowLatency != null &&
+            !string.IsNullOrEmpty(SelectedMic) && !Microphone.IsRecording(SelectedMic))
+            RestartManagedMicrophone();
+    }
+
+    private void OnAudioConfigurationChanged(bool deviceWasChanged)
+    {
+        // 헤드셋/스피커 전환은 샘플레이트만 바뀌는 경우도 있어 항상 캡처를 다시 엽니다.
+        RestartManagedMicrophone();
+    }
+
+    private void RestartManagedMicrophone()
+    {
+        if (micRestartCoroutine != null)
+            StopCoroutine(micRestartCoroutine);
+        micRestartCoroutine = StartCoroutine(RestartManagedMicrophoneRoutine());
+    }
+
+    private IEnumerator RestartManagedMicrophoneRoutine()
+    {
+        MicPreviewStatus = "Connecting microphone...";
+
+        if (!Application.HasUserAuthorization(UserAuthorization.Microphone))
+            yield return Application.RequestUserAuthorization(UserAuthorization.Microphone);
+
+        if (!Application.HasUserAuthorization(UserAuthorization.Microphone))
+        {
+            MicPreviewStatus = "Microphone permission denied";
+            micRestartCoroutine = null;
+            yield break;
+        }
+
+        // 출력 장치 변경 직후에는 Windows 장치 목록이 잠시 비는 경우가 있어 안정될 때까지 기다립니다.
+        float deviceTimeout = Time.realtimeSinceStartup + 5f;
+        while (Microphone.devices.Length == 0 && Time.realtimeSinceStartup < deviceTimeout)
+            yield return new WaitForSecondsRealtime(0.25f);
+
+        RefreshMicDevicesPreservingSelection();
+        if (string.IsNullOrEmpty(SelectedMic))
+        {
+            micRestartCoroutine = null;
+            yield break;
+        }
+
+        if (micLowLatency == null)
+            micLowLatency = GetComponent<StableMicrophoneInput>();
+
+        if (micLowLatency == null)
+        {
+            MicPreviewStatus = "Microphone capture is unavailable";
+            micRestartCoroutine = null;
+            yield break;
+        }
+
+        StopManagedMicrophoneSafely();
+        yield return new WaitForSecondsRealtime(0.15f);
+        micLowLatency.StartMic(MicIndex);
+        sharedMicSource = micLowLatency;
+        ConnectPlayerVoiceSources();
+
+        float startTimeout = Time.realtimeSinceStartup + 3f;
+        while ((!Microphone.IsRecording(SelectedMic) || Microphone.GetPosition(SelectedMic) <= 0) &&
+               Time.realtimeSinceStartup < startTimeout)
+            yield return null;
+
+        IsMicPreviewActive = Microphone.IsRecording(SelectedMic) && Microphone.GetPosition(SelectedMic) > 0;
+        MicPreviewStatus = IsMicPreviewActive ? "Listening" : "Microphone did not respond";
+        micRestartCoroutine = null;
+    }
+
+    private void StopManagedMicrophoneSafely()
+    {
+        if (micLowLatency == null) return;
+
+        string[] devices = micLowLatency.Devices;
+        if (devices.Length > micLowLatency.CurrentDeviceIndex)
+            micLowLatency.StopMic();
+    }
+
+    private void ConnectPlayerVoiceSources()
+    {
+        // 씬 프리팹 오버라이드나 네트워크 스폰 여부와 관계없이 녹음기를 보장합니다.
+        EasyPeasyFirstPersonController.FirstPersonController[] controllers =
+            FindObjectsByType<EasyPeasyFirstPersonController.FirstPersonController>(FindObjectsInactive.Include);
+        foreach (EasyPeasyFirstPersonController.FirstPersonController controller in controllers)
+        {
+            if (controller.GetComponent<WalkieTalkieVoiceRecorder>() == null)
+                controller.gameObject.AddComponent<WalkieTalkieVoiceRecorder>();
+        }
+
+        if (micLowLatency == null) return;
+
+        StablePlayerVoice[] voices = FindObjectsByType<StablePlayerVoice>(FindObjectsInactive.Include);
+        foreach (StablePlayerVoice voice in voices)
+            voice.micSource = micLowLatency;
+    }
+
+    private IEnumerator ReconnectPlayerVoiceSources()
+    {
+        yield return null;
+        ConnectPlayerVoiceSources();
     }
 
     private void InitDisplayModeDropdown()
@@ -294,30 +541,180 @@ public class SettingManager : MonoBehaviour
         SetDropdownWithoutNotify(displayModeDropdown, DisplayModeIndex);
         ApplyDisplayMode(DisplayModeIndex);
     }
-    private void InitMicInput()
+    private void StartMicPreview()
     {
-        if (SelectedMic == null) return;
-
-        if (micAudioSource == null)
+        if (string.IsNullOrEmpty(SelectedMic))
         {
-            Debug.LogWarning("[SettingManager] micAudioSource가 연결되지 않았습니다.");
+            MicPreviewStatus = "No microphone detected";
             return;
         }
 
-        // 기존 마이크 입력 중지
-        if (Microphone.IsRecording(SelectedMic))
-            Microphone.End(SelectedMic);
+        // 인게임 캡처가 동작 중이면 같은 버퍼를 사용합니다.
+        if (micLowLatency != null)
+        {
+            sharedMicSource = micLowLatency;
+            IsMicPreviewActive = Microphone.IsRecording(SelectedMic);
+            MicPreviewStatus = IsMicPreviewActive ? "Listening" : "Connecting microphone...";
+            if (!IsMicPreviewActive)
+                RestartManagedMicrophone();
+            return;
+        }
 
-        // 새 마이크 입력 시작
-        micAudioSource.outputAudioMixerGroup = micMixerGroup;
-        micAudioSource.clip = Microphone.Start(SelectedMic, true, 10, AudioSettings.outputSampleRate);
-        micAudioSource.loop = true;
+        StopMicPreview();
 
-        // 입력 시작 후 재생
-        while (!(Microphone.GetPosition(SelectedMic) > 0)) { }
-        micAudioSource.Play();
+        micPreviewCoroutine = StartCoroutine(StartMicPreviewRoutine(SelectedMic));
+    }
 
-        Debug.Log($"[SettingManager] 마이크 입력 시작: {SelectedMic}");
+    private IEnumerator StartMicPreviewRoutine(string device)
+    {
+        MicPreviewStatus = "Waiting for microphone permission...";
+
+        if (!Application.HasUserAuthorization(UserAuthorization.Microphone))
+            yield return Application.RequestUserAuthorization(UserAuthorization.Microphone);
+
+        if (!Application.HasUserAuthorization(UserAuthorization.Microphone))
+        {
+            MicPreviewStatus = "Microphone permission denied";
+            micPreviewCoroutine = null;
+            yield break;
+        }
+
+        // 플레이어가 이미 같은 장치를 캡처 중이면 녹음을 빼앗지 않고 공유 버퍼를 읽습니다.
+        if (Microphone.IsRecording(device))
+        {
+            StableMicrophoneInput source = micLowLatency != null
+                ? micLowLatency
+                : FindAnyObjectByType<StableMicrophoneInput>();
+            string[] sourceDevices = source != null ? source.Devices : null;
+            if (sourceDevices != null && sourceDevices.Length > source.CurrentDeviceIndex &&
+                sourceDevices[source.CurrentDeviceIndex] == device)
+            {
+                sharedMicSource = source;
+                IsMicPreviewActive = true;
+                MicPreviewStatus = "Listening";
+                micPreviewCoroutine = null;
+                yield break;
+            }
+
+            MicPreviewStatus = "Microphone is already in use";
+            micPreviewCoroutine = null;
+            yield break;
+        }
+
+        activeMicDevice = device;
+        micPreviewClip = Microphone.Start(device, true, 1, AudioSettings.outputSampleRate);
+        if (micPreviewClip == null)
+        {
+            activeMicDevice = null;
+            MicPreviewStatus = "Unable to start microphone";
+            micPreviewCoroutine = null;
+            yield break;
+        }
+
+        float timeout = Time.realtimeSinceStartup + 3f;
+        while (Microphone.GetPosition(device) <= 0 && Time.realtimeSinceStartup < timeout)
+            yield return null;
+
+        if (Microphone.GetPosition(device) <= 0)
+        {
+            if (Microphone.IsRecording(device))
+                Microphone.End(device);
+            micPreviewClip = null;
+            activeMicDevice = null;
+            IsMicPreviewActive = false;
+            MicInputLevel = 0f;
+            micPreviewCoroutine = null;
+            MicPreviewStatus = "Microphone did not respond";
+            yield break;
+        }
+
+        // 미리보기는 로컬 스피커로 재생하지 않아 하울링을 방지합니다.
+        if (micAudioSource != null)
+        {
+            micAudioSource.Stop();
+            micAudioSource.clip = micPreviewClip;
+            micAudioSource.loop = true;
+            micAudioSource.outputAudioMixerGroup = micMixerGroup;
+        }
+
+        IsMicPreviewActive = true;
+        MicPreviewStatus = "Listening";
+        micPreviewCoroutine = null;
+        Debug.Log($"[SettingManager] 마이크 미리보기 시작: {device}");
+    }
+
+    private void StopMicPreview()
+    {
+        if (micPreviewCoroutine != null)
+        {
+            StopCoroutine(micPreviewCoroutine);
+            micPreviewCoroutine = null;
+        }
+
+        if (!string.IsNullOrEmpty(activeMicDevice) && Microphone.IsRecording(activeMicDevice))
+            Microphone.End(activeMicDevice);
+
+        if (micAudioSource != null)
+        {
+            micAudioSource.Stop();
+            micAudioSource.clip = null;
+        }
+
+        micPreviewClip = null;
+        activeMicDevice = null;
+
+        // 설정 패널만 닫힌 경우 인게임 캡처와 HUD는 계속 유지합니다.
+        bool managedMicIsActive = micLowLatency != null && !string.IsNullOrEmpty(SelectedMic) &&
+                                  Microphone.IsRecording(SelectedMic);
+        sharedMicSource = managedMicIsActive ? micLowLatency : null;
+        IsMicPreviewActive = managedMicIsActive;
+        if (!managedMicIsActive)
+            MicInputLevel = 0f;
+    }
+
+    private void UpdateMicInputLevel()
+    {
+        float target = 0f;
+
+        if (sharedMicSource != null && sharedMicSource.CircularBuffer != null &&
+            !string.IsNullOrEmpty(SelectedMic) && Microphone.IsRecording(SelectedMic))
+        {
+            float[] buffer = sharedMicSource.CircularBuffer;
+            int count = Mathf.Min(MIC_SAMPLE_SIZE, buffer.Length);
+            int readPosition = sharedMicSource.WritePos - count;
+            if (readPosition < 0) readPosition += buffer.Length;
+
+            float sum = 0f;
+            for (int i = 0; i < count; i++)
+            {
+                float sample = buffer[(readPosition + i) % buffer.Length];
+                sum += sample * sample;
+            }
+
+            target = NormalizeMicRms(Mathf.Sqrt(sum / count) * MicGain);
+        }
+        else if (IsMicPreviewActive && micPreviewClip != null && !string.IsNullOrEmpty(activeMicDevice))
+        {
+            int position = Microphone.GetPosition(activeMicDevice);
+            if (position >= MIC_SAMPLE_SIZE)
+            {
+                micPreviewClip.GetData(micSamples, position - MIC_SAMPLE_SIZE);
+                float sum = 0f;
+                for (int i = 0; i < micSamples.Length; i++)
+                    sum += micSamples[i] * micSamples[i];
+
+                target = NormalizeMicRms(Mathf.Sqrt(sum / micSamples.Length) * MicGain);
+            }
+        }
+
+        float speed = target > MicInputLevel ? 18f : 7f;
+        MicInputLevel = Mathf.MoveTowards(MicInputLevel, target, speed * Time.unscaledDeltaTime);
+    }
+
+    private static float NormalizeMicRms(float rms)
+    {
+        float decibels = 20f * Mathf.Log10(Mathf.Max(rms, 0.000001f));
+        return Mathf.InverseLerp(MIC_METER_FLOOR_DB, MIC_METER_CEILING_DB, decibels);
     }
     // ──────────────────────────────────────────────
     // 설정값 저장
@@ -426,7 +823,10 @@ public class SettingManager : MonoBehaviour
                 MicIndex = index;
                 string[] devices = Microphone.devices;
                 if (devices.Length > index)
+                {
                     SelectedMic = devices[index];
+                    RestartManagedMicrophone();
+                }
                 SaveSettings();
             });
 
@@ -513,7 +913,10 @@ public class SettingManager : MonoBehaviour
     private void ApplyMicVolume(float value)
     {
         if (audioMixer != null)
-            audioMixer.SetFloat("MicVolume", value);
+        {
+            float decibels = value > 0f ? 20f * Mathf.Log10(value / DEFAULT_MIC_VOLUME) : -80f;
+            audioMixer.SetFloat("MicVolume", decibels);
+        }
     }
 
     // ResolutionManager.SetResolution 로직 통합
@@ -588,7 +991,11 @@ public class SettingManager : MonoBehaviour
     {
         if (settingPanel != null)
         {
+            ConfigureSettingPanelCanvas();
+            settingPanel.transform.SetAsLastSibling();
             settingPanel.SetActive(true);
+            KeepMenuPanelsAboveAllCanvases();
+            StartMicPreview();
         }
 
     }
@@ -599,6 +1006,10 @@ public class SettingManager : MonoBehaviour
         {
             settingPanel.SetActive(false);
         }
+        StopMicPreview();
+
+        if (!IsPausePanelOpen)
+            RestoreOverriddenCanvases();
     }
 
     // 닫기 버튼 전용 메서드 추가
@@ -689,15 +1100,254 @@ public class SettingManager : MonoBehaviour
     //Pause Panel 관련
     public void BackMainScene()
     {
-        AudioManager.Instance.PlaySFX("Button1");
+        SetPausePanelState(false);
+        AudioManager.Instance?.PlaySFX("Button1");
         SceneManager.LoadScene("MainLobby", LoadSceneMode.Single);
     }
+
+    private void ConfigurePausePanelCanvas()
+    {
+        if (PausePanel == null) return;
+
+        EnsureMenuCanvasVisible();
+        EnsureMenuOverlayCanvas();
+
+        pauseCanvas = PausePanel.GetComponent<Canvas>();
+        if (pauseCanvas == null)
+            pauseCanvas = PausePanel.AddComponent<Canvas>();
+
+        pauseCanvas.overrideSorting = true;
+        pauseCanvas.sortingLayerID = GetTopSortingLayerId();
+        pauseCanvas.sortingOrder = PAUSE_PANEL_SORTING_ORDER;
+
+        if (PausePanel.GetComponent<GraphicRaycaster>() == null)
+            PausePanel.AddComponent<GraphicRaycaster>();
+    }
+
+    private void ConfigureSettingPanelCanvas()
+    {
+        if (settingPanel == null) return;
+
+        EnsureMenuCanvasVisible();
+        EnsureMenuOverlayCanvas();
+
+        settingPanelCanvas = settingPanel.GetComponent<Canvas>();
+        if (settingPanelCanvas == null)
+            settingPanelCanvas = settingPanel.AddComponent<Canvas>();
+
+        settingPanelCanvas.overrideSorting = true;
+        settingPanelCanvas.sortingLayerID = GetTopSortingLayerId();
+        settingPanelCanvas.sortingOrder = SETTING_PANEL_SORTING_ORDER;
+
+        if (settingPanel.GetComponent<GraphicRaycaster>() == null)
+            settingPanel.AddComponent<GraphicRaycaster>();
+    }
+
+    private void EnsureMenuCanvasVisible()
+    {
+        if (settingCanvas == null) return;
+
+        settingCanvas.enabled = true;
+        settingCanvas.transform.localScale = Vector3.one;
+
+        Camera uiCamera = settingCanvas.worldCamera;
+        if (uiCamera != null)
+            uiCamera.enabled = true;
+    }
+
+    private void EnsureMenuOverlayCanvas()
+    {
+        if (menuOverlayCanvas == null)
+        {
+            Transform existing = transform.Find("MenuOverlayCanvas");
+            GameObject overlayObject;
+
+            if (existing != null)
+            {
+                overlayObject = existing.gameObject;
+                menuOverlayCanvas = overlayObject.GetComponent<Canvas>();
+            }
+            else
+            {
+                overlayObject = new GameObject(
+                        "MenuOverlayCanvas",
+                        typeof(RectTransform),
+                        typeof(Canvas),
+                        typeof(CanvasScaler),
+                        typeof(GraphicRaycaster));
+                overlayObject.transform.SetParent(transform, false);
+                menuOverlayCanvas = overlayObject.GetComponent<Canvas>();
+            }
+
+            if (menuOverlayCanvas == null)
+                menuOverlayCanvas = overlayObject.AddComponent<Canvas>();
+
+            CanvasScaler overlayScaler = overlayObject.GetComponent<CanvasScaler>();
+            CanvasScaler sourceScaler = settingCanvas != null
+                    ? settingCanvas.GetComponent<CanvasScaler>()
+                    : null;
+            if (overlayScaler != null && sourceScaler != null)
+            {
+                overlayScaler.uiScaleMode = sourceScaler.uiScaleMode;
+                overlayScaler.referenceResolution = sourceScaler.referenceResolution;
+                overlayScaler.screenMatchMode = sourceScaler.screenMatchMode;
+                overlayScaler.matchWidthOrHeight = sourceScaler.matchWidthOrHeight;
+                overlayScaler.referencePixelsPerUnit = sourceScaler.referencePixelsPerUnit;
+            }
+        }
+
+        menuOverlayCanvas.enabled = true;
+
+        Camera uiCamera = settingCanvas != null ? settingCanvas.worldCamera : null;
+        if (uiCamera == null)
+            uiCamera = GetComponentInChildren<Camera>(true);
+
+        if (uiCamera != null)
+        {
+            uiCamera.enabled = true;
+            uiCamera.allowHDR = true;
+            uiCamera.depth = Mathf.Max(uiCamera.depth, 100f);
+            uiCamera.cullingMask |= 1 << 5; // UI layer
+
+            ConfigureUICameraForGlobalVolume(uiCamera);
+            menuOverlayCanvas.renderMode = RenderMode.ScreenSpaceCamera;
+            menuOverlayCanvas.worldCamera = uiCamera;
+            menuOverlayCanvas.planeDistance = Mathf.Max(uiCamera.nearClipPlane + 0.1f, 1f);
+        }
+        else
+        {
+            // 카메라가 없는 예외 상황에서도 메뉴 자체는 보이도록 유지합니다.
+            menuOverlayCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            menuOverlayCanvas.worldCamera = null;
+        }
+
+        menuOverlayCanvas.overrideSorting = true;
+        menuOverlayCanvas.sortingLayerID = GetTopSortingLayerId();
+        menuOverlayCanvas.sortingOrder = MENU_OVERLAY_SORTING_ORDER;
+        menuOverlayCanvas.transform.localScale = Vector3.one;
+
+        MovePanelToMenuOverlay(PausePanel);
+        MovePanelToMenuOverlay(settingPanel);
+    }
+
+    private void MovePanelToMenuOverlay(GameObject panel)
+    {
+        if (panel == null || menuOverlayCanvas == null) return;
+        if (panel.transform.parent == menuOverlayCanvas.transform) return;
+
+        panel.transform.SetParent(menuOverlayCanvas.transform, false);
+        panel.transform.localScale = Vector3.one;
+    }
+
+    private static int GetTopSortingLayerId()
+    {
+        SortingLayer[] layers = SortingLayer.layers;
+        return layers.Length > 0 ? layers[layers.Length - 1].id : 0;
+    }
+
+    private void SetPausePanelState(bool isOpen)
+    {
+        if (PausePanel == null) return;
+
+        if (isOpen)
+        {
+            ConfigurePausePanelCanvas();
+            PausePanel.transform.SetAsLastSibling();
+        }
+
+        PausePanel.SetActive(isOpen);
+        SetPlayerInputLock(isOpen);
+
+        if (isOpen)
+            KeepMenuPanelsAboveAllCanvases();
+        else if (settingPanel == null || !settingPanel.activeInHierarchy)
+            RestoreOverriddenCanvases();
+    }
+
+    private void KeepMenuPanelsAboveAllCanvases()
+    {
+        Camera uiCamera = settingCanvas != null ? settingCanvas.worldCamera : null;
+        Canvas[] canvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include);
+        int topLayerId = GetTopSortingLayerId();
+
+        foreach (Canvas canvas in canvases)
+        {
+            if (canvas == null || canvas == settingCanvas || canvas == menuOverlayCanvas ||
+                    canvas == pauseCanvas || canvas == settingPanelCanvas)
+                continue;
+
+            Transform canvasTransform = canvas.transform;
+            if ((PausePanel != null && canvasTransform.IsChildOf(PausePanel.transform)) ||
+                (settingPanel != null && canvasTransform.IsChildOf(settingPanel.transform)))
+                continue;
+
+            if (!overriddenCanvases.ContainsKey(canvas))
+            {
+                overriddenCanvases.Add(canvas, new CanvasRenderState
+                {
+                    renderMode = canvas.renderMode,
+                    worldCamera = canvas.worldCamera,
+                    planeDistance = canvas.planeDistance,
+                    overrideSorting = canvas.overrideSorting,
+                    sortingLayerId = canvas.sortingLayerID,
+                    sortingOrder = canvas.sortingOrder
+                });
+            }
+
+            if (canvas.isRootCanvas && canvas.renderMode != RenderMode.WorldSpace && uiCamera != null)
+            {
+                if (canvas.renderMode == RenderMode.ScreenSpaceOverlay)
+                    canvas.renderMode = RenderMode.ScreenSpaceCamera;
+
+                canvas.worldCamera = uiCamera;
+                canvas.planeDistance = settingCanvas.planeDistance;
+            }
+
+            canvas.overrideSorting = true;
+            canvas.sortingLayerID = topLayerId;
+            canvas.sortingOrder = Mathf.Min(canvas.sortingOrder, PAUSE_PANEL_SORTING_ORDER - 1);
+        }
+
+        ConfigurePausePanelCanvas();
+        ConfigureSettingPanelCanvas();
+        if (PausePanel != null && PausePanel.activeSelf)
+            PausePanel.transform.SetAsLastSibling();
+        if (settingPanel != null && settingPanel.activeInHierarchy)
+            settingPanel.transform.SetAsLastSibling();
+    }
+
+    private void RestoreOverriddenCanvases()
+    {
+        foreach (KeyValuePair<Canvas, CanvasRenderState> entry in overriddenCanvases)
+        {
+            Canvas canvas = entry.Key;
+            if (canvas == null) continue;
+
+            CanvasRenderState state = entry.Value;
+            canvas.renderMode = state.renderMode;
+            canvas.worldCamera = state.worldCamera;
+            canvas.planeDistance = state.planeDistance;
+            canvas.overrideSorting = state.overrideSorting;
+            canvas.sortingLayerID = state.sortingLayerId;
+            canvas.sortingOrder = state.sortingOrder;
+        }
+
+        overriddenCanvases.Clear();
+    }
+
+    private static void SetPlayerInputLock(bool isLocked)
+    {
+        bool shouldShowCursor = isLocked || SceneManager.GetActiveScene().name == "MainLobby";
+        Cursor.lockState = shouldShowCursor ? CursorLockMode.None : CursorLockMode.Locked;
+        Cursor.visible = shouldShowCursor;
+    }
+
     public void ClosePausePanel()
     {
         if (PausePanel != null)
         {
-            AudioManager.Instance.PlaySFX("Button1");
-            PausePanel.SetActive(false);
+            AudioManager.Instance?.PlaySFX("Button1");
+            SetPausePanelState(false);
         }
     }
 }
