@@ -1,4 +1,5 @@
 ﻿using EasyPeasyFirstPersonController;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -62,6 +63,17 @@ public class MonsterAI : MonoBehaviour
     [Header("Animation")]
     public Animator animator;
 
+    [Header("Debug Gizmos")]
+    [SerializeField] private bool showVoiceDetectionGizmos = true;
+    [SerializeField] private Color maximumVoiceRangeColor = new Color(0.15f, 0.45f, 1f, 0.65f);
+    [SerializeField] private Color currentVoiceRangeColor = new Color(0f, 1f, 1f, 0.9f);
+
+    [Header("Behavior Designer")]
+    [Tooltip("Behavior Designer 트리를 런타임에 자동 구성합니다. 끄면 기존 Update 방식으로 동작합니다.")]
+    [SerializeField] private bool useBehaviorDesigner = true;
+    [Tooltip("멀티플레이 중에는 서버에서만 몬스터 판단과 이동을 실행합니다.")]
+    [SerializeField] private bool serverAuthoritative = true;
+
     // 애니메이터 파라미터 캐싱
     private static readonly int IsIdle = Animator.StringToHash("isIdle");
     private static readonly int IsWalking = Animator.StringToHash("isWalking");
@@ -87,6 +99,34 @@ public class MonsterAI : MonoBehaviour
     private SoundEmitter playerSoundEmitter;
     private float currentVoiceDetectionRange;
     private float voicePositionUpdateTimer;
+    private int preparedFrame = -1;
+    private bool initialized;
+
+    public MonsterState CurrentState => currentState;
+    public bool UsesBehaviorDesigner => useBehaviorDesigner;
+
+    public void SetBehaviorDesignerEnabled(bool enabled)
+    {
+        useBehaviorDesigner = enabled;
+    }
+
+    public bool HasSimulationAuthority
+    {
+        get
+        {
+            if (!serverAuthoritative)
+                return true;
+
+            NetworkManager networkManager = NetworkManager.Singleton;
+            return networkManager == null || !networkManager.IsListening || networkManager.IsServer;
+        }
+    }
+
+    private void Awake()
+    {
+        if (useBehaviorDesigner && GetComponent<MonsterBehaviorTreeInstaller>() == null)
+            gameObject.AddComponent<MonsterBehaviorTreeInstaller>();
+    }
 
 
     private void OnEnable()
@@ -112,11 +152,45 @@ public class MonsterAI : MonoBehaviour
 
         currentState = MonsterState.Idle;
         ChangeState(MonsterState.Search);
+        initialized = true;
     }
 
     void Update()
     {
-        if (player == null || !agent.isOnNavMesh) return;
+        if (useBehaviorDesigner)
+            return;
+
+        if (!initialized || !HasSimulationAuthority || player == null || agent == null || !agent.isOnNavMesh)
+            return;
+
+        PrepareBehaviorFrame();
+        ExecuteCurrentState();
+    }
+
+    /// <summary>
+    /// Behavior Designer의 각 상태 Task가 호출하는 단일 진입점입니다.
+    /// 같은 프레임에 Selector가 여러 상태를 평가해도 감지는 한 번만 갱신됩니다.
+    /// </summary>
+    public bool TickBehaviorState(MonsterState state)
+    {
+        if (!initialized || !HasSimulationAuthority || player == null || agent == null || !agent.isOnNavMesh)
+            return false;
+
+        PrepareBehaviorFrame();
+        if (currentState != state)
+            return false;
+
+        ExecuteCurrentState();
+        return true;
+    }
+
+    private void PrepareBehaviorFrame()
+    {
+        if (preparedFrame == Time.frameCount || !initialized || !HasSimulationAuthority ||
+            player == null || agent == null || !agent.isOnNavMesh)
+            return;
+
+        preparedFrame = Time.frameCount;
 
         canSeePlayer = CheckPlayerVisibility();
         float distToPlayer = Vector3.Distance(transform.position, player.position);
@@ -134,7 +208,6 @@ public class MonsterAI : MonoBehaviour
         if (catchUpNavigator.TryCatchUp(transform.position, player.position, isPursuing))
             lastKnownPlayerPos = player.position;
         UpdateStateMachine(distToPlayer, hearsPlayer);
-        ExecuteCurrentState();
     }
 
     void UpdateStateMachine(float distToPlayer, bool hearsPlayer)
@@ -186,6 +259,9 @@ public class MonsterAI : MonoBehaviour
             {
                 voicePositionUpdateTimer = 0f;
                 ChangeState(MonsterState.Investigate);
+                // 음성을 처음 들은 프레임에는 주변 랜덤 지점보다
+                // 마지막으로 들은 플레이어의 실제 위치를 우선 조사합니다.
+                agent.SetDestination(lastKnownPlayerPos);
             }
             else
             {
@@ -291,7 +367,7 @@ public class MonsterAI : MonoBehaviour
 
     private void OnWorldNoiseHeard(Vector3 noisePosition, float noiseRadius)
     {
-        if (agent == null || !agent.isOnNavMesh) return;
+        if (!HasSimulationAuthority || agent == null || !agent.isOnNavMesh) return;
 
         float audibleRange = Mathf.Min(noiseRadius, soundDetectionRange);
         if (Vector3.Distance(transform.position, noisePosition) > audibleRange) return;
@@ -536,10 +612,18 @@ public class MonsterAI : MonoBehaviour
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, attackRange);
 
-        if (currentVoiceDetectionRange > 0f)
+        if (showVoiceDetectionGizmos)
         {
-            Gizmos.color = Color.blue;
-            Gizmos.DrawWireSphere(transform.position, currentVoiceDetectionRange);
+            // 짙은 파란색: 마이크 볼륨이 최대일 때 감지 가능한 최대 반경
+            Gizmos.color = maximumVoiceRangeColor;
+            Gizmos.DrawWireSphere(transform.position, soundDetectionRange);
+
+            // 청록색: 현재 마이크 볼륨으로 계산된 실시간 감지 반경
+            if (currentVoiceDetectionRange > 0f)
+            {
+                Gizmos.color = currentVoiceRangeColor;
+                Gizmos.DrawWireSphere(transform.position, currentVoiceDetectionRange);
+            }
         }
 
         Gizmos.color = Color.cyan;

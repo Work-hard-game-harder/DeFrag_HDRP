@@ -1883,6 +1883,11 @@ MonoBehaviour:
   voiceRangeExponent: 1.35
   voicePositionUpdateInterval: 0.5
   animator: {fileID: 877255003}
+  showVoiceDetectionGizmos: 1
+  maximumVoiceRangeColor: {r: 0.15, g: 0.45, b: 1, a: 0.65}
+  currentVoiceRangeColor: {r: 0, g: 1, b: 1, a: 0.9}
+  useBehaviorDesigner: 1
+  serverAuthoritative: 1
 --- !u!81 &877255010
 AudioListener:
   m_ObjectHideFlags: 0
@@ -2478,6 +2483,7 @@ MonoBehaviour:
   soundRangeMultiplier: 10
   micSensitivity: 100
   noiseThreshold: 0.01
+  listenContinuously: 1
 --- !u!64 &1227710196
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -2581,6 +2587,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1608967857}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1608967860}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1608967859}
   m_SourcePrefab: {fileID: 100100000, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
 --- !u!64 &1298456647
 MeshCollider:
@@ -2824,12 +2836,17 @@ MonoBehaviour:
   catchUpCooldown: 8
   stuckCheckInterval: 1
   stuckThreshold: 0.1
-  soundDetectionRange: 60
+  soundDetectionRange: 35
   minimumVoiceVolume: 0.05
   minimumVoiceDetectionRange: 5
   voiceRangeExponent: 1.35
   voicePositionUpdateInterval: 0.5
   animator: {fileID: 1608967852}
+  showVoiceDetectionGizmos: 1
+  maximumVoiceRangeColor: {r: 0.15, g: 0.45, b: 1, a: 0.65}
+  currentVoiceRangeColor: {r: 0, g: 1, b: 1, a: 0.9}
+  useBehaviorDesigner: 1
+  serverAuthoritative: 1
 --- !u!81 &1608967856
 AudioListener:
   m_ObjectHideFlags: 0
@@ -2860,6 +2877,59 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
+--- !u!114 &1608967859
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1608967851}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0cf9a5e9789448d8802b519f6ec0b21, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterBehaviorTreeInstaller
+--- !u!114 &1608967860
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1608967851}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d7b55c7ecdb49a4a89fa5e6f9022861, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BehaviorDesigner.Runtime.BehaviorTree
+  startWhenEnabled: 1
+  asynchronousLoad: 0
+  pauseWhenDisabled: 0
+  restartWhenComplete: 0
+  logTaskChanges: 0
+  group: 0
+  resetValuesOnRestart: 0
+  externalBehavior: {fileID: 0}
+  mBehaviorSource:
+    behaviorName: Behavior
+    behaviorDescription: 
+    mTaskData:
+      types: []
+      parentIndex: 
+      startIndex: 
+      variableStartIndex: 
+      JSONSerialization: '{"EntryTask":{"Type":"BehaviorDesigner.Runtime.Tasks.EntryTask","NodeData":{"Offset":"(0,0)"},"ID":0,"Name":"Entry","Instant":true},"RootTask":{"Type":"BehaviorDesigner.Runtime.Tasks.SelectorEvaluator","NodeData":{"Offset":"(0,150)"},"ID":1,"Name":"Monster
+        State Selector","Instant":true,"AbortTypeabortType":"None","Children":[{"Type":"DeFrag.Monsters.BehaviorDesignerTasks.RunMonsterState","NodeData":{"Offset":"(-500,260)"},"ID":2,"Name":"Missing","Instant":true,"MonsterStatestate":"Missing"},{"Type":"DeFrag.Monsters.BehaviorDesignerTasks.RunMonsterState","NodeData":{"Offset":"(-300,260)"},"ID":3,"Name":"Attack","Instant":true,"MonsterStatestate":"Attack"},{"Type":"DeFrag.Monsters.BehaviorDesignerTasks.RunMonsterState","NodeData":{"Offset":"(-100,260)"},"ID":4,"Name":"Chase","Instant":true,"MonsterStatestate":"Chase"},{"Type":"DeFrag.Monsters.BehaviorDesignerTasks.RunMonsterState","NodeData":{"Offset":"(100,260)"},"ID":5,"Name":"Investigate","Instant":true,"MonsterStatestate":"Investigate"},{"Type":"DeFrag.Monsters.BehaviorDesignerTasks.RunMonsterState","NodeData":{"Offset":"(300,260)"},"ID":6,"Name":"Search","Instant":true,"MonsterStatestate":"Search"},{"Type":"DeFrag.Monsters.BehaviorDesignerTasks.RunMonsterState","NodeData":{"Offset":"(500,260)"},"ID":7,"Name":"Idle","Instant":true,"MonsterStatestate":"Idle"}]}}'
+      fieldSerializationData:
+        typeName: []
+        fieldNameHash: 
+        startIndex: 
+        dataPosition: 
+        unityObjects: []
+        byteData: 
+        byteDataArray: 
+      Version: 1.7.14
+  gizmoViewMode: 2
+  showBehaviorDesignerGizmo: 1
 --- !u!64 &1689457401
 MeshCollider:
   m_ObjectHideFlags: 0

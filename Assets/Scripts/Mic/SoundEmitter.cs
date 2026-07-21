@@ -5,83 +5,168 @@ namespace EasyPeasyFirstPersonController
     public class SoundEmitter : MonoBehaviour
     {
         [Header("Sound Settings")]
-        public float soundBaseRange = 15f;          // ±âº» ¼Ò¸® ¹üÀ§
-        public float soundRangeMultiplier = 10f;    // º¼·ı¿¡ µû¸¥ ¹üÀ§ ¹è¼ö
-        public float micSensitivity = 100f;         // ¸¶ÀÌÅ© °¨µµ
-        public float noiseThreshold = 0.01f;        // ³ëÀÌÁî ÇÊÅÍ (ÀÌ ÀÌÇÏ´Â ¹«½Ã)
+        public float soundBaseRange = 15f;
+        public float soundRangeMultiplier = 10f;
+        public float micSensitivity = 100f;
+        public float noiseThreshold = 0.01f;
+
+        [Header("Continuous Voice Detection")]
+        [Tooltip("ì›Œí‚¤í† í‚¤ ì‚¬ìš© ì—¬ë¶€ì™€ ê´€ê³„ì—†ì´ í”Œë ˆì´ì–´ ëª©ì†Œë¦¬ë¥¼ ê³„ì† ê°ì§€í•©ë‹ˆë‹¤.")]
+        [SerializeField] private bool listenContinuously = true;
 
         private AudioClip micInput;
         private string micDevice;
+        private bool ownsMicrophoneCapture;
+        private bool isWalkieTransmitting;
 
-        public bool IsMicActive { get; private set; } = false;
-        public float CurrentVolume { get; private set; } = 0f;
+        public bool IsMicActive { get; private set; }
+        public float CurrentVolume { get; private set; }
+        public bool IsWalkieTransmitting => isWalkieTransmitting;
 
-        // ÇöÀç ¼Ò¸® °¨Áö ¹üÀ§ (º¼·ı¿¡ µû¶ó µ¿ÀûÀ¸·Î º¯ÇÔ)
         public float CurrentSoundRange =>
-            IsMicActive ? soundBaseRange + (CurrentVolume * soundRangeMultiplier) : 0f;
+            IsMicActive ? soundBaseRange + CurrentVolume * soundRangeMultiplier : 0f;
 
-        void Start()
+        private void Start()
         {
             InitializeMicrophone();
+
+            // ì¼ë°˜ ê²Œì„ì—ì„œëŠ” SettingManagerì˜ ì§€ì† ìº¡ì²˜ ë²„í¼ë¥¼ ê³µìœ í•©ë‹ˆë‹¤.
+            // SettingManagerê°€ ì—†ëŠ” ë…ë¦½ í…ŒìŠ¤íŠ¸ ì”¬ì—ì„œë§Œ ì§ì ‘ ë§ˆì´í¬ë¥¼ ì—½ë‹ˆë‹¤.
+            if (listenContinuously && SettingManager.Instance == null)
+                StartOwnedMicrophone();
         }
 
-        void Update()
+        private void Update()
         {
+            if (TryUpdateFromManagedMicrophone())
+                return;
+
+            IsMicActive = ownsMicrophoneCapture &&
+                          !string.IsNullOrEmpty(micDevice) &&
+                          Microphone.IsRecording(micDevice);
+
             if (IsMicActive)
-                UpdateVolume();
+                UpdateOwnedMicrophoneVolume();
+            else
+                CurrentVolume = 0f;
         }
 
-        void InitializeMicrophone()
+        private void InitializeMicrophone()
         {
             if (Microphone.devices.Length == 0)
             {
-                Debug.LogWarning("¸¶ÀÌÅ© ¾øÀ½");
+                Debug.LogWarning("[SoundEmitter] ì‚¬ìš©í•  ìˆ˜ ìˆëŠ” ë§ˆì´í¬ê°€ ì—†ìŠµë‹ˆë‹¤.");
                 return;
             }
-            micDevice = Microphone.devices[0];
+
+            string selectedMic = SettingManager.Instance != null
+                ? SettingManager.Instance.SelectedMic
+                : null;
+            micDevice = !string.IsNullOrEmpty(selectedMic)
+                ? selectedMic
+                : Microphone.devices[0];
         }
 
+        // ê¸°ì¡´ ì›Œí‚¤í† í‚¤ ìƒíƒœ ì½”ë“œì™€ì˜ í˜¸í™˜ìš© APIì…ë‹ˆë‹¤.
         public void StartMic()
         {
-            if (micDevice == null) return;
-            micInput = Microphone.Start(micDevice, true, 1, AudioSettings.outputSampleRate);
-            IsMicActive = true;
+            isWalkieTransmitting = true;
+
+            // ì§€ì† ìº¡ì²˜ê°€ ì¥ì¹˜ë¥¼ ê´€ë¦¬í•˜ë©´ ë™ì¼í•œ ë¬¼ë¦¬ ë§ˆì´í¬ë¥¼ ë‹¤ì‹œ ì—´ì§€ ì•ŠìŠµë‹ˆë‹¤.
+            if (HasManagedMicrophone())
+                return;
+
+            StartOwnedMicrophone();
         }
 
+        // ì›Œí‚¤í† í‚¤ ì†¡ì‹  ì¢…ë£Œì™€ ì£¼ë³€ ìŒì„± ê°ì§€ëŠ” ë³„ê°œë¡œ ì²˜ë¦¬í•©ë‹ˆë‹¤.
         public void StopMic()
         {
-            if (micDevice == null) return;
-            Microphone.End(micDevice);
+            isWalkieTransmitting = false;
+
+            if (!listenContinuously)
+                StopOwnedMicrophone();
+        }
+
+        private bool TryUpdateFromManagedMicrophone()
+        {
+            SettingManager manager = SettingManager.Instance;
+            StableMicrophoneInput input = manager != null ? manager.MicrophoneInput : null;
+            if (input == null || !input.IsRecording)
+                return false;
+
+            IsMicActive = true;
+            CurrentVolume = manager.MicInputLevel < noiseThreshold
+                ? 0f
+                : Mathf.Clamp01(manager.MicInputLevel);
+            return true;
+        }
+
+        private bool HasManagedMicrophone()
+        {
+            SettingManager manager = SettingManager.Instance;
+
+            // ì¥ì¹˜ ì¬ì—°ê²° ì¤‘ì—ë„ SettingManagerê°€ ì¥ì¹˜ ì†Œìœ ìì´ë¯€ë¡œ ì¤‘ë³µìœ¼ë¡œ ì—´ì§€ ì•ŠìŠµë‹ˆë‹¤.
+            return manager != null && manager.MicrophoneInput != null;
+        }
+
+        private void StartOwnedMicrophone()
+        {
+            if (ownsMicrophoneCapture)
+                return;
+
+            if (string.IsNullOrEmpty(micDevice))
+                InitializeMicrophone();
+            if (string.IsNullOrEmpty(micDevice))
+                return;
+
+            micInput = Microphone.Start(micDevice, true, 1, AudioSettings.outputSampleRate);
+            ownsMicrophoneCapture = micInput != null;
+            IsMicActive = ownsMicrophoneCapture;
+        }
+
+        private void StopOwnedMicrophone()
+        {
+            if (ownsMicrophoneCapture && !string.IsNullOrEmpty(micDevice) && Microphone.IsRecording(micDevice))
+                Microphone.End(micDevice);
+
+            ownsMicrophoneCapture = false;
+            micInput = null;
             IsMicActive = false;
             CurrentVolume = 0f;
         }
 
-        void UpdateVolume()
+        private void UpdateOwnedMicrophoneVolume()
         {
-            if (micInput == null) return;
+            if (micInput == null)
+                return;
 
-            float[] samples = new float[256];
-            int micPosition = Microphone.GetPosition(micDevice) - 256;
-            if (micPosition < 0) return;
+            const int sampleCount = 256;
+            int micPosition = Microphone.GetPosition(micDevice) - sampleCount;
+            if (micPosition < 0)
+                return;
 
+            float[] samples = new float[sampleCount];
             micInput.GetData(samples, micPosition);
 
-            // RMS(Æò±Õ Á¦°ö±Ù)·Î º¼·ı ÃøÁ¤
             float sum = 0f;
             foreach (float sample in samples)
                 sum += sample * sample;
 
             float rmsVolume = Mathf.Sqrt(sum / samples.Length) * micSensitivity;
-
-            // ³ëÀÌÁî ÇÊÅÍ
             CurrentVolume = rmsVolume < noiseThreshold ? 0f : Mathf.Clamp01(rmsVolume);
         }
 
-        void OnDrawGizmos()
+        private void OnDisable()
         {
-            if (!IsMicActive) return;
+            StopOwnedMicrophone();
+        }
 
-            // ÇöÀç ¼Ò¸® ¹üÀ§ ½Ã°¢È­
+        private void OnDrawGizmos()
+        {
+            if (!IsMicActive)
+                return;
+
             Gizmos.color = new Color(1f, 0.5f, 0f, 0.3f);
             Gizmos.DrawWireSphere(transform.position, CurrentSoundRange);
         }
