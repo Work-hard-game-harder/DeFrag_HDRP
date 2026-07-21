@@ -239,7 +239,7 @@ namespace StarterAssets
         private void Move()
         {
             // 입력에 따른 가속/감속 목표 속도 설정
-            float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
+            float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
 
             if (_input.move == Vector2.zero) targetSpeed = 0.0f;
 

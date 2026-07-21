@@ -199,7 +199,7 @@ MonoBehaviour:
     m_Value: 50
   meanFreePath:
     m_OverrideState: 1
-    m_Value: 10
+    m_Value: 20
   enableVolumetricFog:
     m_OverrideState: 1
     m_Value: 1
@@ -291,6 +291,37 @@ MonoBehaviour:
   m_HighQualityFiltering:
     m_OverrideState: 0
     m_Value: 1
+--- !u!114 &-4370836510917119106
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb593a25d0a7c294b89976cac3ec736f, type: 3}
+  m_Name: SyntheticVisionPostProcess
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Rendering.SyntheticVisionPostProcess
+  active: 1
+  intensity:
+    m_OverrideState: 1
+    m_Value: 0.7
+  sharpening:
+    m_OverrideState: 1
+    m_Value: 0.08
+  colorSteps:
+    m_OverrideState: 1
+    m_Value: 48
+  quantization:
+    m_OverrideState: 1
+    m_Value: 0.513
+  peripheralFalloff:
+    m_OverrideState: 1
+    m_Value: 0.12
+  peripheralStart:
+    m_OverrideState: 1
+    m_Value: 0.55
 --- !u!114 &-788243014141731366
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -379,6 +410,7 @@ MonoBehaviour:
   - {fileID: 1245754329985834038}
   - {fileID: -7075517137905248484}
   - {fileID: -7054616876923267890}
+  - {fileID: -4370836510917119106}
 --- !u!114 &1245754329985834038
 MonoBehaviour:
   m_ObjectHideFlags: 3

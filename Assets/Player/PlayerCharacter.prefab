@@ -1998,6 +1998,11 @@ GameObject:
   - component: {fileID: 6812459037621148290}
   - component: {fileID: 3598217460136852094}
   - component: {fileID: 5079052627790923466}
+  - component: {fileID: 7349012846091223003}
+  - component: {fileID: 7349012846091223001}
+  - component: {fileID: 7349012846091223002}
+  - component: {fileID: 7349012846091223004}
+  - component: {fileID: 7349012846091223005}
   m_Layer: 7
   m_Name: PlayerCharacter
   m_TagString: Player
@@ -2358,6 +2363,92 @@ MonoBehaviour:
   soundRangeMultiplier: 10
   micSensitivity: 100
   noiseThreshold: 0.01
+--- !u!114 &7349012846091223003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7592877399013546989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ca831e2973968744bd12d479291d220, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerStats
+  Health: 2
+  Inventory: []
+--- !u!114 &7349012846091223001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7592877399013546989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da614d796ab648479fded0e570fa5a8f, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Player.PlayerStamina
+  maximumStamina: 10
+  sprintDurationAtFullStamina: 10
+  recoveryDelay: 3
+  fullRecoveryDuration: 20
+  exhaustedSprintThreshold: 0.33333334
+--- !u!114 &7349012846091223002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7592877399013546989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef78683611c242f2b7468e91e9075cea, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Player.PlayerLocalFeedback
+  playerCamera: {fileID: 5720831487311112839}
+  playerStats: {fileID: 7349012846091223003}
+  damageColor: {r: 0.65, g: 0, b: 0, a: 0.38}
+  damageFlashDuration: 0.25
+  damageShakeDuration: 0.3
+  damagePositionAmplitude: 0.045
+  damageRotationAmplitude: 1.5
+  damageShakeFrequency: 24
+  breathingDuration: 3
+  breathingCycles: 3
+  breathingAmplitude: 0.04
+--- !u!114 &7349012846091223004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7592877399013546989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 86b949450a054e48a13488ee60b82f5b, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Player.PlayerSprintVisuals
+  sprintIntensity: 0.55
+  edgeStart: 0.44
+  blurRadius: 0.018
+  fadeInDuration: 0.2
+  fadeOutDuration: 0.3
+--- !u!114 &7349012846091223005
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7592877399013546989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9274de2e3b50463c971641677f3958e7, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Player.PlayerFlashlight
+  toggleKey: 116
+  spotLight: {fileID: 0}
+  startsOn: 0
 --- !u!1 &7902942776951587776
 GameObject:
   m_ObjectHideFlags: 0

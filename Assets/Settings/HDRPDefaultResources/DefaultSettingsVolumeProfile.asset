@@ -1000,6 +1000,8 @@ MonoBehaviour:
   - {fileID: 2694007586698391025}
   - {fileID: -4494335842594935068}
   - {fileID: -9049432483783011465}
+  - {fileID: 5053855892907329898}
+  - {fileID: 6288006121826421579}
 --- !u!114 &149396139019439416
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -2072,6 +2074,28 @@ MonoBehaviour:
   scale:
     m_OverrideState: 1
     m_Value: 1
+--- !u!114 &5053855892907329898
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e5ceaa3575664f32a4d6372da34bd924, type: 3}
+  m_Name: SprintEdgeBlur
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Player.SprintEdgeBlur
+  active: 1
+  intensity:
+    m_OverrideState: 1
+    m_Value: 0
+  edgeStart:
+    m_OverrideState: 1
+    m_Value: 0.42
+  blurRadius:
+    m_OverrideState: 1
+    m_Value: 0.012
 --- !u!114 &5068645084824082595
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -2476,6 +2500,37 @@ MonoBehaviour:
   screenFadeDistance:
     m_OverrideState: 1
     m_Value: 0.1
+--- !u!114 &6288006121826421579
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb593a25d0a7c294b89976cac3ec736f, type: 3}
+  m_Name: SyntheticVisionPostProcess
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Rendering.SyntheticVisionPostProcess
+  active: 1
+  intensity:
+    m_OverrideState: 1
+    m_Value: 0
+  sharpening:
+    m_OverrideState: 1
+    m_Value: 0.1
+  colorSteps:
+    m_OverrideState: 1
+    m_Value: 48
+  quantization:
+    m_OverrideState: 1
+    m_Value: 0.12
+  peripheralFalloff:
+    m_OverrideState: 1
+    m_Value: 0.12
+  peripheralStart:
+    m_OverrideState: 1
+    m_Value: 0.55
 --- !u!114 &6602852475616759347
 MonoBehaviour:
   m_ObjectHideFlags: 3

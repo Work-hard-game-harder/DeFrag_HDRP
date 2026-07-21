@@ -1,5 +1,6 @@
 namespace EasyPeasyFirstPersonController
 {
+    using DeFrag.Player;
     using UnityEngine;
 
     public partial class FirstPersonController : MonoBehaviour
@@ -56,6 +57,7 @@ namespace EasyPeasyFirstPersonController
         private float bobTimer;
         private float fovVelocity;
         private float originalCamY;
+        private ISprintGate sprintGate;
 
         [Header("Height Settings")]
         public float standingCameraHeight = 1.75f;
@@ -123,7 +125,9 @@ namespace EasyPeasyFirstPersonController
             characterController = GetComponent<CharacterController>();
             standingCharacterControllerHeight = characterController.height;
             standingCharacterControllerCenter = characterController.center;
-            input = GetComponent<IInputManager>();
+            IInputManager sourceInput = GetComponent<IInputManager>();
+            sprintGate = GetComponent<PlayerStamina>();
+            input = sprintGate == null ? sourceInput : new SprintGatedInput(sourceInput, sprintGate);
             states = new PlayerStateFactory(this);
 
             currentState = states.Grounded();
@@ -134,6 +138,7 @@ namespace EasyPeasyFirstPersonController
         {
             if (SettingManager.IsGamePaused)
             {
+                sprintGate?.SetSprinting(false);
                 moveDirection = Vector3.zero;
                 _animBlendSpeed = 0f;
                 if (_animator != null)
@@ -182,12 +187,46 @@ namespace EasyPeasyFirstPersonController
             }
 
             currentState.UpdateState();
+            ReportSprintState();
             HandleRotation();
             UpdateVisuals();
 
             UpdateAnimation(); //애니메이션 업데이트
         }
 
+
+        private void ReportSprintState()
+        {
+            if (sprintGate == null)
+                return;
+
+            bool stateSupportsSprint = currentState is PlayerGroundedState
+                || currentState is PlayerWakieTakieState
+                || currentState is PlayerSwimmingState;
+            bool isMoving = input.moveInput != Vector2.zero;
+            sprintGate.SetSprinting(stateSupportsSprint && input.sprint && isMoving);
+        }
+
+        private sealed class SprintGatedInput : IInputManager
+        {
+            private readonly IInputManager source;
+            private readonly ISprintGate gate;
+
+            public SprintGatedInput(IInputManager source, ISprintGate gate)
+            {
+                this.source = source;
+                this.gate = gate;
+            }
+
+            public Vector2 moveInput => source.moveInput;
+            public Vector2 lookInput => source.lookInput;
+            public bool jump => source.jump;
+            public bool sprint => source.sprint && gate.CanSprint;
+            public bool crouch => source.crouch;
+            public bool slide => source.slide;
+            public bool ledgeGrab => source.ledgeGrab;
+            public bool wakietakie => source.wakietakie;
+        }
 
         public void PickUpWakieTakie()
         {
