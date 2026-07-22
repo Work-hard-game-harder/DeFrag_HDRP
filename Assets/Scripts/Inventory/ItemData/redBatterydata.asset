@@ -9,13 +9,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 313766527103852449cfa707a414286f, type: 3}
+  m_Script: {fileID: 11500000, guid: b62165fd02454b449bfa2d0b2694883f, type: 3}
   m_Name: redBatterydata
-  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  m_EditorClassIdentifier: Assembly-CSharp::BatteryItemData
   itemName: "\uBE68\uAC04\uBC30\uD130\uB9AC"
   icon: {fileID: -155193768, guid: a4b6a94f7425cdf49a7e5ef630309114, type: 3}
   type: 0
-  itemID: redBATTERY
+  itemID: itemBattery_red
   itemPrefab: {fileID: 5648317206521548112, guid: 39b14f9c0367bdc43866efea45616ef4, type: 3}
   impactSound: {fileID: 8300000, guid: ff697d3070687ce4583faa0561a145a2, type: 3}
   impactVolume: 1
@@ -25,3 +25,4 @@ MonoBehaviour:
     \uB0A8\uC9C0 \uC54A\uC558\uB2E4."
   triggerSubtitleOnPickup: 0
   pickupSubtitles: []
+  rechargeRatio: 0.1

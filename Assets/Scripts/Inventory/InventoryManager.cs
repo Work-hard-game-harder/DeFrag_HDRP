@@ -72,6 +72,11 @@ public class InventoryManager : MonoBehaviour
         return true;
     }
 
+    public bool ContainsItemOfType<T>() where T : ItemData
+    {
+        return items.Exists(item => item.itemData is T);
+    }
+
     private void RefreshInventory()
     {
         inventoryUI?.UpdateUI();

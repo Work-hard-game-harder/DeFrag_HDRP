@@ -50,7 +50,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: ca8095548941e1748a00e9d06d60b902, type: 3}
       propertyPath: m_Name
-      value: ConnectionDevice
+      value: Terminal
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -63,7 +63,7 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 618710890111500002}
   m_SourcePrefab: {fileID: 100100000, guid: ca8095548941e1748a00e9d06d60b902, type: 3}
---- !u!1 &618710890111500000 stripped
+--- !u!1 &7427562240513797059 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: ca8095548941e1748a00e9d06d60b902, type: 3}
   m_PrefabInstance: {fileID: 7770232528054572690}
@@ -74,22 +74,24 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 618710890111500000}
+  m_GameObject: {fileID: 7427562240513797059}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 98b13a4498514dac96ff5531a22b9bc1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ConnectionDevice
+  terminalId: terminal_01
+  displayName: TERMINAL 01
   requiredHackingPad: {fileID: 11400000, guid: 8bc2e24d4126165439a2c6052d23ef6d, type: 2}
+  availableCommands: 2
   interactionText: "\uD574\uD0B9\uD328\uB4DC \uC5F0\uACB0 (E \uAE38\uAC8C \uB204\uB974\uAE30)"
-  minigamePrefab: {fileID: 0}
 --- !u!65 &618710890111500002
 BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 618710890111500000}
+  m_GameObject: {fileID: 7427562240513797059}
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2

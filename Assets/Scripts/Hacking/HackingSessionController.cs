@@ -16,7 +16,7 @@ public sealed class HackingSessionController : MonoBehaviour
     private Renderer[] localRenderers;
     private bool[] rendererStates;
     private Canvas sessionCanvas;
-    private HackingMinigameBase activeMinigame;
+    private TerminalScreenController terminalScreen;
 
     public bool IsActive { get; private set; }
 
@@ -28,8 +28,7 @@ public sealed class HackingSessionController : MonoBehaviour
 
     public void Begin(
         GameObject localHeldPad,
-        ConnectionDevice device,
-        HackingMinigameBase minigamePrefab)
+        ConnectionDevice device)
     {
         if (IsActive || localHeldPad == null || device == null) return;
 
@@ -39,25 +38,18 @@ public sealed class HackingSessionController : MonoBehaviour
         SetCursorForUi(true);
         IsActive = true;
 
-        if (minigamePrefab != null)
-        {
-            EnsureSessionCanvas();
-            activeMinigame = Instantiate(minigamePrefab, sessionCanvas.transform, false);
-            activeMinigame.Succeeded += HandleSuccess;
-            activeMinigame.Cancelled += End;
-            activeMinigame.Begin(device);
-        }
-        else
-        {
-            Debug.Log("[Hacking] No minigame prefab is assigned yet. Press Escape to leave the session.");
-        }
+        EnsureSessionCanvas();
+        GameObject screen = new GameObject("Terminal Interface", typeof(RectTransform));
+        screen.transform.SetParent(sessionCanvas.transform, false);
+        terminalScreen = screen.AddComponent<TerminalScreenController>();
+        terminalScreen.Initialize(device, End);
     }
 
     public void End()
     {
         if (!IsActive) return;
 
-        DestroyActiveMinigame();
+        DestroyTerminalScreen();
         RestoreLocalHeldVisual();
         SetGameplayEnabled(true);
         SetCursorForUi(false);
@@ -128,21 +120,11 @@ public sealed class HackingSessionController : MonoBehaviour
         canvasObject.AddComponent<GraphicRaycaster>();
     }
 
-    private void HandleSuccess()
+    private void DestroyTerminalScreen()
     {
-        // Device-specific success effects will be invoked here when the
-        // ConnectionDevice task/result model is added.
-        End();
-    }
-
-    private void DestroyActiveMinigame()
-    {
-        if (activeMinigame == null) return;
-        activeMinigame.Succeeded -= HandleSuccess;
-        activeMinigame.Cancelled -= End;
-        activeMinigame.End();
-        Destroy(activeMinigame.gameObject);
-        activeMinigame = null;
+        if (terminalScreen == null) return;
+        Destroy(terminalScreen.gameObject);
+        terminalScreen = null;
     }
 
     private void SetGameplayEnabled(bool enabled)

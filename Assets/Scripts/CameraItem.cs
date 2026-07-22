@@ -2,103 +2,83 @@ using UnityEngine;
 using UnityEngine.Rendering.PostProcessing;
 using UnityEngine.UI;
 
-public class CameraItem : MonoBehaviour
+[RequireComponent(typeof(CameraBattery))]
+public sealed class CameraItem : MonoBehaviour
 {
     public enum CameraMode { Normal, Infrared }
-    public CameraMode currentMode = CameraMode.Normal;
 
-    public AudioSource audioSource;
-    public AudioClip clickSound;   // 모드 전환 사운드
-    public AudioClip shutterSound; // 촬영 사운드
+    [Header("Audio")]
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip clickSound;
+    [SerializeField] private AudioClip shutterSound;
 
-    private bool isActive = false; // G키로 활성화 여부
-    private Camera cameraView;
+    [Header("View")]
+    [SerializeField] private PostProcessProfile normalProfile;
+    [SerializeField] private PostProcessProfile infraredProfile;
+    [SerializeField] private PostProcessVolume volume;
 
-    public PostProcessProfile normalProfile;
-    public PostProcessProfile infraredProfile;
-    public PostProcessVolume volume;
+    [Header("Battery")]
+    [SerializeField] private Image batteryBar;
+    [SerializeField, UnityEngine.Min(0f)] private float batteryDrainRate = 0.33f;
 
-    [Header("Battery Settings")]
-    [SerializeField] private Image batteryBar;   // UI 게이지바 연결
-    [SerializeField] private float maxBatteryLife = 100f;    // 최대 배터리 용량
-    [SerializeField] public float batteryLife = 100f;   // 배터리 잔량
-    [SerializeField] public float batteryDrainRate = 0.33f; // 초당 소모량
+    private CameraBattery battery;
+    private CameraMode currentMode;
 
-    private bool isInfrared = false;
-
-    void Start()
+    private void Awake()
     {
-        cameraView = GetComponent<Camera>();
-        // cameraView.enabled = false; // 처음엔 꺼둠
+        battery = GetComponent<CameraBattery>();
+        SetMode(CameraMode.Normal);
     }
 
-    void Update()
+    public void Bind(CameraBattery sharedBattery)
     {
-        // G키로 카메라 활성화
-        /* if (Input.GetKeyDown(KeyCode.G))
-        {
-            isActive = !isActive;
-            cameraView.enabled = isActive;
-        }
+        battery = sharedBattery;
+    }
 
-        if (!isActive) return;
-
-        */
-
-        // 모드 전환 (우클릭)
+    private void Update()
+    {
         if (Input.GetMouseButtonDown(1))
-        {
             ToggleMode();
-        }
 
-        // 촬영 (좌클릭)
         if (Input.GetMouseButtonDown(0))
-        {
             TakePhoto();
-        }
 
-        // 적외선 모드일 때 배터리 소모
         if (currentMode == CameraMode.Infrared)
         {
-            batteryLife -= batteryDrainRate * Time.deltaTime;
-            if (batteryLife <= 0)
-            {
-                batteryLife = 0;
-                currentMode = CameraMode.Normal; // 배터리 다 닳으면 일반 모드로 강제 전환
-            }
+            battery.Drain(batteryDrainRate * Time.deltaTime);
+            if (battery.IsEmpty)
+                SetMode(CameraMode.Normal);
         }
 
-        // 배터리 UI 업데이트
         if (batteryBar != null)
         {
-            float batteryLevel = batteryLife / maxBatteryLife;
-            batteryBar.fillAmount = batteryLevel;
-            batteryBar.color = Color.Lerp(Color.red, Color.green, batteryLevel);
+            batteryBar.fillAmount = battery.ChargeRatio;
+            batteryBar.color = Color.Lerp(Color.red, Color.green, battery.ChargeRatio);
         }
     }
 
-    void ToggleMode()
+    private void ToggleMode()
     {
-        currentMode = (currentMode == CameraMode.Normal) ? CameraMode.Infrared : CameraMode.Normal;
-        audioSource.PlayOneShot(clickSound);
-        // 적외선 모드일 때 화면 효과 적용
+        if (currentMode == CameraMode.Normal && battery.IsEmpty)
+            return;
 
-        if (currentMode == CameraMode.Infrared)
-        {
-            volume.profile = infraredProfile;
-            Debug.Log("Infrared Mode");
-        }
-        else
-        {
-            volume.profile = normalProfile;
-            Debug.Log("Normal Mode");
-        }
+        SetMode(currentMode == CameraMode.Normal
+            ? CameraMode.Infrared
+            : CameraMode.Normal);
+        audioSource.PlayOneShot(clickSound);
     }
 
-    void TakePhoto()
+    private void SetMode(CameraMode mode)
+    {
+        currentMode = mode;
+        volume.profile = mode == CameraMode.Infrared
+            ? infraredProfile
+            : normalProfile;
+    }
+
+    private void TakePhoto()
     {
         audioSource.PlayOneShot(shutterSound);
-        // 여기에 이벤트 트리거 작성
         Debug.Log("Photo Taken!");
     }
 }

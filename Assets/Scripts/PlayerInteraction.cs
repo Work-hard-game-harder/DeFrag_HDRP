@@ -98,7 +98,13 @@ public class PlayerInteraction : MonoBehaviour
 
     void HandleInteractionInput()
     {
-        if (targetInteractable == null) return;
+        if (targetInteractable == null)
+        {
+            if (Input.GetKeyDown(KeyCode.E))
+                Camera.main.GetComponent<EquipmentController>().TryUseEquippedItem();
+
+            return;
+        }
 
         if (!targetInteractable.IsHoldInteraction())
         {

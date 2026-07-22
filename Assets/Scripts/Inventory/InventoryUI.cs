@@ -120,6 +120,7 @@ public class InventoryUI : MonoBehaviour
     }
 }
 
+[RequireComponent(typeof(CameraBattery), typeof(HackingSessionController))]
 public sealed class EquipmentController : MonoBehaviour
 {
     private InventoryUI inventoryUI;
@@ -127,6 +128,7 @@ public sealed class EquipmentController : MonoBehaviour
     private ItemData equippedData;
     private GameObject heldVisual;
     private FirstPersonController playerController;
+    private CameraBattery cameraBattery;
 
     public ItemData EquippedData => equippedData;
     public GameObject HeldVisual => heldVisual;
@@ -134,6 +136,7 @@ public sealed class EquipmentController : MonoBehaviour
     private void Awake()
     {
         playerController = transform.root.GetComponentInChildren<FirstPersonController>(true);
+        cameraBattery = GetComponent<CameraBattery>();
         EnsureHandPoint(transform);
     }
 
@@ -163,6 +166,23 @@ public sealed class EquipmentController : MonoBehaviour
         if (selectedData == equippedData && (selectedData == null || heldVisual != null)) return;
 
         Equip(selectedData);
+    }
+
+    public bool TryUseEquippedItem()
+    {
+        InventoryInfo selected = inventoryUI.GetSelectedItem();
+
+        if (selected.itemData is not BatteryItemData battery)
+            return false;
+
+        if (!InventoryManager.Instance.ContainsItemOfType<CameraItemData>())
+            return false;
+
+        if (!cameraBattery.TryRecharge(battery.RechargeRatio))
+            return false;
+
+        InventoryManager.Instance.RemoveItem(selected);
+        return true;
     }
 
     private void Equip(ItemData data)
@@ -199,6 +219,9 @@ public sealed class EquipmentController : MonoBehaviour
         }
 
         PrepareAsHeldVisual(heldVisual);
+
+        if (data is CameraItemData)
+            heldVisual.GetComponentInChildren<CameraItem>(true).Bind(cameraBattery);
 
         if (data.supportsCloseInspection)
         {
