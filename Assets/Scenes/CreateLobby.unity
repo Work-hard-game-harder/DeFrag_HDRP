@@ -149,6 +149,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LobbyManager
   joinCodeText: {fileID: 0}
+  joinCodeInput: {fileID: 0}
+  lobbySceneName: LobbyScene
+  gameplaySceneName: B5F
+  transportFailureSceneName: MainLobby
+  lobbyAvatarPrefab: {fileID: 7592877399013546989, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
+  gameplayPlayerPrefab: {fileID: 8628133643110585351, guid: 7efe8505741782948b7e79c6eedc993c, type: 3}
+  maxClientConnections: 1
+  relayProtocol: 1
 --- !u!4 &120048977
 Transform:
   m_ObjectHideFlags: 0
@@ -249,7 +257,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 120048976}
         m_TargetAssemblyTypeName: LobbyManager, Assembly-CSharp
-        m_MethodName: StartHostWithRelay
+        m_MethodName: BeginHostFlow
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1141,6 +1149,7 @@ GameObject:
   - component: {fileID: 1821212743}
   - component: {fileID: 1821212742}
   - component: {fileID: 1821212741}
+  - component: {fileID: 1821212744}
   m_Layer: 0
   m_Name: EventSystem
   m_TagString: Untagged
@@ -1179,6 +1188,18 @@ MonoBehaviour:
   m_PointerBehavior: 0
   m_CursorLockBehavior: 0
   m_ScrollDeltaPerTick: 6
+--- !u!114 &1821212744
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1821212740}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d4444444444444444444444444444444, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::UIInputModuleBootstrap
 --- !u!114 &1821212742
 MonoBehaviour:
   m_ObjectHideFlags: 0

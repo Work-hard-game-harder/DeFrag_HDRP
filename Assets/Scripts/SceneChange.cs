@@ -1,26 +1,35 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.EventSystems;
-using System.Collections;
+using Unity.Netcode;
 
 public class SceneChange : MonoBehaviour
 {
-    public string sceneName;
-    public Scene[] scenelist;
-    public GameObject floorCanvas;
+    [SerializeField] private string sceneName;
+    [SerializeField] private Scene[] scenelist;
+    [SerializeField] private GameObject floorCanvas;
+    [SerializeField] private string mainLobbySceneName = "MainLobby";
+    [Min(0f)] [SerializeField] private float sceneLoadDelay = 1f;
 
-    public void Start()
+    private void Start()
     {
         if (floorCanvas != null)
+        {
             floorCanvas.SetActive(false);
+        }
     }
-    public void SavedSceneName()
+
+    public void SelectScene(string selectedSceneName)
     {
         AudioManager.Instance.PlaySFX("StageSelect");
-        if (EventSystem.current == null || EventSystem.current.currentSelectedGameObject == null)
-            return;
 
-        sceneName = EventSystem.current.currentSelectedGameObject.name;
+        if (string.IsNullOrWhiteSpace(selectedSceneName))
+        {
+            Debug.LogWarning("ÏÑ†ÌÉùÌï† Ïî¨Ïù¥ ÏÑ§Ï†ïÎêòÏßÄ ÏïäÏïòÏäµÎãàÎã§.");
+            return;
+        }
+
+        sceneName = selectedSceneName;
     }
 
     public void OnSelectedFloor()
@@ -38,25 +47,38 @@ public class SceneChange : MonoBehaviour
 
     public void ChangeScene()
     {
-        AudioManager.Instance.StopBGM(); // BGM ≤Ù±‚
+        AudioManager.Instance.StopBGM();
         AudioManager.Instance.PlaySFX("StageCheck");
-        if (string.IsNullOrEmpty(sceneName))
-            return;
 
-        Debug.Log("¿Ãµø«œ∑¡¥¬ æ¿ ¿Ã∏ß: " + sceneName);
-        StartCoroutine(LoadSceneWithDelay(sceneName, 1f));
+        if (string.IsNullOrWhiteSpace(sceneName))
+        {
+            return;
+        }
+
+        StartCoroutine(LoadSceneWithDelay(sceneName, sceneLoadDelay));
     }
 
-    IEnumerator LoadSceneWithDelay(string sceneName, float delay)
+    private static IEnumerator LoadSceneWithDelay(string targetSceneName, float delay)
     {
         yield return new WaitForSeconds(delay);
-        SceneManager.LoadScene(sceneName, LoadSceneMode.Single);
 
+        NetworkManager networkManager = NetworkManager.Singleton;
+        if (networkManager != null && networkManager.IsListening)
+        {
+            if (networkManager.IsServer)
+            {
+                networkManager.SceneManager.LoadScene(targetSceneName, LoadSceneMode.Single);
+            }
+
+            yield break;
+        }
+
+        SceneManager.LoadScene(targetSceneName, LoadSceneMode.Single);
     }
 
     public void BackMainScene()
     {
         AudioManager.Instance.PlaySFX("Button1");
-        SceneManager.LoadScene("MainLobby", LoadSceneMode.Single);
+        SceneManager.LoadScene(mainLobbySceneName, LoadSceneMode.Single);
     }
 }

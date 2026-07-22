@@ -9497,6 +9497,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SettingManager
   settingPanel: {fileID: 3013520277582335641}
   settingCanvas: {fileID: 3082068224047972869}
+  cursorVisibleSceneNames:
+  - MainLobby
+  - LobbyScene
+  - CreateLobby
   bgmSlider: {fileID: 6506661823539920023}
   sfxSlider: {fileID: 868373718867053523}
   mouseSensitivitySlider: {fileID: 7411424651568203211}

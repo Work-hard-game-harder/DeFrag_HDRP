@@ -1,57 +1,19 @@
-using UnityEngine;
 using TMPro;
-using Unity.Netcode;
-using System.Collections; // CoroutineÀ» À§ÇØ ÇÊ¿ä
+using UnityEngine;
 
-public class DisplayCode : MonoBehaviour
+public sealed class DisplayCode : MonoBehaviour
 {
-    public TextMeshProUGUI lobbyCodeText;
+    [SerializeField] private TextMeshProUGUI lobbyCodeText;
 
-    void Start()
+    private void Start()
     {
-        if (lobbyCodeText != null && !string.IsNullOrEmpty(LobbyManager.SavedJoinCode))
+        if (lobbyCodeText == null)
         {
-            lobbyCodeText.text = "Code: " + LobbyManager.SavedJoinCode;
+            return;
         }
-        else if (lobbyCodeText != null)
-        {
-            lobbyCodeText.text = "ÄÚµå¸¦ ºÒ·¯¿Ã ¼ö ¾ø½À´Ï´Ù.";
-        }
-        if (NetworkManager.Singleton.IsHost)
-        {
-            StartCoroutine(WaitAndSetPosition());
-        }
-    }
 
-    IEnumerator WaitAndSetPosition()
-    {
-        // Ä³¸¯ÅÍ ¿ÀºêÁ§Æ®°¡ »ý¼ºµÉ ¶§±îÁö ÃÖ´ë 1ÃÊ Á¤µµ ´ë±â (¾ÈÀüÀåÄ¡)
-        float timer = 0;
-        while (NetworkManager.Singleton.LocalClient.PlayerObject == null && timer < 1f)
-        {
-            timer += Time.deltaTime;
-            yield return null;
-        }
-        // ÀÌÁ¦ À§Ä¡¸¦ ¿Å±é´Ï´Ù.
-        SetPlayerPosition();
-    }
-
-    private void SetPlayerPosition()
-    {
-        GameObject spawnPointHost = GameObject.Find("SpawnPoint_Host");
-        if (spawnPointHost != null)
-        {
-            var player = NetworkManager.Singleton.LocalClient.PlayerObject;
-            if (player != null)
-            {
-                player.transform.position = spawnPointHost.transform.position;
-                player.transform.rotation = spawnPointHost.transform.rotation;
-                Debug.Log("È£½ºÆ®°¡ ÁöÁ¤µÈ ½ºÆù Æ÷ÀÎÆ®·Î ÀÌµ¿µÇ¾ú½À´Ï´Ù.");
-            }
-        }
-        else
-        {
-            Debug.LogError("SpawnPoint_Host ¿ÀºêÁ§Æ®¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù!");
-        }
+        lobbyCodeText.text = string.IsNullOrEmpty(LobbyManager.SavedJoinCode)
+            ? "ì½”ë“œë¥¼ ë¶ˆëŸ¬ì˜¬ ìˆ˜ ì—†ìŠµë‹ˆë‹¤."
+            : $"Code: {LobbyManager.SavedJoinCode}";
     }
 }

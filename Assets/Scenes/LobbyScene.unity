@@ -455,6 +455,7 @@ GameObject:
   - component: {fileID: 184286721}
   - component: {fileID: 184286720}
   - component: {fileID: 184286719}
+  - component: {fileID: 184286722}
   m_Layer: 0
   m_Name: EventSystem
   m_TagString: Untagged
@@ -523,6 +524,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &184286722
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 184286718}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d4444444444444444444444444444444, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIInputModuleBootstrap
 --- !u!1 &189826599
 GameObject:
   m_ObjectHideFlags: 0
@@ -882,14 +895,14 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1193106123}
         m_TargetAssemblyTypeName: SceneChange, Assembly-CSharp
-        m_MethodName: SavedSceneName
-        m_Mode: 1
+        m_MethodName: SelectScene
+        m_Mode: 5
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: 
+          m_StringArgument: B5F
           m_BoolArgument: 0
         m_CallState: 2
 --- !u!114 &204379724
@@ -1725,14 +1738,14 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1193106123}
         m_TargetAssemblyTypeName: SceneChange, Assembly-CSharp
-        m_MethodName: SavedSceneName
-        m_Mode: 1
+        m_MethodName: SelectScene
+        m_Mode: 5
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: 
+          m_StringArgument: B1F
           m_BoolArgument: 0
         m_CallState: 2
       - m_Target: {fileID: 1513559864}
@@ -2309,6 +2322,18 @@ PrefabInstance:
     - target: {fileID: 2039077024883816998, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7349012846091223010, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 2522043672
+      objectReference: {fileID: 0}
+    - target: {fileID: 7349012846091223010, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
+      propertyPath: SceneMigrationSynchronization
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7349012846091223010, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
+      propertyPath: InScenePlacedSourceGlobalObjectIdHash
+      value: 4267276813
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2914,14 +2939,14 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1193106123}
         m_TargetAssemblyTypeName: SceneChange, Assembly-CSharp
-        m_MethodName: SavedSceneName
-        m_Mode: 1
+        m_MethodName: SelectScene
+        m_Mode: 5
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 0
           m_FloatArgument: 0
-          m_StringArgument: 
+          m_StringArgument: LobbyF
           m_BoolArgument: 0
         m_CallState: 2
       - m_Target: {fileID: 1513559864}
@@ -3210,6 +3235,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1193106124}
   - component: {fileID: 1193106123}
+  - component: {fileID: 1193106125}
   m_Layer: 0
   m_Name: SceneManager
   m_TagString: Untagged
@@ -3232,6 +3258,8 @@ MonoBehaviour:
   sceneName: 
   scenelist: []
   floorCanvas: {fileID: 995821467}
+  mainLobbySceneName: MainLobby
+  sceneLoadDelay: 1
 --- !u!4 &1193106124
 Transform:
   m_ObjectHideFlags: 0
@@ -3247,6 +3275,20 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1193106125
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1193106122}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2222222222222222222222222222222, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LobbyAvatarSpawnPoints
+  hostSpawnPoint: {fileID: 1651696260}
+  clientSpawnPoint: {fileID: 884791173}
 --- !u!1 &1201623400
 GameObject:
   m_ObjectHideFlags: 0
