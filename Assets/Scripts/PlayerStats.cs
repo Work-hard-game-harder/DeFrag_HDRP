@@ -38,8 +38,8 @@ public class PlayerStats : MonoBehaviour
         GameDataManager.Instance.Inventory = new List<string>(Inventory); */
         UpdateInventoryList();
 
-        GameDataManager.Instance.Health = Health;
-        GameDataManager.Instance.Inventory = new List<string>(Inventory);
+        //GameDataManager.Instance.Health = Health;
+        //GameDataManager.Instance.Inventory = new List<string>(Inventory);
         Debug.Log("GameDataManager에 로드 성공");
     }
     public void UpdateInventoryList()

@@ -6,7 +6,7 @@ public class QuestStep
 {
     public string questTitle;       
     public int targetCount;         
-    
+
     [HideInInspector] 
     public int currentCount = 0;    
 
