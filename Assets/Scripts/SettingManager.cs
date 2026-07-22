@@ -94,6 +94,15 @@ public class SettingManager : MonoBehaviour
     [Header("Pause Panel")]
     [SerializeField] private GameObject PausePanel;
 
+    [Header("Cursor Policy")]
+    [Tooltip("Scenes that keep the cursor visible while no modal menu is open.")]
+    [SerializeField] private string[] cursorVisibleSceneNames =
+    {
+        "MainLobby",
+        "LobbyScene",
+        "CreateLobby"
+    };
+
     private const int PAUSE_PANEL_SORTING_ORDER = 32766;
     private const int SETTING_PANEL_SORTING_ORDER = 32767;
     private const int MENU_OVERLAY_SORTING_ORDER = 32765;
@@ -1335,11 +1344,29 @@ public class SettingManager : MonoBehaviour
         overriddenCanvases.Clear();
     }
 
-    private static void SetPlayerInputLock(bool isLocked)
+    private void SetPlayerInputLock(bool isLocked)
     {
-        bool shouldShowCursor = isLocked || SceneManager.GetActiveScene().name == "MainLobby";
+        bool shouldShowCursor = isLocked || IsCursorVisibleScene(SceneManager.GetActiveScene().name);
         Cursor.lockState = shouldShowCursor ? CursorLockMode.None : CursorLockMode.Locked;
         Cursor.visible = shouldShowCursor;
+    }
+
+    private bool IsCursorVisibleScene(string sceneName)
+    {
+        if (cursorVisibleSceneNames == null)
+        {
+            return false;
+        }
+
+        foreach (string cursorVisibleSceneName in cursorVisibleSceneNames)
+        {
+            if (string.Equals(cursorVisibleSceneName, sceneName, System.StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public void ClosePausePanel()
