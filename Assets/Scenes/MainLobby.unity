@@ -2138,9 +2138,11 @@ MonoBehaviour:
   joinCodeInput: {fileID: 38688406}
   lobbySceneName: LobbyScene
   gameplaySceneName: B5F
+  transportFailureSceneName: MainLobby
   lobbyAvatarPrefab: {fileID: 7592877399013546989, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
   gameplayPlayerPrefab: {fileID: 8628133643110585351, guid: 7efe8505741782948b7e79c6eedc993c, type: 3}
   maxClientConnections: 1
+  relayProtocol: 1
 --- !u!4 &938323646
 Transform:
   m_ObjectHideFlags: 0

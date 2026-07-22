@@ -1,9 +1,11 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using TMPro;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
+using Unity.Networking.Transport.Relay;
 using Unity.Services.Authentication;
 using Unity.Services.Core;
 using Unity.Services.Relay;
@@ -13,6 +15,13 @@ using UnityEngine.SceneManagement;
 
 public sealed class LobbyManager : MonoBehaviour
 {
+    private enum RelayConnectionProtocol
+    {
+        Udp,
+        Dtls,
+        Wss
+    }
+
     [Header("Join UI")]
     [SerializeField] private TextMeshProUGUI joinCodeText;
     [SerializeField] private TMP_InputField joinCodeInput;
@@ -20,6 +29,7 @@ public sealed class LobbyManager : MonoBehaviour
     [Header("Scene Flow")]
     [SerializeField] private string lobbySceneName = "LobbyScene";
     [SerializeField] private string gameplaySceneName = "B5F";
+    [SerializeField] private string transportFailureSceneName = "MainLobby";
 
     [Header("Network Prefabs")]
     [SerializeField] private GameObject lobbyAvatarPrefab;
@@ -27,6 +37,7 @@ public sealed class LobbyManager : MonoBehaviour
 
     [Header("Room")]
     [Min(1)] [SerializeField] private int maxClientConnections = 1;
+    [SerializeField] private RelayConnectionProtocol relayProtocol = RelayConnectionProtocol.Dtls;
 
     public static LobbyManager Instance { get; private set; }
     public static string SavedJoinCode { get; private set; }
@@ -85,13 +96,8 @@ public sealed class LobbyManager : MonoBehaviour
 
             NetworkManager manager = PrepareNetworkManager();
             UnityTransport transport = GetTransport(manager);
-            transport.SetHostRelayData(
-                allocation.RelayServer.IpV4,
-                (ushort)allocation.RelayServer.Port,
-                allocation.AllocationIdBytes,
-                allocation.Key,
-                allocation.ConnectionData,
-                true);
+            ConfigureTransportProtocol(transport);
+            transport.SetRelayServerData(CreateRelayServerData(allocation));
 
             if (!manager.StartHost())
             {
@@ -131,14 +137,8 @@ public sealed class LobbyManager : MonoBehaviour
 
             NetworkManager manager = PrepareNetworkManager();
             UnityTransport transport = GetTransport(manager);
-            transport.SetClientRelayData(
-                allocation.RelayServer.IpV4,
-                (ushort)allocation.RelayServer.Port,
-                allocation.AllocationIdBytes,
-                allocation.Key,
-                allocation.ConnectionData,
-                allocation.HostConnectionData,
-                true);
+            ConfigureTransportProtocol(transport);
+            transport.SetRelayServerData(CreateRelayServerData(allocation));
 
             SavedJoinCode = joinCode;
             if (!manager.StartClient())
@@ -205,6 +205,7 @@ public sealed class LobbyManager : MonoBehaviour
         networkManager = manager;
         manager.OnClientConnectedCallback += HandleClientConnected;
         manager.OnClientDisconnectCallback += HandleClientDisconnected;
+        manager.OnTransportFailure += HandleTransportFailure;
         manager.SceneManager.OnLoadEventCompleted += HandleNetworkSceneLoaded;
     }
 
@@ -217,10 +218,71 @@ public sealed class LobbyManager : MonoBehaviour
 
         networkManager.OnClientConnectedCallback -= HandleClientConnected;
         networkManager.OnClientDisconnectCallback -= HandleClientDisconnected;
+        networkManager.OnTransportFailure -= HandleTransportFailure;
         if (networkManager.SceneManager != null)
         {
             networkManager.SceneManager.OnLoadEventCompleted -= HandleNetworkSceneLoaded;
         }
+    }
+
+    private void HandleTransportFailure()
+    {
+        Debug.LogError("Relay 전송 연결이 끊어졌습니다. 기존 할당을 폐기하고 메인 로비로 돌아갑니다.");
+        StartCoroutine(ResetSessionAfterTransportFailure());
+    }
+
+    private IEnumerator ResetSessionAfterTransportFailure()
+    {
+        NetworkManager failedManager = networkManager;
+        UnsubscribeFromNetworkEvents();
+        lobbyAvatars.Clear();
+        SavedJoinCode = null;
+        isStartingSession = false;
+
+        yield return null;
+
+        if (failedManager != null && failedManager.IsListening && !failedManager.ShutdownInProgress)
+        {
+            failedManager.Shutdown();
+        }
+
+        while (failedManager != null && failedManager.ShutdownInProgress)
+        {
+            yield return null;
+        }
+
+        if (SceneManager.GetActiveScene().name != transportFailureSceneName)
+        {
+            SceneManager.LoadScene(transportFailureSceneName, LoadSceneMode.Single);
+        }
+    }
+
+    private RelayServerData CreateRelayServerData(Allocation allocation)
+    {
+        return allocation.ToRelayServerData(GetRelayConnectionType());
+    }
+
+    private RelayServerData CreateRelayServerData(JoinAllocation allocation)
+    {
+        return allocation.ToRelayServerData(GetRelayConnectionType());
+    }
+
+    private void ConfigureTransportProtocol(UnityTransport transport)
+    {
+        // RelayServerData의 프로토콜과 UnityTransport가 사용하는 네트워크
+        // 인터페이스는 반드시 일치해야 한다. WSS만 WebSocket 인터페이스를 사용한다.
+        transport.UseWebSockets = relayProtocol == RelayConnectionProtocol.Wss;
+    }
+
+    private string GetRelayConnectionType()
+    {
+        return relayProtocol switch
+        {
+            RelayConnectionProtocol.Udp => "udp",
+            RelayConnectionProtocol.Dtls => "dtls",
+            RelayConnectionProtocol.Wss => "wss",
+            _ => throw new ArgumentOutOfRangeException()
+        };
     }
 
     private void HandleClientConnected(ulong clientId)
