@@ -103,13 +103,18 @@ public class SettingManager : MonoBehaviour
         "CreateLobby"
     };
 
-    private const int PAUSE_PANEL_SORTING_ORDER = 32766;
-    private const int SETTING_PANEL_SORTING_ORDER = 32767;
-    private const int MENU_OVERLAY_SORTING_ORDER = 32765;
+    // TMP_Dropdown creates its popup using a separate Canvas at runtime. Keep
+    // enough sorting-order headroom so that popup and blocker canvases can be
+    // rendered and raycast above the settings panel.
+    private const int MENU_OVERLAY_SORTING_ORDER = 29000;
+    private const int PAUSE_PANEL_SORTING_ORDER = 29010;
+    private const int SETTING_PANEL_SORTING_ORDER = 29020;
     private Canvas pauseCanvas;
     private Canvas settingPanelCanvas;
     private Canvas menuOverlayCanvas;
     private readonly Dictionary<Canvas, CanvasRenderState> overriddenCanvases = new Dictionary<Canvas, CanvasRenderState>();
+    private readonly Dictionary<GraphicRaycaster, bool> overriddenRaycasters =
+        new Dictionary<GraphicRaycaster, bool>();
 
     private struct CanvasRenderState
     {
@@ -1286,7 +1291,8 @@ public class SettingManager : MonoBehaviour
                 continue;
 
             Transform canvasTransform = canvas.transform;
-            if ((PausePanel != null && canvasTransform.IsChildOf(PausePanel.transform)) ||
+            if ((menuOverlayCanvas != null && canvasTransform.IsChildOf(menuOverlayCanvas.transform)) ||
+                (PausePanel != null && canvasTransform.IsChildOf(PausePanel.transform)) ||
                 (settingPanel != null && canvasTransform.IsChildOf(settingPanel.transform)))
                 continue;
 
@@ -1302,6 +1308,8 @@ public class SettingManager : MonoBehaviour
                     sortingOrder = canvas.sortingOrder
                 });
             }
+
+            DisableCanvasRaycasters(canvas);
 
             if (canvas.isRootCanvas && canvas.renderMode != RenderMode.WorldSpace && uiCamera != null)
             {
@@ -1342,6 +1350,30 @@ public class SettingManager : MonoBehaviour
         }
 
         overriddenCanvases.Clear();
+
+        foreach (KeyValuePair<GraphicRaycaster, bool> entry in overriddenRaycasters)
+        {
+            if (entry.Key != null)
+                entry.Key.enabled = entry.Value;
+        }
+
+        overriddenRaycasters.Clear();
+    }
+
+    private void DisableCanvasRaycasters(Canvas canvas)
+    {
+        if (canvas == null) return;
+
+        GraphicRaycaster[] raycasters = canvas.GetComponents<GraphicRaycaster>();
+        foreach (GraphicRaycaster raycaster in raycasters)
+        {
+            if (raycaster == null) continue;
+
+            if (!overriddenRaycasters.ContainsKey(raycaster))
+                overriddenRaycasters.Add(raycaster, raycaster.enabled);
+
+            raycaster.enabled = false;
+        }
     }
 
     private void SetPlayerInputLock(bool isLocked)

@@ -18,6 +18,8 @@ public class InventorySlot : MonoBehaviour
 
     private void Awake()
     {
+        ConfigureDisplayGraphics();
+
         if (selectedFrame == null)
         {
             Graphic slotGraphic = GetComponent<Graphic>();
@@ -92,6 +94,16 @@ public class InventorySlot : MonoBehaviour
     {
         icon = itemIcon;
         countText = itemCountText;
+        ConfigureDisplayGraphics();
+    }
+
+    private void ConfigureDisplayGraphics()
+    {
+        // The slot's root Button/Graphic owns pointer input. These child graphics are
+        // visual-only and must not intercept dropdown or other modal-menu raycasts.
+        if (icon != null) icon.raycastTarget = false;
+        if (countImage != null) countImage.raycastTarget = false;
+        if (countText != null) countText.raycastTarget = false;
     }
 
     public void SetSelected(bool selected)

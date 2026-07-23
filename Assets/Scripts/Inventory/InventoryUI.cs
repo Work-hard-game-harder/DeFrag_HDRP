@@ -144,9 +144,10 @@ public sealed class EquipmentController : MonoBehaviour
     {
         if (heldVisual == null) return;
 
-        bool walkieTalkieVisible = playerController != null
-            && playerController.wakieTakie != null
-            && playerController.wakieTakie.activeSelf;
+        bool walkieTalkieVisible = playerController != null &&
+            (playerController.walkieTalkieController != null
+                ? playerController.walkieTalkieController.IsEquipped
+                : playerController.wakieTakie != null && playerController.wakieTakie.activeSelf);
 
         if (heldVisual.activeSelf == walkieTalkieVisible)
             heldVisual.SetActive(!walkieTalkieVisible);

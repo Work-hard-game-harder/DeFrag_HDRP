@@ -22,6 +22,8 @@ namespace EasyPeasyFirstPersonController
         public bool IsMicActive { get; private set; }
         public float CurrentVolume { get; private set; }
         public bool IsWalkieTransmitting => isWalkieTransmitting;
+        public AudioClip MicrophoneClip => micInput;
+        public string MicrophoneDevice => micDevice;
 
         public float CurrentSoundRange =>
             IsMicActive ? soundBaseRange + CurrentVolume * soundRangeMultiplier : 0f;

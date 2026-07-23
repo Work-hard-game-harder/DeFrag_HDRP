@@ -17,7 +17,6 @@ namespace EasyPeasyFirstPersonController
         public PlayerBaseState LedgeGrab() => new PlayerLedgeGrabState(context, this);
         public PlayerBaseState Swimming() => new PlayerSwimmingState(context, this);
         public PlayerBaseState Subtitle() => new PlayerSubtitleState(context, this);
-        public PlayerBaseState WakieTakie() => new PlayerWakieTakieState(context, this);
         public PlayerBaseState Hiding() => new PlayerHidingState(context, this);
     }
 }

@@ -69,7 +69,10 @@ public class PlayerItemDropper : MonoBehaviour
         if (playerController == null)
             playerController = transform.root.GetComponentInChildren<FirstPersonController>(true);
 
-        return playerController != null && playerController.hasWakieTakie;
+        return playerController != null &&
+               (playerController.walkieTalkieController != null
+                   ? playerController.walkieTalkieController.HasWalkieTalkie
+                   : playerController.hasWakieTakie);
     }
 
     private void SpawnSelectedItem(bool shouldThrow)

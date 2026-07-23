@@ -83,6 +83,7 @@ namespace EasyPeasyFirstPersonController
         public GameObject wakieTakie;
         public GameObject wakieTakieSubscrition;
         public bool hasWakieTakie = false; // [HideInInspector] 임시로 제거
+        [HideInInspector] public WalkieTalkieController walkieTalkieController;
 
         [Header("Hiding Settings")]
         [HideInInspector] public bool IsHiding = false;
@@ -132,6 +133,17 @@ namespace EasyPeasyFirstPersonController
 
             currentState = states.Grounded();
             currentState.EnterState();
+
+            walkieTalkieController = GetComponent<WalkieTalkieController>();
+            if (walkieTalkieController == null)
+                walkieTalkieController = gameObject.AddComponent<WalkieTalkieController>();
+
+            walkieTalkieController.Configure(
+                this,
+                wakieTakie,
+                wakieTakieSubscrition,
+                wakieTakieAnimator,
+                hasWakieTakie);
         }
 
         private void Update()
@@ -150,35 +162,6 @@ namespace EasyPeasyFirstPersonController
             }
 
             isGrounded = Physics.CheckSphere(groundCheck.position, 0.2f, groundMask, QueryTriggerInteraction.Ignore);
-
-            if (Input.GetKeyDown(KeyCode.R) && hasWakieTakie)
-            {
-                if (Input.GetKeyDown(KeyCode.R) && hasWakieTakie)
-                {
-                    if (currentState is PlayerWakieTakieState)
-                    {
-                        currentState.ExitState();
-                        currentState = states.Grounded();
-                        currentState.EnterState();
-                        CurrentState = currentState;
-                    }
-                    else
-                    {
-                        currentState.ExitState();
-                        currentState = states.WakieTakie();
-                        currentState.EnterState();
-                        CurrentState = currentState;
-                    }
-                }
-            }
-
-            if (wakieTakieSubscrition != null && wakieTakieSubscrition.activeSelf)
-            {
-                if (Input.GetMouseButtonDown(0))
-                {
-                    Destroy(wakieTakieSubscrition);
-                }
-            }
 
             if (GameState.isCutscene && currentState is not PlayerSubtitleState)
             {
@@ -201,7 +184,6 @@ namespace EasyPeasyFirstPersonController
                 return;
 
             bool stateSupportsSprint = currentState is PlayerGroundedState
-                || currentState is PlayerWakieTakieState
                 || currentState is PlayerSwimmingState;
             bool isMoving = input.moveInput != Vector2.zero;
             sprintGate.SetSprinting(stateSupportsSprint && input.sprint && isMoving);
@@ -231,8 +213,13 @@ namespace EasyPeasyFirstPersonController
         public void PickUpWakieTakie()
         {
             hasWakieTakie = true;
-            wakieTakieSubscrition.SetActive(true);
-            wakieTakieAnimator = wakieTakie.GetComponent<Animator>();
+            if (wakieTakieAnimator == null && wakieTakie != null)
+                wakieTakieAnimator = wakieTakie.GetComponentInChildren<Animator>(true);
+
+            if (walkieTalkieController == null)
+                walkieTalkieController = GetComponent<WalkieTalkieController>();
+
+            walkieTalkieController?.Acquire();
         }
         private void HandleRotation()
         {
