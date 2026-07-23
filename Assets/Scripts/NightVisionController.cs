@@ -1,25 +1,13 @@
-using Unity.AppUI.UI;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-public class NightVisionController : MonoBehaviour
+public sealed class NightVisionController : MonoBehaviour
 {
-    public Volume nightVisionVolume;
-    private bool isNightVisionActive = false;
+    [SerializeField] private Volume nightVisionVolume;
 
-    void Update()
+    public void SetNightVisionActive(bool active)
     {
-        if (Input.GetMouseButtonDown(1))
-        {
-            ToggleNightVision();
-        }
-    }
-
-    private void ToggleNightVision()
-    {
-        if(nightVisionVolume == null) { return; }
-
-        isNightVisionActive = !isNightVisionActive;
-        nightVisionVolume.weight = isNightVisionActive ? 1 : 0;
+        if (nightVisionVolume != null)
+            nightVisionVolume.weight = active ? 1f : 0f;
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Rendering.PostProcessing;
 using UnityEngine.UI;
@@ -16,6 +17,12 @@ public sealed class CameraItem : MonoBehaviour
     [SerializeField] private PostProcessProfile normalProfile;
     [SerializeField] private PostProcessProfile infraredProfile;
     [SerializeField] private PostProcessVolume volume;
+    [SerializeField] private NightVisionController nightVisionController;
+
+    [Header("Usage")]
+    [Tooltip("CameraTest처럼 인벤토리를 거치지 않는 테스트 씬에서만 사용합니다.")]
+    [SerializeField] private bool startsEquipped;
+    [SerializeField] private KeyCode viewToggleKey = KeyCode.C;
 
     [Header("Battery")]
     [SerializeField] private Image batteryBar;
@@ -23,10 +30,21 @@ public sealed class CameraItem : MonoBehaviour
 
     private CameraBattery battery;
     private CameraMode currentMode;
+    private bool isEquipped;
+    private bool isViewActive;
+
+    public bool IsEquipped => isEquipped;
+    public bool IsViewActive => isViewActive;
+    public CameraMode CurrentMode => currentMode;
+
+    public event Action<CameraMode> ModeChanged;
+    public event Action PhotoTaken;
+    public event Action<bool> ViewActiveChanged;
 
     private void Awake()
     {
         battery = GetComponent<CameraBattery>();
+        isEquipped = startsEquipped;
         SetMode(CameraMode.Normal);
     }
 
@@ -37,6 +55,15 @@ public sealed class CameraItem : MonoBehaviour
 
     private void Update()
     {
+        if (!isEquipped)
+            return;
+
+        if (Input.GetKeyDown(viewToggleKey))
+            SetViewActive(!isViewActive);
+
+        if (!isViewActive)
+            return;
+
         if (Input.GetMouseButtonDown(1))
             ToggleMode();
 
@@ -65,20 +92,55 @@ public sealed class CameraItem : MonoBehaviour
         SetMode(currentMode == CameraMode.Normal
             ? CameraMode.Infrared
             : CameraMode.Normal);
-        audioSource.PlayOneShot(clickSound);
+        if (audioSource != null && clickSound != null)
+            audioSource.PlayOneShot(clickSound);
     }
 
     private void SetMode(CameraMode mode)
     {
         currentMode = mode;
-        volume.profile = mode == CameraMode.Infrared
-            ? infraredProfile
-            : normalProfile;
+
+        if (volume != null)
+        {
+            volume.profile = mode == CameraMode.Infrared
+                ? infraredProfile
+                : normalProfile;
+        }
+
+        if (nightVisionController != null)
+            nightVisionController.SetNightVisionActive(mode == CameraMode.Infrared);
+
+        ModeChanged?.Invoke(currentMode);
     }
 
     private void TakePhoto()
     {
-        audioSource.PlayOneShot(shutterSound);
+        if (audioSource != null && shutterSound != null)
+            audioSource.PlayOneShot(shutterSound);
+
+        PhotoTaken?.Invoke();
         Debug.Log("Photo Taken!");
+    }
+
+    public void SetEquipped(bool equipped)
+    {
+        isEquipped = equipped;
+        if (!isEquipped)
+            SetViewActive(false);
+    }
+
+    public void SetViewActive(bool active)
+    {
+        if (active && !isEquipped)
+            return;
+
+        if (isViewActive == active)
+            return;
+
+        isViewActive = active;
+        if (!isViewActive)
+            SetMode(CameraMode.Normal);
+
+        ViewActiveChanged?.Invoke(isViewActive);
     }
 }
