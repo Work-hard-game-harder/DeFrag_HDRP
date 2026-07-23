@@ -83,8 +83,10 @@ MonoBehaviour:
   terminalId: terminal_01
   displayName: TERMINAL 01
   requiredHackingPad: {fileID: 11400000, guid: 8bc2e24d4126165439a2c6052d23ef6d, type: 2}
-  availableCommands: 2
   interactionText: "\uD574\uD0B9\uD328\uB4DC \uC5F0\uACB0 (E \uAE38\uAC8C \uB204\uB974\uAE30)"
+  unlockDoorMinigame: {fileID: 0}
+  downloadDataMinigame: {fileID: 0}
+  connectServerMinigame: {fileID: 0}
 --- !u!65 &618710890111500002
 BoxCollider:
   m_ObjectHideFlags: 0

@@ -20,12 +20,6 @@ public sealed class HackingSessionController : MonoBehaviour
 
     public bool IsActive { get; private set; }
 
-    private void Update()
-    {
-        if (IsActive && Input.GetKeyDown(KeyCode.Escape))
-            End();
-    }
-
     public void Begin(
         GameObject localHeldPad,
         ConnectionDevice device)

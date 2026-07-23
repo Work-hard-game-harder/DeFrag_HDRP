@@ -7,24 +7,20 @@ using UnityEngine.UI;
 
 public sealed class TerminalScreenController : MonoBehaviour
 {
-    private static readonly string[] Words =
-    {
-        "CISTERN", "WIRETAP", "HILLTOP", "WYOMING",
-        "DEPOSIT", "CAUSTIC", "SPRYER", "LETTERS"
-    };
-
     private static readonly Color TerminalGreen = new(0.1f, 1f, 0.2f);
-    private static readonly Color DimGreen = new(0.03f, 0.28f, 0.06f);
+    private static readonly Color DeniedRed = new(1f, 0.08f, 0.08f);
 
     private readonly List<Button> buttons = new();
     private ConnectionDevice device;
     private RectTransform content;
+    private VerticalLayoutGroup menuLayout;
     private TMP_Text header;
     private TMP_Text status;
-    private System.Action closeRequested;
-    private string password;
+    private TMP_Text deniedMessage;
+    private HackingMinigameBase activeMinigame;
     private TerminalCommands activeCommand;
-    private int attempts;
+    private System.Action closeRequested;
+    private Coroutine deniedRoutine;
     private int selection;
 
     public void Initialize(ConnectionDevice terminal, System.Action onClose)
@@ -37,7 +33,13 @@ public sealed class TerminalScreenController : MonoBehaviour
 
     private void Update()
     {
-        if (buttons.Count == 0)
+        if (Input.GetKeyDown(KeyCode.Backspace) && activeMinigame != null)
+        {
+            CancelMinigame();
+            return;
+        }
+
+        if (activeMinigame != null || buttons.Count == 0)
             return;
 
         if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow))
@@ -65,102 +67,136 @@ public sealed class TerminalScreenController : MonoBehaviour
         content = CreateRect("Content", screen);
         Place(content, new Vector2(0f, 0.12f), new Vector2(1f, 0.84f),
             new Vector2(65f, 15f), new Vector2(-65f, -15f));
-        VerticalLayoutGroup layout = content.gameObject.AddComponent<VerticalLayoutGroup>();
-        layout.spacing = 14f;
-        layout.childControlHeight = false;
-        layout.childControlWidth = true;
-        layout.childForceExpandHeight = false;
+        menuLayout = content.gameObject.AddComponent<VerticalLayoutGroup>();
+        menuLayout.spacing = 14f;
+        menuLayout.childControlHeight = false;
+        menuLayout.childControlWidth = true;
+        menuLayout.childForceExpandHeight = false;
 
         status = CreateText("Status", screen, 23f, TextAlignmentOptions.BottomLeft);
         Place(status.rectTransform, Vector2.zero, new Vector2(1f, 0.12f),
             new Vector2(35f, 20f), new Vector2(-35f, -10f));
+
+        deniedMessage = CreateText("Denied Access", screen, 52f, TextAlignmentOptions.Center);
+        Place(deniedMessage.rectTransform, new Vector2(0.18f, 0.38f), new Vector2(0.82f, 0.62f),
+            Vector2.zero, Vector2.zero);
+        deniedMessage.color = DeniedRed;
+        deniedMessage.text = "DENIED ACCESS";
+        deniedMessage.gameObject.SetActive(false);
     }
 
     private void ShowMenu()
     {
         ClearContent();
+        menuLayout.enabled = true;
         header.text = $"DEFRAG SECURE LINK // {device.DisplayName}\nACCESS LEVEL: ROOT";
-        status.text = "[W/S] SELECT    [E] EXECUTE    [ESC] DISCONNECT";
+        status.text = "[W/S] SELECT    [E] EXECUTE";
 
         AddCommand(TerminalCommands.UnlockDoor);
         AddCommand(TerminalCommands.DownloadData);
         AddCommand(TerminalCommands.ConnectServer);
-        AddButton("DISCONNECT", closeRequested);
+        AddButton("> EXIT TERMINAL", closeRequested);
         Select(0);
     }
 
     private void AddCommand(TerminalCommands command)
     {
-        if ((device.AvailableCommands & command) == 0)
-            return;
-
-        AddButton($"> {TerminalCommandLabel.Get(command)}", () => BeginPasswordCrack(command));
+        HackingMinigameBase minigame = device.GetMinigame(command);
+        string minigameName = minigame == null ? "NO MODULE" : minigame.DisplayName;
+        AddButton($"> {TerminalCommandLabel.Get(command)}  //  {minigameName}", () => Execute(command));
     }
 
-    private void BeginPasswordCrack(TerminalCommands command)
+    private void Execute(TerminalCommands command)
     {
+        HackingMinigameBase prefab = device.GetMinigame(command);
+        if (prefab == null || device.IsCompleted(command))
+        {
+            ShowDeniedAccess();
+            return;
+        }
+
         ClearContent();
+        menuLayout.enabled = false;
         activeCommand = command;
-        attempts = 4;
-        password = Words[Random.Range(0, Words.Length)];
-        header.text = $"{device.DisplayName} // {TerminalCommandLabel.Get(command)}\nPASSWORD REQUIRED";
-        status.text = $"ATTEMPTS REMAINING: {attempts}";
-
-        TMP_Text code = CreateText("Code", content, 20f, TextAlignmentOptions.TopLeft);
-        code.text = "0x100  {UF:M}  WIRETAP   #<=L;  CISTERN\n" +
-                    "0x110  ?B+@:-  HILLTOP   %CZ<<  CAUSTIC\n" +
-                    "0x120  [<EW$  DEPOSIT   YN]}O  LETTERS";
-        code.color = DimGreen;
-        code.gameObject.AddComponent<LayoutElement>().preferredHeight = 100f;
-
-        foreach (string word in Words)
-        {
-            string candidate = word;
-            AddButton(candidate, () => Submit(candidate));
-        }
-
-        AddButton("< RETURN", ShowMenu);
-        Select(0);
+        activeMinigame = Instantiate(prefab, content);
+        activeMinigame.Succeeded += CompleteMinigame;
+        activeMinigame.Failed += FailMinigame;
+        activeMinigame.Cancelled += CancelMinigame;
+        header.text = $"{device.DisplayName} // {TerminalCommandLabel.Get(command)}";
+        status.text = "[W/S] SELECT    [E] EXECUTE    [BACKSPACE] RETURN";
+        activeMinigame.Begin(device, command);
     }
 
-    private void Submit(string candidate)
+    private void ShowDeniedAccess()
     {
-        if (candidate == password)
-        {
-            device.RequestCommandCompletion(activeCommand);
-            status.text = $"ACCESS GRANTED // {TerminalCommandLabel.Get(activeCommand)} COMPLETE";
-            SetButtonsEnabled(false);
-            StartCoroutine(ReturnToMenu());
-            return;
-        }
+        if (deniedRoutine != null)
+            StopCoroutine(deniedRoutine);
+        deniedRoutine = StartCoroutine(BlinkDeniedAccess());
+    }
 
-        attempts--;
-        status.text = attempts > 0
-            ? $"INVALID RESPONSE: {candidate}    MATCH {Similarity(candidate, password)}/{password.Length}    ATTEMPTS: {attempts}"
-            : "ACCESS DENIED // SESSION RESET";
+    private void CompleteMinigame()
+    {
+        device.RequestCommandCompletion(activeCommand);
+        FinishMinigame($"{TerminalCommandLabel.Get(activeCommand)} // COMPLETE");
+    }
 
-        if (attempts == 0)
-        {
-            SetButtonsEnabled(false);
-            StartCoroutine(ReturnToMenu());
-        }
+    private void FailMinigame()
+    {
+        FinishMinigame("ACCESS DENIED // SESSION RESET");
+    }
+
+    private void CancelMinigame()
+    {
+        DestroyMinigame();
+        ShowMenu();
+    }
+
+    private void FinishMinigame(string message)
+    {
+        DestroyMinigame();
+        status.text = message;
+        StartCoroutine(ReturnToMenu());
+    }
+
+    private void DestroyMinigame()
+    {
+        activeMinigame.Succeeded -= CompleteMinigame;
+        activeMinigame.Failed -= FailMinigame;
+        activeMinigame.Cancelled -= CancelMinigame;
+        activeMinigame.End();
+        Destroy(activeMinigame.gameObject);
+        activeMinigame = null;
     }
 
     private IEnumerator ReturnToMenu()
     {
-        yield return new WaitForSecondsRealtime(1.3f);
+        yield return new WaitForSecondsRealtime(1.2f);
         ShowMenu();
+    }
+
+    private IEnumerator BlinkDeniedAccess()
+    {
+        for (int i = 0; i < 6; i++)
+        {
+            deniedMessage.gameObject.SetActive(i % 2 == 0);
+            yield return new WaitForSecondsRealtime(0.18f);
+        }
+
+        deniedMessage.gameObject.SetActive(false);
+        deniedRoutine = null;
     }
 
     private void AddButton(string label, System.Action action)
     {
-        GameObject buttonObject = new(label, typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
-        buttonObject.transform.SetParent(content, false);
-        buttonObject.GetComponent<LayoutElement>().preferredHeight = 48f;
-        Image image = buttonObject.GetComponent<Image>();
-        image.color = new Color(0f, 0.12f, 0.02f, 0.75f);
+        GameObject row = new(label, typeof(RectTransform), typeof(LayoutElement));
+        row.transform.SetParent(content, false);
+        row.GetComponent<LayoutElement>().preferredHeight = 48f;
 
-        Button button = buttonObject.GetComponent<Button>();
+        GameObject background = new("Selection", typeof(RectTransform), typeof(Image), typeof(Button));
+        background.transform.SetParent(row.transform, false);
+        Stretch((RectTransform)background.transform, Vector2.zero, Vector2.zero);
+
+        Button button = background.GetComponent<Button>();
         ColorBlock colors = button.colors;
         colors.normalColor = new Color(0f, 0.12f, 0.02f, 0.75f);
         colors.highlightedColor = new Color(0.02f, 0.35f, 0.06f, 0.9f);
@@ -169,8 +205,11 @@ public sealed class TerminalScreenController : MonoBehaviour
         button.colors = colors;
         button.onClick.AddListener(() => action());
 
-        TMP_Text text = CreateText("Label", buttonObject.transform, 25f, TextAlignmentOptions.MidlineLeft);
+        TMP_Text text = CreateText("Label", row.transform, 25f, TextAlignmentOptions.MidlineLeft);
+        text.text = label;
         Stretch(text.rectTransform, new Vector2(18f, 0f), new Vector2(-10f, 0f));
+        text.outlineColor = Color.black;
+        text.outlineWidth = 0.18f;
         buttons.Add(button);
     }
 
@@ -178,12 +217,6 @@ public sealed class TerminalScreenController : MonoBehaviour
     {
         selection = (index + buttons.Count) % buttons.Count;
         EventSystem.current.SetSelectedGameObject(buttons[selection].gameObject);
-    }
-
-    private void SetButtonsEnabled(bool enabled)
-    {
-        foreach (Button button in buttons)
-            button.interactable = enabled;
     }
 
     private void ClearContent()
@@ -194,14 +227,6 @@ public sealed class TerminalScreenController : MonoBehaviour
         selection = 0;
     }
 
-    private static int Similarity(string left, string right)
-    {
-        int matches = 0;
-        for (int i = 0; i < left.Length; i++)
-            if (left[i] == right[i]) matches++;
-        return matches;
-    }
-
     private static RectTransform CreateRect(string name, Transform parent)
     {
         GameObject child = new(name, typeof(RectTransform));
@@ -209,7 +234,11 @@ public sealed class TerminalScreenController : MonoBehaviour
         return (RectTransform)child.transform;
     }
 
-    private static TMP_Text CreateText(string name, Transform parent, float size, TextAlignmentOptions alignment)
+    private static TMP_Text CreateText(
+        string name,
+        Transform parent,
+        float size,
+        TextAlignmentOptions alignment)
     {
         RectTransform rect = CreateRect(name, parent);
         TMP_Text text = rect.gameObject.AddComponent<TextMeshProUGUI>();

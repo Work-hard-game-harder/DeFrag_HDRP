@@ -8,11 +8,16 @@ using UnityEngine;
 /// </summary>
 public abstract class HackingMinigameBase : MonoBehaviour
 {
+    [Header("Menu")]
+    [SerializeField] private string displayName = "PASSWORD CRACKING";
+
     public event Action Succeeded;
     public event Action Failed;
     public event Action Cancelled;
 
-    public abstract void Begin(ConnectionDevice device);
+    public string DisplayName => displayName;
+
+    public abstract void Begin(ConnectionDevice device, TerminalCommands command);
 
     public virtual void End() { }
 

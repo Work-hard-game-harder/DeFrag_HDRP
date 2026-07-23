@@ -11,8 +11,15 @@ public sealed class ConnectionDevice : MonoBehaviour, IInteractable
 
     [Header("Access")]
     [SerializeField] private ItemData requiredHackingPad;
-    [SerializeField] private TerminalCommands availableCommands = TerminalCommands.DownloadData;
     [SerializeField] private string interactionText = "해킹패드 연결 (E 길게 누르기)";
+
+    [Header("Command Minigames")]
+    [Tooltip("Leave empty to show DENIED ACCESS for this command.")]
+    [SerializeField] private HackingMinigameBase unlockDoorMinigame;
+    [Tooltip("Leave empty to show DENIED ACCESS for this command.")]
+    [SerializeField] private HackingMinigameBase downloadDataMinigame;
+    [Tooltip("Leave empty to show DENIED ACCESS for this command.")]
+    [SerializeField] private HackingMinigameBase connectServerMinigame;
 
     [Header("Authoritative Result Requests")]
     [SerializeField] private UnityEvent onUnlockDoorRequested = new();
@@ -22,12 +29,27 @@ public sealed class ConnectionDevice : MonoBehaviour, IInteractable
     private EquipmentController equipment;
     private int interactableLayer;
     private int inactiveLayer;
+    private TerminalCommands completedCommands;
 
     public string TerminalId => terminalId;
     public string DisplayName => displayName;
-    public TerminalCommands AvailableCommands => availableCommands;
-
     public event Action<ConnectionDevice, TerminalCommands> CommandCompletionRequested;
+
+    public bool IsCompleted(TerminalCommands command)
+    {
+        return (completedCommands & command) != 0;
+    }
+
+    public HackingMinigameBase GetMinigame(TerminalCommands command)
+    {
+        return command switch
+        {
+            TerminalCommands.UnlockDoor => unlockDoorMinigame,
+            TerminalCommands.DownloadData => downloadDataMinigame,
+            TerminalCommands.ConnectServer => connectServerMinigame,
+            _ => throw new ArgumentOutOfRangeException(nameof(command), command, null)
+        };
+    }
 
     private void Awake()
     {
@@ -61,9 +83,10 @@ public sealed class ConnectionDevice : MonoBehaviour, IInteractable
 
     public void RequestCommandCompletion(TerminalCommands command)
     {
-        if ((availableCommands & command) == 0)
-            throw new InvalidOperationException($"{displayName} does not provide {command}.");
+        if (IsCompleted(command))
+            return;
 
+        completedCommands |= command;
         CommandCompletionRequested?.Invoke(this, command);
 
         switch (command)
