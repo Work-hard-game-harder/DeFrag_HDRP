@@ -20,11 +20,11 @@ public class PatrolRobotAI : MonoBehaviour
     [SerializeField] private float lostSightGraceTime = 3f;
 
     [Header("Random Patrol Settings")]
-    public float patrolRadius = 20f;       // 로봇이 한 번에 탐색할 최대 반경 (너무 크면 멀리 감)
-    public float minPatrolDistance = 7f;   // 최소 이동 거리 (제자리걸음 방지용, 적당히 먼 곳)
+    public float patrolRadius = 20f;       // 濡쒕큸????踰덉뿉 ?먯깋??理쒕? 諛섍꼍 (?덈Т ?щ㈃ 硫由?媛?
+    public float minPatrolDistance = 7f;   // 理쒖냼 ?대룞 嫄곕━ (?쒖옄由ш구??諛⑹??? ?곷떦??癒?怨?
 
     [Header("Vision Settings")]
-    public Light visionLight; // 이 변수를 추가! (인스펙터에서 아까 만든 Spot Light를 끌어다 넣으세요)
+    public Light visionLight; // ??蹂?섎? 異붽?! (?몄뒪?숉꽣?먯꽌 ?꾧퉴 留뚮뱺 Spot Light瑜??뚯뼱???ｌ쑝?몄슂)
     
     private NavMeshAgent agent;
     private bool isInspecting = false;
@@ -38,7 +38,7 @@ public class PatrolRobotAI : MonoBehaviour
         agent = GetComponent<NavMeshAgent>();
         agent.speed = patrolSpeed;
         FindClosestPlayer();
-        SetRandomPatrolDestination(); // 시작하자마자 랜덤한 곳으로 출발
+        SetRandomPatrolDestination(); // ?쒖옉?섏옄留덉옄 ?쒕뜡??怨녹쑝濡?異쒕컻
     }
 
     void Update()
@@ -48,7 +48,7 @@ public class PatrolRobotAI : MonoBehaviour
 
         if (!agent.isOnNavMesh || !agent.enabled) 
             return;
-        // 1단계: 플레이어 감지 (항상 최신 결과 유지)
+        // 1?④퀎: ?뚮젅?댁뼱 媛먯? (??긽 理쒖떊 寃곌낵 ?좎?)
         bool seesPlayer = CanSeePlayer();
         if (seesPlayer)
         {
@@ -56,29 +56,29 @@ public class PatrolRobotAI : MonoBehaviour
             lastKnownPlayerPos = player.position;
         }
 
-        // 2단계: 강력한 상태 전환 논리 (detection 결과에 따라 '즉시' 전환)
-        // [규칙 1] 플레이어를 발견하면, '어떤 상태든' 즉시 추격(빨간불)으로 전환합니다.
+        // 2?④퀎: 媛뺣젰???곹깭 ?꾪솚 ?쇰━ (detection 寃곌낵???곕씪 '利됱떆' ?꾪솚)
+        // [洹쒖튃 1] ?뚮젅?댁뼱瑜?諛쒓껄?섎㈃, '?대뼡 ?곹깭?? 利됱떆 異붽꺽(鍮④컙遺??쇰줈 ?꾪솚?⑸땲??
         if (seesPlayer && currentState != State.Chase)
         {
             StartChase();
-            return; // 전환 완료, 행동은 다음 프레임부터 실행
+            return; // ?꾪솚 ?꾨즺, ?됰룞? ?ㅼ쓬 ?꾨젅?꾨????ㅽ뻾
         }
-        // [규칙 2] 플레이어를 추격 중이다가 놓치면, 즉시 경계(주황불)로 전환합니다.
+        // [洹쒖튃 2] ?뚮젅?댁뼱瑜?異붽꺽 以묒씠?ㅺ? ?볦튂硫? 利됱떆 寃쎄퀎(二쇳솴遺?濡??꾪솚?⑸땲??
         else if (!seesPlayer && currentState == State.Chase
             && Time.time - lastSeenPlayerTime >= lostSightGraceTime)
         {
             StopChase();
-            return; // 전환 완료, 행동은 다음 프레임부터 실행
+            return; // ?꾪솚 ?꾨즺, ?됰룞? ?ㅼ쓬 ?꾨젅?꾨????ㅽ뻾
         }
 
-        // 3단계: 상태별 고유 행동 (전환 논리는 여기 포함 안 함)
+        // 3?④퀎: ?곹깭蹂?怨좎쑀 ?됰룞 (?꾪솚 ?쇰━???ш린 ?ы븿 ????
         switch (currentState)
         {
             case State.Patrol:
-                visionLight.color = Color.yellow; // 노란불
-                agent.isStopped = false; // 이동 보장
+                visionLight.color = Color.yellow; // ?몃?遺?
+                agent.isStopped = false; // ?대룞 蹂댁옣
                 
-                // 순찰 지점 도착 시 두리번거리기
+                // ?쒖같 吏???꾩갑 ???먮━踰덇굅由ш린
                 if (!agent.pathPending && agent.remainingDistance < 0.5f && !isInspecting)
                 {
                     StartCoroutine(InspectRoutine()); 
@@ -86,71 +86,71 @@ public class PatrolRobotAI : MonoBehaviour
                 break;
 
             case State.Inspect:
-                visionLight.color = new Color(1f, 0.5f, 0f); // 주황불
-                // 코루틴 행동은 InspectRoutine() 내부에서 처리 (전환은 2단계에서 이미 수행됨)
+                visionLight.color = new Color(1f, 0.5f, 0f); // 二쇳솴遺?
+                // 肄붾（???됰룞? InspectRoutine() ?대??먯꽌 泥섎━ (?꾪솚? 2?④퀎?먯꽌 ?대? ?섑뻾??
                 break;
 
             case State.Alert:
-                visionLight.color = new Color(1f, 0.5f, 0f); // 주황불
-                agent.isStopped = false; // 이동 보장
+                visionLight.color = new Color(1f, 0.5f, 0f); // 二쇳솴遺?
+                agent.isStopped = false; // ?대룞 蹂댁옣
 
-                // 수색 실패 시 다시 순찰 복귀 (이동 논리는 StopChase()에 구현)
+                // ?섏깋 ?ㅽ뙣 ???ㅼ떆 ?쒖같 蹂듦? (?대룞 ?쇰━??StopChase()??援ы쁽)
                 if (!agent.pathPending && agent.remainingDistance < 1f)
                 {
-                    Debug.Log("플레이어 수색 실패. 다시 순찰 모드로 복귀합니다.");
+                    Debug.Log("?뚮젅?댁뼱 ?섏깋 ?ㅽ뙣. ?ㅼ떆 ?쒖같 紐⑤뱶濡?蹂듦??⑸땲??");
                     currentState = State.Patrol;
                     agent.speed = patrolSpeed;
-                    SetRandomPatrolDestination(); // 새로운 순찰 지점으로 이동
+                    SetRandomPatrolDestination(); // ?덈줈???쒖같 吏?먯쑝濡??대룞
                 }
                 break;
 
             case State.Chase:
-                visionLight.color = Color.red; // 빨간불
-                agent.isStopped = false; // 이동 보장
+                visionLight.color = Color.red; // 鍮④컙遺?
+                agent.isStopped = false; // ?대룞 蹂댁옣
 
-                // 시야를 잠깐 벗어나도 마지막 목격 위치까지 압박합니다.
+                // ?쒖빞瑜??좉퉸 踰쀬뼱?섎룄 留덉?留?紐⑷꺽 ?꾩튂源뚯? ?뺣컯?⑸땲??
                 agent.SetDestination(seesPlayer ? player.position : lastKnownPlayerPos);
                 break;
         }
     }
 
-    // NavMesh 위에서 무작위 목적지를 찾는 핵심 로직
-    // NavMesh 위에서 무작위 목적지를 찾는 핵심 로직 (수정본)
+    // NavMesh ?꾩뿉??臾댁옉??紐⑹쟻吏瑜?李얜뒗 ?듭떖 濡쒖쭅
+    // NavMesh ?꾩뿉??臾댁옉??紐⑹쟻吏瑜?李얜뒗 ?듭떖 濡쒖쭅 (?섏젙蹂?
     void SetRandomPatrolDestination()
     {
         bool foundPoint = false;
 
         for (int i = 0; i < 30; i++)
         {
-            // 수정 1: 공중이 아닌 바닥 평면(XZ축) 기준으로만 랜덤 좌표를 생성합니다.
+            // ?섏젙 1: 怨듭쨷???꾨땶 諛붾떏 ?됰㈃(XZ異? 湲곗??쇰줈留??쒕뜡 醫뚰몴瑜??앹꽦?⑸땲??
             Vector2 randomCircle = Random.insideUnitCircle * patrolRadius;
             Vector3 randomPos = transform.position + new Vector3(randomCircle.x, 0, randomCircle.y);
 
-            // 수정 2: 최소 이동 거리보다 가까우면 무시하고 다시 뽑습니다.
+            // ?섏젙 2: 理쒖냼 ?대룞 嫄곕━蹂대떎 媛源뚯슦硫?臾댁떆?섍퀬 ?ㅼ떆 戮묒뒿?덈떎.
             if (Vector3.Distance(transform.position, randomPos) < minPatrolDistance) continue;
 
-            // 수정 3: 좌표 근처의 파란색 바닥(NavMesh)을 찾는 탐색 범위를 5.0f로 넉넉하게 늘립니다.
+            // ?섏젙 3: 醫뚰몴 洹쇱쿂???뚮???諛붾떏(NavMesh)??李얜뒗 ?먯깋 踰붿쐞瑜?5.0f濡??됰꼮?섍쾶 ?섎┰?덈떎.
             NavMeshHit hit;
             if (NavMesh.SamplePosition(randomPos, out hit, 5.0f, NavMesh.AllAreas))
             {
                 agent.SetDestination(hit.position);
                 foundPoint = true;
-                break; // 목적지를 찾았으니 반복문 탈출!
+                break; // 紐⑹쟻吏瑜?李얠븯?쇰땲 諛섎났臾??덉텧!
             }
         }
 
-        // 무한 두리번거림 방지용 안전장치
-        // 만약 구석에 갇히거나 맵이 좁아서 30번 시도했는데도 적절한 곳을 못 찾았다면,
-        // 일단 로봇이 바라보는 정면 앞쪽 3m 지점으로 강제로 걸어가게 만듭니다.
+        // 臾댄븳 ?먮━踰덇굅由?諛⑹????덉쟾?μ튂
+        // 留뚯빟 援ъ꽍??媛뉙엳嫄곕굹 留듭씠 醫곸븘??30踰??쒕룄?덈뒗?곕룄 ?곸젅??怨녹쓣 紐?李얠븯?ㅻ㈃,
+        // ?쇰떒 濡쒕큸??諛붾씪蹂대뒗 ?뺣㈃ ?욎そ 3m 吏?먯쑝濡?媛뺤젣濡?嫄몄뼱媛寃?留뚮벊?덈떎.
         if (!foundPoint)
         {
             agent.SetDestination(transform.position + transform.forward * 3f);
         }
     }
 
-    // 시야 감지 로직
-    // 수정된 시각 감지 로직 (더욱 정밀하고 버그 없는 버전)
-    // 수정된 시각 감지 로직 (디버그 모드 + 정밀 타격)
+    // ?쒖빞 媛먯? 濡쒖쭅
+    // ?섏젙???쒓컖 媛먯? 濡쒖쭅 (?붿슧 ?뺣??섍퀬 踰꾧렇 ?녿뒗 踰꾩쟾)
+    // ?섏젙???쒓컖 媛먯? 濡쒖쭅 (?붾쾭洹?紐⑤뱶 + ?뺣? ?寃?
     bool CanSeePlayer()
     {
         if (player == null || eyeLocation == null) return false;
@@ -226,7 +226,7 @@ public class PatrolRobotAI : MonoBehaviour
     // Kept temporarily for comparison while the new self-filtering vision is tested.
     bool LegacyCanSeePlayer()
     {
-        Vector3 targetPos = player.position + Vector3.up * 1.0f; // 가슴 높이 조준
+        Vector3 targetPos = player.position + Vector3.up * 1.0f; // 媛???믪씠 議곗?
         Vector3 dirToPlayer = (targetPos - eyeLocation.position).normalized;
         float angleToPlayer = Vector3.Angle(transform.forward, dirToPlayer);
 
@@ -235,19 +235,19 @@ public class PatrolRobotAI : MonoBehaviour
             float distToPlayer = Vector3.Distance(eyeLocation.position, targetPos);
             if (distToPlayer <= viewDistance)
             {
-                // [엑스레이] 씬(Scene) 화면에서 로봇의 눈에서 나가는 레이저를 초록색 선으로 보여줍니다.
+                // [?묒뒪?덉씠] ??Scene) ?붾㈃?먯꽌 濡쒕큸???덉뿉???섍????덉씠?瑜?珥덈줉???좎쑝濡?蹂댁뿬以띾땲??
                 Debug.DrawRay(eyeLocation.position, dirToPlayer * distToPlayer, Color.green);
 
                 RaycastHit hit;
                 if (Physics.Raycast(eyeLocation.position, dirToPlayer, out hit, distToPlayer))
                 {
-                    // [해결 1] 만약 레이저가 로봇 자기 자신의 몸통을 때렸다면? -> 무시!
+                    // [?닿껐 1] 留뚯빟 ?덉씠?媛 濡쒕큸 ?먭린 ?먯떊??紐명넻???뚮졇?ㅻ㈃? -> 臾댁떆!
                     if (hit.collider.transform.root == this.transform) return false;
 
-                    // [추적기] 도대체 레이저가 '무엇'에 부딪혔는지 콘솔에 이름을 띄웁니다.
-                    Debug.Log("로봇 시야에 걸린 물체: " + hit.collider.name + " (태그: " + hit.collider.tag + ")");
+                    // [異붿쟻湲? ?꾨?泥??덉씠?媛 '臾댁뾿'??遺?ろ삍?붿? 肄섏넄???대쫫???꾩썎?덈떎.
+                    Debug.Log("濡쒕큸 ?쒖빞??嫄몃┛ 臾쇱껜: " + hit.collider.name + " (?쒓렇: " + hit.collider.tag + ")");
 
-                    // [해결 2] 플레이어 본체뿐만 아니라, 자식 콜라이더(팔, 다리, 가방 등)에 맞아도 인식하게 만듭니다.
+                    // [?닿껐 2] ?뚮젅?댁뼱 蹂몄껜肉먮쭔 ?꾨땲?? ?먯떇 肄쒕씪?대뜑(?? ?ㅻ━, 媛諛?????留욎븘???몄떇?섍쾶 留뚮벊?덈떎.
                     if (hit.collider.CompareTag("Player") || hit.transform.root.CompareTag("Player"))
                     {
                         return true; 
@@ -258,7 +258,7 @@ public class PatrolRobotAI : MonoBehaviour
         return false;
     }
 
-    // 두리번거리는 코루틴
+    // ?먮━踰덇굅由щ뒗 肄붾（??
     IEnumerator InspectRoutine()
     {
         currentState = State.Inspect;
@@ -283,7 +283,7 @@ public class PatrolRobotAI : MonoBehaviour
         isInspecting = false;
         currentState = State.Patrol;
         
-        SetRandomPatrolDestination(); // 두리번거리기 끝난 후 새로운 무작위 목적지로!
+        SetRandomPatrolDestination(); // ?먮━踰덇굅由ш린 ?앸궃 ???덈줈??臾댁옉??紐⑹쟻吏濡?
     }
 
     IEnumerator SmoothRotate(Quaternion targetRot, float duration)
@@ -301,13 +301,13 @@ public class PatrolRobotAI : MonoBehaviour
 
     void StartChase()
     {
-        // 1. 코루틴이 충돌하지 않도록 중지 (가장 중요)
+        // 1. 肄붾（?댁씠 異⑸룎?섏? ?딅룄濡?以묒? (媛??以묒슂)
         if(isInspecting) { StopAllCoroutines(); isInspecting = false; }
         
-        currentState = State.Chase; // 추격 모드(빨간불)로 전환
+        currentState = State.Chase; // 異붽꺽 紐⑤뱶(鍮④컙遺?濡??꾪솚
         agent.speed = chaseSpeed;
-        Debug.Log("삐빅! 플레이어 발견! 추격합니다.");
-        agent.isStopped = false; // 이동 재개
+        Debug.Log("?먮퉭! ?뚮젅?댁뼱 諛쒓껄! 異붽꺽?⑸땲??");
+        agent.isStopped = false; // ?대룞 ?ш컻
     }
     
     public void ReceiveCCTVReport(Vector3 targetLocation)
@@ -323,28 +323,29 @@ public class PatrolRobotAI : MonoBehaviour
         agent.speed = chaseSpeed;
         lastKnownPlayerPos = targetLocation;
         agent.SetDestination(targetLocation);
-        Debug.Log("CCTV 보고 접수! 해당 위치로 이동합니다.");
+        Debug.Log("CCTV 蹂닿퀬 ?묒닔! ?대떦 ?꾩튂濡??대룞?⑸땲??");
     }
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.CompareTag("Player"))
-        {
-            Debug.Log("Game Over! 플레이어가 로봇에게 잡혔습니다.");
-        }
+        PlayerStats playerStats = collision.collider.GetComponentInParent<PlayerStats>();
+        if (playerStats == null)
+            return;
+
+        playerStats.TakeDamage(1);
     }
-    // 수정된 StopChase 함수 (플레이어를 놓쳤을 때)
+    // ?섏젙??StopChase ?⑥닔 (?뚮젅?댁뼱瑜??볦낀????
     void StopChase()
     {
-        currentState = State.Alert; // 경계 모드(주황불)로 전환
+        currentState = State.Alert; // 寃쎄퀎 紐⑤뱶(二쇳솴遺?濡??꾪솚
         agent.speed = patrolSpeed;
-        Debug.Log("플레이어를 놓쳤습니다. 마지막으로 본 위치를 수색합니다.");
+        Debug.Log("?뚮젅?댁뼱瑜??볦낀?듬땲?? 留덉?留됱쑝濡?蹂??꾩튂瑜??섏깋?⑸땲??");
 
-        // 안전장치: lastKnownPlayerPos가 유효한지 확인하고, 유효하지 않다면 일단 현재 위치를 수색합니다.
-        // (Vector3.zero는 이상한 곳의 전형적인 예시)
+        // ?덉쟾?μ튂: lastKnownPlayerPos媛 ?좏슚?쒖? ?뺤씤?섍퀬, ?좏슚?섏? ?딅떎硫??쇰떒 ?꾩옱 ?꾩튂瑜??섏깋?⑸땲??
+        // (Vector3.zero???댁긽??怨녹쓽 ?꾪삎?곸씤 ?덉떆)
         if (lastKnownPlayerPos == Vector3.zero || Vector3.Distance(transform.position, lastKnownPlayerPos) < 1f)
         {
-            // 근처 NavMesh 위의 랜덤한 지점으로 목적지 설정
+            // 洹쇱쿂 NavMesh ?꾩쓽 ?쒕뜡??吏?먯쑝濡?紐⑹쟻吏 ?ㅼ젙
             NavMeshHit hit;
             if (NavMesh.SamplePosition(transform.position + transform.forward * 3f, out hit, 5.0f, NavMesh.AllAreas))
             {
@@ -352,10 +353,10 @@ public class PatrolRobotAI : MonoBehaviour
             }
             else
             {
-                lastKnownPlayerPos = transform.position; // 그마저도 안 되면 제자리 수색
+                lastKnownPlayerPos = transform.position; // 洹몃쭏??????섎㈃ ?쒖옄由??섏깋
             }
         }
         
-        agent.SetDestination(lastKnownPlayerPos); // 안전하게 검증된 위치로 이동
+        agent.SetDestination(lastKnownPlayerPos); // ?덉쟾?섍쾶 寃利앸맂 ?꾩튂濡??대룞
     }
 }

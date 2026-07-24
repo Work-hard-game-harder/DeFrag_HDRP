@@ -1,57 +1,122 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerStats : MonoBehaviour
 {
-    public int Health;
+    [Header("Health")]
+    [SerializeField, Min(1)] private int maxHealth = 100;
+
+    // ê¸°ì¡´ UIì™€ ë„¤íŠ¸ì›Œí¬ ì–´ëŒ‘í„°ì˜ í˜¸í™˜ì„±ì„ ìœ„í•´ public í•„ë“œë¥¼ ìœ ì§€í•©ë‹ˆë‹¤.
+    // ì²´ë ¥ ë³€ê²½ì€ TakeDamage ë˜ëŠ” ApplyHealthë¥¼ í†µí•´ ì²˜ë¦¬í•©ë‹ˆë‹¤.
+    public int Health = 100;
+    public int MaxHealth => maxHealth;
+    public bool IsDead { get; private set; }
+
     public List<string> Inventory = new List<string>();
+
+    public event Action<int, int> HealthChanged;
+    public event Action Died;
 
     private void Start()
     {
         if(GameDataManager.Instance != null)
         {
-            ApplyData(GameDataManager.Instance.Health, GameDataManager.Instance.Inventory); //°ÔÀÓ ½ÃÀÛ½Ã °ÔÀÓµ¥ÀÌÅÍ ¸Å´ÏÀú¿¡¼­ µ¥ÀÌÅÍ¸¦ ºÒ·¯¿È
+            ApplyData(GameDataManager.Instance.Health, GameDataManager.Instance.Inventory); //ê²Œì„ ì‹œì‘ì‹œ ê²Œì„ë°ì´í„° ë§¤ë‹ˆì €ì—ì„œ ë°ì´í„°ë¥¼ ë¶ˆëŸ¬ì˜´
             Debug.Log($"[PlayerStats] Loaded Health: {Health}, Inventory: {string.Join(", ", Inventory)}");
 
         }
 
         if(InventoryManager.Instance != null)
         {
-            InventoryManager.Instance.items.Clear(); // ±âÁ¸ ¾ÆÀÌÅÛ ¸®½ºÆ® ÃÊ±âÈ­
+            InventoryManager.Instance.items.Clear(); // ê¸°ì¡´ ì•„ì´í…œ ë¦¬ìŠ¤íŠ¸ ì´ˆê¸°í™”
             foreach (string itemId in Inventory)
             {
-                InventoryManager.Instance.AddItem(itemId); // ÀÎº¥Åä¸®¿¡ ¾ÆÀÌÅÛ Ãß°¡
+                InventoryManager.Instance.AddItem(itemId); // ì¸ë²¤í† ë¦¬ì— ì•„ì´í…œ ì¶”ê°€
             }
         }
 
     }
     public void ApplyData(int health, List<string> inventory)
     {
-        Health = health;
-        Inventory = new List<string>(inventory);
+        ApplyHealth(health);
+        Inventory = inventory != null
+            ? new List<string>(inventory)
+            : new List<string>();
+    }
+
+    /// <summary>
+    /// í”Œë ˆì´ì–´ì—ê²Œ ë°ë¯¸ì§€ë¥¼ ì ìš©í•©ë‹ˆë‹¤.
+    /// ë„¤íŠ¸ì›Œí¬ ê³„ì¸µì€ ê¶Œí•œì„ ê°€ì§„ ì¸¡ì—ì„œë§Œ ì´ ë©”ì„œë“œê°€ í˜¸ì¶œë˜ë„ë¡ ë³´ì¥í•´ì•¼ í•©ë‹ˆë‹¤.
+    /// </summary>
+    /// <returns>ì‹¤ì œë¡œ ì²´ë ¥ì´ ê°ì†Œí–ˆìœ¼ë©´ trueë¥¼ ë°˜í™˜í•©ë‹ˆë‹¤.</returns>
+    public bool TakeDamage(int amount)
+    {
+        if (amount <= 0 || IsDead)
+            return false;
+
+        int previousHealth = Health;
+        Health = Mathf.Max(0, Health - amount);
+
+        if (Health == previousHealth)
+            return false;
+
+        HealthChanged?.Invoke(previousHealth, Health);
+
+        if (Health == 0)
+            Die();
+
+        return true;
+    }
+
+    /// <summary>
+    /// ì¸µ ì „í™˜ ë°ì´í„° ë³µì› ë˜ëŠ” ì„œë²„ì—ì„œ í™•ì •ëœ ì²´ë ¥ ë™ê¸°í™”ì— ì‚¬ìš©í•©ë‹ˆë‹¤.
+    /// </summary>
+    public void ApplyHealth(int health)
+    {
+        int previousHealth = Health;
+        bool wasDead = IsDead;
+
+        Health = Mathf.Clamp(health, 0, maxHealth);
+        IsDead = Health == 0;
+
+        if (Health != previousHealth)
+            HealthChanged?.Invoke(previousHealth, Health);
+
+        if (!wasDead && IsDead)
+            Died?.Invoke();
+    }
+
+    private void Die()
+    {
+        if (IsDead)
+            return;
+
+        IsDead = true;
+        Died?.Invoke();
     }
 
     public void SaveData()
     {
-        //µ¥ÀÌÅÍ ³»¿ë º¯°æ½Ã ¸Å´ÏÀú¿¡ ÃÖÁ¾ ÀúÀå
+        //ë°ì´í„° ë‚´ìš© ë³€ê²½ì‹œ ë§¤ë‹ˆì €ì— ìµœì¢… ì €ì¥
         /*GameDataManager.Instance.Health = Health;
         GameDataManager.Instance.Inventory = new List<string>(Inventory); */
         UpdateInventoryList();
 
         //GameDataManager.Instance.Health = Health;
         //GameDataManager.Instance.Inventory = new List<string>(Inventory);
-        Debug.Log("GameDataManager¿¡ ·Îµå ¼º°ø");
+        Debug.Log("GameDataManagerì— ë¡œë“œ ì„±ê³µ");
     }
     public void UpdateInventoryList()
     {
         if (InventoryManager.Instance == null) return;
 
-        Inventory.Clear(); // ½Ï ºñ¿ì°í ÃÖ½Å µ¥ÀÌÅÍ·Î Àç¹èÄ¡
+        Inventory.Clear(); // ì‹¹ ë¹„ìš°ê³  ìµœì‹  ë°ì´í„°ë¡œ ì¬ë°°ì¹˜
         foreach (InventoryInfo info in InventoryManager.Instance.items)
         {
             if (info.itemData != null)
             {
-                // ¾ÆÀÌÅÛ °³¼ö(count)¸¸Å­ ¹®ÀÚ¿­ ¸®½ºÆ®¿¡ ¾ÆÀÌÅÛ ÀÌ¸§À» ¶È°°ÀÌ ´õÇØÁÜ
+                // ì•„ì´í…œ ê°œìˆ˜(count)ë§Œí¼ ë¬¸ìì—´ ë¦¬ìŠ¤íŠ¸ì— ì•„ì´í…œ ì´ë¦„ì„ ë˜‘ê°™ì´ ë”í•´ì¤Œ
                 for (int i = 0; i < info.count; i++)
                 {
                     Inventory.Add(info.itemData.itemID);
@@ -61,7 +126,7 @@ public class PlayerStats : MonoBehaviour
     }
     private void OnDestroy()
     {
-        // ¾À ÀüÈ¯ÀÌ ÀÏ¾î³¯ ¶§ ÀÚµ¿À¸·Î ¹é¾÷ÇÏ±â
+        // ì”¬ ì „í™˜ì´ ì¼ì–´ë‚  ë•Œ ìë™ìœ¼ë¡œ ë°±ì—…í•˜ê¸°
         SaveData();
     }
 }
