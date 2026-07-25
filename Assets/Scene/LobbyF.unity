@@ -13687,6 +13687,8 @@ MonoBehaviour:
   sceneName: 
   scenelist: []
   floorCanvas: {fileID: 0}
+  mainLobbySceneName: MainLobby
+  sceneLoadDelay: 1
 --- !u!4 &1866212027
 Transform:
   m_ObjectHideFlags: 0
@@ -15519,11 +15521,6 @@ Transform:
   - {fileID: 1452537631}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &2098765567 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 8916423859403885125, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
-  m_PrefabInstance: {fileID: 183496742}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &2099599995
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -15908,6 +15905,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c525aee615756c144a05803465441845, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ElevatorTrigger
+  subtitleTrigger: {fileID: 6454744873083920272}
 --- !u!222 &135607727645035363
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -17705,18 +17703,18 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7683991503915512351}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.27, y: 1.15, z: 0.7}
-  m_ConstrainProportionsScale: 0
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -0.000076293945}
+  m_LocalScale: {x: 0.63000005, y: 0.5704724, z: 0.34724408}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 4584031191414173322}
   m_Father: {fileID: 5435327681673261511}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0.0005493164, y: -0.00048828125}
+  m_SizeDelta: {x: 1496.4, y: 957}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &3775028261120535882
 GameObject:
@@ -18067,8 +18065,8 @@ RectTransform:
   m_GameObject: {fileID: 380690545913796804}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.55118114, y: 0.6086956, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 0.7, y: 0.77304333, z: 1.2699999}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 3690790427133482087}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -18093,7 +18091,8 @@ MonoBehaviour:
   mySubtitles:
   - "\uC800 \uBA40\uB9AC\uC5D0 \uC5D8\uB808\uBCA0\uC774\uD130\uAC00 \uBCF4\uC778\uB2E4"
   - "\uAC00\uAE4C\uC774 \uAC00\uBCFC\uAE4C?"
-  wakietakie: {fileID: 0}
+  walkietakie: {fileID: 0}
+  revealPendingQuestAfterSubtitle: 0
 --- !u!33 &4649553521230411870
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -18201,6 +18200,18 @@ MonoBehaviour:
         m_TargetAssemblyTypeName: EasyPeasyFirstPersonController.FirstPersonController,
           Assembly-CSharp
         m_MethodName: PickUpWakieTakie
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 6847688264487602554}
+        m_TargetAssemblyTypeName: SubtitleTrigger, Assembly-CSharp
+        m_MethodName: PlaySubtitleFromInteract
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -18338,10 +18349,10 @@ RectTransform:
   - {fileID: 9107565421505426214}
   - {fileID: 385734863898443681}
   - {fileID: 4078477890372957313}
+  - {fileID: 3690790427133482087}
   - {fileID: 8958561677609145517}
   - {fileID: 1408926361609437843}
   - {fileID: 4431316743949581040}
-  - {fileID: 3690790427133482087}
   m_Father: {fileID: 4751886450143376915}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -18565,7 +18576,8 @@ MonoBehaviour:
   subtitlesScript: {fileID: 8430087059669167798}
   mySubtitles:
   - "\uBB54\uAC00 \uB3CC\uC544\uB2E4\uB2C8\uB294 \uC18C\uB9AC\uAC00 \uB4E4\uB9B0\uB2E4..."
-  wakietakie: {fileID: 0}
+  walkietakie: {fileID: 0}
+  revealPendingQuestAfterSubtitle: 0
 --- !u!1 &5891934708129567545
 GameObject:
   m_ObjectHideFlags: 0
@@ -18719,7 +18731,8 @@ MonoBehaviour:
   mySubtitles:
   - "\uC5D8\uB808\uBCA0\uC774\uD130\uAC00 \uC791\uB3D9\uB418\uC9C0 \uC54A\uB294\uB2E4.
     \uBCF4\uC548\uCF54\uB4DC\uAC00 \uD544\uC694\uD55C \uB4EF \uD558\uB2E4."
-  wakietakie: {fileID: 0}
+  walkietakie: {fileID: 0}
+  revealPendingQuestAfterSubtitle: 1
 --- !u!222 &6533923655092351476
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -18791,7 +18804,8 @@ MonoBehaviour:
   mySubtitles:
   - "\uC774\uACF3\uC5D0\uC11C \uB2E8\uC11C\uB97C \uCC3E\uC544\uC57C \uD560 \uAC83
     \uAC19\uB2E4."
-  wakietakie: {fileID: 0}
+  walkietakie: {fileID: 0}
+  revealPendingQuestAfterSubtitle: 0
 --- !u!1 &6835353694291790345
 GameObject:
   m_ObjectHideFlags: 0
@@ -18827,7 +18841,8 @@ MonoBehaviour:
   subtitlesScript: {fileID: 8430087059669167798}
   mySubtitles:
   - "\uBB34\uC804\uAE30\uC778 \uAC83 \uAC19\uB2E4."
-  wakietakie: {fileID: 2098765567}
+  walkietakie: {fileID: 6653929418703030037}
+  revealPendingQuestAfterSubtitle: 1
 --- !u!114 &6894492648569601345
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19516,7 +19531,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &7747025958499358685
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19533,7 +19548,8 @@ MonoBehaviour:
   mySubtitles:
   - "\uC55E\uC5D0 CCTV\uAC00 \uC788\uB294 \uAC83 \uAC19\uC73C\uB2C8 \uC870\uC2EC\uD574\uC11C
     \uAC00\uC790"
-  wakietakie: {fileID: 0}
+  walkietakie: {fileID: 0}
+  revealPendingQuestAfterSubtitle: 0
 --- !u!1 &7939882010216570702
 GameObject:
   m_ObjectHideFlags: 0
@@ -19775,7 +19791,8 @@ MonoBehaviour:
   - "\uB9C8\uCE58 \uC77C\uBC18\uC801\uC778 \uD68C\uC0AC\uC778 \uAC83\uCC98\uB7FC
     \uC704\uC7A5\uD574\uB1A8\uAD70"
   - "\uC77C\uB2E8 \uBB34\uC804\uAE30\uBD80\uD130 \uCC3E\uC790"
-  wakietakie: {fileID: 0}
+  walkietakie: {fileID: 0}
+  revealPendingQuestAfterSubtitle: 1
 --- !u!1 &8769696929454587188
 GameObject:
   m_ObjectHideFlags: 0
