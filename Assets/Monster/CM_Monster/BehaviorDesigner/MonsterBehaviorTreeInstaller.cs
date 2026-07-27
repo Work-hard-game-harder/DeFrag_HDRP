@@ -36,6 +36,7 @@ public sealed class MonsterBehaviorTreeInstaller : MonoBehaviour
     private static bool HasValidGeneratedTree(BehaviorSource source)
     {
         if (!(source.RootTask is SelectorEvaluator selector) || selector.ID != 1 ||
+            selector.FriendlyName != "B1F Monster State Selector" ||
             selector.Children == null || selector.Children.Count != 6)
             return false;
 
@@ -56,7 +57,7 @@ public sealed class MonsterBehaviorTreeInstaller : MonoBehaviour
         var selector = new SelectorEvaluator
         {
             ID = 1,
-            FriendlyName = "Monster State Selector",
+            FriendlyName = "B1F Monster State Selector",
             NodeData = new NodeData { Offset = new Vector2(0f, 120f) }
         };
         selector.AddChild(CreateStateTask(2, MonsterAI.MonsterState.Missing, -500f), 0);
