@@ -15,6 +15,8 @@ using UnityEngine.SceneManagement;
 
 public sealed class LobbyManager : MonoBehaviour
 {
+    private const string RelayJoinCodeCharacters = "6789BCDFGHJKLMNPQRTW";
+
     private enum RelayConnectionProtocol
     {
         Udp,
@@ -56,6 +58,22 @@ public sealed class LobbyManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
+    }
+
+    private void OnEnable()
+    {
+        if (joinCodeInput != null)
+        {
+            joinCodeInput.onSubmit.AddListener(HandleJoinCodeSubmitted);
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (joinCodeInput != null)
+        {
+            joinCodeInput.onSubmit.RemoveListener(HandleJoinCodeSubmitted);
+        }
     }
 
     private async void Start()
@@ -122,13 +140,21 @@ public sealed class LobbyManager : MonoBehaviour
     public async void JoinWithRelay()
     {
         string joinCode = joinCodeInput == null ? string.Empty : NormalizeJoinCode(joinCodeInput.text);
-        if (!CanStartSession() || string.IsNullOrEmpty(joinCode))
+        if (!CanStartSession())
         {
-            Debug.LogWarning("입장할 방 코드를 입력하세요.");
+            return;
+        }
+
+        if (!IsValidJoinCode(joinCode))
+        {
+            Debug.LogWarning("올바른 Relay 참가 코드를 입력하세요. 코드를 복사할 때 문자가 바뀌지 않았는지 확인하세요.");
+            joinCodeInput?.ActivateInputField();
             return;
         }
 
         isStartingSession = true;
+        joinCodeInput.text = joinCode;
+        joinCodeInput.interactable = false;
 
         try
         {
@@ -150,17 +176,39 @@ public sealed class LobbyManager : MonoBehaviour
         }
         catch (RelayServiceException exception)
         {
-            Debug.LogError($"방 코드 접속 실패: {exception.Message}");
+            Debug.LogError($"Relay 방 참가에 실패했습니다. 방 코드와 호스트 상태를 확인하세요. (ErrorCode: {exception.ErrorCode})");
+            ResetFailedClientStart();
             UnsubscribeFromNetworkEvents();
         }
         catch (Exception exception)
         {
             Debug.LogError($"클라이언트 시작 실패: {exception.Message}");
+            ResetFailedClientStart();
             UnsubscribeFromNetworkEvents();
         }
         finally
         {
             isStartingSession = false;
+            if (joinCodeInput != null)
+            {
+                joinCodeInput.interactable = true;
+            }
+        }
+    }
+
+    private void HandleJoinCodeSubmitted(string _)
+    {
+        JoinWithRelay();
+    }
+
+    private void ResetFailedClientStart()
+    {
+        SavedJoinCode = null;
+
+        NetworkManager manager = NetworkManager.Singleton;
+        if (manager != null && manager.IsListening && !manager.ShutdownInProgress)
+        {
+            manager.Shutdown();
         }
     }
 
@@ -397,6 +445,24 @@ public sealed class LobbyManager : MonoBehaviour
     private static string NormalizeJoinCode(string joinCode)
     {
         return joinCode.Trim().ToUpperInvariant();
+    }
+
+    private static bool IsValidJoinCode(string joinCode)
+    {
+        if (joinCode.Length < 6 || joinCode.Length > 12)
+        {
+            return false;
+        }
+
+        foreach (char character in joinCode)
+        {
+            if (RelayJoinCodeCharacters.IndexOf(character) < 0)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static async Task EnsureServicesInitializedAsync()

@@ -1,17 +1,15 @@
-using UnityEngine;
+癤퓎sing UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class ButtonClickManager : MonoBehaviour
 {
-     private GameObject CodePanel;
+    [SerializeField] private GameObject codePanel;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        CodePanel = GameObject.Find("CodePanel");
-
-        if (CodePanel != null)
-            CodePanel.SetActive(false);
+        if (codePanel != null)
+            codePanel.SetActive(false);
 
     }
 
@@ -23,19 +21,19 @@ public class ButtonClickManager : MonoBehaviour
 
     public void SelectedCodePanel()
     {
-        if (CodePanel != null)
+        if (codePanel != null)
         {
             AudioManager.Instance.PlaySFX("Button1");
-            CodePanel.SetActive(true);
+            codePanel.SetActive(true);
         }
 
     }
     public void ExitCodePanel()
     {
-        if (CodePanel != null)
+        if (codePanel != null)
         {
             AudioManager.Instance.PlaySFX("Button1");
-            CodePanel.SetActive(false);
+            codePanel.SetActive(false);
         }
     }
 
@@ -47,10 +45,10 @@ public class ButtonClickManager : MonoBehaviour
 
     public void QuitGame()
     {
-        Application.Quit(); // 빌드된 게임에서 종료
+        Application.Quit(); // Quit in a player build.
 
 #if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false; // 에디터에서 종료 유도
+        UnityEditor.EditorApplication.isPlaying = false; // Stop Play Mode in the Editor.
 #endif
     }
 }
