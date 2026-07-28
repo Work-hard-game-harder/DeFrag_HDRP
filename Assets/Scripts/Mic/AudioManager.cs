@@ -1,6 +1,7 @@
 // AudioManager.cs
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using static SettingManager;
 
 [System.Serializable]
@@ -15,6 +16,7 @@ public class SceneBGM
 {
     public string sceneName;
     public AudioClip clip;
+    [Range(0f, 1f)] public float volumeScale = 1f;
 }
 public class AudioManager : MonoBehaviour
 {
@@ -24,14 +26,17 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioSource sfxSource;
     [SerializeField] private List<SceneBGM> sceneBGMList;
     [SerializeField] private List<SFXClip> sfxClipList;
+    private float bgmVolume = 1f;
+    private float sceneBgmVolumeScale = 1f;
     private void Start()
     {
-
         if (SettingManager.Instance != null)
         {
             SetBGMVolume(SettingManager.Instance.BGM);
             SetSFXVolume(SettingManager.Instance.SFX);
         }
+
+        PlayBGMForScene(SceneManager.GetActiveScene().name);
     }
     private void Awake()
     {
@@ -45,6 +50,8 @@ public class AudioManager : MonoBehaviour
     {
         SceneBGM matched = sceneBGMList.Find(s => s.sceneName == sceneName);
         if (matched == null || matched.clip == null) { bgmSource.Stop(); return; }
+        sceneBgmVolumeScale = matched.volumeScale;
+        ApplyBGMVolume();
         if (bgmSource.clip == matched.clip && bgmSource.isPlaying) return;
 
         bgmSource.clip = matched.clip;
@@ -54,7 +61,13 @@ public class AudioManager : MonoBehaviour
 
     public void SetBGMVolume(float value)
     {
-        if (bgmSource != null) bgmSource.volume = value;
+        bgmVolume = value;
+        ApplyBGMVolume();
+    }
+
+    private void ApplyBGMVolume()
+    {
+        bgmSource.volume = bgmVolume * sceneBgmVolumeScale;
     }
 
     public void StopBGM()
@@ -72,7 +85,7 @@ public class AudioManager : MonoBehaviour
     {
         SFXClip matched = sfxClipList.Find(s => s.sfxName == sfxName);
         if (matched == null || matched.clip == null) return;
-        sfxSource.PlayOneShot(matched.clip, 0.5f); // ← 1f로 고정, 볼륨은 sfxSource.volume이 담당
+        sfxSource.PlayOneShot(matched.clip, 0.5f);
     }
 
     public void SetSFXVolume(float value)

@@ -31,27 +31,42 @@ public class PatrolRobotAI : MonoBehaviour
     private Vector3 lastKnownPlayerPos;
     private float lastSeenPlayerTime = float.NegativeInfinity;
     private float nextPlayerSearchTime;
+    private GameObject[] playerCandidates = System.Array.Empty<GameObject>();
     private const float PlayerSearchInterval = 0.5f;
 
     void Start()
     {
+        SyncVisionLight();
         agent = GetComponent<NavMeshAgent>();
         agent.speed = patrolSpeed;
-        FindClosestPlayer();
+        RefreshPlayerCandidates();
         SetRandomPatrolDestination(); // ?쒖옉?섏옄留덉옄 ?쒕뜡??怨녹쑝濡?異쒕컻
+    }
+
+    private void OnValidate()
+    {
+        if (visionLight == null) return;
+        SyncVisionLight();
+    }
+
+    private void SyncVisionLight()
+    {
+        visionLight.range = viewDistance;
+        visionLight.spotAngle = viewAngle;
     }
 
     void Update()
     {
-        if (player == null || player.root == transform.root || Time.time >= nextPlayerSearchTime)
-            FindClosestPlayer();
+        if (Time.time >= nextPlayerSearchTime)
+            RefreshPlayerCandidates();
 
         if (!agent.isOnNavMesh || !agent.enabled) 
             return;
         // 1?④퀎: ?뚮젅?댁뼱 媛먯? (??긽 理쒖떊 寃곌낵 ?좎?)
-        bool seesPlayer = CanSeePlayer();
+        bool seesPlayer = TryFindVisiblePlayer(out Transform visiblePlayer);
         if (seesPlayer)
         {
+            player = visiblePlayer;
             lastSeenPlayerTime = Time.time;
             lastKnownPlayerPos = player.position;
         }
@@ -151,34 +166,64 @@ public class PatrolRobotAI : MonoBehaviour
     // ?쒖빞 媛먯? 濡쒖쭅
     // ?섏젙???쒓컖 媛먯? 濡쒖쭅 (?붿슧 ?뺣??섍퀬 踰꾧렇 ?녿뒗 踰꾩쟾)
     // ?섏젙???쒓컖 媛먯? 濡쒖쭅 (?붾쾭洹?紐⑤뱶 + ?뺣? ?寃?
-    bool CanSeePlayer()
+    private bool TryFindVisiblePlayer(out Transform visiblePlayer)
     {
-        if (player == null || eyeLocation == null) return false;
+        visiblePlayer = null;
+        float closestSqrDistance = float.MaxValue;
 
-        Vector3 targetPos = player.position + Vector3.up;
-        Vector3 direction = targetPos - eyeLocation.position;
-        float distance = direction.magnitude;
-        float effectiveDistance = viewDistance;
-        float effectiveAngle = viewAngle;
-        Vector3 visionForward = eyeLocation.forward;
-
-        // Keep detection inside the cone that the player can actually see.
-        if (visionLight != null)
+        foreach (GameObject candidate in playerCandidates)
         {
-            effectiveDistance = Mathf.Min(effectiveDistance, visionLight.range);
-            effectiveAngle = Mathf.Min(effectiveAngle, visionLight.spotAngle);
-            visionForward = visionLight.transform.forward;
+            if (candidate == null || !candidate.activeInHierarchy) continue;
+            if (candidate.transform.root == transform.root) continue;
+            if (!CanSeePlayer(candidate.transform)) continue;
+
+            float sqrDistance = (candidate.transform.position - transform.position).sqrMagnitude;
+            if (sqrDistance >= closestSqrDistance) continue;
+
+            closestSqrDistance = sqrDistance;
+            visiblePlayer = candidate.transform;
         }
 
-        if (distance > effectiveDistance || distance <= Mathf.Epsilon) return false;
+        return visiblePlayer != null;
+    }
+
+    private bool CanSeePlayer(Transform targetPlayer)
+    {
+        CharacterController playerController = targetPlayer.GetComponent<CharacterController>();
+        Bounds playerBounds = playerController.bounds;
+        Transform coneTransform = visionLight.transform;
+        Vector3 coneOrigin = coneTransform.position;
+        Vector3 coneForward = coneTransform.forward;
+
+        float centerProjection = Vector3.Dot(playerBounds.center - coneOrigin, coneForward);
+        Vector3 closestAxisPoint = coneOrigin
+            + coneForward * Mathf.Clamp(centerProjection, 0f, visionLight.range);
+        Vector3 closestControllerPoint = playerController.ClosestPoint(closestAxisPoint);
+        float lowerSampleHeight = Mathf.Min(playerController.radius * 0.5f, playerBounds.extents.y);
+        Vector3 lowerControllerPoint = new Vector3(
+            playerBounds.center.x,
+            playerBounds.min.y + lowerSampleHeight,
+            playerBounds.center.z);
+
+        return CanSeePoint(closestControllerPoint, coneOrigin, coneForward)
+            || CanSeePoint(lowerControllerPoint, coneOrigin, coneForward)
+            || CanSeePoint(playerBounds.center, coneOrigin, coneForward);
+    }
+
+    private bool CanSeePoint(Vector3 targetPos, Vector3 coneOrigin, Vector3 coneForward)
+    {
+        Vector3 direction = targetPos - coneOrigin;
+        float distance = direction.magnitude;
+
+        if (distance > visionLight.range || distance <= Mathf.Epsilon) return false;
 
         direction /= distance;
-        if (Vector3.Angle(visionForward, direction) >= effectiveAngle * 0.5f) return false;
+        if (Vector3.Angle(coneForward, direction) >= visionLight.spotAngle * 0.5f) return false;
 
         RaycastHit[] hits = Physics.RaycastAll(
-            eyeLocation.position,
+            coneOrigin,
             direction,
-            distance,
+            visionLight.range,
             obstacleMask,
             QueryTriggerInteraction.Ignore);
         System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
@@ -192,25 +237,10 @@ public class PatrolRobotAI : MonoBehaviour
         return false;
     }
 
-    private void FindClosestPlayer()
+    private void RefreshPlayerCandidates()
     {
         nextPlayerSearchTime = Time.time + PlayerSearchInterval;
-        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
-        Transform closest = null;
-        float closestSqrDistance = float.MaxValue;
-
-        foreach (GameObject candidate in players)
-        {
-            if (candidate == null || !candidate.activeInHierarchy) continue;
-            if (candidate.transform.root == transform.root) continue;
-
-            float sqrDistance = (candidate.transform.position - transform.position).sqrMagnitude;
-            if (sqrDistance >= closestSqrDistance) continue;
-            closestSqrDistance = sqrDistance;
-            closest = candidate.transform;
-        }
-
-        player = closest;
+        playerCandidates = GameObject.FindGameObjectsWithTag("Player");
     }
 
     private static bool HasPlayerTag(Transform target)

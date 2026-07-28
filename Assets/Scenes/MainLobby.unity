@@ -2139,7 +2139,7 @@ MonoBehaviour:
   lobbySceneName: LobbyScene
   gameplaySceneName: B5F
   transportFailureSceneName: MainLobby
-  lobbyAvatarPrefab: {fileID: 7592877399013546989, guid: 15f473145aa5d9e489e07567b3c2b47f, type: 3}
+  lobbyAvatarPrefab: {fileID: 7592877399013546989, guid: 67e629d78f11bbe4c8d56d5241b03b2e, type: 3}
   gameplayPlayerPrefab: {fileID: 8628133643110585351, guid: 7efe8505741782948b7e79c6eedc993c, type: 3}
   maxClientConnections: 1
   relayProtocol: 1
@@ -3452,8 +3452,16 @@ MonoBehaviour:
   sceneBGMList:
   - sceneName: MainLobby
     clip: {fileID: 8300000, guid: 8ee79e0a45de302478c9c998a4176ab8, type: 3}
+    volumeScale: 1
   - sceneName: CreateLobby
     clip: {fileID: 8300000, guid: b80f6f798b473aa4386023bff6415522, type: 3}
+    volumeScale: 1
+  - sceneName: LobbyF
+    clip: {fileID: 8300000, guid: 7b5af554bd1c8cd4e94b78ebfa0e6d07, type: 3}
+    volumeScale: 0.5
+  - sceneName: B2F
+    clip: {fileID: 8300000, guid: 7b5af554bd1c8cd4e94b78ebfa0e6d07, type: 3}
+    volumeScale: 0.5
   sfxClipList:
   - sfxName: Button1
     clip: {fileID: 8300000, guid: 2ddb4c344b38aca4da4dbe07c2ade7a5, type: 3}
