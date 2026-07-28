@@ -129,6 +129,7 @@ public sealed class EquipmentController : MonoBehaviour
     private GameObject heldVisual;
     private FirstPersonController playerController;
     private CameraBattery cameraBattery;
+    private CameraViewSwitcher cameraViewSwitcher;
 
     public ItemData EquippedData => equippedData;
     public GameObject HeldVisual => heldVisual;
@@ -157,6 +158,8 @@ public sealed class EquipmentController : MonoBehaviour
     {
         inventoryUI = ui;
         playerController = cameraTransform.root.GetComponentInChildren<FirstPersonController>(true);
+        cameraViewSwitcher = cameraTransform.root.GetComponentInChildren<CameraViewSwitcher>(true);
+        cameraViewSwitcher?.BindBattery(cameraBattery);
         EnsureHandPoint(cameraTransform);
         RefreshSelectedItem();
     }
@@ -190,6 +193,7 @@ public sealed class EquipmentController : MonoBehaviour
     {
         ClearHeldVisual();
         equippedData = data;
+        cameraViewSwitcher?.SetCameraEquipped(data is CameraItemData);
 
         if (data == null || handPoint == null) return;
 
@@ -197,7 +201,7 @@ public sealed class EquipmentController : MonoBehaviour
         GameObject visualPrefab = usingWorldPrefab ? data.itemPrefab : data.heldPrefab;
         if (visualPrefab == null)
         {
-            Debug.LogWarning($"[Equipment] '{data.itemName}'에 Held Prefab 또는 Item Prefab이 없습니다.");
+            Debug.LogWarning($"[Equipment] '{data.itemName}'??Held Prefab ?먮뒗 Item Prefab???놁뒿?덈떎.");
             return;
         }
 
@@ -220,9 +224,6 @@ public sealed class EquipmentController : MonoBehaviour
         }
 
         PrepareAsHeldVisual(heldVisual);
-
-        if (data is CameraItemData)
-            heldVisual.GetComponentInChildren<CameraItem>(true).Bind(cameraBattery);
 
         if (data.supportsCloseInspection)
         {
@@ -269,6 +270,17 @@ public sealed class EquipmentController : MonoBehaviour
 
         foreach (GetItem pickup in visual.GetComponentsInChildren<GetItem>(true))
             pickup.enabled = false;
+
+        // 손에 보이는 프리팹은 시야를 렌더링하지 않는다. 실제 카메라 기능은
+        // 플레이어 CameraParent 아래의 ItemCam 한 곳에서만 담당한다.
+        foreach (Camera heldCamera in visual.GetComponentsInChildren<Camera>(true))
+            heldCamera.enabled = false;
+
+        foreach (AudioListener heldListener in visual.GetComponentsInChildren<AudioListener>(true))
+            heldListener.enabled = false;
+
+        foreach (CameraItem heldCameraItem in visual.GetComponentsInChildren<CameraItem>(true))
+            heldCameraItem.enabled = false;
     }
 
     private static void SetLayerRecursively(GameObject target, int layer)

@@ -50,6 +50,10 @@ public class InteractableItem : MonoBehaviour, IInteractable
             if (progressesQuest && QuestManager.Instance != null)
             {
                 QuestManager.Instance.ProgressActiveQuest(questProgressAmount);
+
+                // 이 상호작용으로 퀘스트가 완료되어 다음 단계가 대기 중이면 즉시 공개.
+                // 아직 완료되지 않았다면 QuestManager 내부에서 자동으로 무시됨.
+                QuestManager.Instance.RevealPendingQuestAfterSubtitle();
             }
 
             onInteractEvent?.Invoke();

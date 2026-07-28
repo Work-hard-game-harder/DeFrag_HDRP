@@ -5,7 +5,7 @@ using UnityEngine;
 
 public static class MonsterBehaviorTreeEditorSetup
 {
-    private const string MenuPath = "Tools/DeFrag/Monster/Create Behavior Tree For Selected Monster";
+    private const string MenuPath = "Tools/Behavior Designer/B1F Monster/Create Tree For Selected Monster";
 
     [MenuItem(MenuPath)]
     private static void CreateForSelectedMonster()

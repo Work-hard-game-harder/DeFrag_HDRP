@@ -6,7 +6,7 @@ public class SubtitleTrigger : MonoBehaviour
     public SubtitlesScript subtitlesScript; // 씬에 배치된 SubtitleBox 연결
     public string[] mySubtitles;            // 이 트리거에서 재생할 기존 자막 목록
     private bool hasTriggered = false;
-    public GameObject wakietakie; // 워키토키 획득 시 활성화할 오브젝트
+    public GameObject walkietakie; // 워키토키 획득 시 활성화할 오브젝트
 
     [Header("Quest UI Link")]
     [Tooltip("체크하면 이 자막이 모두 끝난 뒤 공개 대기 중인 다음 퀘스트 UI를 표시합니다.")]
@@ -44,6 +44,36 @@ public class SubtitleTrigger : MonoBehaviour
         QuestManager.Instance?.RevealPendingQuestAfterSubtitle();
     }
 
+    // 무전기 등 UnityEvent(인스펙터)에서 연결하는 용도 - 매개변수 없음
+    public void PlaySubtitleFromInteract()
+    {
+        PlaySubtitleFromInteract(null);
+    }
+
+    // 엘리베이터 등 코드에서 콜백을 넘기는 용도
+    public void PlaySubtitleFromInteract(System.Action onComplete)
+    {
+        if (hasTriggered) return;
+        if (subtitlesScript == null || mySubtitles == null || mySubtitles.Length == 0)
+        {
+            Debug.LogWarning($"[{nameof(SubtitleTrigger)}] {name}에 재생할 자막이 설정되지 않았습니다.", this);
+            onComplete?.Invoke();
+            return;
+        }
+
+        hasTriggered = true;
+
+        System.Action combinedCallback = () =>
+        {
+            if (revealPendingQuestAfterSubtitle)
+            {
+                RevealPendingQuest();
+            }
+            onComplete?.Invoke();
+        };
+
+        subtitlesScript.PlaySubtitles(mySubtitles, combinedCallback);
+    }
     /*
     private void OnMouseDown()
     {

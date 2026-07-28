@@ -1,5 +1,5 @@
 ﻿using EasyPeasyFirstPersonController;
-using Unity.Netcode;
+using DeFrag.Monsters.Common;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -85,6 +85,7 @@ public class MonsterAI : MonoBehaviour
 
     private NavMeshAgent agent;
     private ChaseDetourNavigator chaseNavigator;
+    private NavMeshPath randomDestinationPath;
     private CatchUpNavigator catchUpNavigator;
     private float idleTimer = 0f;
     private float idleDuration = 0f;
@@ -118,8 +119,7 @@ public class MonsterAI : MonoBehaviour
             if (!serverAuthoritative)
                 return true;
 
-            NetworkManager networkManager = NetworkManager.Singleton;
-            return networkManager == null || !networkManager.IsListening || networkManager.IsServer;
+            return MonsterSimulationAuthority.HasServerAuthority();
         }
     }
 
@@ -149,6 +149,7 @@ public class MonsterAI : MonoBehaviour
             playerSoundEmitter = player.GetComponentInChildren<SoundEmitter>();
 
         chaseNavigator = new ChaseDetourNavigator(agent, detourSampleCount, detourSampleRadius, detourRecheckInterval);
+        randomDestinationPath = new NavMeshPath();
         catchUpNavigator = new CatchUpNavigator(agent, maxChaseDistance, catchUpRadius, catchUpCooldown);   // 이 줄이 있는지 확인
 
         currentState = MonsterState.Idle;
@@ -356,22 +357,19 @@ public class MonsterAI : MonoBehaviour
 
     bool CheckPlayerVisibility()
     {
-        float distToPlayer = Vector3.Distance(transform.position, player.position);
         // Investigate 중에는 Search 반경까지 시야를 확장합니다.
         // 이 확장 구간에서는 서 있는 플레이어만 발각되며 웅크리기는 위 조건에서 제외됩니다.
         float visibilityRange = currentState == MonsterState.Investigate
             ? Mathf.Max(chaseRange, searchRadius)
             : chaseRange;
-        if (distToPlayer > visibilityRange) return false;
-
-        Vector3 dirToPlayer = (player.position - transform.position).normalized;
-        float angle = Vector3.Angle(transform.forward, dirToPlayer);
-        if (angle > fieldOfView * 0.5f) return false;
-
-        if (Physics.Raycast(transform.position + Vector3.up, dirToPlayer, distToPlayer, obstacleMask))
-            return false;
-
-        return true;
+        return MonsterPerceptionUtility.CanSeeTarget(
+            transform,
+            player,
+            visibilityRange,
+            fieldOfView,
+            obstacleMask,
+            1f,
+            0f);
     }
     bool CheckSoundDetection()
     {
@@ -501,18 +499,22 @@ public class MonsterAI : MonoBehaviour
     // 특정 위치 근처에서 랜덤 목적지 설정 (재사용 가능하도록 분리)
     void SetRandomDestinationNear(Vector3 center, float radius)
     {
-        for (int i = 0; i < 30; i++)
-        {
-            Vector2 randomCircle = Random.insideUnitCircle * radius;
-            Vector3 randomPos = center + new Vector3(randomCircle.x, 0, randomCircle.y);
+        if (randomDestinationPath == null)
+            randomDestinationPath = new NavMeshPath();
 
-            NavMeshHit hit;
-            if (NavMesh.SamplePosition(randomPos, out hit, 5f, NavMesh.AllAreas))
-            {
-                agent.SetDestination(hit.position);
-                return;
-            }
+        if (MonsterNavMeshUtility.TryFindRandomReachablePosition(
+                agent,
+                center,
+                radius,
+                30,
+                5f,
+                randomDestinationPath,
+                out Vector3 destination))
+        {
+            agent.SetDestination(destination);
+            return;
         }
+
         Debug.LogWarning("[Search] SamplePosition 30회 실패, 폴백 경로 사용");
         agent.SetDestination(transform.position + transform.forward * 3f);
     }
