@@ -17,7 +17,14 @@ MonoBehaviour:
   icon: {fileID: 0}
   type: 0
   itemPrefab: {fileID: 6105546039278006580, guid: c4aea0dfd9b880849859d350ec81e93d, type: 3}
-  impactSound: {fileID: 8300000, guid: ff697d3070687ce4583faa0561a145a2, type: 3}
+  heldPrefab: {fileID: 0}
+  heldLocalPosition: {x: 0.35, y: -0.3, z: 0.65}
+  heldLocalEulerAngles: {x: 0, y: 0, z: 0}
+  heldLocalScale: {x: 1, y: 1, z: 1}
+  supportsCloseInspection: 0
+  impactSound: {fileID: 8300000, guid: 510a7f83c2202a94cb12e86b1e7315ea, type: 3}
   impactVolume: 1
-  impactNoiseRadius: 15
-  description: 
+  impactNoiseRadius: 20
+  description: "\uC18C\uB9AC\uB97C \uBA40\uB9AC \uD37C\uC838\uB098\uAC00\uAC8C \uD560
+    \uC218 \uC788\uB294 \uC544\uC774\uD15C. \n\uC18C\uC74C\uC744 \uB0BC \uC218 \uC788\uC744
+    \uB4EF \uD558\uB2E4."

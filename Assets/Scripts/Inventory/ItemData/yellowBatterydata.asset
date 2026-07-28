@@ -13,14 +13,19 @@ MonoBehaviour:
   m_Name: yellowBatterydata
   m_EditorClassIdentifier: Assembly-CSharp::BatteryItemData
   itemName: "\uB178\uB791\uBC30\uD130\uB9AC"
+  itemID: itemBattery_yellow
   icon: {fileID: 21300000, guid: 0e910d2b252fde24e82ba0ef83644aad, type: 3}
   type: 0
-  itemID: itemBattery_yellow
   itemPrefab: {fileID: 7447663858818627071, guid: c1a42cab182a02a48949364215905f33, type: 3}
+  heldPrefab: {fileID: 0}
+  heldLocalPosition: {x: 0.35, y: -0.3, z: 0.65}
+  heldLocalEulerAngles: {x: 0, y: 0, z: 0}
+  heldLocalScale: {x: 1, y: 1, z: 1}
+  supportsCloseInspection: 0
   impactSound: {fileID: 8300000, guid: ff697d3070687ce4583faa0561a145a2, type: 3}
   impactVolume: 1
-  impactNoiseRadius: 15
-  description: "\uB178\uB791 \uBC30\uD130\uB9AC\uC785\uB2C8\uB2E4."
-  triggerSubtitleOnPickup: 0
-  pickupSubtitles: []
+  impactNoiseRadius: 10
+  description: "\uCE74\uBA54\uB77C\uC5D0 \uC0AC\uC6A9\uD560 \uC218 \uC788\uC744\uB4EF\uD55C
+    \uCD08\uACBD\uB7C9 \uBC30\uD130\uB9AC.\n\uC794\uB7C9\uC774 \uC5BC\uB9C8 \uB0A8\uC9C0
+    \uC54A\uC558\uB2E4."
   rechargeRatio: 0.25

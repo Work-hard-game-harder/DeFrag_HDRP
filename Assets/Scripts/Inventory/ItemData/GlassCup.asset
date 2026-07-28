@@ -17,7 +17,12 @@ MonoBehaviour:
   icon: {fileID: 0}
   type: 0
   itemPrefab: {fileID: 892051013656569146, guid: 6aefe2bc97c8a24498f028de21943d16, type: 3}
-  impactSound: {fileID: 8300000, guid: ff697d3070687ce4583faa0561a145a2, type: 3}
+  heldPrefab: {fileID: 0}
+  heldLocalPosition: {x: 0.35, y: -0.3, z: 0.65}
+  heldLocalEulerAngles: {x: 0, y: 0, z: 0}
+  heldLocalScale: {x: 1, y: 1, z: 1}
+  supportsCloseInspection: 0
+  impactSound: {fileID: 8300000, guid: 345e34bcbe6898b408876630edf84adb, type: 3}
   impactVolume: 1
   impactNoiseRadius: 15
-  description: 
+  description: "\uAE68\uC9C0\uBA74 \uD070 \uC18C\uB9AC\uAC00 \uB0A0\uC9C0\uB3C4..?"

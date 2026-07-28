@@ -2041,7 +2041,7 @@ Animator:
   m_GameObject: {fileID: 7592877399013546989}
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: 9ea857e04876c1d4799d734a13bf8983, type: 3}
-  m_Controller: {fileID: 9100000, guid: 40db3173a05ae3242b1c182a09b0a183, type: 2}
+  m_Controller: {fileID: 9100000, guid: f0874da5c31e95448b7647c01bd3468b, type: 2}
   m_CullingMode: 1
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -2287,6 +2287,7 @@ MonoBehaviour:
   wakieTakie: {fileID: 8916423859403885125}
   wakieTakieSubscrition: {fileID: 0}
   hasWakieTakie: 0
+  walkieTalkieController: {fileID: 0}
   IsHiding: 0
   isCrouching: 0
   useFovKick: 1
@@ -2378,6 +2379,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ca831e2973968744bd12d479291d220, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStats
+  maxHealth: 100
   Health: 2
   Inventory: []
 --- !u!114 &7349012846091223001
