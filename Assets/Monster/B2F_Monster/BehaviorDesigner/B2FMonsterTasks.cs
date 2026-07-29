@@ -1,6 +1,6 @@
-using System.Collections.Generic;
 using BehaviorDesigner.Runtime;
 using BehaviorDesigner.Runtime.Tasks;
+using DeFrag.Monsters.B2F;
 using DeFrag.Monsters.Common;
 using UnityEngine;
 using UnityEngine.AI;
@@ -406,69 +406,69 @@ namespace DeFrag.Monsters.B2F.BehaviorDesignerTasks
     [TaskDescription("녹음 음성 목록에서 한 클립을 골라 재생하고 말하기 애니메이션을 제어합니다.")]
     public sealed class PlayMimicVoice : Action
     {
+        // Preserved so existing serialized Behavior Trees remain compatible.
+        // Runtime recordings are owned by B2FMonsterVoiceMimic.
         public SharedAudioClipList mimicVoiceClips;
         public SharedGameObject audioSourceObject;
         public SharedGameObject animatorObject;
         public SharedString talkingParameter = "isTalking";
         public SharedFloat volume = 1f;
 
-        private AudioSource audioSource;
+        private B2FMonsterVoiceMimic mimicController;
         private Animator animator;
         private int talkingHash;
-        private float finishTime;
         private bool controlsTalkingParameter;
+        private bool playbackStarted;
 
         public override void OnStart()
         {
-            GameObject audioObject = audioSourceObject.Value != null ? audioSourceObject.Value : gameObject;
-            audioSource = audioObject.GetComponent<AudioSource>();
+            GameObject controllerObject =
+                audioSourceObject.Value != null ? audioSourceObject.Value : gameObject;
+            mimicController = controllerObject.GetComponent<B2FMonsterVoiceMimic>();
             animator = B2FMonsterTaskUtility.FindAnimator(gameObject, animatorObject.Value);
             talkingHash = Animator.StringToHash(talkingParameter.Value ?? string.Empty);
             controlsTalkingParameter = B2FMonsterTaskUtility.HasBoolParameter(animator, talkingHash);
 
-            AudioClip clip = GetRandomClip();
-            if (audioSource == null || clip == null)
+            playbackStarted =
+                mimicController != null && mimicController.TryStartNextPlayback(volume.Value);
+
+            if (!playbackStarted)
             {
-                finishTime = Time.time;
+                mimicController?.RefreshMimicList();
                 return;
             }
 
             if (controlsTalkingParameter)
                 animator.SetBool(talkingHash, true);
-
-            audioSource.PlayOneShot(clip, Mathf.Clamp01(volume.Value));
-            finishTime = Time.time + clip.length;
         }
 
         public override TaskStatus OnUpdate()
         {
-            return Time.time >= finishTime ? TaskStatus.Success : TaskStatus.Running;
+            if (!playbackStarted || mimicController == null)
+                return TaskStatus.Success;
+
+            if (!mimicController.IsActivePlaybackComplete)
+                return TaskStatus.Running;
+
+            mimicController.CompleteActivePlayback();
+            playbackStarted = false;
+            SetTalking(false);
+            return TaskStatus.Success;
         }
 
         public override void OnEnd()
         {
-            if (controlsTalkingParameter && animator != null)
-                animator.SetBool(talkingHash, false);
+            if (playbackStarted && mimicController != null)
+                mimicController.CancelActivePlayback();
 
-            if (audioSource != null && audioSource.isPlaying)
-                audioSource.Stop();
+            playbackStarted = false;
+            SetTalking(false);
         }
 
-        private AudioClip GetRandomClip()
+        private void SetTalking(bool value)
         {
-            List<AudioClip> configuredClips = mimicVoiceClips.Value;
-            if (configuredClips != null && configuredClips.Count > 0)
-            {
-                int startIndex = Random.Range(0, configuredClips.Count);
-                for (int i = 0; i < configuredClips.Count; i++)
-                {
-                    AudioClip clip = configuredClips[(startIndex + i) % configuredClips.Count];
-                    if (clip != null)
-                        return clip;
-                }
-            }
-
-            return WalkieTalkieRecordingLibrary.GetRandomClip();
+            if (controlsTalkingParameter && animator != null)
+                animator.SetBool(talkingHash, value);
         }
     }
 

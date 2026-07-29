@@ -19,17 +19,37 @@ public static class WalkieTalkieRecordingLibrary
     {
         if (clip == null) return;
 
-        int existingIndex = filePaths.IndexOf(filePath);
+        string normalizedPath = WalkieTalkieRecordingStorage.NormalizePath(filePath);
+        int existingIndex = FindPathIndex(normalizedPath);
         if (existingIndex >= 0)
         {
+            AudioClip previousClip = clips[existingIndex];
             clips[existingIndex] = clip;
-            RecordingAdded?.Invoke(clip, filePath);
+            if (previousClip != null && previousClip != clip)
+                UnityEngine.Object.Destroy(previousClip);
+            RecordingAdded?.Invoke(clip, normalizedPath);
             return;
         }
 
         clips.Add(clip);
-        filePaths.Add(filePath);
-        RecordingAdded?.Invoke(clip, filePath);
+        filePaths.Add(normalizedPath);
+        RecordingAdded?.Invoke(clip, normalizedPath);
+    }
+
+    public static bool Unregister(string filePath, bool destroyClip)
+    {
+        int index = FindPathIndex(WalkieTalkieRecordingStorage.NormalizePath(filePath));
+        if (index < 0)
+            return false;
+
+        AudioClip clip = clips[index];
+        clips.RemoveAt(index);
+        filePaths.RemoveAt(index);
+
+        if (destroyClip && clip != null)
+            UnityEngine.Object.Destroy(clip);
+
+        return true;
     }
 
     public static AudioClip GetRandomClip()
@@ -45,5 +65,16 @@ public static class WalkieTalkieRecordingLibrary
         audioSource.clip = clip;
         audioSource.Play();
         return true;
+    }
+
+    private static int FindPathIndex(string normalizedPath)
+    {
+        for (int i = 0; i < filePaths.Count; i++)
+        {
+            if (string.Equals(filePaths[i], normalizedPath, StringComparison.OrdinalIgnoreCase))
+                return i;
+        }
+
+        return -1;
     }
 }

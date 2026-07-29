@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using BehaviorDesigner.Runtime;
 using BehaviorDesigner.Runtime.Tasks;
+using DeFrag.Monsters.B2F;
 using DeFrag.Monsters.B2F.BehaviorDesignerTasks;
 using DeFrag.Monsters.Common.BehaviorDesignerTasks;
 using UnityEditor;
@@ -52,6 +53,14 @@ namespace DeFrag.Monsters.B2F.Editor
             AudioSource audioSource = monster.GetComponent<AudioSource>();
             if (audioSource == null)
                 audioSource = recordUndo ? Undo.AddComponent<AudioSource>(monster) : monster.AddComponent<AudioSource>();
+
+            B2FMonsterVoiceMimic voiceMimic = monster.GetComponent<B2FMonsterVoiceMimic>();
+            if (voiceMimic == null)
+            {
+                voiceMimic = recordUndo
+                    ? Undo.AddComponent<B2FMonsterVoiceMimic>(monster)
+                    : monster.AddComponent<B2FMonsterVoiceMimic>();
+            }
 
             audioSource.playOnAwake = false;
             audioSource.loop = false;
@@ -184,8 +193,8 @@ namespace DeFrag.Monsters.B2F.Editor
             {
                 Variable(new SharedTransform { Value = GetValue<SharedTransform, Transform>(source, "PlayerTarget") }, "PlayerTarget"),
                 Variable(new SharedFloat { Value = GetValue(source, "attackRange", 1.5f) }, "attackRange"),
-                Variable(new SharedFloat { Value = GetValue(source, "mimicIntervalMin", 30f) }, "mimicIntervalMin"),
-                Variable(new SharedFloat { Value = GetValue(source, "mimicIntervalMax", 90f) }, "mimicIntervalMax"),
+                Variable(new SharedFloat { Value = GetMimicInterval(source, "mimicIntervalMin", 2f) }, "mimicIntervalMin"),
+                Variable(new SharedFloat { Value = GetMimicInterval(source, "mimicIntervalMax", 30f) }, "mimicIntervalMax"),
                 Variable(new SharedAudioClipList { Value = GetListValue<SharedAudioClipList, AudioClip>(source, "MimicVoiceClips") }, "MimicVoiceClips"),
                 Variable(new SharedVector3(), "PatrolDestination"),
                 Variable(new SharedFloat { Value = GetValue(source, "patrolRadius", 20f) }, "patrolRadius"),
@@ -200,6 +209,21 @@ namespace DeFrag.Monsters.B2F.Editor
         {
             SharedFloat variable = source.GetVariable(name) as SharedFloat;
             return variable != null ? variable.Value : fallback;
+        }
+
+        private static float GetMimicInterval(BehaviorSource source, string name, float fallback)
+        {
+            SharedFloat variable = source.GetVariable(name) as SharedFloat;
+            if (variable == null)
+                return fallback;
+
+            // Migrates the previous 30-90 second defaults to the new 2-30 range.
+            if (name == "mimicIntervalMin" && Mathf.Approximately(variable.Value, 30f))
+                return 2f;
+            if (name == "mimicIntervalMax" && Mathf.Approximately(variable.Value, 90f))
+                return 30f;
+
+            return Mathf.Clamp(variable.Value, 2f, 30f);
         }
 
         private static TValue GetValue<TVariable, TValue>(BehaviorSource source, string name)

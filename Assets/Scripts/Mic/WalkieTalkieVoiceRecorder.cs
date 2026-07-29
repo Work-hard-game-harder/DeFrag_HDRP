@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using EasyPeasyFirstPersonController;
 using UnityEngine;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 /// <summary>
 /// Records one push-to-talk transmission to a WAV file, capped at five seconds.
@@ -17,11 +14,14 @@ using UnityEditor;
 public sealed class WalkieTalkieVoiceRecorder : MonoBehaviour
 {
     [Header("Recording")]
-    [SerializeField, Range(1f, 5f)] private float maxRecordingSeconds = 5f;
+    [SerializeField, Range(2f, 5f)] private float minRecordingSeconds = 2f;
+    [SerializeField, Range(2f, 5f)] private float maxRecordingSeconds = 5f;
     [SerializeField, Min(0f)] private float silencePeakThreshold = 0.0005f;
+    [SerializeField, Min(0f)] private float silenceRmsThreshold = 0.002f;
 
     [Header("Storage")]
-    [SerializeField] private string folderName = "WalkieTalkieRecordings";
+    [SerializeField] private string folderName = WalkieTalkieRecordingStorage.DefaultFolderName;
+    [SerializeField, Min(1)] private int maxStoredRecordings = 30;
 
     private readonly List<float> recordedSamples = new List<float>(240000);
 
@@ -39,6 +39,8 @@ public sealed class WalkieTalkieVoiceRecorder : MonoBehaviour
     private float recordingStartedAt;
     private float recordingDurationLimit;
     private float peakAmplitude;
+    private double squaredAmplitudeSum;
+    private int measuredSampleCount;
     private bool isRecording;
     private bool useStableInput;
     private bool isBound;
@@ -46,11 +48,7 @@ public sealed class WalkieTalkieVoiceRecorder : MonoBehaviour
     private void Awake()
     {
         soundEmitter = GetComponentInChildren<SoundEmitter>(true);
-#if UNITY_EDITOR
-        outputDirectory = Path.Combine(Application.dataPath, folderName);
-#else
-        outputDirectory = Path.Combine(Application.persistentDataPath, folderName);
-#endif
+        outputDirectory = WalkieTalkieRecordingStorage.GetDirectoryPath(folderName);
         Directory.CreateDirectory(outputDirectory);
         Debug.Log($"[WalkieRecorder] Ready. Output: {outputDirectory}");
     }
@@ -135,7 +133,7 @@ public sealed class WalkieTalkieVoiceRecorder : MonoBehaviour
             readFramePosition = micPosition;
         }
 
-        recordingDurationLimit = Mathf.Clamp(maxRecordingSeconds, 1f, 5f);
+        recordingDurationLimit = Mathf.Clamp(maxRecordingSeconds, 2f, 5f);
         maxSampleCount = Mathf.CeilToInt(
             sampleRate * channelCount * recordingDurationLimit);
 
@@ -145,6 +143,8 @@ public sealed class WalkieTalkieVoiceRecorder : MonoBehaviour
 
         recordingStartedAt = Time.unscaledTime;
         peakAmplitude = 0f;
+        squaredAmplitudeSum = 0d;
+        measuredSampleCount = 0;
         isRecording = true;
         Debug.Log("[WalkieRecorder] Recording started.");
     }
@@ -202,7 +202,7 @@ public sealed class WalkieTalkieVoiceRecorder : MonoBehaviour
         {
             float sample = buffer[stableReadPosition];
             recordedSamples.Add(sample);
-            peakAmplitude = Mathf.Max(peakAmplitude, Mathf.Abs(sample));
+            MeasureSample(sample);
             stableReadPosition = (stableReadPosition + 1) % buffer.Length;
         }
     }
@@ -212,7 +212,7 @@ public sealed class WalkieTalkieVoiceRecorder : MonoBehaviour
         foreach (float sample in samples)
         {
             recordedSamples.Add(sample);
-            peakAmplitude = Mathf.Max(peakAmplitude, Mathf.Abs(sample));
+            MeasureSample(sample);
         }
     }
 
@@ -224,9 +224,32 @@ public sealed class WalkieTalkieVoiceRecorder : MonoBehaviour
         CaptureAvailableSamples();
         isRecording = false;
 
-        if (recordedSamples.Count == 0 || peakAmplitude < silencePeakThreshold)
+        float duration = sampleRate > 0 && channelCount > 0
+            ? (float)recordedSamples.Count / (sampleRate * channelCount)
+            : 0f;
+
+        float requiredDuration = Mathf.Clamp(
+            minRecordingSeconds,
+            2f,
+            Mathf.Clamp(maxRecordingSeconds, 2f, 5f));
+        if (duration < requiredDuration)
         {
-            Debug.Log("[WalkieRecorder] Silence detected; no file was created.");
+            Debug.Log(
+                $"[WalkieRecorder] Recording was too short ({duration:F2}s < {requiredDuration:F2}s); no file was created.");
+            ResetRecordingState();
+            return;
+        }
+
+        float rmsAmplitude = measuredSampleCount > 0
+            ? Mathf.Sqrt((float)(squaredAmplitudeSum / measuredSampleCount))
+            : 0f;
+
+        if (recordedSamples.Count == 0 ||
+            peakAmplitude < silencePeakThreshold ||
+            rmsAmplitude < silenceRmsThreshold)
+        {
+            Debug.Log(
+                $"[WalkieRecorder] Input was too quiet (Peak {peakAmplitude:F4}, RMS {rmsAmplitude:F4}); no file was created.");
             ResetRecordingState();
             return;
         }
@@ -246,16 +269,14 @@ public sealed class WalkieTalkieVoiceRecorder : MonoBehaviour
         try
         {
             File.WriteAllBytes(filePath, waveData);
-            AudioClip clip = ImportOrCreateAudioClip(
-                filePath,
-                fileName,
-                gain);
+            EnforceRecordingLimit();
+
+            AudioClip clip = CreateRuntimeAudioClip(filePath, gain);
             WalkieTalkieRecordingLibrary.Register(clip, filePath);
 
-            float duration =
-                (float)recordedSamples.Count / (sampleRate * channelCount);
             Debug.Log(
-                $"[WalkieRecorder] Saved {duration:F2}s recording: {filePath}");
+                $"[WalkieRecorder] Saved {duration:F2}s recording " +
+                $"(Peak {peakAmplitude:F4}, RMS {rmsAmplitude:F4}): {filePath}");
         }
         catch (Exception exception)
         {
@@ -266,22 +287,16 @@ public sealed class WalkieTalkieVoiceRecorder : MonoBehaviour
         ResetRecordingState();
     }
 
-    private AudioClip ImportOrCreateAudioClip(
-        string filePath,
-        string fileName,
-        float gain)
+    private void EnforceRecordingLimit()
     {
-#if UNITY_EDITOR
-        string assetPath = $"Assets/{folderName}/{fileName}";
-        AssetDatabase.ImportAsset(
-            assetPath,
-            ImportAssetOptions.ForceSynchronousImport |
-            ImportAssetOptions.ForceUpdate);
-        AudioClip importedClip = AssetDatabase.LoadAssetAtPath<AudioClip>(assetPath);
-        if (importedClip != null)
-            return importedClip;
-#endif
+        WalkieTalkieRecordingStorage.EnforceRecordingLimit(
+            outputDirectory,
+            Mathf.Max(1, maxStoredRecordings),
+            removedPath => WalkieTalkieRecordingLibrary.Unregister(removedPath, true));
+    }
 
+    private AudioClip CreateRuntimeAudioClip(string filePath, float gain)
+    {
         string clipName = Path.GetFileNameWithoutExtension(filePath);
         AudioClip runtimeClip = AudioClip.Create(
             clipName,
@@ -342,6 +357,24 @@ public sealed class WalkieTalkieVoiceRecorder : MonoBehaviour
         stableInput = null;
         useStableInput = false;
         peakAmplitude = 0f;
+        squaredAmplitudeSum = 0d;
+        measuredSampleCount = 0;
+    }
+
+    private void MeasureSample(float sample)
+    {
+        peakAmplitude = Mathf.Max(peakAmplitude, Mathf.Abs(sample));
+        squaredAmplitudeSum += sample * sample;
+        measuredSampleCount++;
+    }
+
+    private void OnValidate()
+    {
+        maxRecordingSeconds = Mathf.Clamp(maxRecordingSeconds, 2f, 5f);
+        minRecordingSeconds = Mathf.Clamp(minRecordingSeconds, 2f, maxRecordingSeconds);
+        silencePeakThreshold = Mathf.Max(0f, silencePeakThreshold);
+        silenceRmsThreshold = Mathf.Max(0f, silenceRmsThreshold);
+        maxStoredRecordings = Mathf.Max(1, maxStoredRecordings);
     }
 
     private void OnDisable()

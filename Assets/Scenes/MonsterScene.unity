@@ -888,6 +888,7 @@ GameObject:
   - component: {fileID: 286386560}
   - component: {fileID: 286386559}
   - component: {fileID: 286386565}
+  - component: {fileID: 286386566}
   m_Layer: 0
   m_Name: Sphere
   m_TagString: Untagged
@@ -938,19 +939,19 @@ MonoBehaviour:
         Patrol Idle Animation","Instant":true,"SharedStringidleParameter":{"Type":"BehaviorDesigner.Runtime.SharedString","Name":"","StringmValue":"isIdle"},"SharedStringwalkingParameter":{"Type":"BehaviorDesigner.Runtime.SharedString","Name":"","StringmValue":"isWalking"}},{"Type":"BehaviorDesigner.Runtime.Tasks.Wait","NodeData":{"Offset":"(520,820)"},"ID":16,"Name":"Random
         Idle Wait","Instant":true,"SharedFloatwaitTime":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":1},"SharedBoolrandomWait":{"Type":"BehaviorDesigner.Runtime.SharedBool","Name":"","BooleanmValue":true},"SharedFloatrandomWaitMin":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"idleTimeMin","IsShared":true,"SinglemValue":1},"SharedFloatrandomWaitMax":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"idleTimeMax","IsShared":true,"SinglemValue":4}}]}]},{"Type":"BehaviorDesigner.Runtime.Tasks.Repeater","NodeData":{"Offset":"(620,540)"},"ID":17,"Name":"Repeat
         Voice Mimic","Instant":true,"SharedIntcount":{"Type":"BehaviorDesigner.Runtime.SharedInt","Name":"","Int32mValue":1},"SharedBoolrepeatForever":{"Type":"BehaviorDesigner.Runtime.SharedBool","Name":"","BooleanmValue":true},"SharedBoolendOnFailure":{"Type":"BehaviorDesigner.Runtime.SharedBool","Name":"","BooleanmValue":false},"Children":[{"Type":"BehaviorDesigner.Runtime.Tasks.Sequence","NodeData":{"Offset":"(620,680)"},"ID":18,"Name":"VoiceMimicCycle","Instant":true,"AbortTypeabortType":"None","Children":[{"Type":"BehaviorDesigner.Runtime.Tasks.Wait","NodeData":{"Offset":"(700,820)"},"ID":19,"Name":"Random
-        Mimic Wait","Instant":true,"SharedFloatwaitTime":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":1},"SharedBoolrandomWait":{"Type":"BehaviorDesigner.Runtime.SharedBool","Name":"","BooleanmValue":true},"SharedFloatrandomWaitMin":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"mimicIntervalMin","IsShared":true,"SinglemValue":20},"SharedFloatrandomWaitMax":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"mimicIntervalMax","IsShared":true,"SinglemValue":40}},{"Type":"DeFrag.Monsters.B2F.BehaviorDesignerTasks.PlayMimicVoice","NodeData":{"Offset":"(850,820)"},"ID":20,"Name":"Play
-        Mimic Voice","Instant":true,"SharedAudioClipListmimicVoiceClips":{"Type":"BehaviorDesigner.Runtime.SharedAudioClipList","Name":"MimicVoiceClips","IsShared":true,"List`1mValue":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null]},"SharedGameObjectaudioSourceObject":{"Type":"BehaviorDesigner.Runtime.SharedGameObject","Name":null},"SharedGameObjectanimatorObject":{"Type":"BehaviorDesigner.Runtime.SharedGameObject","Name":null},"SharedStringtalkingParameter":{"Type":"BehaviorDesigner.Runtime.SharedString","Name":"","StringmValue":"isTalking"},"SharedFloatvolume":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":1}}]}]}]}]}]},"Variables":[{"Type":"BehaviorDesigner.Runtime.SharedTransform","Name":"PlayerTarget","IsShared":true,"TransformmValue":4},{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"attackRange","IsShared":true,"SinglemValue":1.5},{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"mimicIntervalMin","IsShared":true,"SinglemValue":20},{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"mimicIntervalMax","IsShared":true,"SinglemValue":40},{"Type":"BehaviorDesigner.Runtime.SharedAudioClipList","Name":"MimicVoiceClips","IsShared":true,"List`1mValue":[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null]},{"Type":"BehaviorDesigner.Runtime.SharedVector3","Name":"PatrolDestination","IsShared":true,"Vector3mValue":"(0,0,0)"},{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"patrolRadius","IsShared":true,"SinglemValue":20},{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"walkSpeed","IsShared":true,"SinglemValue":2},{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"idleTimeMin","IsShared":true,"SinglemValue":1},{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"idleTimeMax","IsShared":true,"SinglemValue":4},{"Type":"BehaviorDesigner.Runtime.SharedVector3","Name":"LastKnownPosition","IsShared":true,"Vector3mValue":"(0,0,0)"}]}'
+        Mimic Wait","Instant":true,"SharedFloatwaitTime":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":1},"SharedBoolrandomWait":{"Type":"BehaviorDesigner.Runtime.SharedBool","Name":"","BooleanmValue":true},"SharedFloatrandomWaitMin":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"mimicIntervalMin","IsShared":true,"SinglemValue":10},"SharedFloatrandomWaitMax":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"mimicIntervalMax","IsShared":true,"SinglemValue":30}},{"Type":"DeFrag.Monsters.B2F.BehaviorDesignerTasks.PlayMimicVoice","NodeData":{"Offset":"(850,820)"},"ID":20,"Name":"Play
+        Mimic Voice","Instant":true,"SharedAudioClipListmimicVoiceClips":{"Type":"BehaviorDesigner.Runtime.SharedAudioClipList","Name":null,"IsShared":true,"List`1mValue":[]},"SharedGameObjectaudioSourceObject":{"Type":"BehaviorDesigner.Runtime.SharedGameObject","Name":null},"SharedGameObjectanimatorObject":{"Type":"BehaviorDesigner.Runtime.SharedGameObject","Name":null},"SharedStringtalkingParameter":{"Type":"BehaviorDesigner.Runtime.SharedString","Name":"","StringmValue":"isTalking"},"SharedFloatvolume":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":1}}]}]}]}]}]},"Variables":[{"Type":"BehaviorDesigner.Runtime.SharedTransform","Name":"PlayerTarget","IsShared":true,"TransformmValue":4},{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"attackRange","IsShared":true,"SinglemValue":1.5},{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"mimicIntervalMin","IsShared":true,"SinglemValue":10},{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"mimicIntervalMax","IsShared":true,"SinglemValue":30},{"Type":"BehaviorDesigner.Runtime.SharedVector3","Name":"PatrolDestination","IsShared":true,"Vector3mValue":"(0,0,0)"},{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"patrolRadius","IsShared":true,"SinglemValue":20},{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"walkSpeed","IsShared":true,"SinglemValue":2},{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"idleTimeMin","IsShared":true,"SinglemValue":1},{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"idleTimeMax","IsShared":true,"SinglemValue":4},{"Type":"BehaviorDesigner.Runtime.SharedVector3","Name":"LastKnownPosition","IsShared":true,"Vector3mValue":"(0,0,0)"}]}'
       fieldSerializationData:
         typeName: []
         fieldNameHash: 
         startIndex: 
         dataPosition: 
         unityObjects:
-        - {fileID: 807695175}
-        - {fileID: 807695175}
-        - {fileID: 807695175}
-        - {fileID: 807695175}
-        - {fileID: 807695175}
+        - {fileID: 368234344}
+        - {fileID: 368234344}
+        - {fileID: 368234344}
+        - {fileID: 368234344}
+        - {fileID: 368234344}
         byteData: 
         byteDataArray: 
       Version: 1.7.14
@@ -1093,7 +1094,7 @@ AudioSource:
   Priority: 128
   DopplerLevel: 1
   MinDistance: 1
-  MaxDistance: 500
+  MaxDistance: 30
   Pan2D: 0
   rolloffMode: 0
   BypassEffects: 0
@@ -1168,6 +1169,27 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &286386566
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 286386558}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 843ef19a22bf423f90325c42caf03c72, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Monsters.B2F.B2FMonsterVoiceMimic
+  recordingFolderName: WalkieTalkieRecordings
+  folderScanInterval: 1
+  mimicAudioSource: {fileID: 286386565}
+  playbackVolume: 1
+  mimicPlaybackRange: 30
+  deleteFileAfterPlayback: 1
+  mimicVoiceClipsList: []
+  loadedFilePaths: []
+  playbackRangeColor: {r: 0.3, g: 0.8, b: 1, a: 0.18}
 --- !u!1 &321910012
 GameObject:
   m_ObjectHideFlags: 0
@@ -1470,9 +1492,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c7e2904f5a324d61a844af73db89e102, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WalkieTalkieVoiceRecorder
+  minRecordingSeconds: 2
   maxRecordingSeconds: 5
   silencePeakThreshold: 0.0005
+  silenceRmsThreshold: 0.002
   folderName: WalkieTalkieRecordings
+  maxStoredRecordings: 30
 --- !u!114 &368234335
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2794,11 +2819,6 @@ PrefabInstance:
 --- !u!4 &807695174 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 9156347143994207885, guid: c82236c16aae9d34fbd437f8dea6e2c9, type: 3}
-  m_PrefabInstance: {fileID: 807695173}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &807695175 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 9156347144040445546, guid: c82236c16aae9d34fbd437f8dea6e2c9, type: 3}
   m_PrefabInstance: {fileID: 807695173}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &864981524
@@ -5541,8 +5561,8 @@ Transform:
   m_GameObject: {fileID: 2029796906}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 39.25, y: 3.35, z: -3.58}
-  m_LocalScale: {x: 0.55668133, y: 6.7629, z: 9.365013}
+  m_LocalPosition: {x: 38.34, y: 3.35, z: -3.58}
+  m_LocalScale: {x: 0.55668133, y: 6.7629, z: 7.4271946}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 936202455}
