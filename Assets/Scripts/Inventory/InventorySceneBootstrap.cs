@@ -2,6 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 /// <summary>
@@ -10,12 +11,18 @@ using UnityEngine.UI;
 /// </summary>
 public static class InventorySceneBootstrap
 {
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void InstallIfMissing()
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    private static void RegisterSceneCallback()
+    {
+        SceneManager.sceneLoaded -= InstallIfMissing;
+        SceneManager.sceneLoaded += InstallIfMissing;
+    }
+
+    private static void InstallIfMissing(Scene scene, LoadSceneMode mode)
     {
         if (Object.FindAnyObjectByType<InventoryManager>() != null) return;
         // Do not show the gameplay quick bar in title/lobby/menu scenes.
-        if (Object.FindAnyObjectByType<PlayerInteraction>() == null) return;
+        if (Object.FindAnyObjectByType<PlayerInteraction>(FindObjectsInactive.Include) == null) return;
 
         GameObject system = new GameObject("Runtime Inventory System");
         InventoryManager manager = system.AddComponent<InventoryManager>();
