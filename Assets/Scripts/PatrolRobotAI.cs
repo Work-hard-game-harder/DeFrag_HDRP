@@ -6,6 +6,7 @@ public class PatrolRobotAI : MonoBehaviour
 {
     public enum State { Patrol, Inspect, Alert, Chase }
     public State currentState = State.Patrol;
+    public event System.Action<State> StateChanged;
 
     [Header("Vision Settings")]
     public Transform player;
@@ -53,6 +54,13 @@ public class PatrolRobotAI : MonoBehaviour
     {
         visionLight.range = viewDistance;
         visionLight.spotAngle = viewAngle;
+    }
+
+    private void SetState(State nextState)
+    {
+        if (currentState == nextState) return;
+        currentState = nextState;
+        StateChanged?.Invoke(currentState);
     }
 
     void Update()
@@ -113,7 +121,7 @@ public class PatrolRobotAI : MonoBehaviour
                 if (!agent.pathPending && agent.remainingDistance < 1f)
                 {
                     Debug.Log("?뚮젅?댁뼱 ?섏깋 ?ㅽ뙣. ?ㅼ떆 ?쒖같 紐⑤뱶濡?蹂듦??⑸땲??");
-                    currentState = State.Patrol;
+                    SetState(State.Patrol);
                     agent.speed = patrolSpeed;
                     SetRandomPatrolDestination(); // ?덈줈???쒖같 吏?먯쑝濡??대룞
                 }
@@ -291,7 +299,7 @@ public class PatrolRobotAI : MonoBehaviour
     // ?먮━踰덇굅由щ뒗 肄붾（??
     IEnumerator InspectRoutine()
     {
-        currentState = State.Inspect;
+        SetState(State.Inspect);
         isInspecting = true;
         agent.isStopped = true; 
 
@@ -311,7 +319,7 @@ public class PatrolRobotAI : MonoBehaviour
         
         agent.isStopped = false;
         isInspecting = false;
-        currentState = State.Patrol;
+        SetState(State.Patrol);
         
         SetRandomPatrolDestination(); // ?먮━踰덇굅由ш린 ?앸궃 ???덈줈??臾댁옉??紐⑹쟻吏濡?
     }
@@ -334,7 +342,7 @@ public class PatrolRobotAI : MonoBehaviour
         // 1. 肄붾（?댁씠 異⑸룎?섏? ?딅룄濡?以묒? (媛??以묒슂)
         if(isInspecting) { StopAllCoroutines(); isInspecting = false; }
         
-        currentState = State.Chase; // 異붽꺽 紐⑤뱶(鍮④컙遺?濡??꾪솚
+        SetState(State.Chase); // 異붽꺽 紐⑤뱶(鍮④컙遺?濡??꾪솚
         agent.speed = chaseSpeed;
         Debug.Log("?먮퉭! ?뚮젅?댁뼱 諛쒓껄! 異붽꺽?⑸땲??");
         agent.isStopped = false; // ?대룞 ?ш컻
@@ -349,7 +357,7 @@ public class PatrolRobotAI : MonoBehaviour
         isInspecting = false;
         agent.isStopped = false;
         
-        currentState = State.Alert; 
+        SetState(State.Alert);
         agent.speed = chaseSpeed;
         lastKnownPlayerPos = targetLocation;
         agent.SetDestination(targetLocation);
@@ -367,7 +375,7 @@ public class PatrolRobotAI : MonoBehaviour
     // ?섏젙??StopChase ?⑥닔 (?뚮젅?댁뼱瑜??볦낀????
     void StopChase()
     {
-        currentState = State.Alert; // 寃쎄퀎 紐⑤뱶(二쇳솴遺?濡??꾪솚
+        SetState(State.Alert); // 寃쎄퀎 紐⑤뱶(二쇳솴遺?濡??꾪솚
         agent.speed = patrolSpeed;
         Debug.Log("?뚮젅?댁뼱瑜??볦낀?듬땲?? 留덉?留됱쑝濡?蹂??꾩튂瑜??섏깋?⑸땲??");
 

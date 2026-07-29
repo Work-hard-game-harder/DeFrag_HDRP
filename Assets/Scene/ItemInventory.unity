@@ -2011,6 +2011,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Doors.VerticalDoorMotor
   openHeight: 6
   moveSpeed: 3
+  openSound: {fileID: 0}
+  closeSound: {fileID: 0}
+  soundVolume: 1
+  minDistance: 2
+  maxDistance: 20
+  outputMixerGroup: {fileID: 0}
 --- !u!65 &473395842
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2231,39 +2237,9 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects:
-    - targetCorrespondingSourceObject: {fileID: 6176536335486044068, guid: 32828aeb969c9bb448f2c59ba4d7f166, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1437016301}
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 2067021901957558317, guid: 32828aeb969c9bb448f2c59ba4d7f166, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 513381905}
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 32828aeb969c9bb448f2c59ba4d7f166, type: 3}
---- !u!4 &513381903 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 6176536335486044068, guid: 32828aeb969c9bb448f2c59ba4d7f166, type: 3}
-  m_PrefabInstance: {fileID: 513381902}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &513381904 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 2067021901957558317, guid: 32828aeb969c9bb448f2c59ba4d7f166, type: 3}
-  m_PrefabInstance: {fileID: 513381902}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &513381905
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 513381904}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 14d91fb2a04141ccb1e9a0be7676ba03, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Doors.VerticalDoorMotor
-  openHeight: 6
-  moveSpeed: 3
 --- !u!1 &532608854
 GameObject:
   m_ObjectHideFlags: 0
@@ -4068,6 +4044,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Doors.VerticalDoorMotor
   openHeight: 6
   moveSpeed: 3
+  openSound: {fileID: 0}
+  closeSound: {fileID: 0}
+  soundVolume: 1
+  minDistance: 2
+  maxDistance: 20
+  outputMixerGroup: {fileID: 0}
 --- !u!65 &1169543533
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4810,55 +4792,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
---- !u!1 &1437016300
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1437016301}
-  - component: {fileID: 1437016303}
-  m_Layer: 0
-  m_Name: Door_ProximitySensor
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1437016301
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1437016300}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0.7071068, y: 0.7071068, z: -0, w: 0}
-  m_LocalPosition: {x: 1.86, y: 3, z: -0.07999992}
-  m_LocalScale: {x: 0.6265083, y: 0.5, z: 0.6538001}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 513381903}
-  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 90}
---- !u!114 &1437016303
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1437016300}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9097479c84404fbc80bf4324826abf45, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Doors.AutomaticDoorSensor
-  detectionRadius: 4
-  actorLayers:
-    serializedVersion: 2
-    m_Bits: 128
-  door: {fileID: 513381905}
 --- !u!1 &1502945407
 GameObject:
   m_ObjectHideFlags: 0
@@ -5316,45 +5249,19 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 2067021901957558317, guid: 4fc2bacc10c214046ba2d260d7558a4e, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1639225114}
-    - targetCorrespondingSourceObject: {fileID: 2067021901957558317, guid: 4fc2bacc10c214046ba2d260d7558a4e, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1639225113}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 4fc2bacc10c214046ba2d260d7558a4e, type: 3}
---- !u!1 &1639225112 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 2067021901957558317, guid: 4fc2bacc10c214046ba2d260d7558a4e, type: 3}
+--- !u!114 &1639225113 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 832494278767604469, guid: 4fc2bacc10c214046ba2d260d7558a4e, type: 3}
   m_PrefabInstance: {fileID: 1639225111}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1639225113
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1639225112}
+  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5b48495f54b04f5c88afc3731ac3bcc9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Doors.TerminalDoorLock
---- !u!114 &1639225114
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1639225112}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 14d91fb2a04141ccb1e9a0be7676ba03, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Doors.VerticalDoorMotor
-  openHeight: 6
-  moveSpeed: 3
 --- !u!1 &1691954528
 GameObject:
   m_ObjectHideFlags: 0

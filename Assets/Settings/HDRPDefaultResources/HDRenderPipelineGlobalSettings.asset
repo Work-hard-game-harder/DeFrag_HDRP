@@ -31,6 +31,8 @@ MonoBehaviour:
       m_CustomPostProcessTypesAsString:
       - DeFrag.Player.SprintEdgeBlur, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
         PublicKeyToken=null
+      - DeFrag.Rendering.TvMonsterGlitchPostProcess, Assembly-CSharp, Version=0.0.0.0,
+        Culture=neutral, PublicKeyToken=null
   beforeTransparentCustomPostProcesses: []
   beforePostProcessCustomPostProcesses: []
   afterPostProcessBlursCustomPostProcesses: []

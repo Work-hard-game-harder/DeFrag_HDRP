@@ -9743,6 +9743,72 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2356460683572222620, guid: 6e2477ebacb9b8c47816f3edbdf5ba08, type: 3}
   m_PrefabInstance: {fileID: 1333735634}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1344481274
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1344481276}
+  - component: {fileID: 1344481275}
+  m_Layer: 0
+  m_Name: Video Player
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!328 &1344481275
+VideoPlayer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1344481274}
+  m_Enabled: 1
+  m_VideoClip: {fileID: 32900000, guid: b6ebb8de0d481a74cbda66e1791ebdaa, type: 3}
+  m_TargetCameraAlpha: 1
+  m_TargetCamera3DLayout: 0
+  m_TargetCamera: {fileID: 0}
+  m_TargetTexture: {fileID: 8400000, guid: 9cb78564f2e066c4b9104b90af466a87, type: 2}
+  m_TimeReference: 0
+  m_TargetMaterialRenderer: {fileID: 0}
+  m_TargetMaterialProperty: <noninit>
+  m_RenderMode: 2
+  m_AspectRatio: 5
+  m_DataSource: 0
+  m_TimeUpdateMode: 2
+  m_PlaybackSpeed: 1
+  m_AudioOutputMode: 0
+  m_TargetAudioSources: []
+  m_DirectAudioVolumes: []
+  m_Url: 
+  m_EnabledAudioTracks: 
+  m_DirectAudioMutes: 
+  m_ControlledAudioTrackCount: 0
+  m_PlayOnAwake: 1
+  m_SkipOnDrop: 1
+  m_Looping: 1
+  m_WaitForFirstFrame: 1
+  m_FrameReadyEventEnabled: 0
+  m_VideoShaders: []
+--- !u!4 &1344481276
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1344481274}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -4.56883, y: 1.88439, z: 2.45242}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1362786332
 GameObject:
   m_ObjectHideFlags: 0
@@ -17100,6 +17166,10 @@ PrefabInstance:
       propertyPath: m_Intensity
       value: 318309.88
       objectReference: {fileID: 0}
+    - target: {fileID: 7995639956376344166, guid: c8e0bab957a39704d8fe7c82a38efdf2, type: 3}
+      propertyPath: 'm_Materials.Array.data[1]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 80bdff8a796d8be48b1b96ecd82e0d1a, type: 2}
     - target: {fileID: 8106345834088989208, guid: c8e0bab957a39704d8fe7c82a38efdf2, type: 3}
       propertyPath: m_Lightmapping
       value: 2
@@ -20039,3 +20109,4 @@ SceneRoots:
   - {fileID: 203294037}
   - {fileID: 1396919976}
   - {fileID: 183496742}
+  - {fileID: 1344481276}

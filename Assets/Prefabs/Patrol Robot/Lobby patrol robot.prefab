@@ -45,8 +45,8 @@ Light:
   m_Type: 5
   m_Color: {r: 1, g: 0, b: 0.19160938, a: 1}
   m_Intensity: 3264191.5
-  m_Range: 27.83
-  m_SpotAngle: 61
+  m_Range: 15
+  m_SpotAngle: 80
   m_InnerSpotAngle: 104.687775
   m_CookieSize2D: {x: 0.5, y: 0.5}
   m_Shadows:
@@ -58,18 +58,18 @@ Light:
     m_NormalBias: 0.4
     m_NearPlane: 0.2
     m_CullingMatrixOverride:
-      e00: 0.77166504
+      e00: 0.771665
       e01: 0
       e02: 0
       e03: 0
       e10: 0
-      e11: 1.6976631
+      e11: 1.1917535
       e12: 0
       e13: 0
       e20: 0
       e21: 0
-      e22: 1.0071865
-      e23: -0.20071866
+      e22: 1.0133333
+      e23: -0.20133333
       e30: 0
       e31: 0
       e32: 1
@@ -89,7 +89,7 @@ Light:
   m_BounceIntensity: 0
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 27.83}
+  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 15}
   m_UseBoundingSphereOverride: 1
   m_UseViewFrustumForShadowCasterCull: 1
   m_ForceVisible: 0
@@ -336,6 +336,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f80388a42a948574b842ee6037a3997e, type: 3}
       insertIndex: -1
       addedObject: {fileID: 3773436233318251448}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f80388a42a948574b842ee6037a3997e, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6832491701208701150}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: f80388a42a948574b842ee6037a3997e, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6832491701208701151}
   m_SourcePrefab: {fileID: 100100000, guid: f80388a42a948574b842ee6037a3997e, type: 3}
 --- !u!1 &4936414782736623830 stripped
 GameObject:
@@ -378,15 +384,139 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PatrolRobotAI
   currentState: 0
   player: {fileID: 0}
-  viewDistance: 20
-  viewAngle: 120
+  viewDistance: 15
+  viewAngle: 80
   eyeLocation: {fileID: 5550687125344631530}
   obstacleMask:
     serializedVersion: 2
     m_Bits: 4294967295
+  patrolSpeed: 3.5
+  chaseSpeed: 5.5
+  lostSightGraceTime: 3
   patrolRadius: 300
   minPatrolDistance: 20
   visionLight: {fileID: 4148769906474690142}
+--- !u!82 &6832491701208701150
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4936414782736623830}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 0
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 1
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 0
+  MinDistance: 3
+  MaxDistance: 25
+  Pan2D: 1
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!114 &6832491701208701151
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4936414782736623830}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29a7ad107be24ba2a2e4123ad579fd85, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PatrolRobotSoundManager
+  patrol:
+    clip: {fileID: 8300000, guid: d3b518b237737fa4994fbc39d195e2eb, type: 3}
+    volume: 0.2
+    pitch: 1
+  alert:
+    clip: {fileID: 8300000, guid: 077394e9fe6c6244bba731178c1b19b6, type: 3}
+    volume: 1
+    pitch: 1
+  chase:
+    clip: {fileID: 8300000, guid: 726b11aa9ba33ed42a7f9bd7ee92b441, type: 3}
+    volume: 1
+    pitch: 1.2
 --- !u!4 &5749543920328553068 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: f80388a42a948574b842ee6037a3997e, type: 3}
