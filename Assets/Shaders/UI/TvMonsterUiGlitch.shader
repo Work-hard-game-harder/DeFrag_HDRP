@@ -2,6 +2,7 @@ Shader "DeFrag/UI/TvMonsterGlitchOverlay"
 {
     Properties
     {
+        [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
         _Intensity ("Intensity", Range(0, 1)) = 0
         _NoiseAmount ("Noise Amount", Range(0, 1)) = 0.4
     }
@@ -25,8 +26,7 @@ Shader "DeFrag/UI/TvMonsterGlitchOverlay"
             #pragma target 3.0
             #pragma vertex Vert
             #pragma fragment Frag
-            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
-            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/SpaceTransforms.hlsl"
+            #include "UnityCG.cginc"
 
             struct Attributes { float3 positionOS : POSITION; float2 uv : TEXCOORD0; };
             struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; };
@@ -41,7 +41,7 @@ Shader "DeFrag/UI/TvMonsterGlitchOverlay"
             Varyings Vert(Attributes input)
             {
                 Varyings output;
-                output.positionCS = TransformWorldToHClip(TransformObjectToWorld(input.positionOS));
+                output.positionCS = UnityObjectToClipPos(input.positionOS);
                 output.uv = input.uv;
                 return output;
             }
