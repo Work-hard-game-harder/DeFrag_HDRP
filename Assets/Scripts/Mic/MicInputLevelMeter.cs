@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using DeFrag.UI;
 
 /// <summary>
 /// 플레이 중 항상 표시되는 최소 형태의 마이크 입력 HUD입니다.
@@ -39,9 +40,7 @@ public class MicInputLevelMeter : MonoBehaviour
         canvas.sortingOrder = 100;
 
         CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920f, 1080f);
-        scaler.matchWidthOrHeight = 0.5f;
+        ResponsiveCanvasUtility.Configure(scaler);
 
         GameObject barObject = CreateImage("Mic Level", canvasObject.transform, backgroundColor);
         RectTransform barRect = (RectTransform)barObject.transform;

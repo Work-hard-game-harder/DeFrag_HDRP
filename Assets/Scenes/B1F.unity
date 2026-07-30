@@ -3465,6 +3465,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7706eba48e01a0741b896835b52e270c, type: 3}
       insertIndex: -1
       addedObject: {fileID: 877255013}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7706eba48e01a0741b896835b52e270c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 877255015}
   m_SourcePrefab: {fileID: 100100000, guid: 7706eba48e01a0741b896835b52e270c, type: 3}
 --- !u!1 &877255002 stripped
 GameObject:
@@ -3539,6 +3542,9 @@ MonoBehaviour:
   voiceRangeExponent: 1.35
   voicePositionUpdateInterval: 0.5
   animator: {fileID: 877255003}
+  attackHitbox: {fileID: 877255015}
+  attackCycleDuration: 1
+  attackHitDelay: 0.35
   showVoiceDetectionGizmos: 1
   maximumVoiceRangeColor: {r: 0.15, g: 0.45, b: 1, a: 0.65}
   currentVoiceRangeColor: {r: 0, g: 1, b: 1, a: 0.9}
@@ -3634,6 +3640,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0cf9a5e9789448d8802b519f6ec0b21, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MonsterBehaviorTreeInstaller
+--- !u!114 &877255015
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 877255002}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f13192137cc4b09b76405c390ec8b97, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Combat.MonsterAttackHitbox
+  damage: 10
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  triggerInteraction: 2
+  shape: 0
+  hitboxOrigin: {fileID: 0}
+  localCenter: {x: 0, y: 0, z: 0}
+  sphereRadius: 1.5
+  boxSize: {x: 3, y: 2, z: 3}
+  capsuleRadius: 1
+  capsuleHeight: 2
+  resolveOnContactEnter: 0
+  contactCooldown: 1
+  gizmoColor: {r: 1, g: 0.15, b: 0.1, a: 0.25}
 --- !u!64 &886407336
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -5554,6 +5587,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1608967862}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1608967864}
   m_SourcePrefab: {fileID: 100100000, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
 --- !u!64 &1298456647
 MeshCollider:
@@ -6451,6 +6487,9 @@ MonoBehaviour:
   voiceRangeExponent: 1.35
   voicePositionUpdateInterval: 0.5
   animator: {fileID: 1608967852}
+  attackHitbox: {fileID: 1608967864}
+  attackCycleDuration: 1
+  attackHitDelay: 0.35
   showVoiceDetectionGizmos: 1
   maximumVoiceRangeColor: {r: 0.15, g: 0.45, b: 1, a: 0.65}
   currentVoiceRangeColor: {r: 1, g: 0, b: 0.67410386, a: 0.9}
@@ -6683,6 +6722,33 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
   m_PrefabInstance: {fileID: 1281905815}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1608967864
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1608967851}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f13192137cc4b09b76405c390ec8b97, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Combat.MonsterAttackHitbox
+  damage: 10
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  triggerInteraction: 2
+  shape: 0
+  hitboxOrigin: {fileID: 0}
+  localCenter: {x: 0, y: 0, z: 0}
+  sphereRadius: 2
+  boxSize: {x: 3, y: 2, z: 3}
+  capsuleRadius: 1
+  capsuleHeight: 2
+  resolveOnContactEnter: 0
+  contactCooldown: 1
+  gizmoColor: {r: 1, g: 0.15, b: 0.1, a: 0.25}
 --- !u!1001 &1619229136
 PrefabInstance:
   m_ObjectHideFlags: 0

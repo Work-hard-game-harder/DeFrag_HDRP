@@ -2,6 +2,7 @@ using BehaviorDesigner.Runtime;
 using BehaviorDesigner.Runtime.Tasks;
 using DeFrag.Monsters.B2F;
 using DeFrag.Monsters.Common;
+using DeFrag.Combat;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -478,27 +479,36 @@ namespace DeFrag.Monsters.B2F.BehaviorDesignerTasks
     {
         public SharedTransform playerTarget;
         public SharedString attackTrigger = "Attack";
-        public SharedInt damage = 10;
         public SharedFloat damageDelay = 0.35f;
         public SharedFloat attackDuration = 1f;
-        public SharedFloat damageRange = 2f;
 
         private NavMeshAgent agent;
         private Animator animator;
+        private MonsterAttackHitbox attackHitbox;
         private float startTime;
-        private bool damageApplied;
+        private bool hitCheckRequested;
         private bool wasStopped;
 
         public override void OnAwake()
         {
             agent = GetComponent<NavMeshAgent>();
             animator = B2FMonsterTaskUtility.FindAnimator(gameObject, null);
+            attackHitbox = GetComponent<MonsterAttackHitbox>();
+
+            // 기존에 생성된 Behavior Tree/프리팹도 즉시 동작하도록 하는 마이그레이션 폴백입니다.
+            // 새로 트리를 생성할 때는 Builder가 같은 컴포넌트를 미리 추가합니다.
+            if (attackHitbox == null)
+            {
+                attackHitbox = gameObject.AddComponent<MonsterAttackHitbox>();
+                attackHitbox.ConfigureSphere(10, 1.5f);
+            }
         }
 
         public override void OnStart()
         {
             startTime = Time.time;
-            damageApplied = false;
+            hitCheckRequested = false;
+            attackHitbox?.BeginAttackCycle();
 
             if (B2FMonsterTaskUtility.IsAgentReady(agent))
             {
@@ -516,17 +526,10 @@ namespace DeFrag.Monsters.B2F.BehaviorDesignerTasks
             if (target == null)
                 return TaskStatus.Failure;
 
-            if (!damageApplied && Time.time >= startTime + Mathf.Max(0f, damageDelay.Value))
+            if (!hitCheckRequested && Time.time >= startTime + Mathf.Max(0f, damageDelay.Value))
             {
-                damageApplied = true;
-                float maxRange = Mathf.Max(0f, damageRange.Value);
-                if (B2FMonsterTaskUtility.HasSimulationAuthority() &&
-                    (target.position - transform.position).sqrMagnitude <= maxRange * maxRange)
-                {
-                    PlayerStats stats = target.GetComponentInParent<PlayerStats>();
-                    if (stats != null)
-                        stats.TakeDamage(Mathf.Max(0, damage.Value));
-                }
+                hitCheckRequested = true;
+                attackHitbox?.ResolveAttackHit();
             }
 
             return Time.time >= startTime + Mathf.Max(damageDelay.Value, attackDuration.Value)
@@ -536,6 +539,8 @@ namespace DeFrag.Monsters.B2F.BehaviorDesignerTasks
 
         public override void OnEnd()
         {
+            attackHitbox?.EndAttackCycle();
+
             if (B2FMonsterTaskUtility.IsAgentReady(agent))
                 agent.isStopped = wasStopped;
         }

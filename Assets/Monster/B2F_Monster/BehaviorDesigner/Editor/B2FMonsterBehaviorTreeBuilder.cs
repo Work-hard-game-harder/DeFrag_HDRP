@@ -7,6 +7,7 @@ using BehaviorDesigner.Runtime.Tasks;
 using DeFrag.Monsters.B2F;
 using DeFrag.Monsters.B2F.BehaviorDesignerTasks;
 using DeFrag.Monsters.Common.BehaviorDesignerTasks;
+using DeFrag.Combat;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -62,6 +63,15 @@ namespace DeFrag.Monsters.B2F.Editor
                     : monster.AddComponent<B2FMonsterVoiceMimic>();
             }
 
+            MonsterAttackHitbox attackHitbox = monster.GetComponent<MonsterAttackHitbox>();
+            if (attackHitbox == null)
+            {
+                attackHitbox = recordUndo
+                    ? Undo.AddComponent<MonsterAttackHitbox>(monster)
+                    : monster.AddComponent<MonsterAttackHitbox>();
+                attackHitbox.ConfigureSphere(10, 1.5f);
+            }
+
             audioSource.playOnAwake = false;
             audioSource.loop = false;
             audioSource.spatialBlend = 1f;
@@ -104,8 +114,7 @@ namespace DeFrag.Monsters.B2F.Editor
             }, 3, "Within Attack Range", -430f, 400f), 0);
             attack.AddChild(Node(new AttackPlayer
             {
-                playerTarget = playerTarget,
-                damageRange = attackRange
+                playerTarget = playerTarget
             }, 4, "Attack Player", -290f, 400f), 1);
 
             var chase = Node(new Sequence(), 5, "Chase", 0f, 260f);

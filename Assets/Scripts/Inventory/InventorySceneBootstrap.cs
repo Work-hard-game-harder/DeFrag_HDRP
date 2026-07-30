@@ -1,4 +1,5 @@
 using TMPro;
+using DeFrag.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
@@ -46,9 +47,7 @@ public static class InventorySceneBootstrap
         canvas.renderMode = RenderMode.ScreenSpaceOverlay;
         canvas.sortingOrder = 20;
         CanvasScaler scaler = canvasObject.AddComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920f, 1080f);
-        scaler.matchWidthOrHeight = 0.5f;
+        ResponsiveCanvasUtility.Configure(scaler);
         canvasObject.AddComponent<GraphicRaycaster>();
 
         if (Object.FindAnyObjectByType<EventSystem>() == null)

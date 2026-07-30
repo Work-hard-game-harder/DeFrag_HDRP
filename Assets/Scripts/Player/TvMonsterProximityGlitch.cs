@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using DeFrag.Rendering;
+using DeFrag.UI;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -157,6 +158,7 @@ namespace DeFrag.Player
             uiCanvas = canvasObject.GetComponent<Canvas>();
             uiCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
             uiCanvas.sortingOrder = short.MaxValue - 1;
+            ResponsiveCanvasUtility.Configure(canvasObject.GetComponent<CanvasScaler>());
 
             GameObject overlayObject = new("Visual Glitch Overlay", typeof(RectTransform), typeof(Image));
             overlayObject.transform.SetParent(canvasObject.transform, false);

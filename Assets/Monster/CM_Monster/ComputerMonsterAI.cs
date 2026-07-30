@@ -1,8 +1,11 @@
 ﻿using EasyPeasyFirstPersonController;
 using DeFrag.Monsters.Common;
+using DeFrag.Combat;
 using UnityEngine;
 using UnityEngine.AI;
 
+[DisallowMultipleComponent]
+[RequireComponent(typeof(MonsterAttackHitbox))]
 public class MonsterAI : MonoBehaviour
 {
     public enum MonsterState { Idle, Search, Chase, Attack, Investigate, Missing }
@@ -64,6 +67,13 @@ public class MonsterAI : MonoBehaviour
     [Header("Animation")]
     public Animator animator;
 
+    [Header("Attack Damage")]
+    [SerializeField] private MonsterAttackHitbox attackHitbox;
+    [Tooltip("Attack 상태가 유지될 때 다음 공격 cycle을 시작하는 간격입니다.")]
+    [SerializeField, Min(0.05f)] private float attackCycleDuration = 1f;
+    [Tooltip("공격 cycle 시작 후 실제 타격 판정을 실행할 시간입니다. Animation Event가 있으면 Event가 우선합니다.")]
+    [SerializeField, Min(0f)] private float attackHitDelay = 0.35f;
+
     [Header("Debug Gizmos")]
     [SerializeField] private bool showVoiceDetectionGizmos = true;
     [SerializeField] private Color maximumVoiceRangeColor = new Color(0.15f, 0.45f, 1f, 0.65f);
@@ -103,6 +113,7 @@ public class MonsterAI : MonoBehaviour
     private float voicePositionUpdateTimer;
     private int preparedFrame = -1;
     private bool initialized;
+    private float attackCycleStartedAt;
 
     public MonsterState CurrentState => currentState;
     public bool UsesBehaviorDesigner => useBehaviorDesigner;
@@ -125,6 +136,15 @@ public class MonsterAI : MonoBehaviour
 
     private void Awake()
     {
+        attackHitbox = attackHitbox != null
+            ? attackHitbox
+            : GetComponent<MonsterAttackHitbox>();
+        if (attackHitbox == null)
+        {
+            attackHitbox = gameObject.AddComponent<MonsterAttackHitbox>();
+            attackHitbox.ConfigureSphere(10, attackRange);
+        }
+
         if (useBehaviorDesigner && GetComponent<MonsterBehaviorTreeInstaller>() == null)
             gameObject.AddComponent<MonsterBehaviorTreeInstaller>();
     }
@@ -138,6 +158,7 @@ public class MonsterAI : MonoBehaviour
     private void OnDisable()
     {
         WorldNoiseSystem.NoiseEmitted -= OnWorldNoiseHeard;
+        attackHitbox?.EndAttackCycle();
     }
 
     void Start()
@@ -440,6 +461,8 @@ public class MonsterAI : MonoBehaviour
     }
     void HandleAttack()
     {
+        UpdateAttackDamageCycle();
+
         float distToPlayer = Vector3.Distance(transform.position, player.position);
         Vector3 dirToPlayer = (player.position - transform.position).normalized;
         dirToPlayer.y = 0;
@@ -452,6 +475,42 @@ public class MonsterAI : MonoBehaviour
             agent.ResetPath();
 
         RotateTowardsTarget(player.position);
+    }
+
+    /// <summary>
+    /// 현재 Animator에 타격 Animation Event가 없어도 호스트에서 공격을 검증할 수 있도록
+    /// 공격 상태 동안 일정한 주기로 공용 히트박스의 타격 시점을 실행합니다.
+    /// Animation Event를 추가하면 같은 공격 주기 안에서는 중복 데미지가 자동 차단됩니다.
+    /// </summary>
+    private void UpdateAttackDamageCycle()
+    {
+        if (attackHitbox == null)
+            return;
+
+        float safeHitDelay = Mathf.Max(0f, attackHitDelay);
+        float safeCycleDuration = Mathf.Max(0.05f, attackCycleDuration, safeHitDelay);
+
+        if (!attackHitbox.IsAttackCycleActive)
+        {
+            attackCycleStartedAt = Time.time;
+            attackHitbox.BeginAttackCycle();
+        }
+        else if (Time.time >= attackCycleStartedAt + safeCycleDuration)
+        {
+            attackHitbox.EndAttackCycle();
+            attackCycleStartedAt = Time.time;
+            attackHitbox.BeginAttackCycle();
+        }
+
+        if (Time.time >= attackCycleStartedAt + safeHitDelay)
+            attackHitbox.ResolveAttackHit();
+    }
+
+    // 공격 애니메이션의 실제 타격 프레임에서 호출할 수 있는 선택적 Animation Event입니다.
+    public void AnimationEvent_ResolveAttackHit()
+    {
+        if (currentState == MonsterState.Attack)
+            attackHitbox?.ResolveAttackHit();
     }
 
     void HandleInvestigate()
@@ -570,6 +629,10 @@ public class MonsterAI : MonoBehaviour
     void ChangeState(MonsterState newState)
     {
         if (currentState == newState) return;
+
+        if (currentState == MonsterState.Attack)
+            attackHitbox?.EndAttackCycle();
+
         currentState = newState;
         SetAllAnimationsFalse();
 
@@ -601,6 +664,8 @@ public class MonsterAI : MonoBehaviour
                 agent.speed = 0f;
                 agent.ResetPath();
                 animator.SetBool(IsAttack, true);
+                attackCycleStartedAt = Time.time;
+                attackHitbox?.BeginAttackCycle();
                 break;
 
             case MonsterState.Investigate:

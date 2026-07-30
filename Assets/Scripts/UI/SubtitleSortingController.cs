@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using DeFrag.UI;
 
 /// <summary>
 /// 씬 배치 및 런타임 생성 자막을 Inventory UI보다 위에 표시합니다.
@@ -101,9 +102,7 @@ public sealed class SubtitleSortingController : MonoBehaviour
         }
         else
         {
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920f, 1080f);
-            scaler.matchWidthOrHeight = 0.5f;
+            ResponsiveCanvasUtility.Configure(scaler);
         }
 
         target.transform.SetParent(overlayObject.transform, false);

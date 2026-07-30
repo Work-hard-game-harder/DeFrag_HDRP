@@ -1,4 +1,5 @@
 using EasyPeasyFirstPersonController;
+using DeFrag.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -109,8 +110,7 @@ public sealed class HackingSessionController : MonoBehaviour
         sessionCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
         sessionCanvas.sortingOrder = 100;
         CanvasScaler scaler = canvasObject.AddComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920f, 1080f);
+        ResponsiveCanvasUtility.Configure(scaler);
         canvasObject.AddComponent<GraphicRaycaster>();
     }
 

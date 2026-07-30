@@ -8,6 +8,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using TMPro;
 using UnityEngine.Rendering.HighDefinition;
+using DeFrag.UI;
 
 /// <summary>
 /// 씬 전환 시에도 유지되는 Setting Panel 매니저 (싱글톤 + DontDestroyOnLoad)
@@ -139,6 +140,12 @@ public class SettingManager : MonoBehaviour
     public bool InvertY { get; private set; }
     public int DisplayModeIndex { get; private set; } // 0 = FullScreenWindow, 1 = Window
 
+    /// <summary>
+    /// 로컬 화면의 해상도 적용이 완료된 다음 프레임에 호출됩니다.
+    /// 비율별 별도 레이아웃이 필요한 UI만 선택적으로 구독하면 됩니다.
+    /// </summary>
+    public event System.Action<Vector2Int, float> ResolutionChanged;
+
     // MicSelectScript.selectedMic 대체 — 외부에서 참조 가능
     public string SelectedMic { get; private set; }
 
@@ -165,6 +172,7 @@ public class SettingManager : MonoBehaviour
     private string activeMicDevice;
     private StableMicrophoneInput sharedMicSource;
     private Coroutine micRestartCoroutine;
+    private Coroutine resolutionChangedCoroutine;
     private string micDeviceSignature = string.Empty;
     private float nextMicDevicePollTime;
     private readonly float[] micSamples = new float[MIC_SAMPLE_SIZE];
@@ -183,7 +191,9 @@ public class SettingManager : MonoBehaviour
         new Resolution { width = 2560,  height = 1440 },
         new Resolution { width = 2560,  height = 1600 },
         new Resolution { width = 2880,  height = 1800 },
-        new Resolution { width = 3480,  height = 2160 },
+        new Resolution { width = 3840,  height = 2160 },
+        new Resolution { width = 1600,  height = 1200 },
+        new Resolution { width = 3440,  height = 1440 },
     };
 
     // ──────────────────────────────────────────────
@@ -336,7 +346,10 @@ public class SettingManager : MonoBehaviour
 
         for (int i = 0; i < resolutions.Count; i++)
         {
-            string option = resolutions[i].width + " x " + resolutions[i].height;
+            string aspectLabel = ResponsiveCanvasUtility.GetAspectLabel(
+                resolutions[i].width,
+                resolutions[i].height);
+            string option = $"{resolutions[i].width} x {resolutions[i].height} ({aspectLabel})";
             if (resolutions[i].width == Screen.currentResolution.width &&
                 resolutions[i].height == Screen.currentResolution.height)
             {
@@ -349,7 +362,10 @@ public class SettingManager : MonoBehaviour
         resolutionDropdown.AddOptions(options);
 
         // 저장된 값이 없으면 현재 모니터 최적 해상도를 기본값으로 사용
-        ResolutionIndex = PlayerPrefs.GetInt(KEY_RESOLUTION_INDEX, optimal);
+        ResolutionIndex = Mathf.Clamp(
+            PlayerPrefs.GetInt(KEY_RESOLUTION_INDEX, optimal),
+            0,
+            resolutions.Count - 1);
     }
 
     // MicSelectScript.Start() 로직 통합
@@ -938,22 +954,36 @@ public class SettingManager : MonoBehaviour
     {
         if (index < 0 || index >= resolutions.Count) return;
         Resolution res = resolutions[index];
-        Screen.SetResolution(res.width, res.height, Screen.fullScreen);
+        Screen.SetResolution(res.width, res.height, GetFullScreenMode(DisplayModeIndex));
+
+        if (resolutionChangedCoroutine != null)
+            StopCoroutine(resolutionChangedCoroutine);
+        resolutionChangedCoroutine = StartCoroutine(NotifyResolutionChanged(res.width, res.height));
     }
+
+    private IEnumerator NotifyResolutionChanged(int requestedWidth, int requestedHeight)
+    {
+        // Screen.width/height는 SetResolution 호출 직후가 아니라 다음 프레임에 갱신됩니다.
+        yield return null;
+
+        int appliedWidth = Screen.width > 0 ? Screen.width : requestedWidth;
+        int appliedHeight = Screen.height > 0 ? Screen.height : requestedHeight;
+        ResolutionChanged?.Invoke(
+            new Vector2Int(appliedWidth, appliedHeight),
+            (float)appliedWidth / Mathf.Max(1, appliedHeight));
+        resolutionChangedCoroutine = null;
+    }
+
+    private static FullScreenMode GetFullScreenMode(int index)
+    {
+        return index == 1
+            ? FullScreenMode.Windowed
+            : FullScreenMode.FullScreenWindow;
+    }
+
     private void ApplyDisplayMode(int index)
     {
-        switch (index)
-        {
-            case 0:
-                Screen.fullScreenMode = FullScreenMode.FullScreenWindow;
-                break;
-            case 1:
-                Screen.fullScreenMode = FullScreenMode.Windowed;
-                break;
-            default:
-                Screen.fullScreenMode = FullScreenMode.FullScreenWindow;
-                break;
-        }
+        Screen.fullScreenMode = GetFullScreenMode(index);
     }
     // ──────────────────────────────────────────────
     // 리셋 — 모든 값을 기본값으로 되돌리기
@@ -1207,6 +1237,10 @@ public class SettingManager : MonoBehaviour
                 overlayScaler.screenMatchMode = sourceScaler.screenMatchMode;
                 overlayScaler.matchWidthOrHeight = sourceScaler.matchWidthOrHeight;
                 overlayScaler.referencePixelsPerUnit = sourceScaler.referencePixelsPerUnit;
+            }
+            else
+            {
+                ResponsiveCanvasUtility.Configure(overlayScaler);
             }
         }
 

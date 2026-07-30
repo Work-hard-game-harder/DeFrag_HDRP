@@ -2,6 +2,7 @@ using System.Collections;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
+using DeFrag.UI;
 
 namespace DeFrag.Player
 {
@@ -178,6 +179,7 @@ namespace DeFrag.Player
             Canvas canvas = canvasObject.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = short.MaxValue;
+            ResponsiveCanvasUtility.Configure(canvasObject.GetComponent<CanvasScaler>());
 
             damageOverlay = canvasObject.GetComponent<CanvasGroup>();
             damageOverlay.alpha = 0f;
