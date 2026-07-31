@@ -1236,9 +1236,10 @@ GameObject:
   - component: {fileID: 318093039}
   - component: {fileID: 318093038}
   - component: {fileID: 318093037}
-  m_Layer: 0
+  - component: {fileID: 318093041}
+  m_Layer: 9
   m_Name: NVCam
-  m_TagString: Untagged
+  m_TagString: Interactable
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1336,6 +1337,26 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &318093041
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 318093036}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d9ddea352f4a554cba6587be6eb6827, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GetItem
+  itemData: {fileID: 11400000, guid: a285e91e13984ac0a9ce86fc0181666e, type: 2}
+  isHoldInteraction: 0
+  progressesQuest: 0
+  questProgressAmount: 1
+  canThrow: 1
+  onPickedUp:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &340614626
 GameObject:
   m_ObjectHideFlags: 0
@@ -2497,6 +2518,18 @@ PrefabInstance:
       propertyPath: GlobalObjectIdHash
       value: 4221851483
       objectReference: {fileID: 0}
+    - target: {fileID: 4444323132773095881, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
+      propertyPath: batteryBar
+      value: 
+      objectReference: {fileID: 1041189514}
+    - target: {fileID: 5720831487311112839, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
+      propertyPath: m_CullingMask.m_Bits
+      value: 1911
+      objectReference: {fileID: 0}
+    - target: {fileID: 6617680185298770590, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
+      propertyPath: m_CullingMask.m_Bits
+      value: 4294958975
+      objectReference: {fileID: 0}
     - target: {fileID: 7067416030703452503, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -2545,16 +2578,15 @@ PrefabInstance:
       propertyPath: m_Name
       value: PlayerCharacter
       objectReference: {fileID: 0}
+    - target: {fileID: 7607469581392001813, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
+      propertyPath: cameraOverlayCanvas
+      value: 
+      objectReference: {fileID: 1422351469}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
---- !u!20 &671739220 stripped
-Camera:
-  m_CorrespondingSourceObject: {fileID: 6617680185298770590, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
-  m_PrefabInstance: {fileID: 580726432}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &678908662
 GameObject:
   m_ObjectHideFlags: 0
@@ -2883,6 +2915,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: f19f9650a108c6f4b841b314b75f54a4, type: 2}
   - {fileID: 11400000, guid: 6512afb4422d25345afab928ffd8ac0c, type: 2}
   - {fileID: 11400000, guid: 16fd9fd96be0ca84e8e64518eea4bf25, type: 2}
+  - {fileID: 11400000, guid: a285e91e13984ac0a9ce86fc0181666e, type: 2}
 --- !u!1 &841788282
 GameObject:
   m_ObjectHideFlags: 0
@@ -4756,8 +4789,8 @@ Canvas:
   m_GameObject: {fileID: 1422351466}
   m_Enabled: 1
   serializedVersion: 3
-  m_RenderMode: 1
-  m_Camera: {fileID: 671739220}
+  m_RenderMode: 0
+  m_Camera: {fileID: 0}
   m_PlaneDistance: 1
   m_PixelPerfect: 0
   m_ReceivesEvents: 1
@@ -9553,9 +9586,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c7e2904f5a324d61a844af73db89e102, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WalkieTalkieVoiceRecorder
+  minRecordingSeconds: 2
   maxRecordingSeconds: 5
   silencePeakThreshold: 0.0005
+  silenceRmsThreshold: 0.002
   folderName: WalkieTalkieRecordings
+  maxStoredRecordings: 30
 --- !u!1 &3667280829506387990
 GameObject:
   m_ObjectHideFlags: 0
@@ -10567,7 +10603,7 @@ Camera:
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 1911
+    m_Bits: 2039
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -11642,6 +11678,7 @@ MonoBehaviour:
   itemCamera: {fileID: 43750027}
   itemAudioListener: {fileID: 43750029}
   cameraItem: {fileID: 43750028}
+  cameraOverlayCanvas: {fileID: 0}
 --- !u!1 &7592877398035281505
 GameObject:
   m_ObjectHideFlags: 0
@@ -11668,6 +11705,7 @@ GameObject:
   - component: {fileID: 7349012845716820560}
   - component: {fileID: 7349012845716820561}
   - component: {fileID: 7349012845716820590}
+  - component: {fileID: 9000000000000000001}
   m_Layer: 7
   m_Name: "PlayerCharacter(\uC774\uC804 \uC791\uC5C5\uD558\uB358 \uAC83)"
   m_TagString: Player
@@ -12221,6 +12259,25 @@ Transform:
   m_Children: []
   m_Father: {fileID: 613647361242387535}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &9000000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7592877398035281505}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ed08438ea144ef39d550a16fa6c365d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Player.OwnerCharacterVisibility
+  ShowTopMostFoldoutHeaderGroup: 1
+  characterRenderers:
+  - {fileID: 6897279380494824126}
+  ownerHiddenLayer:
+    serializedVersion: 2
+    m_Bits: 8192
+  applyAsLocalWhenNotNetworkSpawned: 1
 --- !u!4 &9032384225194329318
 Transform:
   m_ObjectHideFlags: 0

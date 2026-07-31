@@ -330,7 +330,7 @@ Camera:
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 4294959103
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -2774,6 +2774,9 @@ GameObject:
   - component: {fileID: 1095481969773090955}
   - component: {fileID: 949082781300913998}
   - component: {fileID: 5276715667392532125}
+  - component: {fileID: 7349012846091223101}
+  - component: {fileID: 7349012846091223102}
+  - component: {fileID: 7349012846091223103}
   m_Layer: 0
   m_Name: PlayerCharacter(H)
   m_TagString: Player
@@ -3018,6 +3021,52 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
+--- !u!114 &7349012846091223101
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8628133643110585351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ca831e2973968744bd12d479291d220, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerStats
+  maxHealth: 100
+  Health: 100
+  Inventory: []
+--- !u!114 &7349012846091223102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8628133643110585351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c84f1782e0464ec49ad376523fcbd59a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Combat.NetworkPlayerHealth
+  playerStats: {fileID: 7349012846091223101}
+--- !u!114 &7349012846091223103
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8628133643110585351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ed08438ea144ef39d550a16fa6c365d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Player.OwnerCharacterVisibility
+  characterRenderers:
+  - {fileID: 5347120693867058667}
+  ownerHiddenLayer:
+    serializedVersion: 2
+    m_Bits: 8192
+  applyAsLocalWhenNotNetworkSpawned: 0
 --- !u!114 &5745487489445018000
 MonoBehaviour:
   m_ObjectHideFlags: 0

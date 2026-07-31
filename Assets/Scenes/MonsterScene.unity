@@ -765,22 +765,22 @@ MonoBehaviour:
       startIndex: 
       variableStartIndex: 
       JSONSerialization: '{"EntryTask":{"Type":"BehaviorDesigner.Runtime.Tasks.EntryTask","NodeData":{"Offset":"(0,0)"},"ID":0,"Name":"Entry","Instant":true},"RootTask":{"Type":"BehaviorDesigner.Runtime.Tasks.Selector","NodeData":{"Offset":"(0,110)"},"ID":1,"Name":"B2F
-        Monster StateSelector","Instant":true,"AbortTypeabortType":"LowerPriority","Children":[{"Type":"BehaviorDesigner.Runtime.Tasks.Sequence","NodeData":{"Offset":"(-360,260)"},"ID":2,"Name":"Attack","Instant":true,"AbortTypeabortType":"LowerPriority","Children":[{"Type":"DeFrag.Monsters.Common.BehaviorDesignerTasks.WithinTargetDistance","NodeData":{"Offset":"(-430,400)"},"ID":3,"Name":"Within
-        Attack Range","Instant":true,"SharedTransformtarget":{"Type":"BehaviorDesigner.Runtime.SharedTransform","Name":"PlayerTarget","IsShared":true,"TransformmValue":0},"SharedFloatdistance":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"attackRange","IsShared":true,"SinglemValue":1.5}},{"Type":"DeFrag.Monsters.B2F.BehaviorDesignerTasks.AttackPlayer","NodeData":{"Offset":"(-290,400)"},"ID":4,"Name":"Attack
-        Player","Instant":true,"SharedTransformplayerTarget":{"Type":"BehaviorDesigner.Runtime.SharedTransform","Name":"PlayerTarget","IsShared":true,"TransformmValue":1},"SharedStringattackTrigger":{"Type":"BehaviorDesigner.Runtime.SharedString","Name":"","StringmValue":"Attack"},"SharedFloatdamageDelay":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":0.35},"SharedFloatattackDuration":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":1}}]},{"Type":"BehaviorDesigner.Runtime.Tasks.Sequence","NodeData":{"Offset":"(0,260)"},"ID":5,"Name":"Chase","Instant":true,"AbortTypeabortType":"Both","Children":[{"Type":"DeFrag.Monsters.Common.BehaviorDesignerTasks.CanSeeTarget","NodeData":{"Offset":"(-70,400)"},"ID":6,"Name":"Can
-        See Player","Instant":true,"SharedTransformtarget":{"Type":"BehaviorDesigner.Runtime.SharedTransform","Name":"PlayerTarget","IsShared":true,"TransformmValue":2},"SharedFloatviewDistance":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":20},"SharedFloatfieldOfView":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":120},"SharedLayerMaskobstacleMask":{"Type":"BehaviorDesigner.Runtime.SharedLayerMask","Name":null,"LayerMaskmValue":0},"SharedFloateyeHeight":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":1.5},"SharedFloattargetHeightOffset":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":1}},{"Type":"DeFrag.Monsters.Common.BehaviorDesignerTasks.ChaseTargetWithDetour","NodeData":{"Offset":"(70,400)"},"ID":7,"Name":"Chase
-        With Detour","Instant":true,"SharedTransformtarget":{"Type":"BehaviorDesigner.Runtime.SharedTransform","Name":"PlayerTarget","IsShared":true,"TransformmValue":3},"SharedFloatstoppingDistance":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"attackRange","IsShared":true,"SinglemValue":1.5},"SharedFloatrotationSpeed":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":null,"SinglemValue":10},"SharedIntdetourSampleCount":{"Type":"BehaviorDesigner.Runtime.SharedInt","Name":"","Int32mValue":8},"SharedFloatdetourSampleRadius":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":6},"SharedFloatdetourRecheckInterval":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":0.4}}]},{"Type":"BehaviorDesigner.Runtime.Tasks.Sequence","NodeData":{"Offset":"(360,260)"},"ID":8,"Name":"Patrol","Instant":true,"AbortTypeabortType":"None","Children":[{"Type":"BehaviorDesigner.Runtime.Tasks.Parallel","NodeData":{"Offset":"(360,400)"},"ID":9,"Name":"Patrol
-        And Voice Mimic","Instant":true,"AbortTypeabortType":"None","Children":[{"Type":"BehaviorDesigner.Runtime.Tasks.Repeater","NodeData":{"Offset":"(230,540)"},"ID":10,"Name":"Random
-        Patrol Loop","Instant":true,"SharedIntcount":{"Type":"BehaviorDesigner.Runtime.SharedInt","Name":"","Int32mValue":1},"SharedBoolrepeatForever":{"Type":"BehaviorDesigner.Runtime.SharedBool","Name":"","BooleanmValue":true},"SharedBoolendOnFailure":{"Type":"BehaviorDesigner.Runtime.SharedBool","Name":"","BooleanmValue":false},"Children":[{"Type":"BehaviorDesigner.Runtime.Tasks.Sequence","NodeData":{"Offset":"(230,680)"},"ID":11,"Name":"Random
-        Patrol Cycle","Instant":true,"AbortTypeabortType":"None","Children":[{"Type":"DeFrag.Monsters.Common.BehaviorDesignerTasks.SetRandomNavMeshDestination","NodeData":{"Offset":"(20,820)"},"ID":12,"Name":"Set
-        Random Patrol Destination","Instant":true,"SharedVector3destination":{"Type":"BehaviorDesigner.Runtime.SharedVector3","Name":"PatrolDestination","IsShared":true,"Vector3mValue":"(0,0,0)"},"SharedFloatradius":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"patrolRadius","IsShared":true,"SinglemValue":20},"SharedIntsampleAttempts":{"Type":"BehaviorDesigner.Runtime.SharedInt","Name":"","Int32mValue":30},"SharedFloatsampleDistance":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":5}},{"Type":"DeFrag.Monsters.B2F.BehaviorDesignerTasks.SetPatrolMovingAnimation","NodeData":{"Offset":"(145,820)"},"ID":13,"Name":"Set
-        Patrol Moving Animation","Instant":true,"SharedStringidleParameter":{"Type":"BehaviorDesigner.Runtime.SharedString","Name":"","StringmValue":"isIdle"},"SharedStringwalkingParameter":{"Type":"BehaviorDesigner.Runtime.SharedString","Name":"","StringmValue":"isWalking"}},{"Type":"DeFrag.Monsters.Common.BehaviorDesignerTasks.MoveToNavMeshDestination","NodeData":{"Offset":"(270,820)"},"ID":14,"Name":"Move
-        To Patrol Destination","Instant":true,"SharedVector3destination":{"Type":"BehaviorDesigner.Runtime.SharedVector3","Name":"PatrolDestination","IsShared":true,"Vector3mValue":"(0,0,0)"},"SharedFloatmoveSpeed":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"walkSpeed","IsShared":true,"SinglemValue":2},"SharedFloatstoppingDistance":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":0.5},"SharedFloatrotationSpeed":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":10},"SharedFloatstuckCheckInterval":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":1},"SharedFloatstuckThreshold":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":0.1}},{"Type":"DeFrag.Monsters.B2F.BehaviorDesignerTasks.SetPatrolIdleAnimation","NodeData":{"Offset":"(395,820)"},"ID":15,"Name":"Set
-        Patrol Idle Animation","Instant":true,"SharedStringidleParameter":{"Type":"BehaviorDesigner.Runtime.SharedString","Name":"","StringmValue":"isIdle"},"SharedStringwalkingParameter":{"Type":"BehaviorDesigner.Runtime.SharedString","Name":"","StringmValue":"isWalking"}},{"Type":"BehaviorDesigner.Runtime.Tasks.Wait","NodeData":{"Offset":"(520,820)"},"ID":16,"Name":"Random
-        Idle Wait","Instant":true,"SharedFloatwaitTime":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":1},"SharedBoolrandomWait":{"Type":"BehaviorDesigner.Runtime.SharedBool","Name":"","BooleanmValue":true},"SharedFloatrandomWaitMin":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"idleTimeMin","IsShared":true,"SinglemValue":1},"SharedFloatrandomWaitMax":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"idleTimeMax","IsShared":true,"SinglemValue":4}}]}]},{"Type":"BehaviorDesigner.Runtime.Tasks.Repeater","NodeData":{"Offset":"(620,540)"},"ID":17,"Name":"Repeat
-        Voice Mimic","Instant":true,"SharedIntcount":{"Type":"BehaviorDesigner.Runtime.SharedInt","Name":"","Int32mValue":1},"SharedBoolrepeatForever":{"Type":"BehaviorDesigner.Runtime.SharedBool","Name":"","BooleanmValue":true},"SharedBoolendOnFailure":{"Type":"BehaviorDesigner.Runtime.SharedBool","Name":"","BooleanmValue":false},"Children":[{"Type":"BehaviorDesigner.Runtime.Tasks.Sequence","NodeData":{"Offset":"(620,680)"},"ID":18,"Name":"VoiceMimicCycle","Instant":true,"AbortTypeabortType":"None","Children":[{"Type":"BehaviorDesigner.Runtime.Tasks.Wait","NodeData":{"Offset":"(700,820)"},"ID":19,"Name":"Random
-        Mimic Wait","Instant":true,"SharedFloatwaitTime":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":1},"SharedBoolrandomWait":{"Type":"BehaviorDesigner.Runtime.SharedBool","Name":"","BooleanmValue":true},"SharedFloatrandomWaitMin":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"mimicIntervalMin","IsShared":true,"SinglemValue":10},"SharedFloatrandomWaitMax":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"mimicIntervalMax","IsShared":true,"SinglemValue":30}},{"Type":"DeFrag.Monsters.B2F.BehaviorDesignerTasks.PlayMimicVoice","NodeData":{"Offset":"(850,820)"},"ID":20,"Name":"Play
-        Mimic Voice","Instant":true,"SharedAudioClipListmimicVoiceClips":{"Type":"BehaviorDesigner.Runtime.SharedAudioClipList","Name":null,"IsShared":true,"List`1mValue":[]},"SharedGameObjectaudioSourceObject":{"Type":"BehaviorDesigner.Runtime.SharedGameObject","Name":null},"SharedGameObjectanimatorObject":{"Type":"BehaviorDesigner.Runtime.SharedGameObject","Name":null},"SharedStringtalkingParameter":{"Type":"BehaviorDesigner.Runtime.SharedString","Name":"","StringmValue":"isTalking"},"SharedFloatvolume":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":1}}]}]}]}]}]},"Variables":[{"Type":"BehaviorDesigner.Runtime.SharedTransform","Name":"PlayerTarget","IsShared":true,"TransformmValue":4},{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"attackRange","IsShared":true,"SinglemValue":1.5},{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"mimicIntervalMin","IsShared":true,"SinglemValue":10},{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"mimicIntervalMax","IsShared":true,"SinglemValue":30},{"Type":"BehaviorDesigner.Runtime.SharedVector3","Name":"PatrolDestination","IsShared":true,"Vector3mValue":"(0,0,0)"},{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"patrolRadius","IsShared":true,"SinglemValue":20},{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"walkSpeed","IsShared":true,"SinglemValue":2},{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"idleTimeMin","IsShared":true,"SinglemValue":1},{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"idleTimeMax","IsShared":true,"SinglemValue":4},{"Type":"BehaviorDesigner.Runtime.SharedVector3","Name":"LastKnownPosition","IsShared":true,"Vector3mValue":"(0,0,0)"}]}'
+        Monster StateSelector","Instant":true,"AbortTypeabortType":"LowerPriority","Children":[{"Type":"BehaviorDesigner.Runtime.Tasks.Sequence","NodeData":{"Offset":"(-360,260)"},"ID":2,"Name":"Attack","Instant":true,"AbortTypeabortType":"LowerPriority","Children":[{"Type":"DeFrag.Monsters.Common.BehaviorDesignerTasks.WithinTargetDistance","NodeData":{"Offset":"(-314.61554,207.692535)"},"ID":3,"Name":"Within
+        Attack Range","Instant":true,"SharedTransformtarget":{"Type":"BehaviorDesigner.Runtime.SharedTransform","Name":"PlayerTarget","IsShared":true,"TransformmValue":0},"SharedFloatdistance":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"attackRange","IsShared":true,"SinglemValue":1.5}},{"Type":"DeFrag.Monsters.B2F.BehaviorDesignerTasks.AttackPlayer","NodeData":{"Offset":"(-174.6155,207.692535)"},"ID":4,"Name":"Attack
+        Player","Instant":true,"SharedTransformplayerTarget":{"Type":"BehaviorDesigner.Runtime.SharedTransform","Name":"PlayerTarget","IsShared":true,"TransformmValue":1},"SharedStringattackTrigger":{"Type":"BehaviorDesigner.Runtime.SharedString","Name":"","StringmValue":"Attack"},"SharedFloatdamageDelay":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":0.35},"SharedFloatattackDuration":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":1}}]},{"Type":"BehaviorDesigner.Runtime.Tasks.Sequence","NodeData":{"Offset":"(0,260)"},"ID":5,"Name":"Chase","Instant":true,"AbortTypeabortType":"Both","Children":[{"Type":"DeFrag.Monsters.Common.BehaviorDesignerTasks.CanSeeTarget","NodeData":{"Offset":"(-70,246.154037)"},"ID":6,"Name":"Can
+        See Player","Instant":true,"SharedTransformtarget":{"Type":"BehaviorDesigner.Runtime.SharedTransform","Name":"PlayerTarget","IsShared":true,"TransformmValue":2},"SharedFloatviewDistance":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":20},"SharedFloatfieldOfView":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":120},"SharedLayerMaskobstacleMask":{"Type":"BehaviorDesigner.Runtime.SharedLayerMask","Name":null,"LayerMaskmValue":0},"SharedFloateyeHeight":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":1.5},"SharedFloattargetHeightOffset":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":1}},{"Type":"DeFrag.Monsters.Common.BehaviorDesignerTasks.ChaseTargetWithDetour","NodeData":{"Offset":"(70,246.154037)"},"ID":7,"Name":"Chase
+        With Detour","Instant":true,"SharedTransformtarget":{"Type":"BehaviorDesigner.Runtime.SharedTransform","Name":"PlayerTarget","IsShared":true,"TransformmValue":3},"SharedFloatstoppingDistance":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"attackRange","IsShared":true,"SinglemValue":1.5},"SharedFloatrotationSpeed":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":10},"SharedIntdetourSampleCount":{"Type":"BehaviorDesigner.Runtime.SharedInt","Name":"","Int32mValue":8},"SharedFloatdetourSampleRadius":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":6},"SharedFloatdetourRecheckInterval":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":0.4}}]},{"Type":"BehaviorDesigner.Runtime.Tasks.Sequence","NodeData":{"Offset":"(360,260)"},"ID":8,"Name":"Patrol","Instant":true,"AbortTypeabortType":"None","Children":[{"Type":"BehaviorDesigner.Runtime.Tasks.Parallel","NodeData":{"Offset":"(167.69252,207.692535)"},"ID":9,"Name":"Patrol
+        And Voice Mimic","Instant":true,"AbortTypeabortType":"None","Children":[{"Type":"BehaviorDesigner.Runtime.Tasks.Repeater","NodeData":{"Offset":"(-154.615021,309.231079)"},"ID":10,"Name":"Random
+        Patrol Loop","Instant":true,"SharedIntcount":{"Type":"BehaviorDesigner.Runtime.SharedInt","Name":"","Int32mValue":1},"SharedBoolrepeatForever":{"Type":"BehaviorDesigner.Runtime.SharedBool","Name":"","BooleanmValue":true},"SharedBoolendOnFailure":{"Type":"BehaviorDesigner.Runtime.SharedBool","Name":"","BooleanmValue":false},"Children":[{"Type":"BehaviorDesigner.Runtime.Tasks.Sequence","NodeData":{"Offset":"(-77.69202,180.000641)"},"ID":11,"Name":"Random
+        Patrol Cycle","Instant":true,"AbortTypeabortType":"None","Children":[{"Type":"DeFrag.Monsters.Common.BehaviorDesignerTasks.SetRandomNavMeshDestination","NodeData":{"Offset":"(-249.230515,204.61618)"},"ID":12,"Name":"Set
+        Random Patrol Destination","Instant":true,"SharedVector3destination":{"Type":"BehaviorDesigner.Runtime.SharedVector3","Name":"PatrolDestination","IsShared":true,"Vector3mValue":"(0,0,0)"},"SharedFloatradius":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"patrolRadius","IsShared":true,"SinglemValue":20},"SharedIntsampleAttempts":{"Type":"BehaviorDesigner.Runtime.SharedInt","Name":"","Int32mValue":30},"SharedFloatsampleDistance":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":5}},{"Type":"DeFrag.Monsters.B2F.BehaviorDesignerTasks.SetPatrolMovingAnimation","NodeData":{"Offset":"(-124.230515,204.61618)"},"ID":13,"Name":"Set
+        Patrol Moving Animation","Instant":true,"SharedStringidleParameter":{"Type":"BehaviorDesigner.Runtime.SharedString","Name":"","StringmValue":"isIdle"},"SharedStringwalkingParameter":{"Type":"BehaviorDesigner.Runtime.SharedString","Name":"","StringmValue":"isWalking"}},{"Type":"DeFrag.Monsters.Common.BehaviorDesignerTasks.MoveToNavMeshDestination","NodeData":{"Offset":"(0.7694855,204.61618)"},"ID":14,"Name":"Move
+        To Patrol Destination","Instant":true,"SharedVector3destination":{"Type":"BehaviorDesigner.Runtime.SharedVector3","Name":"PatrolDestination","IsShared":true,"Vector3mValue":"(0,0,0)"},"SharedFloatmoveSpeed":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"walkSpeed","IsShared":true,"SinglemValue":2},"SharedFloatstoppingDistance":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":0.5},"SharedFloatrotationSpeed":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":10},"SharedFloatstuckCheckInterval":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":1},"SharedFloatstuckThreshold":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":0.1}},{"Type":"DeFrag.Monsters.B2F.BehaviorDesignerTasks.SetPatrolIdleAnimation","NodeData":{"Offset":"(125.769531,204.61618)"},"ID":15,"Name":"Set
+        Patrol Idle Animation","Instant":true,"SharedStringidleParameter":{"Type":"BehaviorDesigner.Runtime.SharedString","Name":"","StringmValue":"isIdle"},"SharedStringwalkingParameter":{"Type":"BehaviorDesigner.Runtime.SharedString","Name":"","StringmValue":"isWalking"}},{"Type":"BehaviorDesigner.Runtime.Tasks.Wait","NodeData":{"Offset":"(250.769577,204.61618)"},"ID":16,"Name":"Random
+        Idle Wait","Instant":true,"SharedFloatwaitTime":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":1},"SharedBoolrandomWait":{"Type":"BehaviorDesigner.Runtime.SharedBool","Name":"","BooleanmValue":true},"SharedFloatrandomWaitMin":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"idleTimeMin","IsShared":true,"SinglemValue":1},"SharedFloatrandomWaitMax":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"idleTimeMax","IsShared":true,"SinglemValue":4}}]}]},{"Type":"BehaviorDesigner.Runtime.Tasks.Repeater","NodeData":{"Offset":"(235.385117,309.231079)"},"ID":17,"Name":"Repeat
+        Voice Mimic","Instant":true,"SharedIntcount":{"Type":"BehaviorDesigner.Runtime.SharedInt","Name":"","Int32mValue":1},"SharedBoolrepeatForever":{"Type":"BehaviorDesigner.Runtime.SharedBool","Name":"","BooleanmValue":true},"SharedBoolendOnFailure":{"Type":"BehaviorDesigner.Runtime.SharedBool","Name":"","BooleanmValue":false},"Children":[{"Type":"BehaviorDesigner.Runtime.Tasks.Sequence","NodeData":{"Offset":"(312.3081,180.000641)"},"ID":18,"Name":"VoiceMimicCycle","Instant":true,"AbortTypeabortType":"None","Children":[{"Type":"BehaviorDesigner.Runtime.Tasks.Wait","NodeData":{"Offset":"(7.69300842,204.61618)"},"ID":19,"Name":"Random
+        Mimic Wait","Instant":true,"SharedFloatwaitTime":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":1},"SharedBoolrandomWait":{"Type":"BehaviorDesigner.Runtime.SharedBool","Name":"","BooleanmValue":true},"SharedFloatrandomWaitMin":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"mimicIntervalMin","IsShared":true,"SinglemValue":10},"SharedFloatrandomWaitMax":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"mimicIntervalMax","IsShared":true,"SinglemValue":20}},{"Type":"DeFrag.Monsters.B2F.BehaviorDesignerTasks.PlayMimicVoice","NodeData":{"Offset":"(157.693008,204.61618)"},"ID":20,"Name":"Play
+        Mimic Voice","Instant":true,"SharedAudioClipListmimicVoiceClips":{"Type":"BehaviorDesigner.Runtime.SharedAudioClipList","Name":"MimicVoiceClips","IsShared":true,"List`1mValue":[]},"SharedGameObjectaudioSourceObject":{"Type":"BehaviorDesigner.Runtime.SharedGameObject","Name":null},"SharedGameObjectanimatorObject":{"Type":"BehaviorDesigner.Runtime.SharedGameObject","Name":null},"SharedStringtalkingParameter":{"Type":"BehaviorDesigner.Runtime.SharedString","Name":"","StringmValue":"isTalking"},"SharedFloatvolume":{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"","SinglemValue":1}}]}]}]}]}]},"Variables":[{"Type":"BehaviorDesigner.Runtime.SharedTransform","Name":"PlayerTarget","IsShared":true,"TransformmValue":4},{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"attackRange","IsShared":true,"SinglemValue":1.5},{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"mimicIntervalMin","IsShared":true,"SinglemValue":10},{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"mimicIntervalMax","IsShared":true,"SinglemValue":20},{"Type":"BehaviorDesigner.Runtime.SharedAudioClipList","Name":"MimicVoiceClips","IsShared":true,"List`1mValue":[]},{"Type":"BehaviorDesigner.Runtime.SharedVector3","Name":"PatrolDestination","IsShared":true,"Vector3mValue":"(0,0,0)"},{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"patrolRadius","IsShared":true,"SinglemValue":20},{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"walkSpeed","IsShared":true,"SinglemValue":2},{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"idleTimeMin","IsShared":true,"SinglemValue":1},{"Type":"BehaviorDesigner.Runtime.SharedFloat","Name":"idleTimeMax","IsShared":true,"SinglemValue":4},{"Type":"BehaviorDesigner.Runtime.SharedVector3","Name":"LastKnownPosition","IsShared":true,"Vector3mValue":"(0,0,0)"}]}'
       fieldSerializationData:
         typeName: []
         fieldNameHash: 
@@ -936,7 +936,7 @@ AudioSource:
   MinDistance: 1
   MaxDistance: 25
   Pan2D: 0
-  rolloffMode: 0
+  rolloffMode: 1
   BypassEffects: 0
   BypassListenerEffects: 0
   BypassReverbZones: 0
@@ -1065,6 +1065,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 231487829888649759, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
+      propertyPath: hasWakieTakie
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 1228092924256219855, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
       propertyPath: itemText
       value: 
@@ -1097,9 +1101,13 @@ PrefabInstance:
       propertyPath: InScenePlacedSourceGlobalObjectIdHash
       value: 1248422577
       objectReference: {fileID: 0}
+    - target: {fileID: 5779452105091600300, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7067416030703452503, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 8.84563
+      value: 21.42
       objectReference: {fileID: 0}
     - target: {fileID: 7067416030703452503, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
       propertyPath: m_LocalPosition.y
@@ -1140,6 +1148,18 @@ PrefabInstance:
     - target: {fileID: 7592877399013546989, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
       propertyPath: m_Name
       value: PlayerCharacter
+      objectReference: {fileID: 0}
+    - target: {fileID: 7592877399013546989, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8916423859403885125, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
+      propertyPath: m_Layer
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8916423859403885125, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1370,6 +1390,67 @@ Transform:
   m_Children: []
   m_Father: {fileID: 936202455}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &647687226
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 3766611112930365929, guid: 7efe8505741782948b7e79c6eedc993c, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 11.39097
+      objectReference: {fileID: 0}
+    - target: {fileID: 3766611112930365929, guid: 7efe8505741782948b7e79c6eedc993c, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.27261
+      objectReference: {fileID: 0}
+    - target: {fileID: 3766611112930365929, guid: 7efe8505741782948b7e79c6eedc993c, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -27.9
+      objectReference: {fileID: 0}
+    - target: {fileID: 3766611112930365929, guid: 7efe8505741782948b7e79c6eedc993c, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3766611112930365929, guid: 7efe8505741782948b7e79c6eedc993c, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3766611112930365929, guid: 7efe8505741782948b7e79c6eedc993c, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3766611112930365929, guid: 7efe8505741782948b7e79c6eedc993c, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3766611112930365929, guid: 7efe8505741782948b7e79c6eedc993c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3766611112930365929, guid: 7efe8505741782948b7e79c6eedc993c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3766611112930365929, guid: 7efe8505741782948b7e79c6eedc993c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5026559601196946210, guid: 7efe8505741782948b7e79c6eedc993c, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 4030281538
+      objectReference: {fileID: 0}
+    - target: {fileID: 8628133643110585351, guid: 7efe8505741782948b7e79c6eedc993c, type: 3}
+      propertyPath: m_Name
+      value: PlayerCharacter(H)
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 7efe8505741782948b7e79c6eedc993c, type: 3}
 --- !u!1001 &807695173
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3046,3 +3127,4 @@ SceneRoots:
   - {fileID: 944067170}
   - {fileID: 286386564}
   - {fileID: 359282396}
+  - {fileID: 647687226}
