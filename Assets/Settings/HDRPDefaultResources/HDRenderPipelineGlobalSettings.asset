@@ -545,6 +545,8 @@ MonoBehaviour:
             PublicKeyToken=null
           - DeFrag.Rendering.SyntheticVisionPostProcess, Assembly-CSharp, Version=0.0.0.0,
             Culture=neutral, PublicKeyToken=null
+          - DeFrag.Rendering.TvMonsterGlitchPostProcess, Assembly-CSharp, Version=0.0.0.0,
+            Culture=neutral, PublicKeyToken=null
     - rid: 6585781545945268236
       type: {class: WaterSystemGlobalSettings, ns: UnityEngine.Rendering.HighDefinition, asm: Unity.RenderPipelines.HighDefinition.Runtime}
       data:

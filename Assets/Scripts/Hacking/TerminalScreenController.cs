@@ -33,7 +33,9 @@ public sealed class TerminalScreenController : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Backspace) && activeMinigame != null)
+        if (activeMinigame != null &&
+            ((activeMinigame.ConsumesTextInput && Input.GetKeyDown(KeyCode.Escape)) ||
+             (!activeMinigame.ConsumesTextInput && Input.GetKeyDown(KeyCode.Backspace))))
         {
             CancelMinigame();
             return;
@@ -109,7 +111,7 @@ public sealed class TerminalScreenController : MonoBehaviour
     private void Execute(TerminalCommands command)
     {
         HackingMinigameBase prefab = device.GetMinigame(command);
-        if (prefab == null || device.IsCompleted(command))
+        if (!device.IsCommandEnabled(command) || prefab == null || device.IsCompleted(command))
         {
             ShowDeniedAccess();
             return;
@@ -123,7 +125,7 @@ public sealed class TerminalScreenController : MonoBehaviour
         activeMinigame.Failed += FailMinigame;
         activeMinigame.Cancelled += CancelMinigame;
         header.text = $"{device.DisplayName} // {TerminalCommandLabel.Get(command)}";
-        status.text = "[W/S] SELECT    [E] EXECUTE    [BACKSPACE] RETURN";
+        status.text = activeMinigame.ControlHint;
         activeMinigame.Begin(device, command);
     }
 

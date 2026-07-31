@@ -8,6 +8,7 @@ namespace DeFrag.Doors
     {
         [SerializeField, Min(0f)] private float openHeight = 6f;
         [SerializeField, Min(0.01f)] private float moveSpeed = 3f;
+        [SerializeField, Min(0.01f)] private float forcedCloseSpeed = 12f;
 
         [Header("Door Sounds")]
         [SerializeField] private AudioClip openSound;
@@ -20,8 +21,11 @@ namespace DeFrag.Doors
         private Vector3 closedPosition;
         private Vector3 openPosition;
         private AudioSource audioSource;
+        private Coroutine movementRoutine;
+        private Coroutine timedLockRoutine;
 
         public bool IsOpen { get; private set; }
+        public bool IsTemporarilyLocked { get; private set; }
 
         private void Awake()
         {
@@ -41,7 +45,7 @@ namespace DeFrag.Doors
 
         public void Open()
         {
-            if (IsOpen)
+            if (IsTemporarilyLocked || IsOpen)
                 return;
 
             IsOpen = true;
@@ -51,12 +55,25 @@ namespace DeFrag.Doors
 
         public void Close()
         {
-            if (!IsOpen)
+            if (!IsOpen && transform.position == closedPosition)
                 return;
 
             IsOpen = false;
             PlayDoorSound(closeSound);
-            MoveTo(closedPosition);
+            MoveTo(closedPosition, moveSpeed);
+        }
+
+        public bool LockClosed(float duration)
+        {
+            if (IsTemporarilyLocked)
+                return false;
+
+            IsTemporarilyLocked = true;
+            IsOpen = false;
+            PlayDoorSound(closeSound);
+            MoveTo(closedPosition, forcedCloseSpeed);
+            timedLockRoutine = StartCoroutine(TimedLockRoutine(duration));
+            return true;
         }
 
         private void PlayDoorSound(AudioClip clip)
@@ -71,20 +88,39 @@ namespace DeFrag.Doors
 
         private void MoveTo(Vector3 target)
         {
-            StopAllCoroutines();
-            StartCoroutine(MoveRoutine(target));
+            MoveTo(target, moveSpeed);
         }
 
-        private IEnumerator MoveRoutine(Vector3 target)
+        private void MoveTo(Vector3 target, float speed)
+        {
+            if (movementRoutine != null)
+                StopCoroutine(movementRoutine);
+
+            movementRoutine = StartCoroutine(MoveRoutine(target, speed));
+        }
+
+        private IEnumerator MoveRoutine(Vector3 target, float speed)
         {
             while (transform.position != target)
             {
                 transform.position = Vector3.MoveTowards(
                     transform.position,
                     target,
-                    moveSpeed * Time.deltaTime);
+                    speed * Time.deltaTime);
                 yield return null;
             }
+
+            movementRoutine = null;
+        }
+
+        private IEnumerator TimedLockRoutine(float duration)
+        {
+            while (transform.position != closedPosition)
+                yield return null;
+
+            yield return new WaitForSeconds(Mathf.Max(0f, duration));
+            IsTemporarilyLocked = false;
+            timedLockRoutine = null;
         }
     }
 }

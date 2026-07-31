@@ -211,6 +211,28 @@ MonoBehaviour:
   chromaticAbberationSampleCount:
     m_OverrideState: 1
     m_Value: 3
+--- !u!114 &-5355961553576470292
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b2dad818632f2f479e8b8eb47d36f16, type: 3}
+  m_Name: TvMonsterGlitchPostProcess
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Rendering.TvMonsterGlitchPostProcess
+  active: 1
+  intensity:
+    m_OverrideState: 1
+    m_Value: 0
+  tearAmount:
+    m_OverrideState: 1
+    m_Value: 0.035
+  noiseAmount:
+    m_OverrideState: 1
+    m_Value: 0.3
 --- !u!114 &-4809510535740912526
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -1002,6 +1024,7 @@ MonoBehaviour:
   - {fileID: -9049432483783011465}
   - {fileID: 5053855892907329898}
   - {fileID: 6288006121826421579}
+  - {fileID: -5355961553576470292}
 --- !u!114 &149396139019439416
 MonoBehaviour:
   m_ObjectHideFlags: 3

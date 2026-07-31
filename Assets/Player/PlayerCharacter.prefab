@@ -1626,6 +1626,7 @@ GameObject:
   - component: {fileID: 2764680782753964517}
   - component: {fileID: 5269668642084588612}
   - component: {fileID: 1228092924256219855}
+  - component: {fileID: 6070090481718063190}
   m_Layer: 7
   m_Name: Camera
   m_TagString: MainCamera
@@ -1633,6 +1634,62 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &6070090481718063190
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6070090481718063174}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1971265ee1218e4e949ddd338541bb9, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Player.TvMonsterProximityGlitch
+  maximumIntensityDistance: 10
+  intensityCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0.25
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.55
+      value: 0.18
+      inSlope: 0.35
+      outSlope: 1.1
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 2.2
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  scanLineJitter: 0.65
+  verticalJump: 0.12
+  horizontalShake: 0.08
+  colorDrift: 0.35
+  horizontalRipple: 0.45
+  digitalIntensity: 0.5
+  refreshInterval: 1
+  intensityOverride: -1
+  currentIntensity: 0
+  detectedSourceCount: 0
 --- !u!4 &3467596619895947432
 Transform:
   m_ObjectHideFlags: 0
@@ -2210,6 +2267,7 @@ GameObject:
   - component: {fileID: 7349012846091223004}
   - component: {fileID: 7349012846091223005}
   - component: {fileID: 4302945229344665463}
+  - component: {fileID: 7349012846091223006}
   m_Layer: 7
   m_Name: PlayerCharacter
   m_TagString: Player
@@ -2685,6 +2743,18 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
+--- !u!114 &7349012846091223006
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7592877399013546989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a3333333333333333333333333333333, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::CooperativeTerminalHintRelay
 --- !u!1 &7668062574812803263
 GameObject:
   m_ObjectHideFlags: 0

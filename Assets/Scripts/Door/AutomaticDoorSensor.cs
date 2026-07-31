@@ -12,8 +12,6 @@ namespace DeFrag.Doors
         [SerializeField] private VerticalDoorMotor door;
 
         private readonly Collider[] detectedActors = new Collider[16];
-        private bool hasOccupants;
-
         private void FixedUpdate()
         {
             bool detected = Physics.OverlapSphereNonAlloc(
@@ -23,11 +21,7 @@ namespace DeFrag.Doors
                 actorLayers,
                 QueryTriggerInteraction.Ignore) > 0;
 
-            if (detected == hasOccupants)
-                return;
-
-            hasOccupants = detected;
-            if (hasOccupants)
+            if (detected)
                 door.Open();
             else
                 door.Close();
