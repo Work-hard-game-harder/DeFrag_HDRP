@@ -174,12 +174,13 @@ public sealed class EquipmentController : MonoBehaviour
 
     public bool TryUseEquippedItem()
     {
-        InventoryInfo selected = inventoryUI.GetSelectedItem();
+        InventoryInfo selected = inventoryUI?.GetSelectedItem();
 
-        if (selected.itemData is not BatteryItemData battery)
+        if (selected?.itemData is not BatteryItemData battery)
             return false;
 
-        if (!InventoryManager.Instance.ContainsItemOfType<CameraItemData>())
+        if (InventoryManager.Instance == null ||
+            !InventoryManager.Instance.ContainsItemOfType<CameraItemData>())
             return false;
 
         if (!cameraBattery.TryRecharge(battery.RechargeRatio))

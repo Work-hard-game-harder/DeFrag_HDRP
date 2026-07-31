@@ -1689,7 +1689,7 @@ Camera:
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 1911
+    m_Bits: 2039
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -2210,6 +2210,7 @@ GameObject:
   - component: {fileID: 7349012846091223004}
   - component: {fileID: 7349012846091223005}
   - component: {fileID: 4302945229344665463}
+  - component: {fileID: 4302945229344665464}
   m_Layer: 7
   m_Name: PlayerCharacter
   m_TagString: Player
@@ -2685,6 +2686,24 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
+--- !u!114 &4302945229344665464
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7592877399013546989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ed08438ea144ef39d550a16fa6c365d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Player.OwnerCharacterVisibility
+  characterRenderers:
+  - {fileID: 7937920051003754032}
+  ownerHiddenLayer:
+    serializedVersion: 2
+    m_Bits: 8192
+  applyAsLocalWhenNotNetworkSpawned: 0
 --- !u!1 &7668062574812803263
 GameObject:
   m_ObjectHideFlags: 0

@@ -21,6 +21,14 @@ public class PlayerInteraction : MonoBehaviour
     private float currentHoldTime = 0f;
     private float holdTime = 1.5f;
     private bool interactionEnabled = true;
+    private Camera defaultViewCamera;
+    private CameraViewSwitcher cameraViewSwitcher;
+
+    private void Awake()
+    {
+        defaultViewCamera = GetComponent<Camera>();
+        cameraViewSwitcher = GetComponentInParent<CameraViewSwitcher>(true);
+    }
 
     void Update()
     {
@@ -50,7 +58,17 @@ public class PlayerInteraction : MonoBehaviour
     void CheckInteractable()
     {
         // 카메라의 정중앙 시점과 정면 방향 계산
-        Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+        Camera interactionCamera = cameraViewSwitcher != null
+            ? cameraViewSwitcher.ActiveCamera
+            : defaultViewCamera;
+
+        if (interactionCamera == null)
+        {
+            ResetTarget();
+            return;
+        }
+
+        Ray ray = interactionCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
         RaycastHit hit;
 
         // ★ [디버그 로그 1] 현재 내 눈앞으로 나가는 레이저를 씬(Scene) 창에 녹색 선으로 그립니다.
@@ -101,7 +119,10 @@ public class PlayerInteraction : MonoBehaviour
         if (targetInteractable == null)
         {
             if (Input.GetKeyDown(KeyCode.E))
-                Camera.main.GetComponent<EquipmentController>().TryUseEquippedItem();
+            {
+                EquipmentController equipmentController = GetComponent<EquipmentController>();
+                equipmentController?.TryUseEquippedItem();
+            }
 
             return;
         }

@@ -10,9 +10,12 @@ public sealed class CameraViewSwitcher : MonoBehaviour
     [SerializeField] private Camera itemCamera;
     [SerializeField] private AudioListener itemAudioListener;
     [SerializeField] private CameraItem cameraItem;
+    [SerializeField] private Canvas cameraOverlayCanvas;
 
     public bool IsCameraEquipped { get; private set; }
     public bool IsCameraViewActive { get; private set; }
+    public Camera ActiveCamera =>
+        IsCameraViewActive && itemCamera != null ? itemCamera : playerCamera;
 
     private void Awake()
     {
@@ -31,6 +34,12 @@ public sealed class CameraViewSwitcher : MonoBehaviour
             cameraItem.ViewActiveChanged -= SetCameraViewActive;
 
         SetCameraViewActive(false);
+    }
+
+    private void LateUpdate()
+    {
+        if (IsCameraViewActive)
+            SynchronizeItemCameraPose();
     }
 
     public void SetCameraEquipped(bool equipped)
@@ -57,6 +66,9 @@ public sealed class CameraViewSwitcher : MonoBehaviour
 
         IsCameraViewActive = active;
 
+        if (active)
+            SynchronizeItemCameraPose();
+
         if (playerCamera != null)
             playerCamera.enabled = !active;
 
@@ -68,5 +80,20 @@ public sealed class CameraViewSwitcher : MonoBehaviour
 
         if (itemAudioListener != null)
             itemAudioListener.enabled = active;
+
+        if (cameraOverlayCanvas != null)
+            cameraOverlayCanvas.enabled = active;
+    }
+
+    private void SynchronizeItemCameraPose()
+    {
+        if (playerCamera == null || itemCamera == null)
+            return;
+
+        Transform source = playerCamera.transform;
+        Transform target = itemCamera.transform;
+
+        target.SetPositionAndRotation(source.position, source.rotation);
+        itemCamera.fieldOfView = playerCamera.fieldOfView;
     }
 }
