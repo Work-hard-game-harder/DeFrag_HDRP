@@ -26,7 +26,7 @@ namespace EasyPeasyFirstPersonController
 
         [Header("Animation Parameters")]
         [SerializeField] private string talkingParameter = "isTalking";
-        [SerializeField] private string playbackSpeedParameter = "speed";
+        [SerializeField] private string playbackSpeedParameter = "Speed";
         [SerializeField] private float talkingPlaybackSpeed = 1f;
         [SerializeField] private float idlePlaybackSpeed = -1f;
 
@@ -212,6 +212,11 @@ namespace EasyPeasyFirstPersonController
 
         private void ApplyEquippedPresentation()
         {
+            // Animator가 재생 가능한 상태일 때 전송 파라미터를 먼저 초기화합니다.
+            // 비주얼을 먼저 끄면 비활성 Animator에 SetBool/SetFloat을 호출하게 됩니다.
+            if (!IsEquipped)
+                ApplyTransmissionPresentation(false);
+
             if (walkieTalkieVisual != null)
                 walkieTalkieVisual.SetActive(IsEquipped);
 
@@ -223,19 +228,22 @@ namespace EasyPeasyFirstPersonController
             else
                 micVolumeUI?.HideUI();
 
-            if (!IsEquipped)
-                ApplyTransmissionPresentation(false);
         }
 
         private void ApplyTransmissionPresentation(bool transmitting)
         {
-            if (walkieTalkieAnimator != null)
+            if (walkieTalkieAnimator == null ||
+                walkieTalkieAnimator.runtimeAnimatorController == null ||
+                !walkieTalkieAnimator.isActiveAndEnabled ||
+                !walkieTalkieAnimator.gameObject.activeInHierarchy)
             {
-                walkieTalkieAnimator.SetFloat(
-                    playbackSpeedParameterId,
-                    transmitting ? talkingPlaybackSpeed : idlePlaybackSpeed);
-                walkieTalkieAnimator.SetBool(talkingParameterId, transmitting);
+                return;
             }
+
+            walkieTalkieAnimator.SetFloat(
+                playbackSpeedParameterId,
+                transmitting ? talkingPlaybackSpeed : idlePlaybackSpeed);
+            walkieTalkieAnimator.SetBool(talkingParameterId, transmitting);
         }
 
         private void OnDisable()
