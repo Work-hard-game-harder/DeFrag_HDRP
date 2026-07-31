@@ -1,19 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using DeFrag.Rendering;
-using DeFrag.UI;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.UI;
 
 namespace DeFrag.Player
 {
     [DisallowMultipleComponent]
     public sealed class TvMonsterProximityGlitch : MonoBehaviour
     {
-        private const string UiShaderName = "DeFrag/UI/TvMonsterGlitchOverlay";
-
         [Header("Distance Response")]
         [Tooltip("The effect reaches full strength at this distance or closer.")]
         [Min(0f)] [SerializeField] private float maximumIntensityDistance = 10f;
@@ -23,28 +19,37 @@ namespace DeFrag.Player
             new Keyframe(0.55f, 0.18f, 0.35f, 1.1f),
             new Keyframe(1f, 1f, 2.2f, 0f));
 
-        [Header("Glitch Appearance")]
-        [Range(0f, 0.12f)] [SerializeField] private float maximumTearAmount = 0.045f;
-        [Range(0f, 1f)] [SerializeField] private float maximumNoiseAmount = 0.42f;
-        [Range(0f, 1f)] [SerializeField] private float uiNoiseAmount = 0.48f;
+        [Header("KinoGlitch Appearance")]
+        [Range(0f, 1f)] [SerializeField] private float scanLineJitter = 0.65f;
+        [Range(0f, 1f)] [SerializeField] private float verticalJump = 0.12f;
+        [Range(0f, 1f)] [SerializeField] private float horizontalShake = 0.08f;
+        [Range(0f, 1f)] [SerializeField] private float colorDrift = 0.35f;
+        [Range(0f, 1f)] [SerializeField] private float horizontalRipple = 0.45f;
+        [Range(0f, 1f)] [SerializeField] private float digitalIntensity = 0.5f;
 
         [Header("Source Discovery")]
         [Min(0.1f)] [SerializeField] private float refreshInterval = 1f;
+
+        [Header("Debug")]
+        [Tooltip("-1 uses monster distance. Set 0-1 to preview and tune the effect in Play Mode.")]
+        [Range(-1f, 1f)] [SerializeField] private float intensityOverride = -1f;
+        [Tooltip("Runtime value after evaluating the closest monster.")]
+        [SerializeField] private float currentIntensity;
+        [Tooltip("Number of active MonsterAI sources found in the current scene.")]
+        [SerializeField] private int detectedSourceCount;
 
         private readonly List<MonsterAI> monsters = new();
         private NetworkObject networkObject;
         private Volume runtimeVolume;
         private VolumeProfile runtimeProfile;
         private TvMonsterGlitchPostProcess postProcess;
-        private Material uiMaterial;
-        private Canvas uiCanvas;
         private float refreshTimer;
 
         private bool IsLocalOwner => networkObject == null || !networkObject.IsSpawned || networkObject.IsOwner;
 
         private void Awake()
         {
-            networkObject = GetComponent<NetworkObject>();
+            networkObject = GetComponentInParent<NetworkObject>();
         }
 
         private IEnumerator Start()
@@ -58,7 +63,6 @@ namespace DeFrag.Player
             }
 
             CreateRuntimeVolume();
-            CreateUiOverlay();
             RefreshMonsterSources();
         }
 
@@ -71,13 +75,11 @@ namespace DeFrag.Player
             if (refreshTimer <= 0f)
                 RefreshMonsterSources();
 
-            float intensity = CalculateStrongestIntensity();
-            postProcess.intensity.value = intensity;
-            if (uiMaterial != null)
-                uiMaterial.SetFloat("_Intensity", intensity);
-
-            // TODO(Accessibility): Connect an eventual "reduced glitch" option here and scale
-            // both post-process and UI intensity without changing gameplay or monster detection.
+            ApplyAppearanceSettings();
+            currentIntensity = intensityOverride >= 0f
+                ? intensityOverride
+                : CalculateStrongestIntensity();
+            postProcess.intensity.value = currentIntensity;
         }
 
         private float CalculateStrongestIntensity()
@@ -115,6 +117,7 @@ namespace DeFrag.Player
             monsters.Clear();
             MonsterAI[] found = FindObjectsByType<MonsterAI>(FindObjectsInactive.Exclude);
             monsters.AddRange(found);
+            detectedSourceCount = monsters.Count;
         }
 
         private void CreateRuntimeVolume()
@@ -133,53 +136,35 @@ namespace DeFrag.Player
 
             postProcess = runtimeProfile.Add<TvMonsterGlitchPostProcess>(true);
             postProcess.intensity.overrideState = true;
-            postProcess.tearAmount.overrideState = true;
-            postProcess.noiseAmount.overrideState = true;
+            postProcess.scanLineJitter.overrideState = true;
+            postProcess.verticalJump.overrideState = true;
+            postProcess.horizontalShake.overrideState = true;
+            postProcess.colorDrift.overrideState = true;
+            postProcess.horizontalRipple.overrideState = true;
+            postProcess.digitalIntensity.overrideState = true;
             postProcess.intensity.value = 0f;
-            postProcess.tearAmount.value = maximumTearAmount;
-            postProcess.noiseAmount.value = maximumNoiseAmount;
+            postProcess.scanLineJitter.value = scanLineJitter;
+            postProcess.verticalJump.value = verticalJump;
+            postProcess.horizontalShake.value = horizontalShake;
+            postProcess.colorDrift.value = colorDrift;
+            postProcess.horizontalRipple.value = horizontalRipple;
+            postProcess.digitalIntensity.value = digitalIntensity;
         }
 
-        private void CreateUiOverlay()
+        private void ApplyAppearanceSettings()
         {
-            Shader shader = Shader.Find(UiShaderName);
-            if (shader == null)
-            {
-                Debug.LogError($"Tv Monster UI glitch shader not found: {UiShaderName}", this);
-                return;
-            }
-
-            uiMaterial = new Material(shader) { name = "Runtime Tv Monster UI Glitch" };
-            uiMaterial.SetFloat("_Intensity", 0f);
-            uiMaterial.SetFloat("_NoiseAmount", uiNoiseAmount);
-
-            GameObject canvasObject = new("Local Tv Monster UI Glitch", typeof(Canvas), typeof(CanvasScaler));
-            canvasObject.transform.SetParent(transform, false);
-            uiCanvas = canvasObject.GetComponent<Canvas>();
-            uiCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            uiCanvas.sortingOrder = short.MaxValue - 1;
-            ResponsiveCanvasUtility.Configure(canvasObject.GetComponent<CanvasScaler>());
-
-            GameObject overlayObject = new("Visual Glitch Overlay", typeof(RectTransform), typeof(Image));
-            overlayObject.transform.SetParent(canvasObject.transform, false);
-            RectTransform rect = overlayObject.GetComponent<RectTransform>();
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-
-            Image image = overlayObject.GetComponent<Image>();
-            image.color = Color.white;
-            image.material = uiMaterial;
-            image.raycastTarget = false;
+            postProcess.scanLineJitter.value = scanLineJitter;
+            postProcess.verticalJump.value = verticalJump;
+            postProcess.horizontalShake.value = horizontalShake;
+            postProcess.colorDrift.value = colorDrift;
+            postProcess.horizontalRipple.value = horizontalRipple;
+            postProcess.digitalIntensity.value = digitalIntensity;
         }
 
         private void OnDisable()
         {
             if (postProcess != null)
                 postProcess.intensity.value = 0f;
-            if (uiMaterial != null)
-                uiMaterial.SetFloat("_Intensity", 0f);
         }
 
         private void OnDestroy()
@@ -188,26 +173,34 @@ namespace DeFrag.Player
                 Destroy(runtimeVolume.gameObject);
             if (runtimeProfile != null)
                 Destroy(runtimeProfile);
-            if (uiMaterial != null)
-                Destroy(uiMaterial);
-            if (uiCanvas != null)
-                Destroy(uiCanvas.gameObject);
         }
     }
 
     internal static class TvMonsterProximityGlitchInstaller
     {
+        private static InstallerBehaviour instance;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Install()
         {
+            if (instance != null)
+                return;
+
             GameObject installer = new("Tv Monster Glitch Installer");
             installer.hideFlags = HideFlags.HideAndDontSave;
-            installer.AddComponent<InstallerBehaviour>();
+            Object.DontDestroyOnLoad(installer);
+            instance = installer.AddComponent<InstallerBehaviour>();
         }
 
         private sealed class InstallerBehaviour : MonoBehaviour
         {
             private float nextScanTime;
+
+            private void OnDestroy()
+            {
+                if (instance == this)
+                    instance = null;
+            }
 
             private void Update()
             {
@@ -220,7 +213,8 @@ namespace DeFrag.Player
                 {
                     NetworkObject cameraOwner = mainCamera.GetComponentInParent<NetworkObject>();
                     bool isUsableLocalCamera = cameraOwner == null ||
-                        (cameraOwner.IsSpawned && cameraOwner.IsOwner);
+                        !cameraOwner.IsSpawned ||
+                        cameraOwner.IsOwner;
                     if (isUsableLocalCamera &&
                         mainCamera.GetComponent<TvMonsterProximityGlitch>() == null &&
                         mainCamera.GetComponentInParent<TvMonsterProximityGlitch>() == null)
@@ -237,7 +231,8 @@ namespace DeFrag.Player
                 {
                     NetworkObject playerNetworkObject = player.GetComponent<NetworkObject>();
                     if (playerNetworkObject != null &&
-                        (!playerNetworkObject.IsSpawned || !playerNetworkObject.IsOwner))
+                        playerNetworkObject.IsSpawned &&
+                        !playerNetworkObject.IsOwner)
                         continue;
 
                     if (player.GetComponent<TvMonsterProximityGlitch>() == null)

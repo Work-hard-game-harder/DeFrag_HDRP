@@ -14,10 +14,13 @@ public sealed class ConnectionDevice : MonoBehaviour, IInteractable
     [SerializeField] private string interactionText = "해킹패드 연결 (E 길게 누르기)";
 
     [Header("Command Minigames")]
+    [SerializeField] private bool unlockDoorEnabled;
     [Tooltip("Leave empty to show DENIED ACCESS for this command.")]
     [SerializeField] private HackingMinigameBase unlockDoorMinigame;
+    [SerializeField] private bool downloadDataEnabled;
     [Tooltip("Leave empty to show DENIED ACCESS for this command.")]
     [SerializeField] private HackingMinigameBase downloadDataMinigame;
+    [SerializeField] private bool connectServerEnabled;
     [Tooltip("Leave empty to show DENIED ACCESS for this command.")]
     [SerializeField] private HackingMinigameBase connectServerMinigame;
 
@@ -33,6 +36,7 @@ public sealed class ConnectionDevice : MonoBehaviour, IInteractable
 
     public string TerminalId => terminalId;
     public string DisplayName => displayName;
+    public int ArchiveNumber => TerminalArchiveNumberRegistry.GetNumber(this);
     public event Action<ConnectionDevice, TerminalCommands> CommandCompletionRequested;
 
     public bool IsCompleted(TerminalCommands command)
@@ -47,6 +51,17 @@ public sealed class ConnectionDevice : MonoBehaviour, IInteractable
             TerminalCommands.UnlockDoor => unlockDoorMinigame,
             TerminalCommands.DownloadData => downloadDataMinigame,
             TerminalCommands.ConnectServer => connectServerMinigame,
+            _ => throw new ArgumentOutOfRangeException(nameof(command), command, null)
+        };
+    }
+
+    public bool IsCommandEnabled(TerminalCommands command)
+    {
+        return command switch
+        {
+            TerminalCommands.UnlockDoor => unlockDoorEnabled,
+            TerminalCommands.DownloadData => downloadDataEnabled,
+            TerminalCommands.ConnectServer => connectServerEnabled,
             _ => throw new ArgumentOutOfRangeException(nameof(command), command, null)
         };
     }

@@ -16,6 +16,8 @@ public abstract class HackingMinigameBase : MonoBehaviour
     public event Action Cancelled;
 
     public string DisplayName => displayName;
+    public virtual bool ConsumesTextInput => false;
+    public virtual string ControlHint => "[W/S] SELECT    [E] EXECUTE    [BACKSPACE] RETURN";
 
     public abstract void Begin(ConnectionDevice device, TerminalCommands command);
 
