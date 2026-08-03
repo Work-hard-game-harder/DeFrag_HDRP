@@ -44,6 +44,8 @@ namespace DeFrag.Player
         private VolumeProfile runtimeProfile;
         private TvMonsterGlitchPostProcess postProcess;
         private float refreshTimer;
+        private float forcedIntensity;
+        private float forcedIntensityEndTime;
 
         private bool IsLocalOwner => networkObject == null || !networkObject.IsSpawned || networkObject.IsOwner;
 
@@ -79,7 +81,15 @@ namespace DeFrag.Player
             currentIntensity = intensityOverride >= 0f
                 ? intensityOverride
                 : CalculateStrongestIntensity();
+            if (Time.unscaledTime < forcedIntensityEndTime)
+                currentIntensity = Mathf.Max(currentIntensity, forcedIntensity);
             postProcess.intensity.value = currentIntensity;
+        }
+
+        public void PlayFailureBurst(float intensity, float duration)
+        {
+            forcedIntensity = Mathf.Clamp01(intensity);
+            forcedIntensityEndTime = Time.unscaledTime + Mathf.Max(0f, duration);
         }
 
         private float CalculateStrongestIntensity()

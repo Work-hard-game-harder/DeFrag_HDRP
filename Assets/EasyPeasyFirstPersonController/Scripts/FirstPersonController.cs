@@ -337,7 +337,7 @@ namespace EasyPeasyFirstPersonController
 
         public void OnFootstep(AnimationEvent animationEvent)
         {
-            // 추후 발소리 재생 기능 연결
+            GetComponent<PlayerMovementAudio>().PlayFootstep();
         }
     }
 }
