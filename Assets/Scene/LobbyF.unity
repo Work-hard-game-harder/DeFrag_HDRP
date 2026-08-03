@@ -19808,6 +19808,12 @@ MonoBehaviour:
   subtitlesText: {fileID: 618574787783669676}
   subtitlesPanel: {fileID: 4202964177777731167}
   subtitlesSpeed: 0.05
+  typewriterSource: {fileID: 0}
+  typewriterClips:
+  - {fileID: 8300000, guid: f9992b5c3bbefe1439d7175266d25e46, type: 3}
+  charactersPerSound: 2
+  typewriterVolume: 0.65
+  typewriterPitchRange: {x: 0.96, y: 1.04}
 --- !u!1 &8658615527272838072
 GameObject:
   m_ObjectHideFlags: 0

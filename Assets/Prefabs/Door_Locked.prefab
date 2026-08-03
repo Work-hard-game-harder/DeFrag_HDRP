@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 6247277350716488722}
   - component: {fileID: 832494278767604469}
   - component: {fileID: 3994208469567071502}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Door
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -69,7 +69,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -5893160060819351940, guid: c5231ceee69cfc04885cdf1b9ea9f0c2, type: 3}
+  - {fileID: 2483467161687160823, guid: 955c7c6ae81f8314180ad29d944b2307, type: 3}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -107,6 +107,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Doors.VerticalDoorMotor
   openHeight: 6
   moveSpeed: 3
+  forcedCloseSpeed: 12
   openSound: {fileID: 8300000, guid: 005152837f1f34b49be022eb0c62fc48, type: 3}
   closeSound: {fileID: 8300000, guid: 005152837f1f34b49be022eb0c62fc48, type: 3}
   soundVolume: 1
@@ -158,7 +159,7 @@ GameObject:
   - component: {fileID: 1618380663495850119}
   - component: {fileID: 6334252617110493602}
   - component: {fileID: 8607987835838769940}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Door_Frame
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -213,7 +214,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 5125955998383885961, guid: c5231ceee69cfc04885cdf1b9ea9f0c2, type: 3}
+  - {fileID: 2483467161687160823, guid: 955c7c6ae81f8314180ad29d944b2307, type: 3}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -271,7 +272,7 @@ GameObject:
   - component: {fileID: 7939002256719095270}
   - component: {fileID: 4081621868360929684}
   - component: {fileID: 2818468190001031834}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Door_Wall
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -326,7 +327,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2483467161687160823, guid: c5231ceee69cfc04885cdf1b9ea9f0c2, type: 3}
+  - {fileID: 2483467161687160823, guid: 955c7c6ae81f8314180ad29d944b2307, type: 3}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -381,7 +382,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6176536335486044068}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: Door_Locked
   m_TagString: Untagged
   m_Icon: {fileID: 0}

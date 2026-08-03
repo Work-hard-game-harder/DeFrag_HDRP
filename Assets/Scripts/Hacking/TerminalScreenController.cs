@@ -138,7 +138,15 @@ public sealed class TerminalScreenController : MonoBehaviour
 
     private void CompleteMinigame()
     {
+        bool closeTerminal = activeMinigame.CloseTerminalOnSuccess;
         device.RequestCommandCompletion(activeCommand);
+        if (closeTerminal)
+        {
+            DestroyMinigame();
+            closeRequested();
+            return;
+        }
+
         FinishMinigame($"{TerminalCommandLabel.Get(activeCommand)} // COMPLETE");
     }
 

@@ -1,5 +1,6 @@
 namespace EasyPeasyFirstPersonController
 {
+    using DeFrag.Player;
     using UnityEngine;
 
     public class PlayerJumpingState : PlayerBaseState
@@ -43,6 +44,7 @@ namespace EasyPeasyFirstPersonController
         private void HandleJump()
         {
             ctx.moveDirection.y = ctx.jumpSpeed;
+            ctx.GetComponent<PlayerMovementAudio>().PlayJump();
         }
 
         private void ApplyGravity()

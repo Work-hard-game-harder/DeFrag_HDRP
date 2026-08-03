@@ -13,12 +13,15 @@ public sealed class CooperativeTerminalHintRelay : NetworkBehaviour
     private TMP_Text hintText;
     private Coroutine hideRoutine;
 
-    public void ShowForTeammate(string terminalLabel, string missingToken)
+    public void ShowForTeammate(
+        string terminalLabel,
+        string value,
+        string valueLabel = "MISSING TOKEN")
     {
         if (!IsOwner || !IsSpawned)
             return;
 
-        ShowForTeammateServerRpc(terminalLabel, missingToken);
+        ShowForTeammateServerRpc(terminalLabel, value, valueLabel);
     }
 
     public void HideForTeammate()
@@ -29,17 +32,29 @@ public sealed class CooperativeTerminalHintRelay : NetworkBehaviour
         HideForTeammateServerRpc();
     }
 
+    public void ReportTerminalFailure(Vector3 terminalPosition, float alertRadius)
+    {
+        if (IsOwner && IsSpawned)
+        {
+            ReportTerminalFailureServerRpc(terminalPosition, alertRadius);
+            return;
+        }
+
+        BroadcastThreat(terminalPosition, alertRadius);
+    }
+
     [ServerRpc]
     private void ShowForTeammateServerRpc(
         string terminalLabel,
-        string missingToken,
+        string value,
+        string valueLabel,
         ServerRpcParams rpcParams = default)
     {
         ClientRpcParams targets = TeammatesOf(rpcParams.Receive.SenderClientId);
         if (targets.Send.TargetClientIds.Count == 0)
             return;
 
-        ShowHintClientRpc(terminalLabel, missingToken, targets);
+        ShowHintClientRpc(terminalLabel, value, valueLabel, targets);
     }
 
     [ServerRpc]
@@ -52,17 +67,44 @@ public sealed class CooperativeTerminalHintRelay : NetworkBehaviour
         HideHintClientRpc(targets);
     }
 
+    [ServerRpc]
+    private void ReportTerminalFailureServerRpc(
+        Vector3 terminalPosition,
+        float alertRadius)
+    {
+        BroadcastThreat(terminalPosition, alertRadius);
+    }
+
+    private static void BroadcastThreat(Vector3 terminalPosition, float alertRadius)
+    {
+        WorldNoiseSystem.Emit(terminalPosition, alertRadius);
+
+        Collider[] hits = Physics.OverlapSphere(
+            terminalPosition,
+            alertRadius,
+            ~0,
+            QueryTriggerInteraction.Ignore);
+        HashSet<PatrolRobotAI> notifiedRobots = new();
+        foreach (Collider hit in hits)
+        {
+            PatrolRobotAI robot = hit.GetComponentInParent<PatrolRobotAI>();
+            if (robot != null && notifiedRobots.Add(robot))
+                robot.ReceiveCCTVReport(terminalPosition);
+        }
+    }
+
     [ClientRpc]
     private void ShowHintClientRpc(
         string terminalLabel,
-        string missingToken,
+        string value,
+        string valueLabel,
         ClientRpcParams rpcParams = default)
     {
         EnsureHintInterface();
         hintText.text =
             $"REMOTE AUTHENTICATION FRAGMENT\n" +
             $"{terminalLabel}\n\n" +
-            $"MISSING TOKEN:  <color=#FFFFFF>{missingToken}</color>";
+            $"{valueLabel}:  <color=#FFFFFF>{value}</color>";
         hintCanvas.gameObject.SetActive(true);
 
         if (hideRoutine != null)

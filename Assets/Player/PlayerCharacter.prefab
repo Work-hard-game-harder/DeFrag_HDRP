@@ -441,13 +441,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fbfff5381d5f3814a84c19008d5306ca, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraViewSwitcher
   playerCamera: {fileID: 5720831487311112839}
   playerAudioListener: {fileID: 2764680782753964517}
   itemCamera: {fileID: 6617680185298770590}
   itemAudioListener: {fileID: 8145937637242455840}
   cameraItem: {fileID: 4444323132773095881}
+  cameraOverlayCanvas: {fileID: 0}
 --- !u!1 &1285972250527053587
 GameObject:
   m_ObjectHideFlags: 0
@@ -1634,62 +1635,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &6070090481718063190
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6070090481718063174}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d1971265ee1218e4e949ddd338541bb9, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Player.TvMonsterProximityGlitch
-  maximumIntensityDistance: 10
-  intensityCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0.25
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 0.55
-      value: 0.18
-      inSlope: 0.35
-      outSlope: 1.1
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 2.2
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  scanLineJitter: 0.65
-  verticalJump: 0.12
-  horizontalShake: 0.08
-  colorDrift: 0.35
-  horizontalRipple: 0.45
-  digitalIntensity: 0.5
-  refreshInterval: 1
-  intensityOverride: -1
-  currentIntensity: 0
-  detectedSourceCount: 0
 --- !u!4 &3467596619895947432
 Transform:
   m_ObjectHideFlags: 0
@@ -1924,6 +1869,62 @@ MonoBehaviour:
   progressCircle: {fileID: 0}
   hintPanel: {fileID: 0}
   hintImage: {fileID: 0}
+--- !u!114 &6070090481718063190
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6070090481718063174}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1971265ee1218e4e949ddd338541bb9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Player.TvMonsterProximityGlitch
+  maximumIntensityDistance: 10
+  intensityCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0.25
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.55
+      value: 0.18
+      inSlope: 0.35
+      outSlope: 1.1
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 2.2
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  scanLineJitter: 0.65
+  verticalJump: 0.12
+  horizontalShake: 0.08
+  colorDrift: 0.35
+  horizontalRipple: 0.45
+  digitalIntensity: 0.5
+  refreshInterval: 1
+  intensityOverride: -1
+  currentIntensity: 0
+  detectedSourceCount: 0
 --- !u!1 &6219760413789545072
 GameObject:
   m_ObjectHideFlags: 0
@@ -2269,6 +2270,7 @@ GameObject:
   - component: {fileID: 4302945229344665463}
   - component: {fileID: 7349012846091223006}
   - component: {fileID: 4302945229344665464}
+  - component: {fileID: 7349012846091223007}
   m_Layer: 7
   m_Name: PlayerCharacter
   m_TagString: Player
@@ -2611,9 +2613,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c7e2904f5a324d61a844af73db89e102, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WalkieTalkieVoiceRecorder
+  minRecordingSeconds: 2
   maxRecordingSeconds: 5
   silencePeakThreshold: 0.0005
+  silenceRmsThreshold: 0.002
   folderName: WalkieTalkieRecordings
+  maxStoredRecordings: 30
 --- !u!114 &5079052627790923466
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2730,7 +2735,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 4221851483
+  GlobalObjectIdHash: 1884082809
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -2754,8 +2759,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a3333333333333333333333333333333, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CooperativeTerminalHintRelay
+  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!114 &4302945229344665464
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2766,14 +2772,46 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7ed08438ea144ef39d550a16fa6c365d, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Player.OwnerCharacterVisibility
+  ShowTopMostFoldoutHeaderGroup: 1
   characterRenderers:
   - {fileID: 7937920051003754032}
   ownerHiddenLayer:
     serializedVersion: 2
     m_Bits: 8192
   applyAsLocalWhenNotNetworkSpawned: 0
+--- !u!114 &7349012846091223007
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7592877399013546989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1111111111111111111111111111111, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Player.PlayerMovementAudio
+  ShowTopMostFoldoutHeaderGroup: 1
+  footstepSource: {fileID: 0}
+  walkClips:
+  - {fileID: 8300000, guid: 7ca5a9710db4327439c9f8cb8204615e, type: 3}
+  walkVolume: 0.75
+  walkPitchRange: {x: 0.95, y: 1.05}
+  runClips:
+  - {fileID: 8300000, guid: 8c2c6c300bd8fc441878f426377bec64, type: 3}
+  runVolume: 0.9
+  runPitchRange: {x: 0.95, y: 1.05}
+  jumpClips:
+  - {fileID: 8300000, guid: 304f2bf2228cba94e91cd22803e54bcf, type: 3}
+  jumpVolume: 0.85
+  jumpPitchRange: {x: 0.97, y: 1.03}
+  breathingSource: {fileID: 0}
+  exhaustionClips:
+  - {fileID: 8300000, guid: 18d488c0a2118f7439f08024058622af, type: 3}
+  exhaustionVolume: 1
+  exhaustionMaximumDuration: 5
 --- !u!1 &7668062574812803263
 GameObject:
   m_ObjectHideFlags: 0
