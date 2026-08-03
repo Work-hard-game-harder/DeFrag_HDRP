@@ -63,6 +63,22 @@ namespace DeFrag.Monsters.B2F.Editor
                     : monster.AddComponent<B2FMonsterVoiceMimic>();
             }
 
+            B2FPlayerVoicePerception voicePerception = monster.GetComponent<B2FPlayerVoicePerception>();
+            if (voicePerception == null)
+            {
+                voicePerception = recordUndo
+                    ? Undo.AddComponent<B2FPlayerVoicePerception>(monster)
+                    : monster.AddComponent<B2FPlayerVoicePerception>();
+            }
+
+            B2FMonsterVision vision = monster.GetComponent<B2FMonsterVision>();
+            if (vision == null)
+            {
+                vision = recordUndo
+                    ? Undo.AddComponent<B2FMonsterVision>(monster)
+                    : monster.AddComponent<B2FMonsterVision>();
+            }
+
             MonsterAttackHitbox attackHitbox = monster.GetComponent<MonsterAttackHitbox>();
             if (attackHitbox == null)
             {
@@ -101,6 +117,10 @@ namespace DeFrag.Monsters.B2F.Editor
             SharedFloat walkSpeed = Shared<SharedFloat>("walkSpeed");
             SharedFloat idleTimeMin = Shared<SharedFloat>("idleTimeMin");
             SharedFloat idleTimeMax = Shared<SharedFloat>("idleTimeMax");
+            SharedVector3 lastKnownPosition = Shared<SharedVector3>("LastKnownPosition");
+            SharedFloat investigateDuration = Shared<SharedFloat>("investigateDuration");
+            SharedFloat investigateRadius = Shared<SharedFloat>("investigateRadius");
+            SharedFloat voicePositionUpdateInterval = Shared<SharedFloat>("voicePositionUpdateInterval");
 
             var root = Node(new Selector(), 1, "B2F Monster StateSelector", 0f, 110f);
             SetAbortType(root, AbortType.LowerPriority);
@@ -119,9 +139,9 @@ namespace DeFrag.Monsters.B2F.Editor
 
             var chase = Node(new Sequence(), 5, "Chase", 0f, 260f);
             SetAbortType(chase, AbortType.Both);
-            chase.AddChild(Node(new CanSeeTarget
+            chase.AddChild(Node(new CanSeePlayer
             {
-                target = playerTarget
+                playerTarget = playerTarget
             }, 6, "Can See Player", -70f, 400f), 0);
             chase.AddChild(Node(new ChaseTargetWithDetour
             {
@@ -129,33 +149,52 @@ namespace DeFrag.Monsters.B2F.Editor
                 stoppingDistance = attackRange
             }, 7, "Chase With Detour", 70f, 400f), 1);
 
-            var patrol = Node(new Sequence(), 8, "Patrol", 360f, 260f);
-            var parallel = Node(new Parallel(), 9, "Patrol And Voice Mimic", 360f, 400f);
+            // IDs follow the serialized depth-first tree order. Behavior Designer 1.7.14 can
+            // lose parent-child links when newly inserted branches use IDs after later siblings.
+            var investigate = Node(new Sequence(), 8, "Investigate Voice", 300f, 260f);
+            SetAbortType(investigate, AbortType.LowerPriority);
+            investigate.AddChild(Node(new CanHearPlayerVoice
+            {
+                playerTarget = playerTarget,
+                lastKnownPosition = lastKnownPosition
+            }, 9, "Can Hear Player Voice", 230f, 400f), 0);
+            investigate.AddChild(Node(new InvestigateHeardVoice
+            {
+                playerTarget = playerTarget,
+                lastKnownPosition = lastKnownPosition,
+                investigateDuration = investigateDuration,
+                investigateRadius = investigateRadius,
+                moveSpeed = walkSpeed,
+                voicePositionUpdateInterval = voicePositionUpdateInterval
+            }, 10, "Investigate Heard Voice", 370f, 400f), 1);
+
+            var patrol = Node(new Sequence(), 11, "Patrol", 600f, 260f);
+            var parallel = Node(new Parallel(), 12, "Patrol And Voice Mimic", 360f, 400f);
 
             var patrolRepeater = Node(new Repeater
             {
                 repeatForever = true,
                 endOnFailure = false
-            }, 10, "Random Patrol Loop", 230f, 540f);
-            var patrolCycle = Node(new Sequence(), 11, "Random Patrol Cycle", 230f, 680f);
+            }, 13, "Random Patrol Loop", 230f, 540f);
+            var patrolCycle = Node(new Sequence(), 14, "Random Patrol Cycle", 230f, 680f);
             patrolCycle.AddChild(Node(new SetRandomNavMeshDestination
             {
                 destination = patrolDestination,
                 radius = patrolRadius
-            }, 12, "Set Random Patrol Destination", 20f, 820f), 0);
-            patrolCycle.AddChild(Node(new SetPatrolMovingAnimation(), 13, "Set Patrol Moving Animation", 145f, 820f), 1);
+            }, 15, "Set Random Patrol Destination", 20f, 820f), 0);
+            patrolCycle.AddChild(Node(new SetPatrolMovingAnimation(), 16, "Set Patrol Moving Animation", 145f, 820f), 1);
             patrolCycle.AddChild(Node(new MoveToNavMeshDestination
             {
                 destination = patrolDestination,
                 moveSpeed = walkSpeed
-            }, 14, "Move To Patrol Destination", 270f, 820f), 2);
-            patrolCycle.AddChild(Node(new SetPatrolIdleAnimation(), 15, "Set Patrol Idle Animation", 395f, 820f), 3);
+            }, 17, "Move To Patrol Destination", 270f, 820f), 2);
+            patrolCycle.AddChild(Node(new SetPatrolIdleAnimation(), 18, "Set Patrol Idle Animation", 395f, 820f), 3);
             patrolCycle.AddChild(Node(new Wait
             {
                 randomWait = true,
                 randomWaitMin = idleTimeMin,
                 randomWaitMax = idleTimeMax
-            }, 16, "Random Idle Wait", 520f, 820f), 4);
+            }, 19, "Random Idle Wait", 520f, 820f), 4);
             patrolRepeater.AddChild(patrolCycle, 0);
             parallel.AddChild(patrolRepeater, 0);
 
@@ -163,25 +202,26 @@ namespace DeFrag.Monsters.B2F.Editor
             {
                 repeatForever = true,
                 endOnFailure = false
-            }, 17, "Repeat Voice Mimic", 620f, 540f);
-            var mimicCycle = Node(new Sequence(), 18, "VoiceMimicCycle", 620f, 680f);
+            }, 20, "Repeat Voice Mimic", 620f, 540f);
+            var mimicCycle = Node(new Sequence(), 21, "VoiceMimicCycle", 620f, 680f);
             mimicCycle.AddChild(Node(new Wait
             {
                 randomWait = true,
                 randomWaitMin = mimicIntervalMin,
                 randomWaitMax = mimicIntervalMax
-            }, 19, "Random Mimic Wait", 700f, 820f), 0);
+            }, 22, "Random Mimic Wait", 700f, 820f), 0);
             mimicCycle.AddChild(Node(new PlayMimicVoice
             {
                 mimicVoiceClips = mimicClips
-            }, 20, "Play Mimic Voice", 850f, 820f), 1);
+            }, 23, "Play Mimic Voice", 850f, 820f), 1);
             repeater.AddChild(mimicCycle, 0);
             parallel.AddChild(repeater, 1);
             patrol.AddChild(parallel, 0);
 
             root.AddChild(attack, 0);
             root.AddChild(chase, 1);
-            root.AddChild(patrol, 2);
+            root.AddChild(investigate, 2);
+            root.AddChild(patrol, 3);
 
             source.EntryTask = Node(new EntryTask(), 0, "Entry", 0f, 0f);
             source.RootTask = root;
@@ -210,7 +250,10 @@ namespace DeFrag.Monsters.B2F.Editor
                 Variable(new SharedFloat { Value = GetValue(source, "walkSpeed", 2f) }, "walkSpeed"),
                 Variable(new SharedFloat { Value = GetValue(source, "idleTimeMin", 2f) }, "idleTimeMin"),
                 Variable(new SharedFloat { Value = GetValue(source, "idleTimeMax", 5f) }, "idleTimeMax"),
-                Variable(new SharedVector3 { Value = GetValue<SharedVector3, Vector3>(source, "LastKnownPosition") }, "LastKnownPosition")
+                Variable(new SharedVector3 { Value = GetValue<SharedVector3, Vector3>(source, "LastKnownPosition") }, "LastKnownPosition"),
+                Variable(new SharedFloat { Value = GetValue(source, "investigateDuration", 10f) }, "investigateDuration"),
+                Variable(new SharedFloat { Value = GetValue(source, "investigateRadius", 5f) }, "investigateRadius"),
+                Variable(new SharedFloat { Value = GetValue(source, "voicePositionUpdateInterval", 0.5f) }, "voicePositionUpdateInterval")
             };
         }
 
@@ -281,6 +324,115 @@ namespace DeFrag.Monsters.B2F.Editor
                 throw new MissingFieldException(typeof(Composite).FullName, "abortType");
 
             field.SetValue(composite, abortType);
+        }
+    }
+
+    /// <summary>
+    /// Updates already loaded B2F monsters once after this feature is imported.
+    /// The scene remains dirty so the developer can review and save the generated tree.
+    /// </summary>
+    [InitializeOnLoad]
+    internal static class B2FVoiceDetectionTreeMigration
+    {
+        private const string SessionKey = "DeFrag.B2FVoiceDetectionTreeMigration.v3";
+
+        static B2FVoiceDetectionTreeMigration()
+        {
+            EditorApplication.delayCall += UpgradeLoadedMonsters;
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+        }
+
+        private static void UpgradeLoadedMonsters()
+        {
+            if (SessionState.GetBool(SessionKey, false) || EditorApplication.isPlayingOrWillChangePlaymode)
+                return;
+
+            B2FMonsterVoiceMimic[] monsters =
+                UnityEngine.Object.FindObjectsByType<B2FMonsterVoiceMimic>(FindObjectsInactive.Include);
+            if (monsters.Length == 0)
+                return;
+
+            SessionState.SetBool(SessionKey, true);
+
+            foreach (B2FMonsterVoiceMimic mimic in monsters)
+            {
+                if (mimic == null || !mimic.gameObject.scene.IsValid())
+                    continue;
+
+                BehaviorTree tree = mimic.GetComponent<BehaviorTree>();
+                if (tree != null && HasValidVoiceDetectionTree(tree.GetBehaviorSource().RootTask))
+                    continue;
+
+                B2FMonsterBehaviorTreeBuilder.Build(mimic.gameObject, true);
+                Debug.Log($"[B2F Monster] '{mimic.name}'에 플레이어 음성 감지/조사 트리를 적용했습니다.", mimic);
+            }
+        }
+
+        private static void OnPlayModeStateChanged(PlayModeStateChange state)
+        {
+            if (state == PlayModeStateChange.EnteredEditMode)
+                EditorApplication.delayCall += UpgradeLoadedMonsters;
+        }
+
+        private static bool HasValidVoiceDetectionTree(Task root)
+        {
+            return ContainsVoiceDetectionTask(root) &&
+                   ContainsVisionTask(root) &&
+                   HasNoEmptyParentTasks(root);
+        }
+
+        private static bool ContainsVoiceDetectionTask(Task task)
+        {
+            if (task == null)
+                return false;
+            if (task is CanHearPlayerVoice)
+                return true;
+            if (task is not ParentTask parent || parent.Children == null)
+                return false;
+
+            foreach (Task child in parent.Children)
+            {
+                if (ContainsVoiceDetectionTask(child))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static bool ContainsVisionTask(Task task)
+        {
+            if (task == null)
+                return false;
+            if (task is CanSeePlayer)
+                return true;
+            if (task is not ParentTask parent || parent.Children == null)
+                return false;
+
+            foreach (Task child in parent.Children)
+            {
+                if (ContainsVisionTask(child))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static bool HasNoEmptyParentTasks(Task task)
+        {
+            if (task == null)
+                return false;
+            if (task is not ParentTask parent)
+                return true;
+            if (parent.Children == null || parent.Children.Count == 0)
+                return false;
+
+            foreach (Task child in parent.Children)
+            {
+                if (!HasNoEmptyParentTasks(child))
+                    return false;
+            }
+
+            return true;
         }
     }
 

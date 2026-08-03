@@ -26,7 +26,8 @@ namespace DeFrag.Monsters.B2F
         [SerializeField] private List<string> loadedFilePaths = new List<string>();
 
         [Header("Gizmo")]
-        [SerializeField] private Color playbackRangeColor = new Color(0.3f, 0.8f, 1f, 0.18f);
+        [Tooltip("주황색: 몬스터가 흉내 낸 음성이 플레이어에게 들리는 재생 범위입니다.")]
+        [SerializeField] private Color playbackRangeColor = new Color(1f, 0.55f, 0f, 0.18f);
 
         private readonly HashSet<string> loadingFilePaths =
             new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -344,6 +345,13 @@ namespace DeFrag.Monsters.B2F
             wireColor.a = Mathf.Max(0.6f, wireColor.a);
             Gizmos.color = wireColor;
             Gizmos.DrawWireSphere(transform.position, range);
+
+#if UNITY_EDITOR
+            UnityEditor.Handles.color = new Color(1f, 0.65f, 0.1f, 1f);
+            UnityEditor.Handles.Label(
+                transform.position + Vector3.up * 1.2f,
+                $"Mimic Playback Range ({range:0.0}m)");
+#endif
         }
     }
 }

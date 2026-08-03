@@ -34,6 +34,8 @@ public class SettingManager : MonoBehaviour
     private const string KEY_MIC_VOLUME = "Setting_MicVolume";
     private const string KEY_MIC_INDEX = "Setting_MicIndex";
     private const string KEY_RESOLUTION_INDEX = "Setting_ResolutionIndex";
+    private const string KEY_RESOLUTION_WIDTH = "Setting_ResolutionWidth";
+    private const string KEY_RESOLUTION_HEIGHT = "Setting_ResolutionHeight";
     private const string KEY_INVERT_Y = "Setting_InvertY";
     private const string KEY_DISPLAY_MODE = "Setting_DisplayMode"; // 0 = FullScreenWindow, 1 = Window
     private const int DEFAULT_DISPLAY_MODE = 0; // FullScreenWindow
@@ -177,23 +179,14 @@ public class SettingManager : MonoBehaviour
     private float nextMicDevicePollTime;
     private readonly float[] micSamples = new float[MIC_SAMPLE_SIZE];
 
-    // ResolutionManager의 해상도 목록
+    // 16:9 해상도만 제공하며, 인덱스 변경에 안전하도록 실제 너비/높이도 함께 저장합니다.
     private readonly List<Resolution> resolutions = new List<Resolution>
     {
         new Resolution { width = 1280,  height = 720  },
-        new Resolution { width = 1280,  height = 800  },
-        new Resolution { width = 1440,  height = 900  },
         new Resolution { width = 1600,  height = 900  },
-        new Resolution { width = 1680,  height = 1050 },
         new Resolution { width = 1920,  height = 1080 },
-        new Resolution { width = 1920,  height = 1200 },
-        new Resolution { width = 2048,  height = 1280 },
         new Resolution { width = 2560,  height = 1440 },
-        new Resolution { width = 2560,  height = 1600 },
-        new Resolution { width = 2880,  height = 1800 },
         new Resolution { width = 3840,  height = 2160 },
-        new Resolution { width = 1600,  height = 1200 },
-        new Resolution { width = 3440,  height = 1440 },
     };
 
     // ──────────────────────────────────────────────
@@ -342,7 +335,9 @@ public class SettingManager : MonoBehaviour
 
         resolutionDropdown.ClearOptions();
         List<string> options = new List<string>();
-        int optimal = 0;
+        int optimal = FindClosestResolutionIndex(
+            Screen.currentResolution.width,
+            Screen.currentResolution.height);
 
         for (int i = 0; i < resolutions.Count; i++)
         {
@@ -353,7 +348,6 @@ public class SettingManager : MonoBehaviour
             if (resolutions[i].width == Screen.currentResolution.width &&
                 resolutions[i].height == Screen.currentResolution.height)
             {
-                optimal = i;
                 option += " *";
             }
             options.Add(option);
@@ -361,11 +355,25 @@ public class SettingManager : MonoBehaviour
 
         resolutionDropdown.AddOptions(options);
 
-        // 저장된 값이 없으면 현재 모니터 최적 해상도를 기본값으로 사용
-        ResolutionIndex = Mathf.Clamp(
-            PlayerPrefs.GetInt(KEY_RESOLUTION_INDEX, optimal),
-            0,
-            resolutions.Count - 1);
+        if (PlayerPrefs.HasKey(KEY_RESOLUTION_WIDTH) && PlayerPrefs.HasKey(KEY_RESOLUTION_HEIGHT))
+        {
+            ResolutionIndex = FindClosestResolutionIndex(
+                PlayerPrefs.GetInt(KEY_RESOLUTION_WIDTH),
+                PlayerPrefs.GetInt(KEY_RESOLUTION_HEIGHT));
+        }
+        else if (PlayerPrefs.HasKey(KEY_RESOLUTION_INDEX) &&
+                 TryGetLegacyResolution(
+                     PlayerPrefs.GetInt(KEY_RESOLUTION_INDEX),
+                     out int legacyWidth,
+                     out int legacyHeight))
+        {
+            // 이전 버전의 16:10/4:3/21:9 선택값도 가장 가까운 16:9 값으로 이관합니다.
+            ResolutionIndex = FindClosestResolutionIndex(legacyWidth, legacyHeight);
+        }
+        else
+        {
+            ResolutionIndex = optimal;
+        }
     }
 
     // MicSelectScript.Start() 로직 통합
@@ -758,6 +766,11 @@ public class SettingManager : MonoBehaviour
         PlayerPrefs.SetFloat(KEY_MIC_VOLUME, MicVolume);
         PlayerPrefs.SetInt(KEY_MIC_INDEX, MicIndex);
         PlayerPrefs.SetInt(KEY_RESOLUTION_INDEX, ResolutionIndex);
+        if (ResolutionIndex >= 0 && ResolutionIndex < resolutions.Count)
+        {
+            PlayerPrefs.SetInt(KEY_RESOLUTION_WIDTH, resolutions[ResolutionIndex].width);
+            PlayerPrefs.SetInt(KEY_RESOLUTION_HEIGHT, resolutions[ResolutionIndex].height);
+        }
         PlayerPrefs.SetInt(KEY_INVERT_Y, InvertY ? 1 : 0);
         PlayerPrefs.SetInt(KEY_DISPLAY_MODE, DisplayModeIndex);
         PlayerPrefs.Save();
@@ -773,7 +786,8 @@ public class SettingManager : MonoBehaviour
         MouseSensitivity = PlayerPrefs.GetFloat(KEY_MOUSE_SENSITIVITY, DEFAULT_MOUSE_SENSITIVITY);
         MicVolume = PlayerPrefs.GetFloat(KEY_MIC_VOLUME, DEFAULT_MIC_VOLUME);
         MicIndex = PlayerPrefs.GetInt(KEY_MIC_INDEX, DEFAULT_MIC_INDEX);
-        ResolutionIndex = PlayerPrefs.GetInt(KEY_RESOLUTION_INDEX, ResolutionIndex); // InitResolutionDropdown에서 optimal 세팅됨
+        // InitResolutionDropdown에서 저장된 실제 크기를 16:9 목록의 인덱스로 변환합니다.
+        ResolutionIndex = Mathf.Clamp(ResolutionIndex, 0, resolutions.Count - 1);
         InvertY = PlayerPrefs.GetInt(KEY_INVERT_Y, DEFAULT_INVERT_Y ? 1 : 0) == 1;
         DisplayModeIndex = PlayerPrefs.GetInt(KEY_DISPLAY_MODE, DEFAULT_DISPLAY_MODE);
 
@@ -953,6 +967,7 @@ public class SettingManager : MonoBehaviour
     private void ApplyResolution(int index)
     {
         if (index < 0 || index >= resolutions.Count) return;
+        ResolutionIndex = index;
         Resolution res = resolutions[index];
         Screen.SetResolution(res.width, res.height, GetFullScreenMode(DisplayModeIndex));
 
@@ -981,6 +996,50 @@ public class SettingManager : MonoBehaviour
             : FullScreenMode.FullScreenWindow;
     }
 
+    private int FindClosestResolutionIndex(int width, int height)
+    {
+        int closestIndex = 0;
+        long closestDifference = long.MaxValue;
+
+        for (int i = 0; i < resolutions.Count; i++)
+        {
+            long widthDifference = resolutions[i].width - (long)width;
+            long heightDifference = resolutions[i].height - (long)height;
+            long difference = widthDifference * widthDifference + heightDifference * heightDifference;
+            if (difference >= closestDifference)
+                continue;
+
+            closestDifference = difference;
+            closestIndex = i;
+        }
+
+        return closestIndex;
+    }
+
+    private static bool TryGetLegacyResolution(int index, out int width, out int height)
+    {
+        (width, height) = index switch
+        {
+            0 => (1280, 720),
+            1 => (1280, 800),
+            2 => (1440, 900),
+            3 => (1600, 900),
+            4 => (1680, 1050),
+            5 => (1920, 1080),
+            6 => (1920, 1200),
+            7 => (2048, 1280),
+            8 => (2560, 1440),
+            9 => (2560, 1600),
+            10 => (2880, 1800),
+            11 => (3840, 2160),
+            12 => (1600, 1200),
+            13 => (3440, 1440),
+            _ => (0, 0)
+        };
+
+        return width > 0 && height > 0;
+    }
+
     private void ApplyDisplayMode(int index)
     {
         Screen.fullScreenMode = GetFullScreenMode(index);
@@ -1005,6 +1064,8 @@ public class SettingManager : MonoBehaviour
         PlayerPrefs.DeleteKey(KEY_MIC_VOLUME);
         PlayerPrefs.DeleteKey(KEY_MIC_INDEX);
         PlayerPrefs.DeleteKey(KEY_RESOLUTION_INDEX);
+        PlayerPrefs.DeleteKey(KEY_RESOLUTION_WIDTH);
+        PlayerPrefs.DeleteKey(KEY_RESOLUTION_HEIGHT);
         PlayerPrefs.DeleteKey(KEY_INVERT_Y);
         foreach (var floor in floorOrder)
             PlayerPrefs.DeleteKey("Unlocked_" + floor);
