@@ -66,11 +66,21 @@ namespace DeFrag.Monsters.B2F.BehaviorDesignerTasks
         public SharedFloat eyeHeight = 1.5f;
         public SharedFloat targetHeightOffset = 1f;
 
+        private B2FMonsterVision vision;
+
+        public override void OnAwake()
+        {
+            vision = GetComponent<B2FMonsterVision>();
+        }
+
         public override TaskStatus OnUpdate()
         {
             Transform target = playerTarget.Value;
             if (target == null)
                 return TaskStatus.Failure;
+
+            if (vision != null)
+                return vision.CanSee(target) ? TaskStatus.Success : TaskStatus.Failure;
 
             Vector3 origin = transform.position + Vector3.up * eyeHeight.Value;
             Vector3 targetPoint = target.position + Vector3.up * targetHeightOffset.Value;
@@ -91,6 +101,169 @@ namespace DeFrag.Monsters.B2F.BehaviorDesignerTasks
                 QueryTriggerInteraction.Ignore);
 
             return blocked ? TaskStatus.Failure : TaskStatus.Success;
+        }
+    }
+
+    [TaskCategory("B2F Monster")]
+    [TaskDescription("플레이어의 실시간 마이크 음량과 거리를 이용해 목소리를 감지하고 마지막 청취 위치를 저장합니다.")]
+    public sealed class CanHearPlayerVoice : Conditional
+    {
+        public SharedTransform playerTarget;
+        public SharedVector3 lastKnownPosition;
+
+        private B2FPlayerVoicePerception perception;
+
+        public override void OnAwake()
+        {
+            perception = GetComponent<B2FPlayerVoicePerception>();
+        }
+
+        public override TaskStatus OnUpdate()
+        {
+            if (!B2FMonsterTaskUtility.HasSimulationAuthority())
+                return TaskStatus.Failure;
+
+            if (perception == null ||
+                !perception.TryHear(
+                    playerTarget.Value,
+                    out Transform heardTarget,
+                    out Vector3 heardPosition))
+            {
+                return TaskStatus.Failure;
+            }
+
+            playerTarget.Value = heardTarget;
+            lastKnownPosition.Value = heardPosition;
+            return TaskStatus.Success;
+        }
+    }
+
+    [TaskCategory("B2F Monster")]
+    [TaskDescription("마지막으로 들은 위치로 이동한 뒤 일정 시간 동안 주변을 조사합니다.")]
+    public sealed class InvestigateHeardVoice : Action
+    {
+        public SharedTransform playerTarget;
+        public SharedVector3 lastKnownPosition;
+        public SharedFloat investigateDuration = 10f;
+        public SharedFloat investigateRadius = 5f;
+        public SharedFloat moveSpeed = 2f;
+        public SharedFloat voicePositionUpdateInterval = 0.5f;
+        public SharedFloat stoppingDistance = 0.5f;
+        public SharedFloat rotationSpeed = 10f;
+        public SharedInt sampleAttempts = 30;
+        public SharedFloat sampleDistance = 5f;
+
+        private NavMeshAgent agent;
+        private NavMeshPath path;
+        private B2FPlayerVoicePerception perception;
+        private B2FMonsterVision vision;
+        private float startedAt;
+        private float nextVoiceUpdateAt;
+        private float originalSpeed;
+        private float originalStoppingDistance;
+
+        public override void OnAwake()
+        {
+            agent = GetComponent<NavMeshAgent>();
+            perception = GetComponent<B2FPlayerVoicePerception>();
+            vision = GetComponent<B2FMonsterVision>();
+            path = new NavMeshPath();
+        }
+
+        public override void OnStart()
+        {
+            startedAt = Time.time;
+            nextVoiceUpdateAt = Time.time;
+
+            if (!B2FMonsterTaskUtility.IsAgentReady(agent))
+                return;
+
+            originalSpeed = agent.speed;
+            originalStoppingDistance = agent.stoppingDistance;
+            agent.speed = Mathf.Max(0f, moveSpeed.Value);
+            agent.stoppingDistance = Mathf.Max(0f, stoppingDistance.Value);
+            agent.isStopped = false;
+            agent.SetDestination(lastKnownPosition.Value);
+        }
+
+        public override TaskStatus OnUpdate()
+        {
+            if (!B2FMonsterTaskUtility.HasSimulationAuthority())
+                return TaskStatus.Running;
+
+            if (!B2FMonsterTaskUtility.IsAgentReady(agent))
+                return TaskStatus.Failure;
+
+            // Conditional Abort에만 의존하면 장기 실행 중인 Investigate Action에서
+            // 상위 Chase 조건이 즉시 재평가되지 않을 수 있습니다. 같은 시야 설정으로
+            // 직접 확인하고 현재 분기를 끝내 다음 평가에서 Attack/Chase가 선택되게 합니다.
+            if (vision != null && vision.CanSee(playerTarget.Value))
+            {
+                if (agent.hasPath)
+                    agent.ResetPath();
+
+                return TaskStatus.Success;
+            }
+
+            UpdateHeardPosition();
+            MonsterNavMeshUtility.RotateTowardsMovement(transform, agent, rotationSpeed.Value);
+
+            if (!agent.pathPending &&
+                (!agent.hasPath || agent.remainingDistance <= agent.stoppingDistance))
+            {
+                SetRandomInvestigationDestination();
+            }
+
+            return Time.time - startedAt >= Mathf.Max(0f, investigateDuration.Value)
+                ? TaskStatus.Success
+                : TaskStatus.Running;
+        }
+
+        public override void OnEnd()
+        {
+            if (!B2FMonsterTaskUtility.IsAgentReady(agent))
+                return;
+
+            agent.ResetPath();
+            agent.speed = originalSpeed;
+            agent.stoppingDistance = originalStoppingDistance;
+        }
+
+        private void UpdateHeardPosition()
+        {
+            if (Time.time < nextVoiceUpdateAt)
+                return;
+
+            nextVoiceUpdateAt = Time.time + Mathf.Max(0.05f, voicePositionUpdateInterval.Value);
+            if (perception == null ||
+                !perception.TryHear(
+                    playerTarget.Value,
+                    out Transform heardTarget,
+                    out Vector3 heardPosition))
+            {
+                return;
+            }
+
+            playerTarget.Value = heardTarget;
+            lastKnownPosition.Value = heardPosition;
+            agent.SetDestination(heardPosition);
+        }
+
+        private void SetRandomInvestigationDestination()
+        {
+            if (!MonsterNavMeshUtility.TryFindRandomReachablePosition(
+                    agent,
+                    lastKnownPosition.Value,
+                    investigateRadius.Value,
+                    sampleAttempts.Value,
+                    sampleDistance.Value,
+                    path,
+                    out Vector3 destination))
+            {
+                return;
+            }
+
+            agent.SetDestination(destination);
         }
     }
 
