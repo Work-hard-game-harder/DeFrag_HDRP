@@ -396,6 +396,8 @@ namespace StarterAssets
 
         public override void OnNetworkSpawn()
         {
+            ConfigureLocalPlayerPresentation();
+
             // 내가 이 캐릭터의 주인(로컬 플레이어)일 때만 위치 변경 작업 수행
             if (IsOwner)
             {
@@ -424,6 +426,52 @@ namespace StarterAssets
                 {
                     Debug.LogWarning("씬에 'SpawnPoint' 태그를 가진 오브젝트가 하나도 없습니다! (0,0,0)에 스폰됩니다.");
                 }
+            }
+        }
+
+        public override void OnNetworkDespawn()
+        {
+            SetLocalInputEnabled(false);
+            base.OnNetworkDespawn();
+        }
+
+        private void ConfigureLocalPlayerPresentation()
+        {
+            SetLocalInputEnabled(IsOwner);
+
+            foreach (Camera playerCamera in GetComponentsInChildren<Camera>(true))
+            {
+                playerCamera.enabled = IsOwner;
+            }
+
+            foreach (AudioListener listener in GetComponentsInChildren<AudioListener>(true))
+            {
+                listener.enabled = IsOwner;
+            }
+        }
+
+        private void SetLocalInputEnabled(bool isEnabled)
+        {
+#if ENABLE_INPUT_SYSTEM
+            PlayerInput playerInput = GetComponent<PlayerInput>();
+            if (playerInput != null)
+            {
+                playerInput.enabled = isEnabled;
+            }
+#endif
+
+            StarterAssetsInputs inputs = GetComponent<StarterAssetsInputs>();
+            if (inputs == null)
+            {
+                return;
+            }
+
+            if (!isEnabled)
+            {
+                inputs.MoveInput(Vector2.zero);
+                inputs.LookInput(Vector2.zero);
+                inputs.JumpInput(false);
+                inputs.SprintInput(false);
             }
         }
     }
