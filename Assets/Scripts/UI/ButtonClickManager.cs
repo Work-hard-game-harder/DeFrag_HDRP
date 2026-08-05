@@ -4,6 +4,7 @@ using UnityEngine.SceneManagement;
 public class ButtonClickManager : MonoBehaviour
 {
     [SerializeField] private GameObject codePanel;
+    [SerializeField] private GameObject walkieImage;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()

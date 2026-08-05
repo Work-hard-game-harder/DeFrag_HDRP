@@ -3346,6 +3346,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ButtonClickScript
   codePanel: {fileID: 1375882484}
+  walkieImage: {fileID: 0}
 --- !u!1 &1533888640
 GameObject:
   m_ObjectHideFlags: 0
@@ -3469,6 +3470,8 @@ MonoBehaviour:
     clip: {fileID: 8300000, guid: c40025268488bb84a86af3bc35afb3a2, type: 3}
   - sfxName: StageSelect
     clip: {fileID: 8300000, guid: 9c22e4a3d74ce344bbac39af8da4b529, type: 3}
+  - sfxName: UIClick
+    clip: {fileID: 8300000, guid: eb6aed510b6beb3428e7a9331fb0b955, type: 3}
 --- !u!4 &1545539460
 Transform:
   m_ObjectHideFlags: 0
