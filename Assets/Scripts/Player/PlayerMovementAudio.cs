@@ -173,7 +173,7 @@ namespace DeFrag.Player
         private void EnsureAudioSources()
         {
             if (footstepSource == null)
-                footstepSource = gameObject.AddComponent<AudioSource>();
+                footstepSource = CreateChildAudioSource("Footstep Audio");
             footstepSource.playOnAwake = false;
             footstepSource.loop = false;
             footstepSource.spatialBlend = 1f;
@@ -182,11 +182,25 @@ namespace DeFrag.Player
             footstepSource.dopplerLevel = 0f;
 
             if (breathingSource == null)
-                breathingSource = gameObject.AddComponent<AudioSource>();
+                breathingSource = CreateChildAudioSource("Breathing Audio");
             breathingSource.playOnAwake = false;
             breathingSource.loop = false;
             breathingSource.spatialBlend = 0f;
             breathingSource.dopplerLevel = 0f;
+        }
+
+        private AudioSource CreateChildAudioSource(string childName)
+        {
+            Transform child = transform.Find(childName);
+            if (child == null)
+            {
+                GameObject childObject = new(childName);
+                child = childObject.transform;
+                child.SetParent(transform, false);
+            }
+
+            AudioSource source = child.GetComponent<AudioSource>();
+            return source != null ? source : child.gameObject.AddComponent<AudioSource>();
         }
     }
 }

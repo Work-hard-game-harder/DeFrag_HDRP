@@ -57,12 +57,8 @@ public class MonsterAI : MonoBehaviour
     public float stuckCheckInterval = 1f;
     public float stuckThreshold = 0.1f;
 
-    [Header("Sound Detection Settings")]
+    [Header("World Noise Detection Settings")]
     [Min(0f)] public float soundDetectionRange = 60f;
-    [Range(0f, 1f)] public float minimumVoiceVolume = 0.05f;
-    [Min(0f)] public float minimumVoiceDetectionRange = 5f;
-    [Min(0.1f)] public float voiceRangeExponent = 1.35f;
-    [Min(0.05f)] public float voicePositionUpdateInterval = 0.5f;
 
     [Header("Animation")]
     public Animator animator;
@@ -73,11 +69,6 @@ public class MonsterAI : MonoBehaviour
     [SerializeField, Min(0.05f)] private float attackCycleDuration = 1f;
     [Tooltip("공격 cycle 시작 후 실제 타격 판정을 실행할 시간입니다. Animation Event가 있으면 Event가 우선합니다.")]
     [SerializeField, Min(0f)] private float attackHitDelay = 0.35f;
-
-    [Header("Debug Gizmos")]
-    [SerializeField] private bool showVoiceDetectionGizmos = true;
-    [SerializeField] private Color maximumVoiceRangeColor = new Color(0.15f, 0.45f, 1f, 0.65f);
-    [SerializeField] private Color currentVoiceRangeColor = new Color(0f, 1f, 1f, 0.9f);
 
     [Header("Behavior Designer")]
     [Tooltip("Behavior Designer 트리를 런타임에 자동 구성합니다. 끄면 기존 Update 방식으로 동작합니다.")]
@@ -108,9 +99,6 @@ public class MonsterAI : MonoBehaviour
     private Vector3 lastPosition;
     private bool canSeePlayer = false;
     private bool canDetectPlayer = false;
-    private SoundEmitter playerSoundEmitter;
-    private float currentVoiceDetectionRange;
-    private float voicePositionUpdateTimer;
     private int preparedFrame = -1;
     private bool initialized;
     private float attackCycleStartedAt;
@@ -166,9 +154,6 @@ public class MonsterAI : MonoBehaviour
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
         lastPosition = transform.position;
-        if (player != null)
-            playerSoundEmitter = player.GetComponentInChildren<SoundEmitter>();
-
         chaseNavigator = new ChaseDetourNavigator(agent, detourSampleCount, detourSampleRadius, detourRecheckInterval);
         randomDestinationPath = new NavMeshPath();
         catchUpNavigator = new CatchUpNavigator(agent, maxChaseDistance, catchUpRadius, catchUpCooldown);   // 이 줄이 있는지 확인
@@ -217,7 +202,6 @@ public class MonsterAI : MonoBehaviour
 
         canSeePlayer = CheckPlayerVisibility();
         float distToPlayer = Vector3.Distance(transform.position, player.position);
-        bool hearsPlayer = CheckSoundDetection();
         bool hasTrackableVisual = canSeePlayer && !ShouldIgnoreVisiblePlayer(distToPlayer);
         bool isActivelyChasing = currentState == MonsterState.Chase
                 || currentState == MonsterState.Attack;
@@ -228,10 +212,10 @@ public class MonsterAI : MonoBehaviour
 
         if (catchUpNavigator.TryCatchUp(transform.position, player.position, canCatchUpToPlayer))
             lastKnownPlayerPos = player.position;
-        UpdateStateMachine(distToPlayer, hearsPlayer, hasTrackableVisual);
+        UpdateStateMachine(distToPlayer, hasTrackableVisual);
     }
 
-    void UpdateStateMachine(float distToPlayer, bool hearsPlayer, bool hasTrackableVisual)
+    void UpdateStateMachine(float distToPlayer, bool hasTrackableVisual)
     {
         // Missing은 플레이어를 놓친 사실을 표현하는 전용 상태입니다.
         // 이 상태가 끝날 때까지 감지 결과로 Chase/Attack에 재진입하지 않고,
@@ -242,7 +226,6 @@ public class MonsterAI : MonoBehaviour
             return;
         }
 
-        // 시야 감지는 정확한 추적으로, 목소리 감지는 위치 조사로 구분합니다.
         if (hasTrackableVisual)
         {
             canDetectPlayer = true;
@@ -257,9 +240,7 @@ public class MonsterAI : MonoBehaviour
             return;
         }
 
-        // 추적 중 시야를 잃은 경우에는 소리 조사보다 Lost Player 유예를 우선합니다.
-        // 이전에는 hearsPlayer 분기가 먼저 실행되어, 마이크 잡음이나 월드 사운드가
-        // 계속 들어오면 lostPlayerTimer가 누적되지 않고 즉시 Investigate로 빠졌습니다.
+        // 추적 중 시야를 잃은 경우 Lost Player 유예를 우선합니다.
         if (currentState == MonsterState.Chase || currentState == MonsterState.Attack)
         {
             canDetectPlayer = false;
@@ -286,35 +267,7 @@ public class MonsterAI : MonoBehaviour
             return;
         }
 
-        if (hearsPlayer)
-        {
-            canDetectPlayer = true;
-            lastKnownPlayerPos = player.position;
-            lostPlayerTimer = 0f;
-
-            if (currentState != MonsterState.Investigate)
-            {
-                voicePositionUpdateTimer = 0f;
-                ChangeState(MonsterState.Investigate);
-                // 음성을 처음 들은 프레임에는 주변 랜덤 지점보다
-                // 마지막으로 들은 플레이어의 실제 위치를 우선 조사합니다.
-                agent.SetDestination(lastKnownPlayerPos);
-            }
-            else
-            {
-                voicePositionUpdateTimer += Time.deltaTime;
-                if (voicePositionUpdateTimer >= voicePositionUpdateInterval)
-                {
-                    voicePositionUpdateTimer = 0f;
-                    agent.SetDestination(lastKnownPlayerPos);
-                }
-            }
-
-            return;
-        }
-
         canDetectPlayer = false;
-        currentVoiceDetectionRange = 0f;
     }
 
     void ExecuteCurrentState()
@@ -392,25 +345,6 @@ public class MonsterAI : MonoBehaviour
             1f,
             0f);
     }
-    bool CheckSoundDetection()
-    {
-        currentVoiceDetectionRange = 0f;
-        if (playerSoundEmitter == null || !playerSoundEmitter.IsMicActive) return false;
-
-        float volume = playerSoundEmitter.CurrentVolume;
-        if (volume < minimumVoiceVolume) return false;
-
-        float normalizedVolume = Mathf.InverseLerp(minimumVoiceVolume, 1f, volume);
-        float volumeFactor = Mathf.Pow(normalizedVolume, voiceRangeExponent);
-        currentVoiceDetectionRange = Mathf.Lerp(
-                minimumVoiceDetectionRange,
-                soundDetectionRange,
-                volumeFactor);
-
-        float distToPlayer = Vector3.Distance(transform.position, player.position);
-        return distToPlayer <= currentVoiceDetectionRange;
-    }
-
     private void OnWorldNoiseHeard(Vector3 noisePosition, float noiseRadius)
     {
         if (!HasSimulationAuthority || agent == null || !agent.isOnNavMesh) return;
@@ -703,20 +637,6 @@ public class MonsterAI : MonoBehaviour
 
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, attackRange);
-
-        if (showVoiceDetectionGizmos)
-        {
-            // 짙은 파란색: 마이크 볼륨이 최대일 때 감지 가능한 최대 반경
-            Gizmos.color = maximumVoiceRangeColor;
-            Gizmos.DrawWireSphere(transform.position, soundDetectionRange);
-
-            // 청록색: 현재 마이크 볼륨으로 계산된 실시간 감지 반경
-            if (currentVoiceDetectionRange > 0f)
-            {
-                Gizmos.color = currentVoiceRangeColor;
-                Gizmos.DrawWireSphere(transform.position, currentVoiceDetectionRange);
-            }
-        }
 
         Gizmos.color = Color.cyan;
         Vector3 leftDir = Quaternion.Euler(0, -fieldOfView * 0.5f, 0) * transform.forward;

@@ -1190,10 +1190,6 @@ PrefabInstance:
       propertyPath: InScenePlacedSourceGlobalObjectIdHash
       value: 1248422577
       objectReference: {fileID: 0}
-    - target: {fileID: 5779452105091600300, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 7067416030703452503, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
       propertyPath: m_LocalPosition.x
       value: 22.9
@@ -1234,6 +1230,26 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7349012846091223010, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
+      propertyPath: volume
+      value: 0.344
+      objectReference: {fileID: 0}
+    - target: {fileID: 7349012846091223010, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
+      propertyPath: audioSource
+      value: 
+      objectReference: {fileID: 1132540538}
+    - target: {fileID: 7349012846091223010, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
+      propertyPath: outputMixerGroup
+      value: 
+      objectReference: {fileID: -1756255783097824108, guid: 2f73f41f978fecb46a4479e077c1712e, type: 2}
+    - target: {fileID: 7349012846091223010, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
+      propertyPath: transmissionStopClip
+      value: 
+      objectReference: {fileID: 8300000, guid: 01b46350f0bb13640a478aa194e4ed1e, type: 3}
+    - target: {fileID: 7349012846091223010, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
+      propertyPath: transmissionStartClip
+      value: 
+      objectReference: {fileID: 8300000, guid: 245cc9dba1b5f2249a2a487e35612f7d, type: 3}
     - target: {fileID: 7581676527181479485, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -1260,7 +1276,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8916423859403885125, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1932,6 +1948,11 @@ CanvasRenderer:
 --- !u!4 &1132540519 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7067416030703452503, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
+  m_PrefabInstance: {fileID: 359282396}
+  m_PrefabAsset: {fileID: 0}
+--- !u!82 &1132540538 stripped
+AudioSource:
+  m_CorrespondingSourceObject: {fileID: 21042247990524551, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
   m_PrefabInstance: {fileID: 359282396}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &1294406584

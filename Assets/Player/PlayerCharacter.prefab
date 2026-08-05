@@ -2258,9 +2258,7 @@ GameObject:
   - component: {fileID: 4802178703657015332}
   - component: {fileID: 231487829888649759}
   - component: {fileID: 4089493473910277660}
-  - component: {fileID: 5779452105091600300}
   - component: {fileID: 6812459037621148290}
-  - component: {fileID: 3598217460136852094}
   - component: {fileID: 5079052627790923466}
   - component: {fileID: 7349012846091223003}
   - component: {fileID: 7349012846091223001}
@@ -2270,6 +2268,8 @@ GameObject:
   - component: {fileID: 4302945229344665463}
   - component: {fileID: 7349012846091223006}
   - component: {fileID: 4302945229344665464}
+  - component: {fileID: 3598217460136852094}
+  - component: {fileID: 7349012846091223010}
   - component: {fileID: 7349012846091223007}
   m_Layer: 7
   m_Name: PlayerCharacter
@@ -2573,19 +2573,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 245deb3b698c6de4d80fdc6bcd905053, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &5779452105091600300
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7592877399013546989}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4894b5bdfa2b74e408d57c6cc9d73474, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerVoice
-  micSource: {fileID: 0}
 --- !u!114 &6812459037621148290
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2601,24 +2588,6 @@ MonoBehaviour:
   micSource: {fileID: 0}
   monitorLocally: 0
   targetLatencySamples: 2048
---- !u!114 &3598217460136852094
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7592877399013546989}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c7e2904f5a324d61a844af73db89e102, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WalkieTalkieVoiceRecorder
-  minRecordingSeconds: 2
-  maxRecordingSeconds: 5
-  silencePeakThreshold: 0.0005
-  silenceRmsThreshold: 0.002
-  folderName: WalkieTalkieRecordings
-  maxStoredRecordings: 30
 --- !u!114 &5079052627790923466
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2735,7 +2704,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1884082809
+  GlobalObjectIdHash: 610151634
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -2781,6 +2750,43 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 8192
   applyAsLocalWhenNotNetworkSpawned: 0
+--- !u!114 &3598217460136852094
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7592877399013546989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7e2904f5a324d61a844af73db89e102, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WalkieTalkieVoiceRecorder
+  minRecordingSeconds: 2
+  maxRecordingSeconds: 5
+  silencePeakThreshold: 0.0005
+  silenceRmsThreshold: 0.002
+  folderName: WalkieTalkieRecordings
+  maxStoredRecordings: 30
+--- !u!114 &7349012846091223010
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7592877399013546989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 913c2b23859d4a4ba3e3acf956c9cd85, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WalkieTalkieSfx
+  walkieTalkieController: {fileID: 0}
+  audioSource: {fileID: 21042247990524551}
+  outputMixerGroup: {fileID: -1756255783097824108, guid: 2f73f41f978fecb46a4479e077c1712e, type: 2}
+  audioSourceObjectName: Walkie-Talkie Sound
+  transmissionStartClip: {fileID: 8300000, guid: 245cc9dba1b5f2249a2a487e35612f7d, type: 3}
+  transmissionStopClip: {fileID: 8300000, guid: 01b46350f0bb13640a478aa194e4ed1e, type: 3}
+  volume: 0.3
 --- !u!114 &7349012846091223007
 MonoBehaviour:
   m_ObjectHideFlags: 0

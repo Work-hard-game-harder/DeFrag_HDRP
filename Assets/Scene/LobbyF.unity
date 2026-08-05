@@ -7679,6 +7679,11 @@ Light:
   m_LightUnit: 0
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!1 &1088614065 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8436396341486250031, guid: c8e0bab957a39704d8fe7c82a38efdf2, type: 3}
+  m_PrefabInstance: {fileID: 2855393961608065923}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1092438464
 GameObject:
   m_ObjectHideFlags: 0
@@ -15251,6 +15256,30 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7645108140107606578, guid: c8e0bab957a39704d8fe7c82a38efdf2, type: 3}
   m_PrefabInstance: {fileID: 2855393961608065923}
   m_PrefabAsset: {fileID: 0}
+--- !u!167 &2048425818
+AudioReverbZone:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1088614065}
+  m_Enabled: 1
+  m_MinDistance: 125
+  m_MaxDistance: 125
+  m_ReverbPreset: 13
+  m_Room: -1000
+  m_RoomHF: -300
+  m_DecayTime: 1.49
+  m_DecayHFRatio: 0.59
+  m_Reflections: -1219
+  m_ReflectionsDelay: 0.007
+  m_Reverb: 441
+  m_ReverbDelay: 0.011
+  m_HFReference: 5000
+  m_Diffusion: 100
+  m_Density: 100
+  m_LFReference: 250
+  m_RoomLF: 0
 --- !u!1 &2064822290 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2202143928447784093, guid: c8e0bab957a39704d8fe7c82a38efdf2, type: 3}
@@ -17278,6 +17307,9 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 1757959465}
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 8436396341486250031, guid: c8e0bab957a39704d8fe7c82a38efdf2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2048425818}
     - targetCorrespondingSourceObject: {fileID: 652032180750411716, guid: c8e0bab957a39704d8fe7c82a38efdf2, type: 3}
       insertIndex: 1
       addedObject: {fileID: 594993768}
@@ -19811,7 +19843,6 @@ MonoBehaviour:
   typewriterSource: {fileID: 0}
   typewriterClips:
   - {fileID: 8300000, guid: f9992b5c3bbefe1439d7175266d25e46, type: 3}
-  charactersPerSound: 2
   typewriterVolume: 0.65
   typewriterPitchRange: {x: 0.96, y: 1.04}
 --- !u!1 &8658615527272838072

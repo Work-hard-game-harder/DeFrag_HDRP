@@ -108,6 +108,7 @@ public sealed class LobbyManager : MonoBehaviour
 
         try
         {
+            AudioManager.Instance.PlaySFX("Button1");
             await EnsureServicesInitializedAsync();
             Allocation allocation = await RelayService.Instance.CreateAllocationAsync(maxClientConnections);
             SavedJoinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
