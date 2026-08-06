@@ -130,7 +130,8 @@ namespace DeFrag.Monsters.B2F.Editor
             attack.AddChild(Node(new WithinTargetDistance
             {
                 target = playerTarget,
-                distance = attackRange
+                distance = attackRange,
+                ignoreHeight = new SharedBool { Value = true }
             }, 3, "Within Attack Range", -430f, 400f), 0);
             attack.AddChild(Node(new AttackPlayer
             {
@@ -146,7 +147,8 @@ namespace DeFrag.Monsters.B2F.Editor
             chase.AddChild(Node(new ChaseTargetWithDetour
             {
                 target = playerTarget,
-                stoppingDistance = attackRange
+                stoppingDistance = attackRange,
+                ignoreHeight = new SharedBool { Value = true }
             }, 7, "Chase With Detour", 70f, 400f), 1);
 
             // IDs follow the serialized depth-first tree order. Behavior Designer 1.7.14 can

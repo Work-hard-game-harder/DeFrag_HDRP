@@ -7925,7 +7925,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -37.3
+      value: -37.29
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
       propertyPath: m_LocalPosition.y
@@ -7933,7 +7933,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -83.3
+      value: -74.8
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
       propertyPath: m_LocalRotation.w
@@ -7995,13 +7995,7 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1608967854}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1608967859}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1608967861}
+      addedObject: {fileID: 1608967862}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1608967857}
@@ -8010,7 +8004,13 @@ PrefabInstance:
       addedObject: {fileID: 1608967860}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1608967862}
+      addedObject: {fileID: 1608967854}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1608967859}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1608967861}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1608967864}
@@ -9559,7 +9559,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
   m_PlayOnAwake: 0
-  m_Volume: 1
+  m_Volume: 0.7
   m_Pitch: 1
   Loop: 0
   Mute: 0
@@ -9663,15 +9663,15 @@ MonoBehaviour:
   damage: 10
   targetLayers:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 128
   triggerInteraction: 2
-  shape: 0
-  hitboxOrigin: {fileID: 0}
-  localCenter: {x: 0, y: 0, z: 0}
+  shape: 2
+  hitboxOrigin: {fileID: 1608967863}
+  localCenter: {x: 0, y: 1.45, z: 0}
   sphereRadius: 2
   boxSize: {x: 3, y: 2, z: 3}
-  capsuleRadius: 1
-  capsuleHeight: 2
+  capsuleRadius: 0.8
+  capsuleHeight: 3.93
   resolveOnContactEnter: 0
   contactCooldown: 1
   gizmoColor: {r: 1, g: 0.15, b: 0.1, a: 0.25}

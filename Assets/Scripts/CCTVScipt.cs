@@ -1,6 +1,7 @@
 ﻿using System.Collections;
-using UnityEngine;
 using System.Collections.Generic;
+using Unity.Netcode;
+using UnityEngine;
 
 public class CCTVScript : MonoBehaviour
 {
@@ -8,6 +9,15 @@ public class CCTVScript : MonoBehaviour
     [SerializeField] private Light spotLight;
     [SerializeField] private float detectionRange = 10f;
     [SerializeField] private float detectionAngle = 30f;
+
+    [Header("Detection Performance")]
+    [SerializeField] private LayerMask playerLayers;
+    [SerializeField] private LayerMask lineOfSightLayers;
+    [SerializeField, Min(0.02f)] private float detectionInterval = 0.15f;
+    [SerializeField, Min(1)] private int candidateBufferSize = 32;
+    [SerializeField, Min(1)] private int lineOfSightHitBufferSize = 32;
+    [Tooltip("네트워크 플레이 중에는 서버/호스트만 순찰 로봇에게 감지 위치를 보고합니다.")]
+    [SerializeField] private bool serverAuthoritativeRobotReporting = true;
 
     [Header("Rotation Setting")]
     [SerializeField] private Transform pivot;
@@ -22,25 +32,49 @@ public class CCTVScript : MonoBehaviour
     private Quaternion startRotation;
     private float currentAngle = 0f;
     private bool isPaused = false;
+    private float nextDetectionTime;
+
+    private Collider[] candidateBuffer;
+    private RaycastHit[] lineOfSightHitBuffer;
+    private readonly HashSet<Transform> checkedPlayers = new HashSet<Transform>();
+    private readonly List<Collider> playerColliderBuffer = new List<Collider>(16);
 
     private enum CCTVState { Rotating, Detected }
     private CCTVState currentState = CCTVState.Rotating;
 
     void Start()
     {
+        EnsurePhysicsBuffers();
+
         Transform rotateTarget = pivot != null ? pivot : transform;
         startRotation = rotateTarget.localRotation;
 
-        audioSource.loop = true;
-        audioSource.Stop();
+        // 여러 CCTV의 물리 검사가 같은 프레임에 몰리지 않도록 첫 검사 시점을 분산합니다.
+        float staggerPhase = Mathf.Repeat(
+            transform.position.x * 0.1031f + transform.position.z * 0.11369f,
+            1f);
+        nextDetectionTime = Time.time + detectionInterval * staggerPhase;
+
+        if (audioSource != null)
+        {
+            audioSource.loop = true;
+            audioSource.Stop();
+        }
     }
 
     void Update()
     {
+        if (currentState == CCTVState.Rotating)
+            RotateCCTV();
+
+        if (Time.time < nextDetectionTime)
+            return;
+
+        nextDetectionTime = Time.time + detectionInterval;
+
         switch (currentState)
         {
             case CCTVState.Rotating:
-                RotateCCTV();
                 DetectPlayer();
                 break;
             case CCTVState.Detected:
@@ -96,20 +130,27 @@ public class CCTVScript : MonoBehaviour
         Vector3 forward = spotLight.transform.forward.normalized;
         float range = GetDetectionRange();
         float halfAngle = GetDetectionHalfAngle();
-        Collider[] candidates = Physics.OverlapSphere(
+        EnsurePhysicsBuffers();
+
+        int candidateCount = Physics.OverlapSphereNonAlloc(
             origin,
             GetBroadphaseRadius(range, halfAngle),
-            ~0,
+            candidateBuffer,
+            playerLayers,
             QueryTriggerInteraction.Ignore);
-        HashSet<Transform> checkedPlayers = new HashSet<Transform>();
+        checkedPlayers.Clear();
 
-        foreach (Collider candidate in candidates)
+        for (int candidateIndex = 0; candidateIndex < candidateCount; candidateIndex++)
         {
+            Collider candidate = candidateBuffer[candidateIndex];
+            if (candidate == null) continue;
+
             Transform playerRoot = FindPlayerRoot(candidate.transform);
             if (playerRoot == null || !checkedPlayers.Add(playerRoot)) continue;
 
-            Collider[] playerColliders = playerRoot.GetComponentsInChildren<Collider>(false);
-            foreach (Collider playerCollider in playerColliders)
+            playerColliderBuffer.Clear();
+            playerRoot.GetComponentsInChildren(false, playerColliderBuffer);
+            foreach (Collider playerCollider in playerColliderBuffer)
             {
                 if (!playerCollider.enabled || playerCollider.isTrigger) continue;
                 if (!TryGetConeIntersectionPoint(
@@ -209,21 +250,29 @@ public class CCTVScript : MonoBehaviour
         float distance = direction.magnitude;
         if (distance <= Mathf.Epsilon) return true;
 
-        RaycastHit[] hits = Physics.RaycastAll(
+        EnsurePhysicsBuffers();
+        int hitCount = Physics.RaycastNonAlloc(
             origin,
             direction / distance,
+            lineOfSightHitBuffer,
             distance + 0.05f,
-            ~0,
+            lineOfSightLayers,
             QueryTriggerInteraction.Ignore);
-        System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
 
-        foreach (RaycastHit hit in hits)
+        Collider nearestCollider = null;
+        float nearestDistance = float.PositiveInfinity;
+        for (int hitIndex = 0; hitIndex < hitCount; hitIndex++)
         {
+            RaycastHit hit = lineOfSightHitBuffer[hitIndex];
+            if (hit.collider == null) continue;
             if (hit.collider.GetComponentInParent<CCTVScript>() == this) continue;
-            return HasPlayerTag(hit.transform);
+            if (hit.distance >= nearestDistance) continue;
+
+            nearestDistance = hit.distance;
+            nearestCollider = hit.collider;
         }
 
-        return true;
+        return nearestCollider == null || HasPlayerTag(nearestCollider.transform);
     }
 
     private static Transform FindPlayerRoot(Transform target)
@@ -300,8 +349,9 @@ public class CCTVScript : MonoBehaviour
     {
         if (currentState == CCTVState.Detected) return;
         currentState = CCTVState.Detected;
-        if (!audioSource.isPlaying) audioSource.Play();
-        ReportToNearestRobot(detectedPosition);
+        if (audioSource != null && !audioSource.isPlaying) audioSource.Play();
+        if (HasRobotReportingAuthority())
+            ReportToNearestRobot(detectedPosition);
     }
 
     void ReportToNearestRobot(Vector3 detectedPosition)
@@ -338,10 +388,10 @@ public class CCTVScript : MonoBehaviour
     {
         if (currentState == CCTVState.Rotating) return;
         currentState = CCTVState.Rotating;
-        audioSource.Stop();
+        if (audioSource != null) audioSource.Stop();
     }
 
-    bool HasPlayerTag(Transform t)
+    private static bool HasPlayerTag(Transform t)
     {
         while (t != null)
         {
@@ -349,6 +399,35 @@ public class CCTVScript : MonoBehaviour
             t = t.parent;
         }
         return false;
+    }
+
+    private bool HasRobotReportingAuthority()
+    {
+        if (!serverAuthoritativeRobotReporting)
+            return true;
+
+        NetworkManager manager = NetworkManager.Singleton;
+        return manager == null || !manager.IsListening || manager.IsServer;
+    }
+
+    private void EnsurePhysicsBuffers()
+    {
+        int safeCandidateSize = Mathf.Max(1, candidateBufferSize);
+        if (candidateBuffer == null || candidateBuffer.Length != safeCandidateSize)
+            candidateBuffer = new Collider[safeCandidateSize];
+
+        int safeHitSize = Mathf.Max(1, lineOfSightHitBufferSize);
+        if (lineOfSightHitBuffer == null || lineOfSightHitBuffer.Length != safeHitSize)
+            lineOfSightHitBuffer = new RaycastHit[safeHitSize];
+    }
+
+    private void OnValidate()
+    {
+        detectionRange = Mathf.Max(0f, detectionRange);
+        detectionAngle = Mathf.Clamp(detectionAngle, 0f, 89.9f);
+        detectionInterval = Mathf.Max(0.02f, detectionInterval);
+        candidateBufferSize = Mathf.Max(1, candidateBufferSize);
+        lineOfSightHitBufferSize = Mathf.Max(1, lineOfSightHitBufferSize);
     }
 
     void OnDrawGizmos()

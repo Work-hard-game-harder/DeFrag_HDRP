@@ -342,6 +342,16 @@ MonoBehaviour:
   spotLight: {fileID: 4803340593279672233}
   detectionRange: 20
   detectionAngle: 20
+  playerLayers:
+    serializedVersion: 2
+    m_Bits: 128
+  lineOfSightLayers:
+    serializedVersion: 2
+    m_Bits: 1793
+  detectionInterval: 0.15
+  candidateBufferSize: 32
+  lineOfSightHitBufferSize: 32
+  serverAuthoritativeRobotReporting: 1
   pivot: {fileID: 1916062215674094985}
   rotationSpeed: 45
   maxAngle: 90

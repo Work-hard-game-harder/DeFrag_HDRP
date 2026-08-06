@@ -103,10 +103,18 @@ namespace DeFrag.Monsters.Common
 
     public static class MonsterPerceptionUtility
     {
-        public static bool IsWithinDistance(Vector3 origin, Vector3 target, float distance)
+        public static bool IsWithinDistance(
+            Vector3 origin,
+            Vector3 target,
+            float distance,
+            bool ignoreHeight = false)
         {
             float safeDistance = Mathf.Max(0f, distance);
-            return (target - origin).sqrMagnitude <= safeDistance * safeDistance;
+            Vector3 offset = target - origin;
+            if (ignoreHeight)
+                offset.y = 0f;
+
+            return offset.sqrMagnitude <= safeDistance * safeDistance;
         }
 
         public static bool CanSeeTarget(
@@ -179,13 +187,19 @@ namespace DeFrag.Monsters.Common.BehaviorDesignerTasks
     {
         public SharedTransform target;
         public SharedFloat distance = 1.5f;
+        [UnityEngine.Tooltip("활성화하면 높이 차이를 제외하고 XZ 평면 거리만 검사합니다.")]
+        public SharedBool ignoreHeight = false;
 
         public override TaskStatus OnUpdate()
         {
             if (target.Value == null)
                 return TaskStatus.Failure;
 
-            return MonsterPerceptionUtility.IsWithinDistance(transform.position, target.Value.position, distance.Value)
+            return MonsterPerceptionUtility.IsWithinDistance(
+                    transform.position,
+                    target.Value.position,
+                    distance.Value,
+                    ignoreHeight.Value)
                 ? TaskStatus.Success
                 : TaskStatus.Failure;
         }
@@ -223,6 +237,8 @@ namespace DeFrag.Monsters.Common.BehaviorDesignerTasks
     {
         public SharedTransform target;
         public SharedFloat stoppingDistance = 1.5f;
+        [UnityEngine.Tooltip("활성화하면 목표 도착 판정에서 높이 차이를 제외합니다.")]
+        public SharedBool ignoreHeight = false;
         public SharedFloat rotationSpeed = 10f;
         public SharedInt detourSampleCount = 8;
         public SharedFloat detourSampleRadius = 6f;
@@ -266,7 +282,8 @@ namespace DeFrag.Monsters.Common.BehaviorDesignerTasks
             if (MonsterPerceptionUtility.IsWithinDistance(
                     transform.position,
                     currentTarget.position,
-                    stoppingDistance.Value))
+                    stoppingDistance.Value,
+                    ignoreHeight.Value))
             {
                 return TaskStatus.Success;
             }
