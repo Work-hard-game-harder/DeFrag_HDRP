@@ -439,6 +439,14 @@ namespace StarterAssets
         {
             SetLocalInputEnabled(IsOwner);
 
+            CameraViewSwitcher cameraViewSwitcher =
+                GetComponentInChildren<CameraViewSwitcher>(true);
+            if (cameraViewSwitcher != null)
+            {
+                cameraViewSwitcher.SetLocalPresentationEnabled(IsOwner);
+                return;
+            }
+
             foreach (Camera playerCamera in GetComponentsInChildren<Camera>(true))
             {
                 playerCamera.enabled = IsOwner;
