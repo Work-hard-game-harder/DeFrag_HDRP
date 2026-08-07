@@ -26,6 +26,11 @@ public sealed class HackingSessionController : MonoBehaviour
         ConnectionDevice device)
     {
         if (IsActive || localHeldPad == null || device == null) return;
+        if (!GameplayInputGate.TryAcquire(this))
+        {
+            Debug.LogWarning("[HackingSession] Another modal interaction is already using local input.", this);
+            return;
+        }
 
         CacheLocalPlayerComponents();
         HideLocalHeldVisual(localHeldPad);
@@ -48,6 +53,7 @@ public sealed class HackingSessionController : MonoBehaviour
         RestoreLocalHeldVisual();
         SetGameplayEnabled(true);
         SetCursorForUi(false);
+        GameplayInputGate.Release(this);
         IsActive = false;
     }
 
@@ -57,6 +63,15 @@ public sealed class HackingSessionController : MonoBehaviour
         RestoreLocalHeldVisual();
         SetGameplayEnabled(true);
         SetCursorForUi(false);
+        GameplayInputGate.Release(this);
+    }
+
+    private void OnDisable()
+    {
+        if (IsActive)
+            End();
+        else
+            GameplayInputGate.Release(this);
     }
 
     private void CacheLocalPlayerComponents()

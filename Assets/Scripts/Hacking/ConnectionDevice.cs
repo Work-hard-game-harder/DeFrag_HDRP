@@ -120,6 +120,11 @@ public sealed class ConnectionDevice : MonoBehaviour, IInteractable
         }
     }
 
+    public void ResetCommandCompletion(TerminalCommands command)
+    {
+        completedCommands &= ~command;
+    }
+
     private bool IsHackingPadBeingInspected()
     {
         if (equipment == null || equipment.EquippedData != requiredHackingPad)

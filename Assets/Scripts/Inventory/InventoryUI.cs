@@ -40,6 +40,9 @@ public class InventoryUI : MonoBehaviour
 
     private void Update()
     {
+        if (GameplayInputGate.IsBlocked)
+            return;
+
         if (Keyboard.current != null && Keyboard.current.iKey.wasPressedThisFrame && quickSlotsPanel != null)
             quickSlotsPanel.SetActive(!quickSlotsPanel.activeSelf);
 

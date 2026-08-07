@@ -55,6 +55,9 @@ public sealed class CameraItem : MonoBehaviour
 
     private void Update()
     {
+        if (GameplayInputGate.IsBlocked)
+            return;
+
         if (!isEquipped)
             return;
 

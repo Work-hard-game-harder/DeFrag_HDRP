@@ -13,6 +13,7 @@ public sealed class CameraViewSwitcher : MonoBehaviour
     [SerializeField] private Canvas cameraOverlayCanvas;
 
     private bool localPresentationEnabled = true;
+    private bool interactionLocked;
 
     public bool IsCameraEquipped { get; private set; }
     public bool IsCameraViewActive { get; private set; }
@@ -55,6 +56,17 @@ public sealed class CameraViewSwitcher : MonoBehaviour
             SetCameraViewActive(false);
     }
 
+    public void SetInteractionLocked(bool locked)
+    {
+        interactionLocked = locked;
+
+        if (cameraItem != null)
+            cameraItem.enabled = localPresentationEnabled && !locked;
+
+        if (locked)
+            SetCameraViewActive(false);
+    }
+
     public void BindBattery(CameraBattery battery)
     {
         if (cameraItem != null && battery != null)
@@ -82,7 +94,7 @@ public sealed class CameraViewSwitcher : MonoBehaviour
         localPresentationEnabled = enabled;
 
         if (cameraItem != null)
-            cameraItem.enabled = enabled;
+            cameraItem.enabled = enabled && !interactionLocked;
 
         SetCameraViewActive(false);
     }
@@ -90,7 +102,7 @@ public sealed class CameraViewSwitcher : MonoBehaviour
     private void SetCameraViewActive(bool active)
     {
         // 카메라 아이템을 장착하지 않았다면 ItemCam을 켤 수 없다.
-        active &= IsCameraEquipped;
+        active &= IsCameraEquipped && !interactionLocked;
 
         IsCameraViewActive = active;
 

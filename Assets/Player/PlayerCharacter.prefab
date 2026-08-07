@@ -988,7 +988,7 @@ Transform:
   m_GameObject: {fileID: 3769297390406994600}
   serializedVersion: 2
   m_LocalRotation: {x: 0.000000059604638, y: 1.7763566e-15, z: -3.5527133e-15, w: 1}
-  m_LocalPosition: {x: -0.044, y: 0.79750013, z: 0.076}
+  m_LocalPosition: {x: -0.044, y: 0.261, z: 0.076}
   m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1005,10 +1005,10 @@ Light:
   serializedVersion: 13
   m_Type: 0
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 473425.94
-  m_Range: 10
-  m_SpotAngle: 51.907692
-  m_InnerSpotAngle: 43.70977
+  m_Intensity: 197458.7
+  m_Range: 25
+  m_SpotAngle: 81.38932
+  m_InnerSpotAngle: 61.687023
   m_CookieSize2D: {x: 0.5, y: 0.5}
   m_Shadows:
     m_Type: 0
@@ -1098,7 +1098,7 @@ MonoBehaviour:
   m_NonLightmappedOnly: 0
   m_SoftnessScale: 1
   m_UseCustomSpotLightShadowCone: 0
-  m_CustomSpotLightShadowCone: 30
+  m_CustomSpotLightShadowCone: 25
   m_MaxSmoothness: 0.99
   m_ApplyRangeAttenuation: 1
   m_DisplayAreaLightEmissiveMesh: 0
@@ -1869,6 +1869,7 @@ MonoBehaviour:
   progressCircle: {fileID: 0}
   hintPanel: {fileID: 0}
   hintImage: {fileID: 0}
+  additionalSequenceInputBehaviours: []
 --- !u!114 &6070090481718063190
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2502,11 +2503,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2922308556bc98e4898cb3309250e781, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  walkSpeed: 3
-  sprintSpeed: 5
+  walkSpeed: 4
+  sprintSpeed: 8
   crouchSpeed: 1.5
-  jumpSpeed: 4
-  gravity: 12
+  jumpSpeed: 5
+  gravity: 11
   slideDuration: 0.7
   slideSpeed: 6
   mouseSensitivity: 2
@@ -2521,8 +2522,8 @@ MonoBehaviour:
   moveDirection: {x: 0, y: 0, z: 0}
   isGrounded: 0
   normalFov: 60
-  sprintFov: 70
-  slideFovBoost: 5
+  sprintFov: 75
+  slideFovBoost: 8
   fovChangeSpeed: 5
   bobAmount: 0.001
   bobSpeed: 12
@@ -2533,7 +2534,7 @@ MonoBehaviour:
   currentBobSpeed: 0
   targetTilt: 0
   wakieTakieAnimator: {fileID: 0}
-  standingCameraHeight: 2.14
+  standingCameraHeight: 2.5
   crouchingCameraHeight: 1
   crouchingCharacterControllerHeight: 1
   standingCharacterControllerHeight: 1.8
@@ -2659,7 +2660,7 @@ MonoBehaviour:
   damageShakeFrequency: 24
   breathingDuration: 3
   breathingCycles: 3
-  breathingAmplitude: 0.04
+  breathingAmplitude: 0.25
 --- !u!114 &7349012846091223004
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2672,7 +2673,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 86b949450a054e48a13488ee60b82f5b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Player.PlayerSprintVisuals
-  sprintIntensity: 0.55
+  sprintIntensity: 0.8
   edgeStart: 0.44
   blurRadius: 0.018
   fadeInDuration: 0.2
@@ -2704,15 +2705,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 610151634
-  InScenePlacedSourceGlobalObjectIdHash: 0
+  GlobalObjectIdHash: 2301724343
+  InScenePlacedSourceGlobalObjectIdHash: 1248422577
   DeferredDespawnTick: 0
   Ownership: 1
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   <InScenePlaced>k__BackingField: 0
   ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 1
+  SceneMigrationSynchronization: 0
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
@@ -2749,7 +2750,7 @@ MonoBehaviour:
   ownerHiddenLayer:
     serializedVersion: 2
     m_Bits: 8192
-  applyAsLocalWhenNotNetworkSpawned: 0
+  applyAsLocalWhenNotNetworkSpawned: 1
 --- !u!114 &3598217460136852094
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3182,16 +3183,28 @@ PrefabInstance:
     m_TransformParent: {fileID: 3467596619895947432}
     m_Modifications:
     - target: {fileID: 4065086617947044019, guid: 85ab41cf77a70f24dbf949840e32657c, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.18
+      objectReference: {fileID: 0}
+    - target: {fileID: 4065086617947044019, guid: 85ab41cf77a70f24dbf949840e32657c, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.07
+      objectReference: {fileID: 0}
+    - target: {fileID: 4065086617947044019, guid: 85ab41cf77a70f24dbf949840e32657c, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.26
+      objectReference: {fileID: 0}
+    - target: {fileID: 4065086617947044019, guid: 85ab41cf77a70f24dbf949840e32657c, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0.4306669
+      value: 0.654
       objectReference: {fileID: 0}
     - target: {fileID: 4065086617947044019, guid: 85ab41cf77a70f24dbf949840e32657c, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.299
+      value: -0.322
       objectReference: {fileID: 0}
     - target: {fileID: 4065086617947044019, guid: 85ab41cf77a70f24dbf949840e32657c, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.5970001
+      value: 0.826
       objectReference: {fileID: 0}
     - target: {fileID: 4065086617947044019, guid: 85ab41cf77a70f24dbf949840e32657c, type: 3}
       propertyPath: m_LocalRotation.w
@@ -3227,7 +3240,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8980702806714624822, guid: 85ab41cf77a70f24dbf949840e32657c, type: 3}
       propertyPath: m_Layer
-      value: 7
+      value: 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

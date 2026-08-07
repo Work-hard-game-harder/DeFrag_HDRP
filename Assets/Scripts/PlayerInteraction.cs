@@ -1,6 +1,8 @@
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using System.Collections.Generic;
+using EasyPeasyFirstPersonController;
 
 public class PlayerInteraction : MonoBehaviour
 {
@@ -17,12 +19,19 @@ public class PlayerInteraction : MonoBehaviour
     public GameObject hintPanel;
     public Image hintImage;
 
+    [Header("Sequence Input Lock")]
+    [Tooltip("시퀀스 동안 함께 비활성화할 추가 로컬 입력 컴포넌트입니다.")]
+    [SerializeField] private Behaviour[] additionalSequenceInputBehaviours;
+
     private IInteractable targetInteractable;
+    private IInteractable heldInteractable;
     private float currentHoldTime = 0f;
     private float holdTime = 1.5f;
     private bool interactionEnabled = true;
     private Camera defaultViewCamera;
     private CameraViewSwitcher cameraViewSwitcher;
+    private HintSequencePresentation activeSequence;
+    private readonly Dictionary<Behaviour, bool> lockedBehaviourStates = new();
 
     private void Awake()
     {
@@ -32,16 +41,26 @@ public class PlayerInteraction : MonoBehaviour
 
     void Update()
     {
-        // 1. 만약 힌트 패널이 화면에 켜져 있는 상태라면?
+        if (activeSequence != null)
+        {
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                GameplayInputGate.ConsumeEscape(this);
+                CloseSequence();
+            }
+            return;
+        }
+
+        // 힌트 확인 판정은 상호작용 완료 시점에 끝난다.
+        // ESC는 로컬 UI를 닫고 조작을 복구하는 역할만 담당한다.
         if (hintPanel != null && hintPanel.activeSelf)
         {
-            // 2. 플레이어가 마우스 좌클릭(0)을 하는 순간!
             if (Input.GetMouseButtonDown(0))
             {
-                CloseAllUI(); // 이미 만들어 두신 이 함수를 여기서 실행해 주는 겁니다!
-                TogglePlayerControl(true); 
+                CloseAllUI();
+                TogglePlayerControl(true);
             }
-            return; // 힌트창이 열려있을 땐 아래 레이저(조준) 연산을 안 하도록 막아줌
+            return;
         }
 
         // 힌트 패널이 꺼져있을 때만 정상적으로 조준 레이저 작동
@@ -51,7 +70,15 @@ public class PlayerInteraction : MonoBehaviour
             return;
         }
 
-        CheckInteractable();
+        if (heldInteractable == null && targetInteractable != null &&
+            targetInteractable.IsHoldInteraction() && Input.GetKeyDown(KeyCode.E))
+            heldInteractable = targetInteractable;
+
+        // Once a hold starts, keep the same logical target. Complex props can have
+        // several child colliders and a SphereCast may otherwise alternate between
+        // them, resetting the progress every frame.
+        if (heldInteractable == null)
+            CheckInteractable();
         HandleInteractionInput();
     }
 
@@ -139,6 +166,12 @@ public class PlayerInteraction : MonoBehaviour
 
         if (Input.GetKey(KeyCode.E))
         {
+            if (heldInteractable == null)
+                heldInteractable = targetInteractable;
+
+            if (!ReferenceEquals(heldInteractable, targetInteractable))
+                return;
+
             currentHoldTime += Time.deltaTime;
             if (progressCircle != null) progressCircle.fillAmount = currentHoldTime / holdTime;
             
@@ -150,22 +183,27 @@ public class PlayerInteraction : MonoBehaviour
 
         if (Input.GetKeyUp(KeyCode.E))
         {
+            heldInteractable = null;
             ResetTimer();
         }
     }
 
     void ExecuteInteraction()
     {
-        if (targetInteractable != null)
+        IInteractable interaction = heldInteractable ?? targetInteractable;
+        if (interaction != null)
         {
-            targetInteractable.Interact(this);
+            interaction.Interact(this);
         }
+        heldInteractable = null;
         ResetTarget();
     }
 
     public void ResetTarget()
     {
         targetInteractable = null;
+        if (!Input.GetKey(KeyCode.E))
+            heldInteractable = null;
         if (interactionHUD != null && interactionHUD.activeSelf)
             interactionHUD.SetActive(false);
         ResetTimer();
@@ -187,5 +225,78 @@ public class PlayerInteraction : MonoBehaviour
     {
         if (hintPanel != null) hintPanel.SetActive(false);
         if (interactionHUD != null) interactionHUD.SetActive(false);
+    }
+
+    public void OpenHint(Sprite sprite)
+    {
+        if (hintPanel == null || hintImage == null || sprite == null)
+            return;
+
+        hintImage.sprite = sprite;
+        hintPanel.SetActive(true);
+        TogglePlayerControl(false);
+    }
+
+    public void OpenSequence(HintSequencePresentation presentation)
+    {
+        if (presentation == null)
+        {
+            Debug.LogWarning("[PlayerInteraction] Sequence Presentation이 연결되지 않았습니다.", this);
+            return;
+        }
+
+        if (!GameplayInputGate.TryAcquire(this))
+            return;
+
+        CloseAllUI();
+        TogglePlayerControl(false);
+        activeSequence = presentation;
+
+        LockBehaviour(GetComponentInParent<FirstPersonController>(true));
+        LockBehaviour(GetComponentInParent<StarterAssets.PersonController>(true));
+
+        foreach (Behaviour behaviour in additionalSequenceInputBehaviours)
+            LockBehaviour(behaviour);
+
+        cameraViewSwitcher?.SetInteractionLocked(true);
+        presentation.Play();
+    }
+
+    public void CloseSequence()
+    {
+        if (activeSequence == null)
+            return;
+
+        HintSequencePresentation sequence = activeSequence;
+        activeSequence = null;
+        sequence.Stop();
+
+        foreach (KeyValuePair<Behaviour, bool> entry in lockedBehaviourStates)
+        {
+            if (entry.Key != null)
+                entry.Key.enabled = entry.Value;
+        }
+        lockedBehaviourStates.Clear();
+
+        cameraViewSwitcher?.SetInteractionLocked(false);
+        GameplayInputGate.Release(this);
+        TogglePlayerControl(true);
+    }
+
+    private void LockBehaviour(Behaviour behaviour)
+    {
+        if (behaviour == null || behaviour == this || lockedBehaviourStates.ContainsKey(behaviour))
+            return;
+
+        lockedBehaviourStates.Add(behaviour, behaviour.enabled);
+        behaviour.enabled = false;
+    }
+
+    private void OnDisable()
+    {
+        if (activeSequence != null)
+            CloseSequence();
+        else
+            GameplayInputGate.Release(this);
     }
 }

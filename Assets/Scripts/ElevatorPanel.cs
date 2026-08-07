@@ -3,12 +3,16 @@ using TMPro;
 using UnityEngine.SceneManagement;
 using System.Collections;
 
+[RequireComponent(typeof(ElevatorWrongCodeAlarm))]
 public class ElevatorPanel : MonoBehaviour, IInteractable
 {
     [Header("도어락 UI 연결")]
     [SerializeField] private GameObject keypadUIPanel;
     [SerializeField] private TextMeshProUGUI passwordText;
     [SerializeField] private TextMeshProUGUI errorText;
+
+    [Header("오답 경보")]
+    [SerializeField] private ElevatorWrongCodeAlarm wrongCodeAlarm;
 
     [Header("비밀번호 및 탈출 설정")]
     [SerializeField] private string correctPassword = "361025";
@@ -25,7 +29,32 @@ public class ElevatorPanel : MonoBehaviour, IInteractable
 
     private string currentInput = "";
     private bool isKeypadActive = false;
+    private bool waitForInteractionKeyRelease;
     private PlayerInteraction savedPlayer;
+
+    private void Awake()
+    {
+        ResolveWrongCodeAlarm();
+    }
+
+    private void Reset()
+    {
+        ResolveWrongCodeAlarm();
+    }
+
+    private void ResolveWrongCodeAlarm()
+    {
+        if (wrongCodeAlarm == null)
+            wrongCodeAlarm = GetComponent<ElevatorWrongCodeAlarm>();
+
+        if (wrongCodeAlarm == null)
+        {
+            Debug.LogError(
+                "[ElevatorPanel] ElevatorWrongCodeAlarm component is missing. " +
+                "Add it to the same keypad object.",
+                this);
+        }
+    }
 
     void Start()
     {
@@ -36,6 +65,15 @@ public class ElevatorPanel : MonoBehaviour, IInteractable
     void Update()
     {
         if (!isKeypadActive) return;
+
+        // 키패드를 연 E 입력이 같은 프레임에 첫 글자로 전달되지 않도록 한다.
+        if (waitForInteractionKeyRelease)
+        {
+            if (!Input.GetKey(KeyCode.E))
+                waitForInteractionKeyRelease = false;
+
+            return;
+        }
 
         if (Input.GetKeyDown(KeyCode.Escape) || Input.GetMouseButtonDown(1))
         {
@@ -117,6 +155,7 @@ public class ElevatorPanel : MonoBehaviour, IInteractable
     public void OpenKeypad()
     {
         isKeypadActive = true;
+        waitForInteractionKeyRelease = true;
         currentInput = "";
         UpdateDisplay();
         if (keypadUIPanel != null) keypadUIPanel.SetActive(true);
@@ -126,6 +165,7 @@ public class ElevatorPanel : MonoBehaviour, IInteractable
     public void CloseKeypad()
     {
         isKeypadActive = false;
+        waitForInteractionKeyRelease = false;
         if (keypadUIPanel != null) keypadUIPanel.SetActive(false);
         
         if (savedPlayer != null)
@@ -172,6 +212,10 @@ public class ElevatorPanel : MonoBehaviour, IInteractable
         {
             Debug.Log("암호 불일치!");
             ShowError("틀린 암호입니다.");
+            if (wrongCodeAlarm != null)
+                wrongCodeAlarm.Trigger(savedPlayer);
+            else
+                Debug.LogError("[ElevatorPanel] Wrong-code alarm is not configured.", this);
             // Keep the current entry visible so Backspace can correct it.
         }
     }

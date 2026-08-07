@@ -28,11 +28,18 @@ public class CCTVScript : MonoBehaviour
     [Header("Sound Setting")]
     [SerializeField] private AudioSource audioSource;
 
+    [Header("Alarm Visual")]
+    [SerializeField] private Color normalLightColor = new Color(1f, 0.35f, 0f, 1f);
+    [SerializeField] private Color alarmLightColor = Color.red;
+    [Tooltip("발각 후 빨간불과 경보음을 유지하는 시간입니다.")]
+    [SerializeField, Min(0.1f)] private float alarmDuration = 5f;
+
     private float startYAngle;
     private Quaternion startRotation;
     private float currentAngle = 0f;
     private bool isPaused = false;
     private float nextDetectionTime;
+    private float alarmEndTime;
 
     private Collider[] candidateBuffer;
     private RaycastHit[] lineOfSightHitBuffer;
@@ -60,6 +67,8 @@ public class CCTVScript : MonoBehaviour
             audioSource.loop = true;
             audioSource.Stop();
         }
+
+        SetLightColor(normalLightColor);
     }
 
     void Update()
@@ -78,7 +87,7 @@ public class CCTVScript : MonoBehaviour
                 DetectPlayer();
                 break;
             case CCTVState.Detected:
-                CheckPlayerLeft();
+                UpdateAlarmDuration();
                 break;
         }
     }
@@ -349,12 +358,14 @@ public class CCTVScript : MonoBehaviour
     {
         if (currentState == CCTVState.Detected) return;
         currentState = CCTVState.Detected;
+        alarmEndTime = Time.time + alarmDuration;
+        SetLightColor(alarmLightColor);
         if (audioSource != null && !audioSource.isPlaying) audioSource.Play();
         if (HasRobotReportingAuthority())
             ReportToNearestRobot(detectedPosition);
     }
 
-    void ReportToNearestRobot(Vector3 detectedPosition)
+    PatrolRobotAI ReportToNearestRobot(Vector3 detectedPosition)
     {
         PatrolRobotAI[] robots = FindObjectsByType<PatrolRobotAI>(FindObjectsInactive.Exclude);
 
@@ -382,13 +393,33 @@ public class CCTVScript : MonoBehaviour
         {
             Debug.LogWarning("[CCTV] No active patrol robot can respond to the alarm.");
         }
+
+        return nearestRobot;
+    }
+
+    private void UpdateAlarmDuration()
+    {
+        if (Time.time >= alarmEndTime)
+            FinishAlarm();
+    }
+
+    private void FinishAlarm()
+    {
+        currentState = CCTVState.Rotating;
+        SetLightColor(normalLightColor);
+        if (audioSource != null) audioSource.Stop();
+    }
+
+    private void SetLightColor(Color color)
+    {
+        if (spotLight != null)
+            spotLight.color = color;
     }
 
     void OnPlayerLost()
     {
         if (currentState == CCTVState.Rotating) return;
-        currentState = CCTVState.Rotating;
-        if (audioSource != null) audioSource.Stop();
+        FinishAlarm();
     }
 
     private static bool HasPlayerTag(Transform t)
@@ -428,6 +459,7 @@ public class CCTVScript : MonoBehaviour
         detectionInterval = Mathf.Max(0.02f, detectionInterval);
         candidateBufferSize = Mathf.Max(1, candidateBufferSize);
         lineOfSightHitBufferSize = Mathf.Max(1, lineOfSightHitBufferSize);
+        alarmDuration = Mathf.Max(0.1f, alarmDuration);
     }
 
     void OnDrawGizmos()

@@ -23,6 +23,7 @@ public sealed class DownloadDataTypingMinigame : HackingMinigameBase
     private DownloadCommand currentCommand;
     private int currentRound;
     private bool acceptingInput;
+    private bool ownsRuntimeWordLibrary;
 
     public override bool ConsumesTextInput => true;
     public override string ControlHint => "[ENTER] TRANSMIT    [ESC] ABORT";
@@ -30,7 +31,10 @@ public sealed class DownloadDataTypingMinigame : HackingMinigameBase
     public override void Begin(ConnectionDevice terminal, TerminalCommands command)
     {
         device = terminal;
-        hintRelay = Camera.main.GetComponentInParent<CooperativeTerminalHintRelay>();
+        EnsureWordLibrary();
+        hintRelay = Camera.main != null
+            ? Camera.main.GetComponentInParent<CooperativeTerminalHintRelay>()
+            : null;
         BuildInterface();
         log.text =
             $"> EXEC DOWNLOAD_DATA_ARCHIVE_{device.ArchiveNumber:00}\n" +
@@ -43,6 +47,25 @@ public sealed class DownloadDataTypingMinigame : HackingMinigameBase
     {
         StopAllCoroutines();
         hintRelay?.HideForTeammate();
+
+        if (ownsRuntimeWordLibrary && wordLibrary != null)
+        {
+            Destroy(wordLibrary);
+            wordLibrary = null;
+            ownsRuntimeWordLibrary = false;
+        }
+    }
+
+    private void EnsureWordLibrary()
+    {
+        if (wordLibrary != null)
+            return;
+
+        wordLibrary = ScriptableObject.CreateInstance<DownloadCommandWordLibrary>();
+        ownsRuntimeWordLibrary = true;
+        Debug.LogWarning(
+            "[DownloadData] Word library was not assigned. Using the built-in command words.",
+            this);
     }
 
     private void StartRound()

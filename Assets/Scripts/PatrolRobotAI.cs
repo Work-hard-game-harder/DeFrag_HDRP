@@ -19,6 +19,8 @@ public class PatrolRobotAI : MonoBehaviour
     [SerializeField] private float patrolSpeed = 3.5f;
     [SerializeField] private float chaseSpeed = 5.5f;
     [SerializeField] private float lostSightGraceTime = 3f;
+    [SerializeField, Min(1f)] private float emergencyChaseSpeedMultiplier = 2f;
+    [SerializeField, Min(1f)] private float emergencyResponseTimeout = 30f;
 
     [Header("Random Patrol Settings")]
     public float patrolRadius = 20f;       // 濡쒕큸????踰덉뿉 ?먯깋??理쒕? 諛섍꼍 (?덈Т ?щ㈃ 硫由?媛?
@@ -32,6 +34,8 @@ public class PatrolRobotAI : MonoBehaviour
     private Vector3 lastKnownPlayerPos;
     private float lastSeenPlayerTime = float.NegativeInfinity;
     private float nextPlayerSearchTime;
+    private bool isEmergencyResponse;
+    private float emergencyResponseDeadline;
     private GameObject[] playerCandidates = System.Array.Empty<GameObject>();
     private const float PlayerSearchInterval = 0.5f;
 
@@ -74,6 +78,7 @@ public class PatrolRobotAI : MonoBehaviour
         bool seesPlayer = TryFindVisiblePlayer(out Transform visiblePlayer);
         if (seesPlayer)
         {
+            isEmergencyResponse = false;
             player = visiblePlayer;
             lastSeenPlayerTime = Time.time;
             lastKnownPlayerPos = player.position;
@@ -87,7 +92,7 @@ public class PatrolRobotAI : MonoBehaviour
             return; // ?꾪솚 ?꾨즺, ?됰룞? ?ㅼ쓬 ?꾨젅?꾨????ㅽ뻾
         }
         // [洹쒖튃 2] ?뚮젅?댁뼱瑜?異붽꺽 以묒씠?ㅺ? ?볦튂硫? 利됱떆 寃쎄퀎(二쇳솴遺?濡??꾪솚?⑸땲??
-        else if (!seesPlayer && currentState == State.Chase
+        else if (!seesPlayer && currentState == State.Chase && !isEmergencyResponse
             && Time.time - lastSeenPlayerTime >= lostSightGraceTime)
         {
             StopChase();
@@ -133,6 +138,17 @@ public class PatrolRobotAI : MonoBehaviour
 
                 // ?쒖빞瑜??좉퉸 踰쀬뼱?섎룄 留덉?留?紐⑷꺽 ?꾩튂源뚯? ?뺣컯?⑸땲??
                 agent.SetDestination(seesPlayer ? player.position : lastKnownPlayerPos);
+
+                if (isEmergencyResponse)
+                {
+                    bool arrived = !agent.pathPending && agent.hasPath && agent.remainingDistance < 1f;
+                    bool timedOut = Time.time >= emergencyResponseDeadline;
+                    if (arrived || timedOut)
+                    {
+                        isEmergencyResponse = false;
+                        StopChase();
+                    }
+                }
                 break;
         }
     }
@@ -362,6 +378,55 @@ public class PatrolRobotAI : MonoBehaviour
         lastKnownPlayerPos = targetLocation;
         agent.SetDestination(targetLocation);
         Debug.Log("CCTV 蹂닿퀬 ?묒닔! ?대떦 ?꾩튂濡??대룞?⑸땲??");
+    }
+
+    public bool TryGetEmergencyPath(
+        Vector3 targetLocation,
+        out Vector3 reachableTarget,
+        out float pathDistance)
+    {
+        reachableTarget = targetLocation;
+        pathDistance = float.PositiveInfinity;
+
+        if (agent == null) agent = GetComponent<NavMeshAgent>();
+        if (agent == null || !agent.enabled || !agent.isOnNavMesh)
+            return false;
+
+        if (!NavMesh.SamplePosition(targetLocation, out NavMeshHit hit, 8f, agent.areaMask))
+            return false;
+
+        NavMeshPath path = new NavMeshPath();
+        if (!NavMesh.CalculatePath(transform.position, hit.position, agent.areaMask, path) ||
+            path.status != NavMeshPathStatus.PathComplete)
+            return false;
+
+        reachableTarget = hit.position;
+        pathDistance = 0f;
+        for (int i = 1; i < path.corners.Length; i++)
+            pathDistance += Vector3.Distance(path.corners[i - 1], path.corners[i]);
+
+        return true;
+    }
+
+    public void ReceiveEmergencyAlarm(Vector3 targetLocation)
+    {
+        if (!TryGetEmergencyPath(targetLocation, out Vector3 reachableTarget, out _))
+        {
+            Debug.LogWarning($"[Robot Emergency] {name} has no complete NavMesh path to the waypoint.", this);
+            return;
+        }
+
+        StopAllCoroutines();
+        isInspecting = false;
+        isEmergencyResponse = true;
+        emergencyResponseDeadline = Time.time + emergencyResponseTimeout;
+        lastKnownPlayerPos = reachableTarget;
+
+        SetState(State.Chase);
+        agent.speed = chaseSpeed * emergencyChaseSpeedMultiplier;
+        agent.isStopped = false;
+        agent.SetDestination(lastKnownPlayerPos);
+        Debug.Log($"[Robot Emergency] {name} is rushing to the elevator alarm.", this);
     }
 
     private void OnCollisionEnter(Collision collision)

@@ -43,6 +43,17 @@ public sealed class CooperativeTerminalHintRelay : NetworkBehaviour
         BroadcastThreat(terminalPosition, alertRadius);
     }
 
+    public void ReportEmergencyAlarm(Vector3 alarmPosition, float alertRadius)
+    {
+        if (IsOwner && IsSpawned)
+        {
+            ReportEmergencyAlarmServerRpc(alarmPosition, alertRadius);
+            return;
+        }
+
+        BroadcastEmergencyAlarm(alarmPosition, alertRadius);
+    }
+
     [ServerRpc]
     private void ShowForTeammateServerRpc(
         string terminalLabel,
@@ -73,6 +84,53 @@ public sealed class CooperativeTerminalHintRelay : NetworkBehaviour
         float alertRadius)
     {
         BroadcastThreat(terminalPosition, alertRadius);
+    }
+
+    [ServerRpc]
+    private void ReportEmergencyAlarmServerRpc(
+        Vector3 alarmPosition,
+        float alertRadius)
+    {
+        BroadcastEmergencyAlarm(alarmPosition, alertRadius);
+    }
+
+    private static void BroadcastEmergencyAlarm(
+        Vector3 alarmPosition,
+        float alertRadius)
+    {
+        WorldNoiseSystem.Emit(alarmPosition, alertRadius);
+
+        PatrolRobotAI responder = DispatchClosestEmergencyResponder(alarmPosition);
+        Debug.Log(
+            responder != null
+                ? $"[Elevator Alarm] {responder.name} is the closest reachable responder."
+                : "[Elevator Alarm] No robot has a complete NavMesh path to the response waypoint.",
+            responder);
+    }
+
+    public static PatrolRobotAI DispatchClosestEmergencyResponder(Vector3 alarmPosition)
+    {
+
+        PatrolRobotAI[] robots = FindObjectsByType<PatrolRobotAI>(
+            FindObjectsInactive.Exclude,
+            FindObjectsSortMode.None);
+        PatrolRobotAI closestRobot = null;
+        float shortestPath = float.PositiveInfinity;
+        foreach (PatrolRobotAI robot in robots)
+        {
+            if (robot == null || !robot.enabled || !robot.gameObject.activeInHierarchy)
+                continue;
+            if (!robot.TryGetEmergencyPath(alarmPosition, out _, out float pathDistance))
+                continue;
+            if (pathDistance >= shortestPath)
+                continue;
+
+            shortestPath = pathDistance;
+            closestRobot = robot;
+        }
+
+        closestRobot?.ReceiveEmergencyAlarm(alarmPosition);
+        return closestRobot;
     }
 
     private static void BroadcastThreat(Vector3 terminalPosition, float alertRadius)

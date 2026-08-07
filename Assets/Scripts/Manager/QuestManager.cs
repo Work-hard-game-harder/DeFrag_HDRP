@@ -58,6 +58,14 @@ public class QuestManager : MonoBehaviour
         if (CurrentStep == null || IsWaitingForSubtitleReveal)
             return;
 
+        // 탈출/이동 목표처럼 씬 전환 자체가 완료인 단계는, 기존 트리거나
+        // 힌트가 진행 요청을 보내더라도 현재 씬에서 완료 처리하지 않습니다.
+        if (CurrentStep.persistUntilSceneChange)
+        {
+            Debug.Log($"씬 전환까지 유지되는 퀘스트입니다: {CurrentStep.questTitle}");
+            return;
+        }
+
         CurrentStep.currentCount += amount;
         Debug.Log($"퀘스트 진행 중: {CurrentStep.questTitle} ({CurrentStep.currentCount}/{CurrentStep.targetCount})");
 

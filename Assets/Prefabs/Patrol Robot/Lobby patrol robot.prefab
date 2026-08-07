@@ -393,6 +393,8 @@ MonoBehaviour:
   patrolSpeed: 3.5
   chaseSpeed: 5.5
   lostSightGraceTime: 3
+  emergencyChaseSpeedMultiplier: 2
+  emergencyResponseTimeout: 30
   patrolRadius: 300
   minPatrolDistance: 20
   visionLight: {fileID: 4148769906474690142}

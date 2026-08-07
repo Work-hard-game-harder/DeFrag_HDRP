@@ -56,6 +56,9 @@ public class PlayerItemDropper : MonoBehaviour
 
     private void Update()
     {
+        if (GameplayInputGate.IsBlocked)
+            return;
+
         if (Keyboard.current == null || inventoryUI == null) return;
 
         if (Keyboard.current.gKey.wasPressedThisFrame)

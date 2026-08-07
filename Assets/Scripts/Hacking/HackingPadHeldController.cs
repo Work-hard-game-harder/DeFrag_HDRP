@@ -32,6 +32,9 @@ public sealed class HackingPadHeldController : MonoBehaviour
 
     private void Update()
     {
+        if (GameplayInputGate.IsBlocked)
+            return;
+
         if (!focusLocked)
             IsInspecting = Input.GetMouseButton(1);
 

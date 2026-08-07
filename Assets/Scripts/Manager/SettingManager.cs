@@ -230,7 +230,8 @@ public class SettingManager : MonoBehaviour
 
 
         // 다른 씬에서는 ESC 입력 처리
-        if (Input.GetKeyDown(KeyCode.Escape) && PausePanel != null)
+        if (!GameplayInputGate.SuppressPauseEscape &&
+            Input.GetKeyDown(KeyCode.Escape) && PausePanel != null)
             SetPausePanelState(!PausePanel.activeSelf);
     }
 

@@ -30,7 +30,8 @@ namespace DeFrag.Player
 
         private void Update()
         {
-            if (CanReadLocalInput && !SettingManager.IsGamePaused && Input.GetKeyDown(toggleKey))
+            if (CanReadLocalInput && !SettingManager.IsGamePaused &&
+                !GameplayInputGate.IsBlocked && Input.GetKeyDown(toggleKey))
                 SetState(!IsOn);
         }
 

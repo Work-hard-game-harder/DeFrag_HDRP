@@ -64,6 +64,9 @@ namespace EasyPeasyFirstPersonController
 
         private void Update()
         {
+            if (GameplayInputGate.IsBlocked)
+                return;
+
             if (!CanReadLocalInput)
                 return;
 
