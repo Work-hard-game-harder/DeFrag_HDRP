@@ -130,7 +130,7 @@ public sealed class EquipmentController : MonoBehaviour
     private Transform handPoint;
     private ItemData equippedData;
     private GameObject heldVisual;
-    private FirstPersonController playerController;
+    private WalkieTalkieController walkieTalkieController;
     private CameraBattery cameraBattery;
     private CameraViewSwitcher cameraViewSwitcher;
 
@@ -139,7 +139,7 @@ public sealed class EquipmentController : MonoBehaviour
 
     private void Awake()
     {
-        playerController = transform.root.GetComponentInChildren<FirstPersonController>(true);
+        walkieTalkieController = transform.root.GetComponentInChildren<WalkieTalkieController>(true);
         cameraBattery = GetComponent<CameraBattery>();
         EnsureHandPoint(transform);
     }
@@ -148,10 +148,8 @@ public sealed class EquipmentController : MonoBehaviour
     {
         if (heldVisual == null) return;
 
-        bool walkieTalkieVisible = playerController != null &&
-            (playerController.walkieTalkieController != null
-                ? playerController.walkieTalkieController.IsEquipped
-                : playerController.wakieTakie != null && playerController.wakieTakie.activeSelf);
+        bool walkieTalkieVisible = walkieTalkieController != null &&
+                                   walkieTalkieController.IsEquipped;
 
         if (heldVisual.activeSelf == walkieTalkieVisible)
             heldVisual.SetActive(!walkieTalkieVisible);
@@ -160,7 +158,7 @@ public sealed class EquipmentController : MonoBehaviour
     public void Configure(InventoryUI ui, Transform cameraTransform)
     {
         inventoryUI = ui;
-        playerController = cameraTransform.root.GetComponentInChildren<FirstPersonController>(true);
+        walkieTalkieController = cameraTransform.root.GetComponentInChildren<WalkieTalkieController>(true);
         cameraViewSwitcher = cameraTransform.root.GetComponentInChildren<CameraViewSwitcher>(true);
         cameraViewSwitcher?.BindBattery(cameraBattery);
         EnsureHandPoint(cameraTransform);

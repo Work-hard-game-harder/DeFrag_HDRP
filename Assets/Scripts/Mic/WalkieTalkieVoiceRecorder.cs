@@ -95,7 +95,8 @@ public sealed class WalkieTalkieVoiceRecorder : MonoBehaviour
 
     private void BeginRecording()
     {
-        if (isRecording)
+        if (isRecording || walkieTalkieController == null ||
+            !walkieTalkieController.IsLocalOwner)
             return;
 
         if (soundEmitter == null)

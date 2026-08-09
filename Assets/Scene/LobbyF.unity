@@ -10032,17 +10032,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2356460683572222620, guid: 6e2477ebacb9b8c47816f3edbdf5ba08, type: 3}
   m_PrefabInstance: {fileID: 1125645528}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1298191147 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 231487829888649759, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
-  m_PrefabInstance: {fileID: 183496742}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2922308556bc98e4898cb3309250e781, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1315114308
 GameObject:
   m_ObjectHideFlags: 0
@@ -30734,22 +30723,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WorldQuestItem
   itemName: "\uBB34\uC804\uAE30"
   isHoldInteraction: 0
+  grantsWalkieTalkie: 1
   onInteractEvent:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1298191147}
-        m_TargetAssemblyTypeName: EasyPeasyFirstPersonController.FirstPersonController,
-          Assembly-CSharp
-        m_MethodName: PickUpWakieTakie
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
       - m_Target: {fileID: 6847688264487602554}
         m_TargetAssemblyTypeName: SubtitleTrigger, Assembly-CSharp
         m_MethodName: PlaySubtitleFromInteract
@@ -38533,7 +38510,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &7683991503915512352
 MonoBehaviour:
   m_ObjectHideFlags: 0

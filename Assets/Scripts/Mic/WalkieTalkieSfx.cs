@@ -37,7 +37,7 @@ public sealed class WalkieTalkieSfx : MonoBehaviour
 
     private void Start()
     {
-        // FirstPersonController may add WalkieTalkieController during Awake,
+        // The player prefab may initialize WalkieTalkieController during Awake,
         // so bind after every component has completed Awake.
         TryBind();
     }

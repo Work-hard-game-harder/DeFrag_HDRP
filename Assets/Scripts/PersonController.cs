@@ -65,6 +65,13 @@ namespace StarterAssets
         [Tooltip("What layers the character uses as ground")]
         public LayerMask GroundLayers;
 
+        [Header("Player Crouching")]
+        [SerializeField, Min(0.1f)] private float CrouchSpeed = 1.5f;
+        [SerializeField, Min(0.1f)] private float CrouchingHeight = 1.0f;
+        [SerializeField, Min(0f)] private float CrouchingCameraHeight = 0.9f;
+        [SerializeField, Min(0.1f)] private float PostureTransitionSpeed = 10f;
+        [SerializeField] private string CrouchActionName = "Crouch";
+
         [Header("Cinemachine")]
         [Tooltip("The follow target set in the Cinemachine Virtual Camera that the camera will follow")]
         public GameObject CinemachineCameraTarget;
@@ -106,6 +113,9 @@ namespace StarterAssets
 #if ENABLE_INPUT_SYSTEM 
         private PlayerInput _playerInput;
 #endif
+#if ENABLE_INPUT_SYSTEM
+        private InputAction _crouchAction;
+#endif
         private Animator _animator;
         private CharacterController _controller;
         private StarterAssetsInputs _input;
@@ -116,6 +126,26 @@ namespace StarterAssets
 
         private bool _hasAnimator;
         private SoundEmitter _soundEmitter;
+        private float _standingControllerHeight;
+        private Vector3 _standingControllerCenter;
+        private float _standingCameraHeight;
+        private bool _localIsCrouching;
+        private bool _localIsHiding;
+        private bool _hidingRequested;
+
+        private readonly NetworkVariable<bool> _networkIsCrouching = new(
+            false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+        private readonly NetworkVariable<bool> _networkIsHiding = new(
+            false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+        public bool IsCrouching => !IsSpawned || IsOwner
+            ? _localIsCrouching
+            : _networkIsCrouching.Value;
+        public bool isCrouching => IsCrouching;
+        public bool IsHiding => !IsSpawned || IsOwner
+            ? _localIsHiding
+            : _networkIsHiding.Value;
+        public bool IsSubtitleLocked => GameState.isCutscene;
 
         private bool IsCurrentDeviceMouse
         {
@@ -146,8 +176,15 @@ namespace StarterAssets
             _hasAnimator = TryGetComponent(out _animator);
             _controller = GetComponent<CharacterController>();
             _input = GetComponent<StarterAssetsInputs>();
+            _standingControllerHeight = _controller.height;
+            _standingControllerCenter = _controller.center;
+            if (CinemachineCameraTarget != null)
+                _standingCameraHeight = CinemachineCameraTarget.transform.localPosition.y;
 #if ENABLE_INPUT_SYSTEM 
             _playerInput = GetComponent<PlayerInput>();
+            _crouchAction = _playerInput != null && _playerInput.actions != null
+                ? _playerInput.actions.FindAction(CrouchActionName, false)
+                : null;
 #else
 			Debug.LogError( "Starter Assets package is missing dependencies. Please use Tools/Starter Assets/Reinstall Dependencies to fix it");
 #endif
@@ -167,13 +204,14 @@ namespace StarterAssets
             // if (SceneManager.GetActiveScene().name == "LobbyScene") return;
 
             // 내 화면에 생성된 다른 사람의 캐릭터라면 여기서 조작 로직 통과 차단
-            if (!IsOwner) return;
+            if (IsSpawned && !IsOwner) return;
 
             _hasAnimator = TryGetComponent(out _animator);
 
-            JumpAndGravity();
             GroundedCheck();
-            Move();
+            UpdatePosture();
+            JumpAndGravity(IsSubtitleLocked);
+            Move(IsSubtitleLocked);
         }
 
         private void LateUpdate()
@@ -181,7 +219,7 @@ namespace StarterAssets
             // 마우스 움직임에 따라 시야 회전 로직도 차단
             // if (SceneManager.GetActiveScene().name == "LobbyScene") return;
             // 다른 사람 캐릭터의 카메라는 내가 마우스를 돌려도 안 움직이게 차단
-            if (!IsOwner) return;
+            if ((IsSpawned && !IsOwner) || IsSubtitleLocked) return;
             CameraRotation();
         }
 
@@ -239,12 +277,13 @@ namespace StarterAssets
             }
         }
 
-        private void Move()
+        private void Move(bool movementLocked)
         {
+            Vector2 movementInput = movementLocked ? Vector2.zero : _input.move;
             // 입력에 따른 가속/감속 목표 속도 설정
-            float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
+            float targetSpeed = _localIsCrouching ? CrouchSpeed : (_input.sprint ? SprintSpeed : MoveSpeed);
 
-            if (_input.move == Vector2.zero) targetSpeed = 0.0f;
+            if (movementInput == Vector2.zero) targetSpeed = 0.0f;
 
             // 현재 가로 방향 속도 계산
             float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
@@ -271,7 +310,7 @@ namespace StarterAssets
             if (_animationBlend < 0.01f) _animationBlend = 0f;
 
             // 카메라 뱡향 기준이 아닌 내 몸통 기준으로 이동 방향 결정
-            Vector3 targetDirection = transform.forward * _input.move.y + transform.right * _input.move.x;
+            Vector3 targetDirection = transform.forward * movementInput.y + transform.right * movementInput.x;
 
             // 플레이어 최종 이동 컴포넌트 호출
             _controller.Move(targetDirection.normalized * (_speed * Time.deltaTime) +
@@ -285,7 +324,7 @@ namespace StarterAssets
             }
         }
 
-        private void JumpAndGravity()
+        private void JumpAndGravity(bool jumpLocked)
         {
             if (Grounded)
             {
@@ -306,7 +345,7 @@ namespace StarterAssets
                 }
 
                 // Jump
-                if (_input.jump && _jumpTimeoutDelta <= 0.0f)
+                if (!jumpLocked && !_localIsCrouching && _input.jump && _jumpTimeoutDelta <= 0.0f)
                 {
                     // the square root of H * -2 * G = how much velocity needed to reach desired height
                     _verticalVelocity = Mathf.Sqrt(JumpHeight * -2f * Gravity);
@@ -348,9 +387,108 @@ namespace StarterAssets
             }
 
             // apply gravity over time if under terminal (multiply by delta time twice to linearly speed up over time)
-            if (_verticalVelocity < _terminalVelocity)
+            if (_verticalVelocity < _terminalVelocity)
             {
                 _verticalVelocity += Gravity * Time.deltaTime;
+            }
+        }
+
+        private void UpdatePosture()
+        {
+            bool crouchPressed = ReadCrouchInput();
+            bool wantsToCrouch = !IsSubtitleLocked && (crouchPressed || _hidingRequested);
+
+            bool hiding = wantsToCrouch && _hidingRequested;
+            SetLocalPosture(wantsToCrouch, hiding);
+
+            float targetHeight = wantsToCrouch ? CrouchingHeight : _standingControllerHeight;
+            Vector3 targetCenter = wantsToCrouch
+                ? new Vector3(_standingControllerCenter.x, targetHeight * 0.5f, _standingControllerCenter.z)
+                : _standingControllerCenter;
+
+            _controller.height = Mathf.MoveTowards(
+                _controller.height, targetHeight, PostureTransitionSpeed * Time.deltaTime);
+            _controller.center = Vector3.MoveTowards(
+                _controller.center, targetCenter, PostureTransitionSpeed * Time.deltaTime);
+
+            if (CinemachineCameraTarget != null)
+            {
+                Transform cameraTarget = CinemachineCameraTarget.transform;
+                Vector3 localPosition = cameraTarget.localPosition;
+                float targetCameraY = wantsToCrouch ? CrouchingCameraHeight : _standingCameraHeight;
+                localPosition.y = Mathf.MoveTowards(
+                    localPosition.y, targetCameraY, PostureTransitionSpeed * Time.deltaTime);
+                cameraTarget.localPosition = localPosition;
+            }
+        }
+
+        private bool ReadCrouchInput()
+        {
+#if ENABLE_INPUT_SYSTEM
+            if (_crouchAction != null)
+            {
+                bool isPressed = _crouchAction.IsPressed();
+                if (_input.crouch != isPressed)
+                    _input.CrouchInput(isPressed);
+
+                return isPressed;
+            }
+#endif
+            return _input.crouch;
+        }
+
+        /// <summary>
+        /// 숨기 오브젝트가 플레이어를 완전히 숨길 때 호출하는 공용 진입점입니다.
+        /// 자세 표현은 소유 플레이어가 담당하고 판정 값은 서버에서 동기화합니다.
+        /// </summary>
+        public void SetHiding(bool hiding)
+        {
+            if (IsSpawned && !IsOwner)
+                return;
+
+            _hidingRequested = hiding;
+            SetLocalPosture(hiding || _localIsCrouching, hiding);
+        }
+
+        private void SetLocalPosture(bool crouching, bool hiding)
+        {
+            hiding &= crouching;
+            if (_localIsCrouching == crouching && _localIsHiding == hiding)
+                return;
+
+            _localIsCrouching = crouching;
+            _localIsHiding = hiding;
+
+            if (!IsSpawned)
+                return;
+
+            if (IsServer)
+                ApplyServerPosture(crouching, hiding);
+            else
+                SetPostureServerRpc(crouching, hiding);
+        }
+
+        [ServerRpc]
+        private void SetPostureServerRpc(bool crouching, bool hiding)
+        {
+            ApplyServerPosture(crouching, hiding);
+        }
+
+        private void ApplyServerPosture(bool crouching, bool hiding)
+        {
+            _networkIsCrouching.Value = crouching;
+            _networkIsHiding.Value = crouching && hiding;
+
+            // 클라이언트 소유 캐릭터도 서버의 실제 충돌 크기는 서버 권한 상태와 맞춰야 합니다.
+            if (!IsOwner && _controller != null)
+            {
+                _controller.height = crouching ? CrouchingHeight : _standingControllerHeight;
+                _controller.center = crouching
+                    ? new Vector3(
+                        _standingControllerCenter.x,
+                        CrouchingHeight * 0.5f,
+                        _standingControllerCenter.z)
+                    : _standingControllerCenter;
             }
         }
 

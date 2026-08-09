@@ -36,14 +36,14 @@ public class PlayerItemDropper : MonoBehaviour
     [SerializeField] private float ignorePlayerCollisionTime = 0.4f;
 
     private Collider[] playerColliders;
-    private FirstPersonController playerController;
+    private WalkieTalkieController walkieTalkieController;
 
     private void Awake()
     {
         if (dropOrigin == null) dropOrigin = Camera.main != null ? Camera.main.transform : transform;
         if (inventoryUI == null) inventoryUI = FindAnyObjectByType<InventoryUI>();
         playerColliders = transform.root.GetComponentsInChildren<Collider>(true);
-        playerController = transform.root.GetComponentInChildren<FirstPersonController>(true);
+        walkieTalkieController = transform.root.GetComponentInChildren<WalkieTalkieController>(true);
     }
 
     public void Configure(InventoryUI ui, Transform origin)
@@ -51,7 +51,7 @@ public class PlayerItemDropper : MonoBehaviour
         inventoryUI = ui;
         if (origin != null) dropOrigin = origin;
         playerColliders = transform.root.GetComponentsInChildren<Collider>(true);
-        playerController = transform.root.GetComponentInChildren<FirstPersonController>(true);
+        walkieTalkieController = transform.root.GetComponentInChildren<WalkieTalkieController>(true);
     }
 
     private void Update()
@@ -69,13 +69,10 @@ public class PlayerItemDropper : MonoBehaviour
 
     private bool HasWalkieTalkie()
     {
-        if (playerController == null)
-            playerController = transform.root.GetComponentInChildren<FirstPersonController>(true);
+        if (walkieTalkieController == null)
+            walkieTalkieController = transform.root.GetComponentInChildren<WalkieTalkieController>(true);
 
-        return playerController != null &&
-               (playerController.walkieTalkieController != null
-                   ? playerController.walkieTalkieController.HasWalkieTalkie
-                   : playerController.hasWakieTakie);
+        return walkieTalkieController != null && walkieTalkieController.HasWalkieTalkie;
     }
 
     private void SpawnSelectedItem(bool shouldThrow)

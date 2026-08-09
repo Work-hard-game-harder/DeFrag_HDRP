@@ -549,9 +549,9 @@ public class SettingManager : MonoBehaviour
     private void ConnectPlayerVoiceSources()
     {
         // 씬 프리팹 오버라이드나 네트워크 스폰 여부와 관계없이 녹음기를 보장합니다.
-        EasyPeasyFirstPersonController.FirstPersonController[] controllers =
-            FindObjectsByType<EasyPeasyFirstPersonController.FirstPersonController>(FindObjectsInactive.Include);
-        foreach (EasyPeasyFirstPersonController.FirstPersonController controller in controllers)
+        EasyPeasyFirstPersonController.WalkieTalkieController[] controllers =
+            FindObjectsByType<EasyPeasyFirstPersonController.WalkieTalkieController>(FindObjectsInactive.Include);
+        foreach (EasyPeasyFirstPersonController.WalkieTalkieController controller in controllers)
         {
             if (controller.GetComponent<WalkieTalkieVoiceRecorder>() == null)
                 controller.gameObject.AddComponent<WalkieTalkieVoiceRecorder>();

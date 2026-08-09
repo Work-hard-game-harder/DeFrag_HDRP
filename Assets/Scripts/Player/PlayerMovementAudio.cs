@@ -32,13 +32,13 @@ namespace DeFrag.Player
         [Min(0.01f)] [SerializeField] private float exhaustionMaximumDuration = 5f;
 
         private PlayerStamina stamina;
-        private FirstPersonController movement;
+        private StarterAssets.PersonController movement;
         private Coroutine exhaustionStopRoutine;
 
         private void Awake()
         {
             stamina = GetComponent<PlayerStamina>();
-            movement = GetComponent<FirstPersonController>();
+            movement = GetComponent<StarterAssets.PersonController>();
             EnsureAudioSources();
         }
 
@@ -60,7 +60,7 @@ namespace DeFrag.Player
 
         public void PlayFootstep()
         {
-            if (!movement.isGrounded)
+            if (movement == null || !movement.Grounded)
                 return;
 
             bool running = stamina.IsSprinting;

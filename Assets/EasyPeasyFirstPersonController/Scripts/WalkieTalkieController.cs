@@ -19,6 +19,10 @@ namespace EasyPeasyFirstPersonController
 
         [Header("References")]
         [SerializeField] private GameObject walkieTalkieVisual;
+        [Tooltip("네트워크 플레이어처럼 프리팹 내부에 1인칭 모델이 없을 때 소유자에게만 생성할 프리팹입니다.")]
+        [SerializeField] private GameObject walkieTalkieVisualPrefab;
+        [Tooltip("생성된 1인칭 워키토키 모델의 부모입니다. 비어 있으면 소유자 카메라를 사용합니다.")]
+        [SerializeField] private Transform visualParent;
         [SerializeField] private GameObject pickupHint;
         [SerializeField] private Animator walkieTalkieAnimator;
         [SerializeField] private SoundEmitter soundEmitter;
@@ -43,7 +47,6 @@ namespace EasyPeasyFirstPersonController
         public bool IsTransmitting { get; private set; }
         public bool IsLocalOwner => CanReadLocalInput;
 
-        private FirstPersonController playerController;
         private NetworkObject networkObject;
         private int talkingParameterId;
         private int playbackSpeedParameterId;
@@ -53,13 +56,19 @@ namespace EasyPeasyFirstPersonController
 
         private void Awake()
         {
-            playerController = GetComponent<FirstPersonController>();
             networkObject = GetComponentInParent<NetworkObject>();
             CacheAnimationParameters();
             ResolveReferences();
 
             HasWalkieTalkie = startsWithWalkieTalkie;
             SetEquipped(startsWithWalkieTalkie && startsEquipped);
+        }
+
+        private void Start()
+        {
+            EnsureLocalVisual();
+            ResolveReferences();
+            ApplyEquippedPresentation();
         }
 
         private void Update()
@@ -96,13 +105,11 @@ namespace EasyPeasyFirstPersonController
         }
 
         public void Configure(
-            FirstPersonController controller,
             GameObject visual,
             GameObject hint,
             Animator animator,
             bool hasWalkieTalkie)
         {
-            playerController = controller != null ? controller : playerController;
             if (visual != null) walkieTalkieVisual = visual;
             if (hint != null) pickupHint = hint;
             if (animator != null) walkieTalkieAnimator = animator;
@@ -125,8 +132,8 @@ namespace EasyPeasyFirstPersonController
             HasWalkieTalkie = hasWalkieTalkie;
             startsWithWalkieTalkie = hasWalkieTalkie;
 
-            if (playerController != null)
-                playerController.hasWakieTakie = hasWalkieTalkie;
+            if (hasWalkieTalkie)
+                EnsureLocalVisual();
 
             if (pickupHint != null)
                 pickupHint.SetActive(hasWalkieTalkie && showPickupHint);
@@ -205,6 +212,42 @@ namespace EasyPeasyFirstPersonController
 
             if (micVolumeUI == null && CanReadLocalInput)
                 micVolumeUI = FindAnyObjectByType<MicVolumeUI>();
+        }
+
+        private void EnsureLocalVisual()
+        {
+            if (walkieTalkieVisual != null || walkieTalkieVisualPrefab == null || !CanReadLocalInput)
+                return;
+
+            Transform parent = visualParent;
+            if (parent == null)
+            {
+                Camera ownerCamera = GetComponentInChildren<Camera>(true);
+                if (ownerCamera != null)
+                    parent = ownerCamera.transform;
+            }
+
+            if (parent == null)
+                return;
+
+            walkieTalkieVisual = Instantiate(walkieTalkieVisualPrefab, parent, false);
+            walkieTalkieVisual.name = walkieTalkieVisualPrefab.name;
+            SetLayerRecursively(walkieTalkieVisual, LayerMask.NameToLayer("Ignore Raycast"));
+
+            foreach (Collider visualCollider in walkieTalkieVisual.GetComponentsInChildren<Collider>(true))
+                visualCollider.enabled = false;
+
+            walkieTalkieVisual.SetActive(false);
+            walkieTalkieAnimator = walkieTalkieVisual.GetComponentInChildren<Animator>(true);
+        }
+
+        private static void SetLayerRecursively(GameObject root, int layer)
+        {
+            if (root == null || layer < 0)
+                return;
+
+            foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
+                child.gameObject.layer = layer;
         }
 
         private void CacheAnimationParameters()

@@ -9,7 +9,7 @@ using UnityEngine.UI;
 /// </summary>
 public sealed class HackingSessionController : MonoBehaviour
 {
-    private FirstPersonController movement;
+    private StarterAssets.PersonController movement;
     private PlayerInteraction interaction;
     private InventoryUI inventoryUI;
     private PlayerItemDropper itemDropper;
@@ -77,7 +77,7 @@ public sealed class HackingSessionController : MonoBehaviour
     private void CacheLocalPlayerComponents()
     {
         Transform playerRoot = transform.root;
-        movement = playerRoot.GetComponentInChildren<FirstPersonController>(true);
+        movement = playerRoot.GetComponentInChildren<StarterAssets.PersonController>(true);
         interaction = playerRoot.GetComponentInChildren<PlayerInteraction>(true);
         inventoryUI = FindAnyObjectByType<InventoryUI>();
         itemDropper = GetComponent<PlayerItemDropper>();

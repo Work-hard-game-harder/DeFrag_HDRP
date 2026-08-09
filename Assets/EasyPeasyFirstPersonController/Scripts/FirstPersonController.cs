@@ -139,7 +139,6 @@ namespace EasyPeasyFirstPersonController
                 walkieTalkieController = gameObject.AddComponent<WalkieTalkieController>();
 
             walkieTalkieController.Configure(
-                this,
                 wakieTakie,
                 wakieTakieSubscrition,
                 wakieTakieAnimator,

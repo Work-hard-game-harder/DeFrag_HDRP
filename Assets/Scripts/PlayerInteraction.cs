@@ -252,7 +252,6 @@ public class PlayerInteraction : MonoBehaviour
         TogglePlayerControl(false);
         activeSequence = presentation;
 
-        LockBehaviour(GetComponentInParent<FirstPersonController>(true));
         LockBehaviour(GetComponentInParent<StarterAssets.PersonController>(true));
 
         foreach (Behaviour behaviour in additionalSequenceInputBehaviours)

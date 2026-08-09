@@ -11,7 +11,7 @@ namespace DeFrag.B1F
         private PlayerInteraction playerInteraction;
         private Camera playerCamera;
         private Camera interactionCamera;
-        private FirstPersonController movement;
+        private StarterAssets.PersonController movement;
         private CameraViewSwitcher viewSwitcher;
         private AudioListener interactionAudioListener;
         private bool originalPlayerCameraEnabled;
@@ -43,7 +43,7 @@ namespace DeFrag.B1F
             playerCamera = localPlayerCamera;
             interactionCamera = boxCamera;
             interactionDistance = rayDistance;
-            movement = player.GetComponentInParent<FirstPersonController>(true);
+            movement = player.GetComponentInParent<StarterAssets.PersonController>(true);
             viewSwitcher = player.GetComponentInParent<CameraViewSwitcher>(true);
             interactionAudioListener = interactionCamera.GetComponent<AudioListener>();
 

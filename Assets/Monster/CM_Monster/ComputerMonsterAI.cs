@@ -352,16 +352,16 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
     // 플레이어 숨기 상태 체크
     bool IsPlayerHiding()
     {
-        // IsHiding bool은 정지한 Crouching 상태에서도 true가 되므로 사용하지 않습니다.
-        // 실제 테이블/숨기 장소 상태인 PlayerHidingState만 완전 은신으로 처리합니다.
-        FirstPersonController playerController = player.GetComponentInParent<FirstPersonController>();
-        return playerController != null && playerController.CurrentState is PlayerHidingState;
+        StarterAssets.PersonController playerController =
+            player.GetComponentInParent<StarterAssets.PersonController>();
+        return playerController != null && playerController.IsHiding;
     }
 
     bool IsPlayerCrouching()
     {
-        FirstPersonController playerController = player.GetComponentInParent<FirstPersonController>();
-        return playerController != null && playerController.CurrentState is PlayerCrouchingState;
+        StarterAssets.PersonController playerController =
+            player.GetComponentInParent<StarterAssets.PersonController>();
+        return playerController != null && playerController.IsCrouching;
     }
 
     bool ShouldIgnoreVisiblePlayer(float distToPlayer)
