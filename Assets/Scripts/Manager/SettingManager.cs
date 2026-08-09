@@ -573,7 +573,7 @@ public class SettingManager : MonoBehaviour
     private void InitDisplayModeDropdown()
     {
         if (displayModeDropdown == null) return;
-        List<string> options = new List<string> { "Full Screen", "Window Screen" };
+        List<string> options = new List<string> { "전체 화면", "창 모드" };
         displayModeDropdown.ClearOptions();
         displayModeDropdown.AddOptions(options);
         DisplayModeIndex = PlayerPrefs.GetInt(KEY_DISPLAY_MODE, DEFAULT_DISPLAY_MODE);

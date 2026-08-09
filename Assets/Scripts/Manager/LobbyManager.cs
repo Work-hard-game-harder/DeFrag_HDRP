@@ -32,6 +32,7 @@ public sealed class LobbyManager : MonoBehaviour
     [SerializeField] private string lobbySceneName = "LobbyScene";
     [SerializeField] private string gameplaySceneName = "B5F";
     [SerializeField] private string transportFailureSceneName = "MainLobby";
+    [SerializeField] private GameObject warningText;    
 
     [Header("Network Prefabs")]
     [SerializeField] private GameObject lobbyAvatarPrefab;
@@ -62,6 +63,7 @@ public sealed class LobbyManager : MonoBehaviour
 
     private void OnEnable()
     {
+        warningText.SetActive(false);
         if (joinCodeInput != null)
         {
             joinCodeInput.onSubmit.AddListener(HandleJoinCodeSubmitted);
@@ -148,6 +150,8 @@ public sealed class LobbyManager : MonoBehaviour
 
         if (!IsValidJoinCode(joinCode))
         {
+            AudioManager.Instance.PlaySFX("WrongNumber");
+            warningText.SetActive(true);
             Debug.LogWarning("올바른 Relay 참가 코드를 입력하세요. 코드를 복사할 때 문자가 바뀌지 않았는지 확인하세요.");
             joinCodeInput?.ActivateInputField();
             return;
