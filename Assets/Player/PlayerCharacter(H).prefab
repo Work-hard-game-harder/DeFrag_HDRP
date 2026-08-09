@@ -2645,16 +2645,17 @@ GameObject:
   - component: {fileID: 6730870902330787505}
   - component: {fileID: 3507045698917650693}
   - component: {fileID: 8981397236343574808}
-  - component: {fileID: 2167304961188310751}
   - component: {fileID: 5026559601196946210}
   - component: {fileID: 5745487489445018000}
+  - component: {fileID: 2167304961188310751}
   - component: {fileID: 1095481969773090955}
   - component: {fileID: 949082781300913998}
   - component: {fileID: 5276715667392532125}
   - component: {fileID: 7349012846091223101}
   - component: {fileID: 7349012846091223102}
   - component: {fileID: 7349012846091223103}
-  m_Layer: 0
+  - component: {fileID: 7349012846091223104}
+  m_Layer: 7
   m_Name: PlayerCharacter(H)
   m_TagString: Player
   m_Icon: {fileID: 0}
@@ -2855,25 +2856,6 @@ MonoBehaviour:
   m_DefaultActionMap: Player
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 7146755445071539165}
---- !u!114 &2167304961188310751
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8628133643110585351}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e087ecce43ebbff45a1b360637807d93, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::StarterAssets.StarterAssetsInputs
-  move: {x: 0, y: 0}
-  look: {x: 0, y: 0}
-  jump: 0
-  sprint: 0
-  analogMovement: 0
-  cursorLocked: 1
-  cursorInputForLook: 1
 --- !u!114 &5026559601196946210
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2938,6 +2920,25 @@ MonoBehaviour:
   BottomClamp: -30
   CameraAngleOverride: 0
   LockCameraPosition: 0
+--- !u!114 &2167304961188310751
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8628133643110585351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e087ecce43ebbff45a1b360637807d93, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StarterAssets.StarterAssetsInputs
+  move: {x: 0, y: 0}
+  look: {x: 0, y: 0}
+  jump: 0
+  sprint: 0
+  analogMovement: 0
+  cursorLocked: 1
+  cursorInputForLook: 1
 --- !u!114 &1095481969773090955
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3089,6 +3090,25 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 8192
   applyAsLocalWhenNotNetworkSpawned: 0
+--- !u!114 &7349012846091223104
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8628133643110585351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29c69481b9941a44d8251158a0965e11, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  soundBaseRange: 15
+  soundRangeMultiplier: 10
+  micSensitivity: 100
+  noiseThreshold: 0.01
+  listenContinuously: 1
+  networkPublishInterval: 0.1
+  networkSilenceTimeout: 0.35
 --- !u!1 &8846232740498023747
 GameObject:
   m_ObjectHideFlags: 0

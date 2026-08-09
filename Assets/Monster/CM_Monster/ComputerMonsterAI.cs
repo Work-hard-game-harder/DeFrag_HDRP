@@ -1,12 +1,13 @@
 ﻿using EasyPeasyFirstPersonController;
 using DeFrag.Monsters.Common;
 using DeFrag.Combat;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(MonsterAttackHitbox))]
-public class MonsterAI : MonoBehaviour
+public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
 {
     public enum MonsterState { Idle, Search, Chase, Attack, Investigate, Missing }
     public MonsterState currentState = MonsterState.Search;
@@ -102,6 +103,7 @@ public class MonsterAI : MonoBehaviour
     private int preparedFrame = -1;
     private bool initialized;
     private float attackCycleStartedAt;
+    private NetworkMonsterPlayerTargetResolver targetResolver;
 
     public MonsterState CurrentState => currentState;
     public bool UsesBehaviorDesigner => useBehaviorDesigner;
@@ -109,6 +111,18 @@ public class MonsterAI : MonoBehaviour
     public void SetBehaviorDesignerEnabled(bool enabled)
     {
         useBehaviorDesigner = enabled;
+    }
+
+    public void SetPlayerTarget(Transform target)
+    {
+        if (player == target)
+            return;
+
+        player = target;
+        preparedFrame = -1;
+
+        if (target != null && initialized)
+            lastKnownPlayerPos = target.position;
     }
 
     public bool HasSimulationAuthority
@@ -124,6 +138,10 @@ public class MonsterAI : MonoBehaviour
 
     private void Awake()
     {
+        targetResolver = GetComponent<NetworkMonsterPlayerTargetResolver>();
+        if (targetResolver == null)
+            targetResolver = gameObject.AddComponent<NetworkMonsterPlayerTargetResolver>();
+
         attackHitbox = attackHitbox != null
             ? attackHitbox
             : GetComponent<MonsterAttackHitbox>();
@@ -168,7 +186,11 @@ public class MonsterAI : MonoBehaviour
         if (useBehaviorDesigner)
             return;
 
-        if (!initialized || !HasSimulationAuthority || player == null || agent == null || !agent.isOnNavMesh)
+        if (!initialized || !HasSimulationAuthority || agent == null || !agent.isOnNavMesh)
+            return;
+
+        RefreshNetworkPlayerTarget();
+        if (player == null)
             return;
 
         PrepareBehaviorFrame();
@@ -181,7 +203,11 @@ public class MonsterAI : MonoBehaviour
     /// </summary>
     public bool TickBehaviorState(MonsterState state)
     {
-        if (!initialized || !HasSimulationAuthority || player == null || agent == null || !agent.isOnNavMesh)
+        if (!initialized || !HasSimulationAuthority || agent == null || !agent.isOnNavMesh)
+            return false;
+
+        RefreshNetworkPlayerTarget();
+        if (player == null)
             return false;
 
         PrepareBehaviorFrame();
@@ -213,6 +239,34 @@ public class MonsterAI : MonoBehaviour
         if (catchUpNavigator.TryCatchUp(transform.position, player.position, canCatchUpToPlayer))
             lastKnownPlayerPos = player.position;
         UpdateStateMachine(distToPlayer, hasTrackableVisual);
+    }
+
+    private void RefreshNetworkPlayerTarget()
+    {
+        NetworkManager manager = NetworkManager.Singleton;
+        if (targetResolver == null || manager == null || !manager.IsListening || !manager.IsServer)
+            return;
+
+        float visibilityRange = currentState == MonsterState.Investigate
+            ? Mathf.Max(chaseRange, searchRadius)
+            : chaseRange;
+
+        if (targetResolver.TryAcquireVisiblePlayer(
+                visibilityRange,
+                fieldOfView,
+                obstacleMask,
+                1f,
+                0f,
+                out Transform visiblePlayer))
+        {
+            SetPlayerTarget(visiblePlayer);
+            return;
+        }
+
+        // 시야에서 사라진 기존 대상은 LostPlayerTime 동안 유지합니다.
+        // 대상이 없거나 죽었을 때만 다음 생존 플레이어를 기준 대상으로 잡습니다.
+        if (player == null && targetResolver.TryAcquireNearestLivingPlayer(out Transform fallbackPlayer))
+            SetPlayerTarget(fallbackPlayer);
     }
 
     void UpdateStateMachine(float distToPlayer, bool hasTrackableVisual)

@@ -6,6 +6,7 @@ using BehaviorDesigner.Runtime;
 using BehaviorDesigner.Runtime.Tasks;
 using DeFrag.Monsters.B2F;
 using DeFrag.Monsters.B2F.BehaviorDesignerTasks;
+using DeFrag.Monsters.Common;
 using DeFrag.Monsters.Common.BehaviorDesignerTasks;
 using DeFrag.Combat;
 using UnityEditor;
@@ -96,6 +97,14 @@ namespace DeFrag.Monsters.B2F.Editor
             if (behaviorTree == null)
                 behaviorTree = recordUndo ? Undo.AddComponent<BehaviorTree>(monster) : monster.AddComponent<BehaviorTree>();
 
+            NetworkMonsterPlayerTargetResolver targetResolver =
+                monster.GetComponent<NetworkMonsterPlayerTargetResolver>();
+            if (targetResolver == null)
+            {
+                targetResolver = recordUndo
+                    ? Undo.AddComponent<NetworkMonsterPlayerTargetResolver>(monster)
+                    : monster.AddComponent<NetworkMonsterPlayerTargetResolver>();
+            }
             var serializedTree = new SerializedObject(behaviorTree);
             SerializedProperty restartWhenComplete = serializedTree.FindProperty("restartWhenComplete");
             if (restartWhenComplete != null)
@@ -106,6 +115,7 @@ namespace DeFrag.Monsters.B2F.Editor
 
             BehaviorSource source = behaviorTree.GetBehaviorSource();
             source.SetAllVariables(CreateVariables(source));
+            targetResolver.BindBehaviorTree(behaviorTree);
 
             SharedTransform playerTarget = Shared<SharedTransform>("PlayerTarget");
             SharedFloat attackRange = Shared<SharedFloat>("attackRange");
@@ -242,6 +252,8 @@ namespace DeFrag.Monsters.B2F.Editor
         {
             return new List<SharedVariable>
             {
+                // 단독 실행에서는 기존 Inspector 대상을 유지하고, 네트워크 서버에서는
+                // NetworkMonsterPlayerTargetResolver가 실제 PlayerObject로 교체합니다.
                 Variable(new SharedTransform { Value = GetValue<SharedTransform, Transform>(source, "PlayerTarget") }, "PlayerTarget"),
                 Variable(new SharedFloat { Value = GetValue(source, "attackRange", 1.5f) }, "attackRange"),
                 Variable(new SharedFloat { Value = GetMimicInterval(source, "mimicIntervalMin", 2f) }, "mimicIntervalMin"),

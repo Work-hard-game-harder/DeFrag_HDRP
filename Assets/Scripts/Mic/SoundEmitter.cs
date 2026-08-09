@@ -1,4 +1,5 @@
 using UnityEngine;
+using StarterAssets;
 
 namespace EasyPeasyFirstPersonController
 {
@@ -14,10 +15,19 @@ namespace EasyPeasyFirstPersonController
         [Tooltip("워키토키 사용 여부와 관계없이 플레이어 목소리를 계속 감지합니다.")]
         [SerializeField] private bool listenContinuously = true;
 
+        [Header("Network Voice Relay")]
+        [Tooltip("소유 클라이언트가 서버에 마이크 레벨을 전송하는 간격입니다.")]
+        [SerializeField, Min(0.05f)] private float networkPublishInterval = 0.1f;
+        [Tooltip("원격 음성 갱신이 끊겼을 때 서버가 음성을 비활성화하는 시간입니다.")]
+        [SerializeField, Min(0.1f)] private float networkSilenceTimeout = 0.35f;
+
         private AudioClip micInput;
         private string micDevice;
         private bool ownsMicrophoneCapture;
         private bool isWalkieTransmitting;
+        private PersonController networkController;
+        private float nextNetworkPublishTime;
+        private float lastNetworkVoiceUpdateTime;
 
         public bool IsMicActive { get; private set; }
         public float CurrentVolume { get; private set; }
@@ -30,6 +40,10 @@ namespace EasyPeasyFirstPersonController
 
         private void Start()
         {
+            networkController = GetComponentInParent<PersonController>();
+            if (!HasLocalMicrophoneAuthority())
+                return;
+
             InitializeMicrophone();
 
             // 일반 게임에서는 SettingManager의 지속 캡처 버퍼를 공유합니다.
@@ -40,17 +54,36 @@ namespace EasyPeasyFirstPersonController
 
         private void Update()
         {
-            if (TryUpdateFromManagedMicrophone())
+            if (!HasLocalMicrophoneAuthority())
+            {
+                ExpireStaleNetworkVoice();
                 return;
 
-            IsMicActive = ownsMicrophoneCapture &&
-                          !string.IsNullOrEmpty(micDevice) &&
-                          Microphone.IsRecording(micDevice);
+            }
 
-            if (IsMicActive)
-                UpdateOwnedMicrophoneVolume();
-            else
-                CurrentVolume = 0f;
+            if (!TryUpdateFromManagedMicrophone())
+            {
+                IsMicActive = ownsMicrophoneCapture &&
+                              !string.IsNullOrEmpty(micDevice) &&
+                              Microphone.IsRecording(micDevice);
+
+                if (IsMicActive)
+                    UpdateOwnedMicrophoneVolume();
+                else
+                    CurrentVolume = 0f;
+            }
+
+            PublishVoiceLevelToServer();
+        }
+
+        public void ApplyNetworkVoiceLevel(bool isActive, float normalizedVolume)
+        {
+            if (HasLocalMicrophoneAuthority())
+                return;
+
+            IsMicActive = isActive;
+            CurrentVolume = isActive ? Mathf.Clamp01(normalizedVolume) : 0f;
+            lastNetworkVoiceUpdateTime = Time.unscaledTime;
         }
 
         private void InitializeMicrophone()
@@ -138,6 +171,37 @@ namespace EasyPeasyFirstPersonController
             CurrentVolume = 0f;
         }
 
+        private bool HasLocalMicrophoneAuthority()
+        {
+            return networkController == null ||
+                   !networkController.IsSpawned ||
+                   networkController.IsOwner;
+        }
+
+        private void PublishVoiceLevelToServer()
+        {
+            if (networkController == null || !networkController.IsSpawned ||
+                !networkController.IsOwner || Time.unscaledTime < nextNetworkPublishTime)
+            {
+                return;
+            }
+
+            nextNetworkPublishTime = Time.unscaledTime + networkPublishInterval;
+            networkController.SubmitLocalVoiceLevel(IsMicActive, CurrentVolume);
+        }
+
+        private void ExpireStaleNetworkVoice()
+        {
+            if (networkController == null || !networkController.IsServer || !IsMicActive)
+                return;
+
+            if (Time.unscaledTime - lastNetworkVoiceUpdateTime < networkSilenceTimeout)
+                return;
+
+            IsMicActive = false;
+            CurrentVolume = 0f;
+        }
+
         private void UpdateOwnedMicrophoneVolume()
         {
             if (micInput == null)
@@ -162,6 +226,12 @@ namespace EasyPeasyFirstPersonController
         private void OnDisable()
         {
             StopOwnedMicrophone();
+        }
+
+        private void OnValidate()
+        {
+            networkPublishInterval = Mathf.Max(0.05f, networkPublishInterval);
+            networkSilenceTimeout = Mathf.Max(0.1f, networkSilenceTimeout);
         }
 
         private void OnDrawGizmos()

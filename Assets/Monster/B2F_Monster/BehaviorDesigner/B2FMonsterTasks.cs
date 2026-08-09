@@ -3,6 +3,7 @@ using BehaviorDesigner.Runtime.Tasks;
 using DeFrag.Monsters.B2F;
 using DeFrag.Monsters.Common;
 using DeFrag.Combat;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -13,6 +14,12 @@ namespace DeFrag.Monsters.B2F.BehaviorDesignerTasks
         public static bool HasSimulationAuthority()
         {
             return MonsterSimulationAuthority.HasServerAuthority();
+        }
+
+        public static bool HasActiveNetworkSession()
+        {
+            NetworkManager manager = NetworkManager.Singleton;
+            return manager != null && manager.IsListening;
         }
 
         public static bool IsAgentReady(NavMeshAgent agent)
@@ -43,8 +50,30 @@ namespace DeFrag.Monsters.B2F.BehaviorDesignerTasks
         public SharedTransform playerTarget;
         public SharedFloat attackRange = 1.5f;
 
+        private NetworkMonsterPlayerTargetResolver targetResolver;
+
+        public override void OnAwake()
+        {
+            targetResolver = GetComponent<NetworkMonsterPlayerTargetResolver>();
+        }
+
         public override TaskStatus OnUpdate()
         {
+            if (!B2FMonsterTaskUtility.HasSimulationAuthority())
+                return TaskStatus.Failure;
+
+            if (B2FMonsterTaskUtility.HasActiveNetworkSession())
+            {
+                if (targetResolver == null ||
+                    !targetResolver.TryAcquirePlayerInRange(attackRange.Value, out Transform networkTarget))
+                {
+                    return TaskStatus.Failure;
+                }
+
+                playerTarget.Value = networkTarget;
+                return TaskStatus.Success;
+            }
+
             if (playerTarget.Value == null || attackRange.Value < 0f)
                 return TaskStatus.Failure;
 
@@ -67,14 +96,43 @@ namespace DeFrag.Monsters.B2F.BehaviorDesignerTasks
         public SharedFloat targetHeightOffset = 1f;
 
         private B2FMonsterVision vision;
+        private NetworkMonsterPlayerTargetResolver targetResolver;
 
         public override void OnAwake()
         {
             vision = GetComponent<B2FMonsterVision>();
+            targetResolver = GetComponent<NetworkMonsterPlayerTargetResolver>();
         }
 
         public override TaskStatus OnUpdate()
         {
+            if (!B2FMonsterTaskUtility.HasSimulationAuthority())
+                return TaskStatus.Failure;
+
+            if (B2FMonsterTaskUtility.HasActiveNetworkSession())
+            {
+                float networkViewDistance = vision != null ? vision.ViewDistance : viewDistance.Value;
+                float angle = vision != null ? vision.FieldOfView : fieldOfView.Value;
+                LayerMask mask = vision != null ? vision.ObstacleMask : obstacleMask.Value;
+                float originHeight = vision != null ? vision.EyeHeight : eyeHeight.Value;
+                float targetOffset = vision != null ? vision.TargetHeightOffset : targetHeightOffset.Value;
+
+                if (targetResolver == null ||
+                    !targetResolver.TryAcquireVisiblePlayer(
+                        networkViewDistance,
+                        angle,
+                        mask,
+                        originHeight,
+                        targetOffset,
+                        out Transform visibleTarget))
+                {
+                    return TaskStatus.Failure;
+                }
+
+                playerTarget.Value = visibleTarget;
+                return TaskStatus.Success;
+            }
+
             Transform target = playerTarget.Value;
             if (target == null)
                 return TaskStatus.Failure;
@@ -112,10 +170,12 @@ namespace DeFrag.Monsters.B2F.BehaviorDesignerTasks
         public SharedVector3 lastKnownPosition;
 
         private B2FPlayerVoicePerception perception;
+        private NetworkMonsterPlayerTargetResolver targetResolver;
 
         public override void OnAwake()
         {
             perception = GetComponent<B2FPlayerVoicePerception>();
+            targetResolver = GetComponent<NetworkMonsterPlayerTargetResolver>();
         }
 
         public override TaskStatus OnUpdate()
@@ -132,7 +192,15 @@ namespace DeFrag.Monsters.B2F.BehaviorDesignerTasks
                 return TaskStatus.Failure;
             }
 
-            playerTarget.Value = heardTarget;
+            if (targetResolver != null &&
+                targetResolver.TrySetCurrentTarget(heardTarget, out Transform playerRoot))
+            {
+                playerTarget.Value = playerRoot;
+            }
+            else
+            {
+                playerTarget.Value = heardTarget;
+            }
             lastKnownPosition.Value = heardPosition;
             return TaskStatus.Success;
         }
@@ -157,6 +225,7 @@ namespace DeFrag.Monsters.B2F.BehaviorDesignerTasks
         private NavMeshPath path;
         private B2FPlayerVoicePerception perception;
         private B2FMonsterVision vision;
+        private NetworkMonsterPlayerTargetResolver targetResolver;
         private float startedAt;
         private float nextVoiceUpdateAt;
         private float originalSpeed;
@@ -167,6 +236,7 @@ namespace DeFrag.Monsters.B2F.BehaviorDesignerTasks
             agent = GetComponent<NavMeshAgent>();
             perception = GetComponent<B2FPlayerVoicePerception>();
             vision = GetComponent<B2FMonsterVision>();
+            targetResolver = GetComponent<NetworkMonsterPlayerTargetResolver>();
             path = new NavMeshPath();
         }
 
@@ -197,7 +267,28 @@ namespace DeFrag.Monsters.B2F.BehaviorDesignerTasks
             // Conditional Abort에만 의존하면 장기 실행 중인 Investigate Action에서
             // 상위 Chase 조건이 즉시 재평가되지 않을 수 있습니다. 같은 시야 설정으로
             // 직접 확인하고 현재 분기를 끝내 다음 평가에서 Attack/Chase가 선택되게 합니다.
-            if (vision != null && vision.CanSee(playerTarget.Value))
+            bool foundVisiblePlayer;
+            if (B2FMonsterTaskUtility.HasActiveNetworkSession())
+            {
+                Transform visibleTarget = null;
+                foundVisiblePlayer = targetResolver != null && vision != null &&
+                    targetResolver.TryAcquireVisiblePlayer(
+                        vision.ViewDistance,
+                        vision.FieldOfView,
+                        vision.ObstacleMask,
+                        vision.EyeHeight,
+                        vision.TargetHeightOffset,
+                        out visibleTarget);
+
+                if (foundVisiblePlayer)
+                    playerTarget.Value = visibleTarget;
+            }
+            else
+            {
+                foundVisiblePlayer = vision != null && vision.CanSee(playerTarget.Value);
+            }
+
+            if (foundVisiblePlayer)
             {
                 if (agent.hasPath)
                     agent.ResetPath();
@@ -244,7 +335,15 @@ namespace DeFrag.Monsters.B2F.BehaviorDesignerTasks
                 return;
             }
 
-            playerTarget.Value = heardTarget;
+            if (targetResolver != null &&
+                targetResolver.TrySetCurrentTarget(heardTarget, out Transform playerRoot))
+            {
+                playerTarget.Value = playerRoot;
+            }
+            else
+            {
+                playerTarget.Value = heardTarget;
+            }
             lastKnownPosition.Value = heardPosition;
             agent.SetDestination(heardPosition);
         }
@@ -681,6 +780,10 @@ namespace DeFrag.Monsters.B2F.BehaviorDesignerTasks
         {
             startTime = Time.time;
             hitCheckRequested = false;
+
+            if (!B2FMonsterTaskUtility.HasSimulationAuthority())
+                return;
+
             attackHitbox?.BeginAttackCycle();
 
             if (B2FMonsterTaskUtility.IsAgentReady(agent))
@@ -695,6 +798,9 @@ namespace DeFrag.Monsters.B2F.BehaviorDesignerTasks
 
         public override TaskStatus OnUpdate()
         {
+            if (!B2FMonsterTaskUtility.HasSimulationAuthority())
+                return TaskStatus.Running;
+
             Transform target = playerTarget.Value;
             if (target == null)
                 return TaskStatus.Failure;

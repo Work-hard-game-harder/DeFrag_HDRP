@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using Unity.Netcode;
 using UnityEngine.SceneManagement;
+using EasyPeasyFirstPersonController;
 #if ENABLE_INPUT_SYSTEM 
 using UnityEngine.InputSystem;
 #endif
@@ -114,6 +115,7 @@ namespace StarterAssets
         private const float _threshold = 0.01f;
 
         private bool _hasAnimator;
+        private SoundEmitter _soundEmitter;
 
         private bool IsCurrentDeviceMouse
         {
@@ -130,7 +132,8 @@ namespace StarterAssets
 
         private void Awake()
         {
-            if (_mainCamera == null)
+            _soundEmitter = GetComponentInChildren<SoundEmitter>(true);
+            if (_mainCamera == null)
             {
                 _mainCamera = GameObject.FindGameObjectWithTag("MainCamera");
             }
@@ -394,8 +397,40 @@ namespace StarterAssets
             }
         }
 
+        /// <summary>
+        /// 소유 플레이어의 로컬 마이크 레벨을 서버에 전달합니다.
+        /// 서버만 이 값을 몬스터 감지용 SoundEmitter에 적용합니다.
+        /// </summary>
+        public void SubmitLocalVoiceLevel(bool isActive, float normalizedVolume)
+        {
+            if (!IsSpawned || !IsOwner)
+                return;
+
+            float safeVolume = Mathf.Clamp01(normalizedVolume);
+            if (IsServer)
+            {
+                // 호스트의 SoundEmitter는 같은 프로세스에서 로컬 입력을 이미 가지고 있으므로
+                // 별도의 복제 값을 덮어쓸 필요가 없습니다.
+                return;
+            }
+
+            SubmitVoiceLevelServerRpc(isActive, safeVolume);
+        }
+
+        [ServerRpc]
+        private void SubmitVoiceLevelServerRpc(bool isActive, float normalizedVolume)
+        {
+            if (_soundEmitter == null)
+                _soundEmitter = GetComponentInChildren<SoundEmitter>(true);
+
+            _soundEmitter?.ApplyNetworkVoiceLevel(isActive, Mathf.Clamp01(normalizedVolume));
+        }
+
         public override void OnNetworkSpawn()
         {
+            if (_soundEmitter == null)
+                _soundEmitter = GetComponentInChildren<SoundEmitter>(true);
+
             ConfigureLocalPlayerPresentation();
 
             // 내가 이 캐릭터의 주인(로컬 플레이어)일 때만 위치 변경 작업 수행
