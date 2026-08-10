@@ -30,7 +30,6 @@ public sealed class LobbyManager : MonoBehaviour
 
     [Header("Scene Flow")]
     [SerializeField] private string lobbySceneName = "LobbyScene";
-    [SerializeField] private string gameplaySceneName = "B5F";
     [SerializeField] private string transportFailureSceneName = "MainLobby";
     [SerializeField] private GameObject warningText;    
 
@@ -383,7 +382,7 @@ public sealed class LobbyManager : MonoBehaviour
                 SpawnLobbyAvatar(clientId);
             }
         }
-        else if (sceneName == gameplaySceneName)
+        else if (GameplaySpawnPointRegistry.Instance != null)
         {
             lobbyAvatars.Clear();
             SpawnGameplayPlayers();
