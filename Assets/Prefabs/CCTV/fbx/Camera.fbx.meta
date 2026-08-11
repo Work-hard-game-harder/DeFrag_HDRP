@@ -3,7 +3,17 @@ guid: ddf7a5973e095fd44b1c92faf893c432
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CCTV Base
+    second: {fileID: 2100000, guid: 41ee0e4efa3b3ea4cab81d45235abf3e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Camera
+    second: {fileID: 2100000, guid: 3025d6fbe22fe9e40bb2a425536a3097, type: 2}
   materials:
     materialImportMode: 2
     materialName: 0
