@@ -366,6 +366,8 @@ GameObject:
   - component: {fileID: 5996855780988249320}
   - component: {fileID: 8336892364223203271}
   - component: {fileID: 667900793598903239}
+  - component: {fileID: 2683992198885452138}
+  - component: {fileID: 6279671393293856995}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -607,6 +609,84 @@ MonoBehaviour:
   itemAudioListener: {fileID: 1916114695043516792}
   cameraItem: {fileID: 6767060980139100289}
   cameraOverlayCanvas: {fileID: 8968839979216758565}
+--- !u!114 &2683992198885452138
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1886703978293666199}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1971265ee1218e4e949ddd338541bb9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Player.TvMonsterProximityGlitch
+  maximumIntensityDistance: 10
+  intensityCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0.25
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.55
+      value: 0.18
+      inSlope: 0.35
+      outSlope: 1.1
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 2.2
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  scanLineJitter: 0.65
+  verticalJump: 0.12
+  horizontalShake: 0.08
+  colorDrift: 0.35
+  horizontalRipple: 0.45
+  digitalIntensity: 0.1
+  refreshInterval: 1
+  intensityOverride: -1
+  currentIntensity: 0
+  detectedSourceCount: 0
+--- !u!114 &6279671393293856995
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1886703978293666199}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ce20a2967fefef468c3730e9b539f8a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerInteraction
+  maxDistance: 7
+  sphereRadius: 0.3
+  interactionHUD: {fileID: 0}
+  itemText: {fileID: 0}
+  progressCircle: {fileID: 0}
+  hintPanel: {fileID: 0}
+  hintImage: {fileID: 0}
+  automaticallyBindSceneUI: 1
+  uiBindingRetryFrames: 120
+  additionalSequenceInputBehaviours: []
 --- !u!1 &1898357046216177466
 GameObject:
   m_ObjectHideFlags: 0
@@ -1078,11 +1158,11 @@ Light:
   m_Enabled: 1
   serializedVersion: 13
   m_Type: 0
-  m_Color: {r: 1, g: 0.9690448, b: 0.8349056, a: 1}
-  m_Intensity: 255.22005
-  m_Range: 10
-  m_SpotAngle: 71.23551
-  m_InnerSpotAngle: 63.037598
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Intensity: 197458.7
+  m_Range: 25
+  m_SpotAngle: 81.38932
+  m_InnerSpotAngle: 61.687023
   m_CookieSize2D: {x: 0.5, y: 0.5}
   m_Shadows:
     m_Type: 0
@@ -1122,13 +1202,13 @@ Light:
   m_LightShadowCasterMode: 2
   m_AreaSize: {x: 1, y: 1}
   m_BounceIntensity: 1
-  m_ColorTemperature: 8255
+  m_ColorTemperature: 6570
   m_UseColorTemperature: 1
-  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_BoundingSphereOverride: {x: 8.93e-43, y: 2e-44, z: 0, w: NaN}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ForceVisible: 0
-  m_ShapeRadius: 0
+  m_ShapeRadius: 0.03
   m_ShadowAngle: 0
   m_LightUnit: 0
   m_LuxAtDistance: 1
@@ -2661,6 +2741,9 @@ GameObject:
   - component: {fileID: 6292500446856489754}
   - component: {fileID: 6599072761980130246}
   - component: {fileID: -574059606829602058}
+  - component: {fileID: 8697075961925148635}
+  - component: {fileID: 7255047732428418656}
+  - component: {fileID: 1264422813971240959}
   m_Layer: 7
   m_Name: PlayerCharacter(H)
   m_TagString: Player
@@ -2874,7 +2957,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3097368093
+  GlobalObjectIdHash: 4213798826
   InScenePlacedSourceGlobalObjectIdHash: 3097368093
   DeferredDespawnTick: 0
   Ownership: 1
@@ -2901,8 +2984,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StarterAssets.PersonController
   ShowTopMostFoldoutHeaderGroup: 1
-  MoveSpeed: 2
-  SprintSpeed: 5.335
+  MoveSpeed: 4
+  SprintSpeed: 8
   RotationSmoothTime: 0.12
   SpeedChangeRate: 10
   AudioFootsteps: {fileID: 0}
@@ -2947,6 +3030,7 @@ MonoBehaviour:
   look: {x: 0, y: 0}
   jump: 0
   sprint: 0
+  crouch: 0
   analogMovement: 0
   cursorLocked: 1
   cursorInputForLook: 1
@@ -3238,6 +3322,73 @@ MonoBehaviour:
   blurRadius: 0.018
   fadeInDuration: 0.2
   fadeOutDuration: 0.3
+--- !u!114 &8697075961925148635
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8628133643110585351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da614d796ab648479fded0e570fa5a8f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Player.PlayerStamina
+  maximumStamina: 10
+  sprintDurationAtFullStamina: 10
+  recoveryDelay: 3
+  fullRecoveryDuration: 20
+  exhaustedSprintThreshold: 0.33333334
+--- !u!114 &7255047732428418656
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8628133643110585351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1111111111111111111111111111111, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Player.PlayerMovementAudio
+  ShowTopMostFoldoutHeaderGroup: 1
+  footstepSource: {fileID: 0}
+  walkClips:
+  - {fileID: 8300000, guid: 7ca5a9710db4327439c9f8cb8204615e, type: 3}
+  walkVolume: 0.75
+  walkPitchRange: {x: 0.95, y: 1.05}
+  runClips:
+  - {fileID: 8300000, guid: 8c2c6c300bd8fc441878f426377bec64, type: 3}
+  runVolume: 0.9
+  runPitchRange: {x: 0.95, y: 1.05}
+  movementSpeedThreshold: 0.15
+  walkStepInterval: 0.48
+  runStepInterval: 0.32
+  jumpVelocityThreshold: 0.5
+  jumpClips:
+  - {fileID: 8300000, guid: 304f2bf2228cba94e91cd22803e54bcf, type: 3}
+  jumpVolume: 0.85
+  jumpPitchRange: {x: 0.97, y: 1.03}
+  breathingSource: {fileID: 0}
+  exhaustionClips:
+  - {fileID: 8300000, guid: 18d488c0a2118f7439f08024058622af, type: 3}
+  exhaustionVolume: 1
+  exhaustionMaximumDuration: 5
+--- !u!114 &1264422813971240959
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8628133643110585351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9274de2e3b50463c971641677f3958e7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Player.PlayerFlashlight
+  toggleKey: 116
+  spotLight: {fileID: 7359414020960781152}
+  startsOn: 0
 --- !u!1 &8846232740498023747
 GameObject:
   m_ObjectHideFlags: 0

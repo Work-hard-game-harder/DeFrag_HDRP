@@ -20,6 +20,12 @@ namespace DeFrag.Player
         [Range(0f, 1f)] [SerializeField] private float runVolume = 0.9f;
         [SerializeField] private Vector2 runPitchRange = new(0.95f, 1.05f);
 
+        [Header("Person Controller Automatic Events")]
+        [SerializeField, Min(0.01f)] private float movementSpeedThreshold = 0.15f;
+        [SerializeField, Min(0.05f)] private float walkStepInterval = 0.48f;
+        [SerializeField, Min(0.05f)] private float runStepInterval = 0.32f;
+        [SerializeField, Min(0f)] private float jumpVelocityThreshold = 0.5f;
+
         [Header("Jump")]
         [SerializeField] private AudioClip[] jumpClips;
         [Range(0f, 1f)] [SerializeField] private float jumpVolume = 0.85f;
@@ -33,13 +39,52 @@ namespace DeFrag.Player
 
         private PlayerStamina stamina;
         private StarterAssets.PersonController movement;
+        private CharacterController characterController;
         private Coroutine exhaustionStopRoutine;
+        private float footstepTimer;
+        private bool wasGrounded;
 
         private void Awake()
         {
             stamina = GetComponent<PlayerStamina>();
             movement = GetComponent<StarterAssets.PersonController>();
+            characterController = GetComponent<CharacterController>();
             EnsureAudioSources();
+            wasGrounded = movement != null && movement.Grounded;
+        }
+
+        private void Update()
+        {
+            // EasyPeasy FirstPersonController invokes PlayFootstep/PlayJump itself.
+            // The network PlayerCharacter(H) uses PersonController, which exposes no
+            // animation events, so generate those events from its actual velocity.
+            if (movement == null || characterController == null ||
+                (IsSpawned && !IsOwner))
+                return;
+
+            bool grounded = movement.Grounded;
+            Vector3 velocity = characterController.velocity;
+            float horizontalSpeed = new Vector3(velocity.x, 0f, velocity.z).magnitude;
+
+            if (grounded && horizontalSpeed >= movementSpeedThreshold)
+            {
+                bool running = horizontalSpeed > (movement.MoveSpeed + movement.SprintSpeed) * 0.5f;
+                footstepTimer += Time.deltaTime;
+                float interval = running ? runStepInterval : walkStepInterval;
+                if (footstepTimer >= interval)
+                {
+                    footstepTimer %= interval;
+                    TriggerFootstep(running);
+                }
+            }
+            else
+            {
+                footstepTimer = 0f;
+            }
+
+            if (wasGrounded && !grounded && velocity.y > jumpVelocityThreshold)
+                PlayJump();
+            wasGrounded = grounded;
         }
 
         private void OnEnable()
@@ -63,7 +108,11 @@ namespace DeFrag.Player
             if (movement == null || !movement.Grounded)
                 return;
 
-            bool running = stamina.IsSprinting;
+            TriggerFootstep(stamina.IsSprinting);
+        }
+
+        private void TriggerFootstep(bool running)
+        {
             AudioClip[] clips = running ? runClips : walkClips;
             if (clips.Length == 0)
                 return;
@@ -167,6 +216,10 @@ namespace DeFrag.Player
                 runPitchRange = new Vector2(runPitchRange.y, runPitchRange.x);
             if (jumpPitchRange.x > jumpPitchRange.y)
                 jumpPitchRange = new Vector2(jumpPitchRange.y, jumpPitchRange.x);
+            movementSpeedThreshold = Mathf.Max(0.01f, movementSpeedThreshold);
+            walkStepInterval = Mathf.Max(0.05f, walkStepInterval);
+            runStepInterval = Mathf.Max(0.05f, runStepInterval);
+            jumpVelocityThreshold = Mathf.Max(0f, jumpVelocityThreshold);
             exhaustionMaximumDuration = Mathf.Max(0.01f, exhaustionMaximumDuration);
         }
 

@@ -1921,7 +1921,7 @@ MonoBehaviour:
   horizontalShake: 0.08
   colorDrift: 0.35
   horizontalRipple: 0.45
-  digitalIntensity: 0.5
+  digitalIntensity: 0.1
   refreshInterval: 1
   intensityOverride: -1
   currentIntensity: 0
@@ -2488,6 +2488,7 @@ MonoBehaviour:
   look: {x: 0, y: 0}
   jump: 0
   sprint: 0
+  crouch: 0
   analogMovement: 0
   cursorLocked: 1
   cursorInputForLook: 1
@@ -2553,7 +2554,7 @@ MonoBehaviour:
   isInWater: 0
   wakieTakie: {fileID: 8916423859403885125}
   wakieTakieSubscrition: {fileID: 0}
-  hasWakieTakie: 0
+  hasWakieTakie: 1
   walkieTalkieController: {fileID: 0}
   IsHiding: 0
   isCrouching: 0
@@ -2606,6 +2607,8 @@ MonoBehaviour:
   micSensitivity: 100
   noiseThreshold: 0.01
   listenContinuously: 1
+  networkPublishInterval: 0.1
+  networkSilenceTimeout: 0.35
 --- !u!114 &7349012846091223003
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2705,7 +2708,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2301724343
+  GlobalObjectIdHash: 610151634
   InScenePlacedSourceGlobalObjectIdHash: 1248422577
   DeferredDespawnTick: 0
   Ownership: 1

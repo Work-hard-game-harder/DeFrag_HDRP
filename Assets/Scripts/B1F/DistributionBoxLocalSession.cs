@@ -1,5 +1,7 @@
+using System.Collections;
 using EasyPeasyFirstPersonController;
 using UnityEngine;
+using UnityEngine.Rendering.HighDefinition;
 
 namespace DeFrag.B1F
 {
@@ -20,14 +22,30 @@ namespace DeFrag.B1F
         private bool originalInteractionAudioListenerEnabled;
         private float interactionDistance;
         private bool waitingForInteractionKeyRelease;
+        private bool cameraTransitionComplete;
         private bool active;
+        private Coroutine cameraBlendRoutine;
+        private Vector3 interactionCameraRestPosition;
+        private Quaternion interactionCameraRestRotation;
+        private float cameraLookSensitivity;
+        private float cameraYawLimit;
+        private float cameraUpPitchLimit;
+        private float cameraDownPitchLimit;
+        private float lookYaw;
+        private float lookPitch;
 
         public void Begin(
             DistributionBoxController box,
             PlayerInteraction player,
             Camera localPlayerCamera,
             Camera boxCamera,
-            float rayDistance)
+            float rayDistance,
+            float blendDuration,
+            AnimationCurve blendCurve,
+            float lookSensitivity,
+            float yawLimit,
+            float upPitchLimit,
+            float downPitchLimit)
         {
             if (active || box == null || player == null ||
                 localPlayerCamera == null || boxCamera == null)
@@ -43,6 +61,10 @@ namespace DeFrag.B1F
             playerCamera = localPlayerCamera;
             interactionCamera = boxCamera;
             interactionDistance = rayDistance;
+            cameraLookSensitivity = lookSensitivity;
+            cameraYawLimit = yawLimit;
+            cameraUpPitchLimit = upPitchLimit;
+            cameraDownPitchLimit = downPitchLimit;
             movement = player.GetComponentInParent<StarterAssets.PersonController>(true);
             viewSwitcher = player.GetComponentInParent<CameraViewSwitcher>(true);
             interactionAudioListener = interactionCamera.GetComponent<AudioListener>();
@@ -52,6 +74,12 @@ namespace DeFrag.B1F
             originalInteractionCameraEnabled = interactionCamera.enabled;
             originalInteractionAudioListenerEnabled =
                 interactionAudioListener != null && interactionAudioListener.enabled;
+            interactionCameraRestPosition = interactionCamera.transform.position;
+            interactionCameraRestRotation = interactionCamera.transform.rotation;
+            CopyLocalCameraRenderingSettings(playerCamera, interactionCamera);
+            lookYaw = 0f;
+            lookPitch = 0f;
+            cameraTransitionComplete = false;
 
             waitingForInteractionKeyRelease = true;
             active = true;
@@ -64,8 +92,34 @@ namespace DeFrag.B1F
 
             interactionCamera.gameObject.SetActive(true);
             if (interactionAudioListener != null) interactionAudioListener.enabled = false;
+            interactionCamera.transform.SetPositionAndRotation(
+                playerCamera.transform.position,
+                playerCamera.transform.rotation);
             interactionCamera.enabled = true;
             playerCamera.enabled = false;
+            cameraBlendRoutine = StartCoroutine(BlendCameraToBox(
+                blendDuration,
+                blendCurve ?? AnimationCurve.Linear(0f, 0f, 1f, 1f)));
+        }
+
+        private static void CopyLocalCameraRenderingSettings(Camera source, Camera target)
+        {
+            if (source == null || target == null) return;
+
+            target.allowHDR = source.allowHDR;
+            target.allowMSAA = source.allowMSAA;
+
+            HDAdditionalCameraData sourceData = source.GetComponent<HDAdditionalCameraData>();
+            HDAdditionalCameraData targetData = target.GetComponent<HDAdditionalCameraData>();
+            if (sourceData == null || targetData == null) return;
+
+            // The local player's runtime glitch is a Volume effect. The box camera
+            // must sample the same layers, but must not create a second glitch owner.
+            targetData.volumeLayerMask = sourceData.volumeLayerMask;
+            targetData.antialiasing = sourceData.antialiasing;
+            targetData.SMAAQuality = sourceData.SMAAQuality;
+            targetData.dithering = sourceData.dithering;
+            targetData.stopNaNs = sourceData.stopNaNs;
         }
 
         private void Update()
@@ -85,6 +139,11 @@ namespace DeFrag.B1F
                 return;
             }
 
+            if (!cameraTransitionComplete)
+                return;
+
+            UpdateCameraLook();
+
             if (Input.GetKeyDown(KeyCode.E))
                 InteractWithFocusedControl();
         }
@@ -95,9 +154,18 @@ namespace DeFrag.B1F
             active = false;
             controller?.RequestReleaseFromLocalPlayer();
 
+            if (cameraBlendRoutine != null)
+            {
+                StopCoroutine(cameraBlendRoutine);
+                cameraBlendRoutine = null;
+            }
+
             if (playerCamera != null) playerCamera.enabled = originalPlayerCameraEnabled;
             if (interactionCamera != null)
             {
+                interactionCamera.transform.SetPositionAndRotation(
+                    interactionCameraRestPosition,
+                    interactionCameraRestRotation);
                 interactionCamera.enabled = originalInteractionCameraEnabled;
                 if (interactionAudioListener != null)
                     interactionAudioListener.enabled = originalInteractionAudioListenerEnabled;
@@ -117,23 +185,107 @@ namespace DeFrag.B1F
             if (Active == this) Active = null;
         }
 
+        private IEnumerator BlendCameraToBox(float duration, AnimationCurve curve)
+        {
+            Vector3 startPosition = interactionCamera.transform.position;
+            Quaternion startRotation = interactionCamera.transform.rotation;
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = curve.Evaluate(Mathf.Clamp01(elapsed / duration));
+                interactionCamera.transform.position =
+                    Vector3.LerpUnclamped(startPosition, interactionCameraRestPosition, t);
+                interactionCamera.transform.rotation =
+                    Quaternion.SlerpUnclamped(startRotation, interactionCameraRestRotation, t);
+                yield return null;
+            }
+
+            interactionCamera.transform.SetPositionAndRotation(
+                interactionCameraRestPosition,
+                interactionCameraRestRotation);
+            cameraTransitionComplete = true;
+            cameraBlendRoutine = null;
+        }
+
+        private void UpdateCameraLook()
+        {
+            lookYaw = Mathf.Clamp(
+                lookYaw + Input.GetAxisRaw("Mouse X") * cameraLookSensitivity,
+                -cameraYawLimit,
+                cameraYawLimit);
+            lookPitch = Mathf.Clamp(
+                lookPitch - Input.GetAxisRaw("Mouse Y") * cameraLookSensitivity,
+                -cameraUpPitchLimit,
+                cameraDownPitchLimit);
+
+            interactionCamera.transform.rotation = interactionCameraRestRotation *
+                                                   Quaternion.Euler(lookPitch, lookYaw, 0f);
+        }
+
         private void InteractWithFocusedControl()
         {
             Ray ray = interactionCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f));
-            if (!Physics.Raycast(ray, out RaycastHit hit, interactionDistance,
-                    ~0, QueryTriggerInteraction.Ignore))
-                return;
+            RaycastHit[] hits = Physics.RaycastAll(
+                ray,
+                interactionDistance,
+                ~0,
+                QueryTriggerInteraction.Ignore);
 
-            DistributionSwitch distributionSwitch =
-                hit.collider.GetComponentInParent<DistributionSwitch>();
-            if (distributionSwitch != null)
+            DistributionSwitch closestSwitch = null;
+            DistributionMainKnobTarget closestMainKnob = null;
+            float closestControlDistance = float.PositiveInfinity;
+
+            // The box door/frame can be in front of the controls. Do not stop at
+            // the first collider; choose the nearest actual minigame control.
+            foreach (RaycastHit hit in hits)
             {
-                controller.RequestToggleFromLocalPlayer(distributionSwitch.Index);
+                DistributionSwitch distributionSwitch =
+                    hit.collider.GetComponentInParent<DistributionSwitch>();
+                if (distributionSwitch != null && hit.distance < closestControlDistance)
+                {
+                    closestSwitch = distributionSwitch;
+                    closestMainKnob = null;
+                    closestControlDistance = hit.distance;
+                    continue;
+                }
+
+                DistributionMainKnobTarget mainKnob =
+                    hit.collider.GetComponentInParent<DistributionMainKnobTarget>();
+                if (mainKnob != null && hit.distance < closestControlDistance)
+                {
+                    closestSwitch = null;
+                    closestMainKnob = mainKnob;
+                    closestControlDistance = hit.distance;
+                }
+            }
+
+            if (closestSwitch != null)
+            {
+                controller.RequestToggleFromLocalPlayer(closestSwitch.Index);
                 return;
             }
 
-            if (hit.collider.GetComponentInParent<DistributionMainKnobTarget>() != null)
+            if (closestMainKnob != null)
+            {
                 controller.RequestSubmitFromLocalPlayer();
+                return;
+            }
+
+            // The cabinet door/frame can occlude the knob's small target collider.
+            // Use the configured knob pivot as a narrow crosshair fallback instead
+            // of treating an unrelated foreground collider as the control.
+            if (controller.IsMainKnobUnderCrosshair(interactionCamera, interactionDistance))
+            {
+                controller.RequestSubmitFromLocalPlayer();
+                return;
+            }
+
+            Debug.LogWarning(
+                $"[DistributionBox] No switch or MainKnob under the crosshair. " +
+                $"Ray hit {hits.Length} collider(s).",
+                controller);
         }
 
         private void OnDestroy()

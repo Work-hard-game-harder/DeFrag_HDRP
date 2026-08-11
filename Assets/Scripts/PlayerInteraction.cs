@@ -2,7 +2,9 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using System.Collections;
 using EasyPeasyFirstPersonController;
+using Unity.Netcode;
 
 public class PlayerInteraction : MonoBehaviour
 {
@@ -19,6 +21,10 @@ public class PlayerInteraction : MonoBehaviour
     public GameObject hintPanel;
     public Image hintImage;
 
+    [Header("Scene UI Auto Binding")]
+    [SerializeField] private bool automaticallyBindSceneUI = true;
+    [SerializeField, Min(1)] private int uiBindingRetryFrames = 120;
+
     [Header("Sequence Input Lock")]
     [Tooltip("시퀀스 동안 함께 비활성화할 추가 로컬 입력 컴포넌트입니다.")]
     [SerializeField] private Behaviour[] additionalSequenceInputBehaviours;
@@ -32,11 +38,64 @@ public class PlayerInteraction : MonoBehaviour
     private CameraViewSwitcher cameraViewSwitcher;
     private HintSequencePresentation activeSequence;
     private readonly Dictionary<Behaviour, bool> lockedBehaviourStates = new();
+    private NetworkObject playerNetworkObject;
 
     private void Awake()
     {
         defaultViewCamera = GetComponent<Camera>();
         cameraViewSwitcher = GetComponentInParent<CameraViewSwitcher>(true);
+        playerNetworkObject = GetComponentInParent<NetworkObject>(true);
+    }
+
+    private IEnumerator Start()
+    {
+        if (playerNetworkObject != null && NetworkManager.Singleton != null &&
+            NetworkManager.Singleton.IsListening)
+        {
+            while (!playerNetworkObject.IsSpawned)
+                yield return null;
+
+            if (!playerNetworkObject.IsOwner)
+            {
+                enabled = false;
+                yield break;
+            }
+        }
+
+        // Network gameplay players are spawned after sceneLoaded, so the inventory
+        // bootstrap's scene callback may have run before a PlayerInteraction existed.
+        InventorySceneBootstrap.EnsureInstalledForGameplay();
+
+        if (!automaticallyBindSceneUI)
+            yield break;
+
+        for (int frame = 0; frame < uiBindingRetryFrames; frame++)
+        {
+            if (TryBindSceneUI())
+                yield break;
+            yield return null;
+        }
+
+        Debug.LogError(
+            "[PlayerInteraction] Could not find InteractionHUD and HintPanel in the scene Canvas.",
+            this);
+    }
+
+    private bool TryBindSceneUI()
+    {
+        if (!PlayerInteractionUIResolver.TryResolve(out var bindings))
+            return false;
+
+        interactionHUD = bindings.InteractionHUD;
+        itemText = bindings.ItemText;
+        progressCircle = bindings.ProgressCircle;
+        hintPanel = bindings.HintPanel;
+        hintImage = bindings.HintImage;
+
+        interactionHUD.SetActive(false);
+        progressCircle.fillAmount = 0f;
+        Debug.Log("[PlayerInteraction] Scene UI bound to the local player.", this);
+        return true;
     }
 
     void Update()
@@ -297,5 +356,66 @@ public class PlayerInteraction : MonoBehaviour
             CloseSequence();
         else
             GameplayInputGate.Release(this);
+    }
+}
+
+internal static class PlayerInteractionUIResolver
+{
+    internal readonly struct Bindings
+    {
+        public Bindings(GameObject hud, TextMeshProUGUI text, Image progress,
+            GameObject panel, Image image)
+        {
+            InteractionHUD = hud;
+            ItemText = text;
+            ProgressCircle = progress;
+            HintPanel = panel;
+            HintImage = image;
+        }
+
+        public GameObject InteractionHUD { get; }
+        public TextMeshProUGUI ItemText { get; }
+        public Image ProgressCircle { get; }
+        public GameObject HintPanel { get; }
+        public Image HintImage { get; }
+    }
+
+    internal static bool TryResolve(out Bindings bindings)
+    {
+        Canvas[] canvases = Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include);
+        foreach (Canvas canvas in canvases)
+        {
+            if (canvas == null) continue;
+
+            Transform hud = FindDescendant(canvas.transform, "InteractionHUD");
+            Transform panel = FindDescendant(canvas.transform, "HintPanel");
+            if (hud == null || panel == null) continue;
+
+            TextMeshProUGUI text =
+                FindDescendant(hud, "ItemText")?.GetComponent<TextMeshProUGUI>();
+            Image progress =
+                FindDescendant(hud, "InteractionProgress")?.GetComponent<Image>();
+            Image image =
+                FindDescendant(panel, "HintImage")?.GetComponent<Image>();
+            if (text == null || progress == null || image == null) continue;
+
+            bindings = new Bindings(
+                hud.gameObject, text, progress, panel.gameObject, image);
+            return true;
+        }
+
+        bindings = default;
+        return false;
+    }
+
+    private static Transform FindDescendant(Transform root, string objectName)
+    {
+        if (root.name == objectName) return root;
+        for (int i = 0; i < root.childCount; i++)
+        {
+            Transform result = FindDescendant(root.GetChild(i), objectName);
+            if (result != null) return result;
+        }
+        return null;
     }
 }

@@ -27,6 +27,15 @@ namespace DeFrag.B1F
         [SerializeField] private Camera interactionCamera;
         [SerializeField, Min(0.5f)] private float localInteractionDistance = 4f;
 
+        [Header("Local Camera Presentation")]
+        [SerializeField, Min(0.01f)] private float cameraBlendDuration = 0.75f;
+        [SerializeField] private AnimationCurve cameraBlendCurve =
+            AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+        [SerializeField, Min(0.01f)] private float cameraLookSensitivity = 2f;
+        [SerializeField, Range(0f, 90f)] private float cameraYawLimit = 24f;
+        [SerializeField, Range(0f, 90f)] private float cameraPitchLimit = 18f;
+        [SerializeField, Range(0f, 90f)] private float cameraDownPitchLimit = 42f;
+
         [Header("Box Door")]
         [SerializeField] private Transform doorPivot;
         [SerializeField] private Vector3 doorOpenLocalEulerOffset = new(0f, 110f, 0f);
@@ -39,9 +48,12 @@ namespace DeFrag.B1F
 
         [Header("Main Knob")]
         [SerializeField] private Transform mainKnobPivot;
-        [SerializeField] private Vector3 mainKnobRestLocalEuler = new(38.058f, 0f, 0f);
+        [Tooltip("현재 로컬 회전을 기준으로 실패할 때 추가할 회전 오프셋입니다.")]
         [SerializeField] private Vector3 mainKnobFailureLocalEuler = new(-55f, 0f, 0f);
+        [Tooltip("현재 로컬 회전을 기준으로 성공할 때 추가할 회전 오프셋입니다.")]
         [SerializeField] private Vector3 mainKnobSuccessLocalEuler = new(-110f, 0f, 0f);
+        [Tooltip("노브 콜라이더가 가려져도 화면 중앙에서 이 반경 안에 피벗이 있으면 제출 대상으로 판정합니다.")]
+        [SerializeField, Range(0.01f, 0.2f)] private float mainKnobAimViewportRadius = 0.075f;
         [SerializeField, Min(0.01f)] private float mainKnobMoveDuration = 0.5f;
         [SerializeField] private AnimationCurve mainKnobCurve =
             AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
@@ -69,7 +81,8 @@ namespace DeFrag.B1F
         private double nextHintRefreshTime;
         private Coroutine doorRoutine;
         private Coroutine mainKnobRoutine;
-        private Vector3 capturedDoorClosedLocalEuler;
+        private Quaternion capturedDoorClosedLocalRotation = Quaternion.identity;
+        private Quaternion capturedMainKnobRestLocalRotation = Quaternion.identity;
         private ushort offlineSwitchMask;
         private bool offlineOccupied;
 
@@ -79,11 +92,13 @@ namespace DeFrag.B1F
         private void Awake()
         {
             if (doorPivot != null)
-                capturedDoorClosedLocalEuler = doorPivot.localEulerAngles;
+                capturedDoorClosedLocalRotation = doorPivot.localRotation;
+            if (mainKnobPivot != null)
+                capturedMainKnobRestLocalRotation = mainKnobPivot.localRotation;
             ConfigureSwitches();
             ApplySwitchMask(currentSwitchMask.Value, true);
             SetDoorImmediate(false);
-            SetMainKnobImmediate(mainKnobRestLocalEuler);
+            SetMainKnobImmediate(Vector3.zero);
         }
 
         public override void OnNetworkSpawn()
@@ -402,7 +417,18 @@ namespace DeFrag.B1F
             DistributionBoxLocalSession session =
                 camera.GetComponent<DistributionBoxLocalSession>() ??
                 camera.gameObject.AddComponent<DistributionBoxLocalSession>();
-            session.Begin(this, player, camera, interactionCamera, localInteractionDistance);
+            session.Begin(
+                this,
+                player,
+                camera,
+                interactionCamera,
+                localInteractionDistance,
+                cameraBlendDuration,
+                cameraBlendCurve,
+                cameraLookSensitivity,
+                cameraYawLimit,
+                cameraPitchLimit,
+                cameraDownPitchLimit);
         }
 
         private static PlayerInteraction FindLocalPlayerInteraction()
@@ -427,7 +453,7 @@ namespace DeFrag.B1F
             if (doorRoutine != null) StopCoroutine(doorRoutine);
             doorRoutine = StartCoroutine(RotateRoutine(
                 doorPivot,
-                open ? capturedDoorClosedLocalEuler + doorOpenLocalEulerOffset : capturedDoorClosedLocalEuler,
+                GetDoorLocalRotation(open),
                 doorMoveDuration,
                 doorMoveCurve,
                 () => doorRoutine = null));
@@ -436,9 +462,13 @@ namespace DeFrag.B1F
         private void SetDoorImmediate(bool open)
         {
             if (doorPivot != null)
-                doorPivot.localRotation = Quaternion.Euler(
-                    open ? capturedDoorClosedLocalEuler + doorOpenLocalEulerOffset : capturedDoorClosedLocalEuler);
+                doorPivot.localRotation = GetDoorLocalRotation(open);
         }
+
+        private Quaternion GetDoorLocalRotation(bool open) =>
+            open
+                ? capturedDoorClosedLocalRotation * Quaternion.Euler(doorOpenLocalEulerOffset)
+                : capturedDoorClosedLocalRotation;
 
         private void AnimateMainKnobFailure()
         {
@@ -448,9 +478,9 @@ namespace DeFrag.B1F
 
         private IEnumerator MainKnobFailureRoutine()
         {
-            yield return RotateRoutine(mainKnobPivot, mainKnobFailureLocalEuler,
+            yield return RotateRoutine(mainKnobPivot, GetMainKnobLocalRotation(mainKnobFailureLocalEuler),
                 mainKnobMoveDuration, mainKnobCurve, null);
-            yield return RotateRoutine(mainKnobPivot, mainKnobRestLocalEuler,
+            yield return RotateRoutine(mainKnobPivot, capturedMainKnobRestLocalRotation,
                 mainKnobMoveDuration, mainKnobCurve, null);
             mainKnobRoutine = null;
         }
@@ -459,13 +489,28 @@ namespace DeFrag.B1F
         {
             if (mainKnobRoutine != null) StopCoroutine(mainKnobRoutine);
             mainKnobRoutine = StartCoroutine(RotateRoutine(
-                mainKnobPivot, target, mainKnobMoveDuration, mainKnobCurve,
+                mainKnobPivot, GetMainKnobLocalRotation(target), mainKnobMoveDuration, mainKnobCurve,
                 () => mainKnobRoutine = null));
         }
 
-        private void SetMainKnobImmediate(Vector3 euler)
+        private void SetMainKnobImmediate(Vector3 localEulerOffset)
         {
-            if (mainKnobPivot != null) mainKnobPivot.localRotation = Quaternion.Euler(euler);
+            if (mainKnobPivot != null)
+                mainKnobPivot.localRotation = GetMainKnobLocalRotation(localEulerOffset);
+        }
+
+        private Quaternion GetMainKnobLocalRotation(Vector3 localEulerOffset) =>
+            capturedMainKnobRestLocalRotation * Quaternion.Euler(localEulerOffset);
+
+        public bool IsMainKnobUnderCrosshair(Camera camera, float maximumDistance)
+        {
+            if (camera == null || mainKnobPivot == null) return false;
+
+            Vector3 viewportPoint = camera.WorldToViewportPoint(mainKnobPivot.position);
+            if (viewportPoint.z <= 0f || viewportPoint.z > maximumDistance) return false;
+
+            Vector2 offset = new(viewportPoint.x - 0.5f, viewportPoint.y - 0.5f);
+            return offset.sqrMagnitude <= mainKnobAimViewportRadius * mainKnobAimViewportRadius;
         }
 
         private static IEnumerator RotateRoutine(
@@ -475,9 +520,23 @@ namespace DeFrag.B1F
             AnimationCurve curve,
             System.Action completedAction)
         {
+            return RotateRoutine(
+                target,
+                Quaternion.Euler(targetEuler),
+                duration,
+                curve,
+                completedAction);
+        }
+
+        private static IEnumerator RotateRoutine(
+            Transform target,
+            Quaternion end,
+            float duration,
+            AnimationCurve curve,
+            System.Action completedAction)
+        {
             if (target == null) yield break;
             Quaternion start = target.localRotation;
-            Quaternion end = Quaternion.Euler(targetEuler);
             float elapsed = 0f;
             while (elapsed < duration)
             {

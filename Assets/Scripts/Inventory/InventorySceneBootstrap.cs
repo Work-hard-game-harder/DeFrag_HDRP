@@ -21,6 +21,11 @@ public static class InventorySceneBootstrap
 
     private static void InstallIfMissing(Scene scene, LoadSceneMode mode)
     {
+        EnsureInstalledForGameplay();
+    }
+
+    public static void EnsureInstalledForGameplay()
+    {
         if (Object.FindAnyObjectByType<InventoryManager>() != null) return;
         // Do not show the gameplay quick bar in title/lobby/menu scenes.
         if (Object.FindAnyObjectByType<PlayerInteraction>(FindObjectsInactive.Include) == null) return;

@@ -2,6 +2,7 @@
 using Unity.Netcode;
 using UnityEngine.SceneManagement;
 using EasyPeasyFirstPersonController;
+using DeFrag.Player;
 #if ENABLE_INPUT_SYSTEM 
 using UnityEngine.InputSystem;
 #endif
@@ -132,6 +133,7 @@ namespace StarterAssets
         private bool _localIsCrouching;
         private bool _localIsHiding;
         private bool _hidingRequested;
+        private ISprintGate _sprintGate;
 
         private readonly NetworkVariable<bool> _networkIsCrouching = new(
             false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
@@ -176,6 +178,7 @@ namespace StarterAssets
             _hasAnimator = TryGetComponent(out _animator);
             _controller = GetComponent<CharacterController>();
             _input = GetComponent<StarterAssetsInputs>();
+            ResolveSprintGate();
             _standingControllerHeight = _controller.height;
             _standingControllerCenter = _controller.center;
             if (CinemachineCameraTarget != null)
@@ -279,9 +282,16 @@ namespace StarterAssets
 
         private void Move(bool movementLocked)
         {
-            Vector2 movementInput = movementLocked ? Vector2.zero : _input.move;
-            // 입력에 따른 가속/감속 목표 속도 설정
-            float targetSpeed = _localIsCrouching ? CrouchSpeed : (_input.sprint ? SprintSpeed : MoveSpeed);
+            Vector2 movementInput = movementLocked ? Vector2.zero : _input.move;
+            bool wantsToSprint = !movementLocked &&
+                                 !_localIsCrouching &&
+                                 movementInput != Vector2.zero &&
+                                 _input.sprint;
+            _sprintGate?.SetSprinting(wantsToSprint);
+            bool canSprint = wantsToSprint && (_sprintGate?.CanSprint ?? true);
+
+            // 입력에 따른 가속/감속 목표 속도 설정
+            float targetSpeed = _localIsCrouching ? CrouchSpeed : (canSprint ? SprintSpeed : MoveSpeed);
 
             if (movementInput == Vector2.zero) targetSpeed = 0.0f;
 
@@ -316,12 +326,30 @@ namespace StarterAssets
             _controller.Move(targetDirection.normalized * (_speed * Time.deltaTime) +
               new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
 
-            // 애니메이터에 연동된 3인칭 걷기/뛰기 파라미터 업데이트
+            // 애니메이터에 연동된 3인칭 걷기/뛰기 파라미터 업데이트
             if (_hasAnimator)
             {
                 _animator.SetFloat(_animIDSpeed, _animationBlend);
                 _animator.SetFloat(_animIDMotionSpeed, inputMagnitude);
             }
+        }
+
+        private void ResolveSprintGate()
+        {
+            MonoBehaviour[] behaviours = GetComponents<MonoBehaviour>();
+            foreach (MonoBehaviour behaviour in behaviours)
+            {
+                if (behaviour is ISprintGate sprintGate)
+                {
+                    _sprintGate = sprintGate;
+                    return;
+                }
+            }
+        }
+
+        private void OnDisable()
+        {
+            _sprintGate?.SetSprinting(false);
         }
 
         private void JumpAndGravity(bool jumpLocked)
