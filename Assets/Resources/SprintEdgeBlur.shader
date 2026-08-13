@@ -35,6 +35,7 @@ Shader "Hidden/DeFrag/SprintEdgeBlur"
     float _Intensity;
     float _EdgeStart;
     float _BlurRadius;
+    float _FullScreenBlend;
 
     float3 SampleInput(float2 uv)
     {
@@ -51,7 +52,10 @@ Shader "Hidden/DeFrag/SprintEdgeBlur"
         float2 fromCenter = uv - 0.5;
         float aspect = _ScreenSize.x / _ScreenSize.y;
         float radialDistance = length(float2(fromCenter.x * aspect, fromCenter.y));
-        float edgeMask = smoothstep(_EdgeStart, 0.72, radialDistance) * _Intensity;
+        float edgeMask = lerp(
+            smoothstep(_EdgeStart, 0.72, radialDistance),
+            1.0,
+            saturate(_FullScreenBlend)) * _Intensity;
         float2 sampleStep = fromCenter * (_BlurRadius * edgeMask);
 
         float3 color = SampleInput(uv) * 0.28;

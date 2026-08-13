@@ -12,6 +12,7 @@ namespace DeFrag.Player
         public ClampedFloatParameter intensity = new(0f, 0f, 1f);
         public ClampedFloatParameter edgeStart = new(0.42f, 0.05f, 0.95f);
         public ClampedFloatParameter blurRadius = new(0.012f, 0f, 0.04f);
+        public ClampedFloatParameter fullScreenBlend = new(0f, 0f, 1f);
 
         private const string ShaderName = "Hidden/DeFrag/SprintEdgeBlur";
         private Material material;
@@ -37,6 +38,7 @@ namespace DeFrag.Player
             material.SetFloat("_Intensity", intensity.value);
             material.SetFloat("_EdgeStart", edgeStart.value);
             material.SetFloat("_BlurRadius", blurRadius.value);
+            material.SetFloat("_FullScreenBlend", fullScreenBlend.value);
             HDUtils.DrawFullScreen(cmd, material, destination, shaderPassId: 0);
         }
 

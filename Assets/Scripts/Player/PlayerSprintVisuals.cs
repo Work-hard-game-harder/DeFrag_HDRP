@@ -96,9 +96,11 @@ namespace DeFrag.Player
             edgeBlur.intensity.overrideState = true;
             edgeBlur.edgeStart.overrideState = true;
             edgeBlur.blurRadius.overrideState = true;
+            edgeBlur.fullScreenBlend.overrideState = true;
             edgeBlur.intensity.value = 0f;
             edgeBlur.edgeStart.value = edgeStart;
             edgeBlur.blurRadius.value = blurRadius;
+            edgeBlur.fullScreenBlend.value = 0f;
         }
     }
 }

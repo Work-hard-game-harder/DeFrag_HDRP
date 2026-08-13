@@ -216,7 +216,7 @@ MonoBehaviour:
   m_CharacterValidation: 4
   m_RegexValue: 
   m_GlobalPointSize: 20
-  m_CharacterLimit: 6
+  m_CharacterLimit: 10
   m_OnEndEdit:
     m_PersistentCalls:
       m_Calls: []
@@ -2277,7 +2277,6 @@ MonoBehaviour:
   joinCodeText: {fileID: 0}
   joinCodeInput: {fileID: 38688406}
   lobbySceneName: LobbyScene
-  gameplaySceneName: MonsterScene
   transportFailureSceneName: MainLobby
   warningText: {fileID: 906913182}
   lobbyAvatarPrefab: {fileID: 7592877399013546989, guid: 67e629d78f11bbe4c8d56d5241b03b2e, type: 3}

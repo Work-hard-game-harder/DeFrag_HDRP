@@ -2744,6 +2744,7 @@ GameObject:
   - component: {fileID: 8697075961925148635}
   - component: {fileID: 7255047732428418656}
   - component: {fileID: 1264422813971240959}
+  - component: {fileID: 7851964327015289634}
   m_Layer: 7
   m_Name: PlayerCharacter(H)
   m_TagString: Player
@@ -2957,7 +2958,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 4213798826
+  GlobalObjectIdHash: 3097368093
   InScenePlacedSourceGlobalObjectIdHash: 3097368093
   DeferredDespawnTick: 0
   Ownership: 1
@@ -3294,8 +3295,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef78683611c242f2b7468e91e9075cea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Player.PlayerLocalFeedback
-  playerCamera: {fileID: 5720831487311112839, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
-  playerStats: {fileID: 7349012846091223003, guid: e519dc05ec206af4e82a1dfe04f4affd, type: 3}
+  playerCamera: {fileID: 7146755445071539165}
+  playerStats: {fileID: 7349012846091223101}
   damageColor: {r: 0.65, g: 0, b: 0, a: 0.38}
   damageFlashDuration: 0.25
   damageShakeDuration: 0.3
@@ -3389,6 +3390,55 @@ MonoBehaviour:
   toggleKey: 116
   spotLight: {fileID: 7359414020960781152}
   startsOn: 0
+--- !u!114 &7851964327015289634
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8628133643110585351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c37e63992d5948d5a8dcc7c7ac715ec1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Player.VisionBlurEffect
+  ShowTopMostFoldoutHeaderGroup: 1
+  totalDuration: 5
+  fadeInDuration: 1
+  fadeOutDuration: 1.5
+  fadeCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  maxWeight: 1
+  blurIntensity: 1
+  blurRadius: 0.035
+  vignetteIntensity: 0.65
+  vignetteSmoothness: 0.9
+  fogColor: {r: 0.64, g: 0.67, b: 0.7, a: 1}
+  saturation: -55
+  postExposure: -0.35
+  volumePriority: 1200
 --- !u!1 &8846232740498023747
 GameObject:
   m_ObjectHideFlags: 0

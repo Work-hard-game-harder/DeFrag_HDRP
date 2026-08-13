@@ -1,7 +1,9 @@
 using DeFrag.Monsters.Common;
+using DeFrag.Player;
 using Unity.Netcode;
 using Unity.Netcode.Components;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(NetworkObject))]
@@ -31,7 +33,11 @@ public sealed class B2F_GhostController : NetworkBehaviour, IMonsterPlayerTarget
     [Min(0f)]
     [SerializeField] private float stoppingDistance = 1f;
     [Min(0f)]
-    [SerializeField] private float rotationSpeed = 3f;
+    [FormerlySerializedAs("rotationSpeed")]
+    [SerializeField] private float turnSpeedDegrees = 360f;
+    [Tooltip("Use this when the imported model's forward axis does not match Unity's +Z axis.")]
+    [SerializeField] private float modelForwardYawOffset;
+    [SerializeField] private bool rotateOnlyAroundY = true;
     [SerializeField] private bool keepSpawnHeight = true;
 
     [Header("Contact")]
@@ -59,6 +65,7 @@ public sealed class B2F_GhostController : NetworkBehaviour, IMonsterPlayerTarget
     private float spawnHeight;
     private Vector3 lockedMotionFacingPosition;
     private bool hasLockedMotionFacingPosition;
+    private bool hasTriggeredVisionEffect;
 
     private void Awake()
     {
@@ -80,6 +87,7 @@ public sealed class B2F_GhostController : NetworkBehaviour, IMonsterPlayerTarget
 
         spawnHeight = transform.position.y;
         targetPlayer = null;
+        hasTriggeredVisionEffect = false;
         SetState(GhostState.SpawnIdle, true);
         nextTargetAttemptAt = Time.time + spawnIdleDuration;
     }
@@ -183,13 +191,14 @@ public sealed class B2F_GhostController : NetworkBehaviour, IMonsterPlayerTarget
             return;
         }
 
-        Vector3 direction = toTarget.normalized;
+        Vector3 previousPosition = transform.position;
         transform.position = Vector3.MoveTowards(
             transform.position,
             movementTarget,
             moveSpeed * Time.deltaTime);
 
-        RotateTowards(direction);
+        Vector3 movementDirection = transform.position - previousPosition;
+        RotateTowards(movementDirection);
     }
 
     private void UpdateSpecificMotion()
@@ -203,14 +212,26 @@ public sealed class B2F_GhostController : NetworkBehaviour, IMonsterPlayerTarget
 
     private void TryBeginContactMotion(Collider other)
     {
-        if (!IsSpawned || !IsServer || other == null ||
-            synchronizedState.Value == GhostState.PerformingMotion)
+        if (!IsSpawned || !IsServer || other == null)
         {
             return;
         }
 
         PlayerStats playerStats = other.GetComponentInParent<PlayerStats>();
         if (playerStats == null || playerStats.IsDead)
+            return;
+
+        if (!hasTriggeredVisionEffect)
+        {
+            VisionBlurEffect visionBlurEffect = playerStats.GetComponent<VisionBlurEffect>();
+            if (visionBlurEffect != null)
+            {
+                hasTriggeredVisionEffect = true;
+                visionBlurEffect.TriggerVisionBlock();
+            }
+        }
+
+        if (synchronizedState.Value == GhostState.PerformingMotion)
             return;
 
         BeginSpecificMotion(playerStats.transform);
@@ -298,14 +319,19 @@ public sealed class B2F_GhostController : NetworkBehaviour, IMonsterPlayerTarget
 
     private void RotateTowards(Vector3 direction)
     {
+        if (rotateOnlyAroundY)
+            direction.y = 0f;
+
         if (direction.sqrMagnitude <= 0.0001f)
             return;
 
-        Quaternion targetRotation = Quaternion.LookRotation(direction);
-        transform.rotation = Quaternion.Slerp(
+        Quaternion targetRotation =
+            Quaternion.LookRotation(direction.normalized, Vector3.up) *
+            Quaternion.Euler(0f, modelForwardYawOffset, 0f);
+        transform.rotation = Quaternion.RotateTowards(
             transform.rotation,
             targetRotation,
-            rotationSpeed * Time.deltaTime);
+            turnSpeedDegrees * Time.deltaTime);
     }
 
     private void ResolveReferences()
@@ -339,7 +365,7 @@ public sealed class B2F_GhostController : NetworkBehaviour, IMonsterPlayerTarget
         specificMotionDuration = Mathf.Max(0.05f, specificMotionDuration);
         moveSpeed = Mathf.Max(0f, moveSpeed);
         stoppingDistance = Mathf.Max(0f, stoppingDistance);
-        rotationSpeed = Mathf.Max(0f, rotationSpeed);
+        turnSpeedDegrees = Mathf.Max(0f, turnSpeedDegrees);
         animationFadeDuration = Mathf.Max(0f, animationFadeDuration);
         ResolveReferences();
     }
