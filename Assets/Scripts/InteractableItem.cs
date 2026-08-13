@@ -26,6 +26,11 @@ public class InteractableItem : MonoBehaviour, IInteractable
     [Tooltip("Sequence 모드에서 재생할 영상/애니메이션 화면입니다.")]
     [SerializeField] private HintSequencePresentation sequencePresentation;
 
+    [Header("Optional Camera Presentation")]
+    [Tooltip("When enabled, this camera presentation replaces the normal hint presentation.")]
+    [SerializeField] private bool useCameraPresentation;
+    [SerializeField] private HintCameraPresentation cameraPresentation;
+
     [Header("Hint Progress")]
     [Tooltip("LobbyF 힌트 진행도에서 중복을 구분할 안정적인 ID입니다.")]
     [SerializeField] private string hintId;
@@ -73,6 +78,15 @@ public class InteractableItem : MonoBehaviour, IInteractable
             return;
         }
 
+        if (useCameraPresentation)
+        {
+            if (cameraPresentation != null)
+                cameraPresentation.Begin(player);
+            else
+                Debug.LogWarning("[InteractableItem] Camera Presentation is not assigned.", this);
+            return;
+        }
+
         switch (presentationMode)
         {
             case HintPresentationMode.Subtitle:
@@ -104,7 +118,11 @@ public class InteractableItem : MonoBehaviour, IInteractable
     {
         isInteracted = true;
 
-        if (progressesQuest && QuestManager.Instance != null)
+        // A tracked LobbyF hint advances through the server relay so every
+        // player progresses exactly once. Untracked items stay personal.
+        bool usesSharedHintProgress = hintConfirmationTracker != null &&
+                                      !string.IsNullOrWhiteSpace(hintId);
+        if (progressesQuest && !usesSharedHintProgress && QuestManager.Instance != null)
         {
             QuestManager.Instance.ProgressActiveQuest(questProgressAmount);
             QuestManager.Instance.RevealPendingQuestAfterSubtitle();

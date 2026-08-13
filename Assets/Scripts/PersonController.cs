@@ -599,6 +599,13 @@ namespace StarterAssets
 
             ConfigureLocalPlayerPresentation();
 
+            if (IsOwner)
+            {
+                TvMonsterProximityGlitch glitch =
+                    GetComponentInChildren<TvMonsterProximityGlitch>(true);
+                glitch?.InitializeForConfirmedLocalOwner();
+            }
+
             // 내가 이 캐릭터의 주인(로컬 플레이어)일 때만 위치 변경 작업 수행
             if (IsOwner)
             {
@@ -634,6 +641,35 @@ namespace StarterAssets
         {
             SetLocalInputEnabled(false);
             base.OnNetworkDespawn();
+        }
+
+        public void RequestLobbyHintConfirmation(string hintId)
+        {
+            if (string.IsNullOrWhiteSpace(hintId)) return;
+
+            if (IsSpawned && IsOwner)
+                ConfirmLobbyHintServerRpc(hintId);
+        }
+
+        [ServerRpc]
+        private void ConfirmLobbyHintServerRpc(string hintId)
+        {
+            HintConfirmationTracker tracker = HintConfirmationTracker.Instance;
+            if (tracker == null ||
+                !tracker.TryConfirmOnServer(hintId, out int count, out bool emergency))
+                return;
+
+            ApplyLobbyHintConfirmationClientRpc(hintId, count, emergency);
+        }
+
+        [ClientRpc]
+        private void ApplyLobbyHintConfirmationClientRpc(
+            string hintId,
+            int count,
+            bool emergency)
+        {
+            HintConfirmationTracker.Instance?.ApplyServerConfirmation(
+                hintId, count, emergency, this);
         }
 
         private void ConfigureLocalPlayerPresentation()
