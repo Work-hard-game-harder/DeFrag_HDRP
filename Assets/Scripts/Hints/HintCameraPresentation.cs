@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Rendering.HighDefinition;
+using UnityEngine.Video;
 
 [DisallowMultipleComponent]
 public sealed class HintCameraPresentation : MonoBehaviour
@@ -24,6 +25,16 @@ public sealed class HintCameraPresentation : MonoBehaviour
     [Min(0f)] [SerializeField] private float displayDuration = 3f;
     [SerializeField] private bool allowEscapeToSkip = true;
 
+    [Header("Optional Video")]
+    [Tooltip("When assigned in Timed mode, the video plays once after the camera blend and ends the presentation automatically.")]
+    [SerializeField] private VideoPlayer videoPlayer;
+    [Tooltip("Renderer containing the monitor material. When empty, the VideoPlayer target renderer or this object's Renderer is used.")]
+    [SerializeField] private Renderer videoRenderer;
+    [Min(0)] [SerializeField] private int videoMaterialIndex;
+    [SerializeField] private string videoTextureProperty = "_BaseColorMap";
+    [SerializeField] private bool applyVideoToEmission = true;
+    [SerializeField] private string videoEmissionTextureProperty = "_EmissiveColorMap";
+
     [Header("Interactive Desktop")]
     [Tooltip("Canvas containing the monitor desktop, icons and windows.")]
     [SerializeField] private GameObject desktopRoot;
@@ -43,16 +54,22 @@ public sealed class HintCameraPresentation : MonoBehaviour
     private CursorLockMode originalCursorLockMode;
     private bool active;
     private bool returning;
+    private RenderTexture videoRenderTexture;
+    private MaterialPropertyBlock originalVideoProperties;
+    private MaterialPropertyBlock videoProperties;
+    private bool videoOutputConfigured;
 
     public bool IsActive => active;
 
     private void Awake()
     {
         if (desktopRoot != null) desktopRoot.SetActive(false);
+        ConfigureVideoOutput();
     }
 
     public void Begin(PlayerInteraction player)
     {
+        ConfigureVideoOutput();
         if (active || player == null || presentationCamera == null) return;
         if (!GameplayInputGate.TryAcquire(this)) return;
 
@@ -113,8 +130,78 @@ public sealed class HintCameraPresentation : MonoBehaviour
             yield break;
         }
 
+        if (videoPlayer != null)
+        {
+            videoPlayer.loopPointReached -= HandleVideoFinished;
+            videoPlayer.loopPointReached += HandleVideoFinished;
+            videoPlayer.isLooping = false;
+            videoPlayer.Stop();
+            videoPlayer.time = 0d;
+            videoPlayer.Play();
+            sessionRoutine = null;
+            yield break;
+        }
+
         yield return new WaitForSecondsRealtime(displayDuration);
         if (active) End();
+    }
+
+    private void HandleVideoFinished(VideoPlayer source)
+    {
+        if (active && !returning)
+            End();
+    }
+
+    private void ConfigureVideoOutput()
+    {
+        if (videoOutputConfigured) return;
+
+        if (videoPlayer == null)
+            videoPlayer = GetComponent<VideoPlayer>();
+        if (videoPlayer == null) return;
+
+        if (videoRenderer == null)
+            videoRenderer = videoPlayer.targetMaterialRenderer;
+        if (videoRenderer == null)
+            videoRenderer = GetComponent<Renderer>();
+        if (videoRenderer == null)
+        {
+            Debug.LogWarning("[HintCameraPresentation] Video renderer is not assigned.", this);
+            return;
+        }
+
+        Material[] materials = videoRenderer.sharedMaterials;
+        if (videoMaterialIndex < 0 || videoMaterialIndex >= materials.Length)
+        {
+            Debug.LogWarning(
+                $"[HintCameraPresentation] Video material index {videoMaterialIndex} is outside the renderer's {materials.Length} material slots.",
+                this);
+            return;
+        }
+
+        videoRenderTexture = new RenderTexture(1280, 720, 0, RenderTextureFormat.ARGB32)
+        {
+            name = $"{name}_VideoOutput",
+            useMipMap = false,
+            autoGenerateMips = false
+        };
+        videoRenderTexture.Create();
+
+        originalVideoProperties = new MaterialPropertyBlock();
+        videoRenderer.GetPropertyBlock(originalVideoProperties, videoMaterialIndex);
+        videoProperties = new MaterialPropertyBlock();
+        videoRenderer.GetPropertyBlock(videoProperties, videoMaterialIndex);
+        videoProperties.SetTexture(videoTextureProperty, videoRenderTexture);
+        if (applyVideoToEmission && !string.IsNullOrWhiteSpace(videoEmissionTextureProperty))
+        {
+            videoProperties.SetTexture(videoEmissionTextureProperty, videoRenderTexture);
+            videoProperties.SetColor("_EmissiveColor", Color.white);
+        }
+        videoRenderer.SetPropertyBlock(videoProperties, videoMaterialIndex);
+
+        videoPlayer.renderMode = VideoRenderMode.RenderTexture;
+        videoPlayer.targetTexture = videoRenderTexture;
+        videoOutputConfigured = true;
     }
 
     private void Update()
@@ -180,6 +267,13 @@ public sealed class HintCameraPresentation : MonoBehaviour
 
     private void RestoreImmediately()
     {
+        if (videoPlayer != null)
+        {
+            videoPlayer.loopPointReached -= HandleVideoFinished;
+            videoPlayer.Stop();
+            videoPlayer.time = 0d;
+        }
+
         if (playerCamera != null) playerCamera.enabled = true;
         if (presentationCamera != null)
         {
@@ -233,5 +327,24 @@ public sealed class HintCameraPresentation : MonoBehaviour
     private void OnDisable()
     {
         if (active) RestoreImmediately();
+    }
+
+    private void OnDestroy()
+    {
+        if (videoPlayer != null)
+        {
+            videoPlayer.loopPointReached -= HandleVideoFinished;
+            if (videoPlayer.targetTexture == videoRenderTexture)
+                videoPlayer.targetTexture = null;
+        }
+
+        if (videoOutputConfigured && videoRenderer != null)
+            videoRenderer.SetPropertyBlock(originalVideoProperties, videoMaterialIndex);
+
+        if (videoRenderTexture != null)
+        {
+            videoRenderTexture.Release();
+            Destroy(videoRenderTexture);
+        }
     }
 }
