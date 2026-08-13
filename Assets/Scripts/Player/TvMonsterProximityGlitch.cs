@@ -46,6 +46,7 @@ namespace DeFrag.Player
         private float refreshTimer;
         private float forcedIntensity;
         private float forcedIntensityEndTime;
+        private bool initialized;
 
         private bool IsLocalOwner => networkObject == null || !networkObject.IsSpawned || networkObject.IsOwner;
 
@@ -56,14 +57,25 @@ namespace DeFrag.Player
 
         private IEnumerator Start()
         {
-            // Wait one frame so NetworkObject ownership is valid before creating local-only presentation.
-            yield return null;
+            // Host ownership can be unresolved for more than one frame while the
+            // player prefab is entering the gameplay scene.
+            while (networkObject != null && !networkObject.IsSpawned)
+                yield return null;
+
             if (!IsLocalOwner)
             {
                 enabled = false;
                 yield break;
             }
 
+            InitializeForConfirmedLocalOwner();
+        }
+
+        public void InitializeForConfirmedLocalOwner()
+        {
+            if (initialized || !IsLocalOwner) return;
+
+            initialized = true;
             CreateRuntimeVolume();
             RefreshMonsterSources();
         }
