@@ -53,7 +53,6 @@ public class SubtitleTrigger : MonoBehaviour
     // 엘리베이터 등 코드에서 콜백을 넘기는 용도
     public void PlaySubtitleFromInteract(System.Action onComplete)
     {
-        if (hasTriggered) return;
         if (subtitlesScript == null || mySubtitles == null || mySubtitles.Length == 0)
         {
             Debug.LogWarning($"[{nameof(SubtitleTrigger)}] {name}에 재생할 자막이 설정되지 않았습니다.", this);
@@ -61,6 +60,8 @@ public class SubtitleTrigger : MonoBehaviour
             return;
         }
 
+        // Trigger volumes remain one-shot, while an explicitly interacted hint
+        // can be replayed without progressing its quest a second time.
         hasTriggered = true;
 
         System.Action combinedCallback = () =>

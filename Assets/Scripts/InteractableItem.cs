@@ -5,10 +5,9 @@ public class InteractableItem : MonoBehaviour, IInteractable
 {
     public enum HintPresentationMode
     {
-        Sprite,
-        None,
-        Subtitle,
-        Sequence
+        Sprite = 0,
+        None = 1,
+        Subtitle = 2
     }
 
     [Header("Interaction")]
@@ -23,8 +22,6 @@ public class InteractableItem : MonoBehaviour, IInteractable
     [SerializeField] private SubtitleTrigger subtitlePresentation;
     [Tooltip("Sprite 모드에서 표시할 이미지입니다.")]
     [SerializeField] protected Sprite hintSprite;
-    [Tooltip("Sequence 모드에서 재생할 영상/애니메이션 화면입니다.")]
-    [SerializeField] private HintSequencePresentation sequencePresentation;
 
     [Header("Optional Camera Presentation")]
     [Tooltip("When enabled, this camera presentation replaces the normal hint presentation.")]
@@ -96,10 +93,6 @@ public class InteractableItem : MonoBehaviour, IInteractable
 
             case HintPresentationMode.Sprite:
                 player.OpenHint(hintSprite);
-                break;
-
-            case HintPresentationMode.Sequence:
-                player.OpenSequence(sequencePresentation);
                 break;
 
             default:

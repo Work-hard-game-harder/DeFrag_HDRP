@@ -19,6 +19,7 @@ namespace DeFrag.B1F
         private bool originalPlayerCameraEnabled;
         private bool originalInteractionObjectActive;
         private bool originalInteractionCameraEnabled;
+        private float originalInteractionCameraFieldOfView;
         private bool originalInteractionAudioListenerEnabled;
         private float interactionDistance;
         private bool waitingForInteractionKeyRelease;
@@ -34,11 +35,15 @@ namespace DeFrag.B1F
         private float lookYaw;
         private float lookPitch;
 
+        public bool IsFor(DistributionBoxController box) => active && controller == box;
+
         public void Begin(
             DistributionBoxController box,
             PlayerInteraction player,
             Camera localPlayerCamera,
             Camera boxCamera,
+            Camera initialPreset,
+            float initialFieldOfView,
             float rayDistance,
             float blendDuration,
             AnimationCurve blendCurve,
@@ -72,11 +77,14 @@ namespace DeFrag.B1F
             originalPlayerCameraEnabled = playerCamera.enabled;
             originalInteractionObjectActive = interactionCamera.gameObject.activeSelf;
             originalInteractionCameraEnabled = interactionCamera.enabled;
+            originalInteractionCameraFieldOfView = interactionCamera.fieldOfView;
             originalInteractionAudioListenerEnabled =
                 interactionAudioListener != null && interactionAudioListener.enabled;
-            interactionCameraRestPosition = interactionCamera.transform.position;
-            interactionCameraRestRotation = interactionCamera.transform.rotation;
+            Camera entryPreset = initialPreset != null ? initialPreset : interactionCamera;
+            interactionCameraRestPosition = entryPreset.transform.position;
+            interactionCameraRestRotation = entryPreset.transform.rotation;
             CopyLocalCameraRenderingSettings(playerCamera, interactionCamera);
+            interactionCamera.fieldOfView = playerCamera.fieldOfView;
             lookYaw = 0f;
             lookPitch = 0f;
             cameraTransitionComplete = false;
@@ -98,6 +106,7 @@ namespace DeFrag.B1F
             interactionCamera.enabled = true;
             playerCamera.enabled = false;
             cameraBlendRoutine = StartCoroutine(BlendCameraToBox(
+                initialFieldOfView,
                 blendDuration,
                 blendCurve ?? AnimationCurve.Linear(0f, 0f, 1f, 1f)));
         }
@@ -166,6 +175,7 @@ namespace DeFrag.B1F
                 interactionCamera.transform.SetPositionAndRotation(
                     interactionCameraRestPosition,
                     interactionCameraRestRotation);
+                interactionCamera.fieldOfView = originalInteractionCameraFieldOfView;
                 interactionCamera.enabled = originalInteractionCameraEnabled;
                 if (interactionAudioListener != null)
                     interactionAudioListener.enabled = originalInteractionAudioListenerEnabled;
@@ -185,10 +195,34 @@ namespace DeFrag.B1F
             if (Active == this) Active = null;
         }
 
-        private IEnumerator BlendCameraToBox(float duration, AnimationCurve curve)
+        public void BlendToPreset(
+            Camera preset,
+            float fieldOfView,
+            float duration,
+            AnimationCurve curve)
+        {
+            if (!active || interactionCamera == null || preset == null) return;
+
+            interactionCameraRestPosition = preset.transform.position;
+            interactionCameraRestRotation = preset.transform.rotation;
+            lookYaw = 0f;
+            lookPitch = 0f;
+            cameraTransitionComplete = false;
+            if (cameraBlendRoutine != null) StopCoroutine(cameraBlendRoutine);
+            cameraBlendRoutine = StartCoroutine(BlendCameraToBox(
+                fieldOfView,
+                duration,
+                curve ?? AnimationCurve.Linear(0f, 0f, 1f, 1f)));
+        }
+
+        private IEnumerator BlendCameraToBox(
+            float targetFieldOfView,
+            float duration,
+            AnimationCurve curve)
         {
             Vector3 startPosition = interactionCamera.transform.position;
             Quaternion startRotation = interactionCamera.transform.rotation;
+            float startFieldOfView = interactionCamera.fieldOfView;
             float elapsed = 0f;
 
             while (elapsed < duration)
@@ -199,12 +233,15 @@ namespace DeFrag.B1F
                     Vector3.LerpUnclamped(startPosition, interactionCameraRestPosition, t);
                 interactionCamera.transform.rotation =
                     Quaternion.SlerpUnclamped(startRotation, interactionCameraRestRotation, t);
+                interactionCamera.fieldOfView =
+                    Mathf.LerpUnclamped(startFieldOfView, targetFieldOfView, t);
                 yield return null;
             }
 
             interactionCamera.transform.SetPositionAndRotation(
                 interactionCameraRestPosition,
                 interactionCameraRestRotation);
+            interactionCamera.fieldOfView = targetFieldOfView;
             cameraTransitionComplete = true;
             cameraBlendRoutine = null;
         }
@@ -226,6 +263,15 @@ namespace DeFrag.B1F
 
         private void InteractWithFocusedControl()
         {
+            // Main Knob is larger than its imported pivot and can overlap the
+            // cabinet/switch colliders in the ray. Give its visible bounds an
+            // explicit hit test before choosing a raycast control.
+            if (controller.IsMainKnobUnderCrosshair(interactionCamera, interactionDistance))
+            {
+                controller.RequestSubmitFromLocalPlayer();
+                return;
+            }
+
             Ray ray = interactionCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f));
             RaycastHit[] hits = Physics.RaycastAll(
                 ray,
@@ -268,15 +314,6 @@ namespace DeFrag.B1F
             }
 
             if (closestMainKnob != null)
-            {
-                controller.RequestSubmitFromLocalPlayer();
-                return;
-            }
-
-            // The cabinet door/frame can occlude the knob's small target collider.
-            // Use the configured knob pivot as a narrow crosshair fallback instead
-            // of treating an unrelated foreground collider as the control.
-            if (controller.IsMainKnobUnderCrosshair(interactionCamera, interactionDistance))
             {
                 controller.RequestSubmitFromLocalPlayer();
                 return;

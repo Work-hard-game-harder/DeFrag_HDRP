@@ -34,10 +34,10 @@ namespace DeFrag.B1F
             if (instance != null) instance.gameObject.SetActive(false);
         }
 
-        public void Show(ushort mask, float duration)
+        public void Show(ushort mask, int bankIndex, float duration)
         {
             remaining = duration;
-            hintText.text = BuildHint(mask);
+            hintText.text = BuildHint(mask, bankIndex);
             gameObject.SetActive(true);
             UpdateTimer();
         }
@@ -75,10 +75,12 @@ namespace DeFrag.B1F
                 timerText.text = $"SIGNAL UPDATE: {remaining:00.0}s";
         }
 
-        private static string BuildHint(ushort mask)
+        private static string BuildHint(ushort mask, int bankIndex)
         {
-            string result = "DISTRIBUTION BOX A\nLIVE SWITCH MAP\n\n";
-            for (int i = 0; i < 15; i++)
+            char bankName = (char)('A' + Mathf.Clamp(bankIndex, 0, 2));
+            int firstSwitch = Mathf.Clamp(bankIndex, 0, 2) * 5;
+            string result = $"DISTRIBUTION BOX A\nBANK {bankName} SWITCH MAP\n\n";
+            for (int i = firstSwitch; i < firstSwitch + 5; i++)
             {
                 bool on = (mask & (1 << i)) != 0;
                 result += $"KNOB {i + 1:000}  {(on ? "ON" : "OFF")}\n";

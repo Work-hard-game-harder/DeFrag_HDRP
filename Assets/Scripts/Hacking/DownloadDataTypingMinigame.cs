@@ -13,6 +13,8 @@ public sealed class DownloadDataTypingMinigame : HackingMinigameBase
     [Header("Command Generation")]
     [SerializeField] private DownloadCommandWordLibrary wordLibrary;
     [SerializeField, Min(1)] private int authenticationRounds = 3;
+    [Tooltip("Editor/Development Build에서 상대 플레이어에게 전송되는 힌트 단어를 Console에 출력합니다.")]
+    [SerializeField] private bool logRemoteHintForSoloDebug = true;
 
     private ConnectionDevice device;
     private CooperativeTerminalHintRelay hintRelay;
@@ -22,7 +24,9 @@ public sealed class DownloadDataTypingMinigame : HackingMinigameBase
     private TMP_InputField input;
     private DownloadCommand currentCommand;
     private int currentRound;
+    private int hiddenTokenIndex;
     private bool acceptingInput;
+    private bool waitingForDistributionBank;
     private bool ownsRuntimeWordLibrary;
 
     public override bool ConsumesTextInput => true;
@@ -36,6 +40,7 @@ public sealed class DownloadDataTypingMinigame : HackingMinigameBase
             ? Camera.main.GetComponentInParent<CooperativeTerminalHintRelay>()
             : null;
         BuildInterface();
+        DeFrag.B1F.B1FDistributionTerminalAdapter.LocalBankAdvanced += OnDistributionBankAdvanced;
         log.text =
             $"> EXEC DOWNLOAD_DATA_ARCHIVE_{device.ArchiveNumber:00}\n" +
             "> ESTABLISHING REMOTE AUTHENTICATION...\n" +
@@ -46,6 +51,7 @@ public sealed class DownloadDataTypingMinigame : HackingMinigameBase
     public override void End()
     {
         StopAllCoroutines();
+        DeFrag.B1F.B1FDistributionTerminalAdapter.LocalBankAdvanced -= OnDistributionBankAdvanced;
         hintRelay?.HideForTeammate();
 
         if (ownsRuntimeWordLibrary && wordLibrary != null)
@@ -73,9 +79,10 @@ public sealed class DownloadDataTypingMinigame : HackingMinigameBase
         currentCommand = wordLibrary.CreateCommand(device.ArchiveNumber);
         currentRound++;
 
-        int hiddenTokenIndex = Random.Range(1, 3);
+        hiddenTokenIndex = Random.Range(1, 3);
         string hiddenToken = currentCommand.TokenAt(hiddenTokenIndex);
         target.text = currentCommand.ObscuredText(hiddenTokenIndex);
+        LogRemoteHint(hiddenToken, target.text);
         progress.text =
             $"AUTHENTICATION SEQUENCE {currentRound:00}/{authenticationRounds:00}\n" +
             "REMOTE FRAGMENT REQUIRED";
@@ -88,6 +95,46 @@ public sealed class DownloadDataTypingMinigame : HackingMinigameBase
         hintRelay?.ShowForTeammate(
             $"DOWNLOAD_DATA_ARCHIVE_{device.ArchiveNumber:00}",
             hiddenToken);
+    }
+
+    private void Update()
+    {
+        if (acceptingInput && Input.GetKeyDown(KeyCode.Tab))
+            AutoCompleteCurrentToken();
+    }
+
+    private void AutoCompleteCurrentToken()
+    {
+        string value = input.text.ToUpperInvariant();
+        string[] enteredTokens = value.Split('_');
+        int tokenIndex = enteredTokens.Length - 1;
+        if (tokenIndex < 0 || tokenIndex >= currentCommand.TokenCount ||
+            tokenIndex == hiddenTokenIndex)
+            return;
+
+        string prefix = enteredTokens[tokenIndex];
+        string expected = currentCommand.TokenAt(tokenIndex);
+        if (prefix.Length < 2 || !expected.StartsWith(prefix, System.StringComparison.Ordinal))
+            return;
+
+        enteredTokens[tokenIndex] = expected;
+        string completed = string.Join("_", enteredTokens);
+        input.SetTextWithoutNotify(completed);
+        input.caretPosition = completed.Length;
+        input.ActivateInputField();
+    }
+
+    [System.Diagnostics.Conditional("UNITY_EDITOR")]
+    [System.Diagnostics.Conditional("DEVELOPMENT_BUILD")]
+    private void LogRemoteHint(string hiddenToken, string obscuredCommand)
+    {
+        if (!logRemoteHintForSoloDebug) return;
+
+        Debug.Log(
+            $"[DownloadData Debug] REMOTE HINT WORD: {hiddenToken}\n" +
+            $"ARCHIVE: {device.ArchiveNumber:00} | ROUND: {currentRound:00}/{authenticationRounds:00}\n" +
+            $"LOCAL COMMAND: {obscuredCommand}",
+            this);
     }
 
     private void Submit(string submitted)
@@ -126,7 +173,29 @@ public sealed class DownloadDataTypingMinigame : HackingMinigameBase
     {
         progress.text = "ARCHIVE TRANSFER COMPLETE";
         yield return new WaitForSecondsRealtime(0.9f);
-        ReportSuccess();
+        waitingForDistributionBank = true;
+        acceptingInput = false;
+        input.interactable = false;
+        progress.text = "BANK DATA SENT // WAITING FOR REMOTE OPERATOR";
+        device.RequestCommandCompletion(TerminalCommands.DownloadData);
+    }
+
+    private void OnDistributionBankAdvanced(DeFrag.B1F.DistributionPuzzlePhase nextPhase)
+    {
+        if (!waitingForDistributionBank) return;
+
+        if (nextPhase == DeFrag.B1F.DistributionPuzzlePhase.MainKnob ||
+            nextPhase == DeFrag.B1F.DistributionPuzzlePhase.Completed)
+        {
+            progress.text = "ALL BANKS VERIFIED // SIGNAL MAIN KNOB OPERATOR";
+            log.text += "\n> DISTRIBUTION BANK C VERIFIED";
+            return;
+        }
+
+        waitingForDistributionBank = false;
+        currentRound = 0;
+        log.text += $"\n> NEXT DISTRIBUTION BANK READY [{nextPhase}]";
+        StartRound();
     }
 
     private void BuildInterface()

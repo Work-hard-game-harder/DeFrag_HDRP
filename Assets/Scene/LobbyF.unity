@@ -405,7 +405,6 @@ MonoBehaviour:
   presentationMode: 2
   subtitlePresentation: {fileID: 97161665}
   hintSprite: {fileID: 0}
-  sequencePresentation: {fileID: 0}
   useCameraPresentation: 0
   cameraPresentation: {fileID: 0}
   hintId: Office1Schedule
@@ -1222,7 +1221,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.26432896, g: 0.53394103, b: 0.5660378, a: 0.39215687}
+  m_Color: {r: 0.26432896, g: 0.53394103, b: 0.5660378, a: 0.78431374}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1591,7 +1590,6 @@ MonoBehaviour:
   presentationMode: 2
   subtitlePresentation: {fileID: 274732460}
   hintSprite: {fileID: 0}
-  sequencePresentation: {fileID: 0}
   useCameraPresentation: 0
   cameraPresentation: {fileID: 0}
   hintId: EmployeeBadge
@@ -4671,10 +4669,9 @@ MonoBehaviour:
   itemName: "\uD558\uC580\uC0C9\uC73C\uB85C \uBE5B\uB098\uB294 \uD654\uBA74"
   isHoldInteraction: 1
   requireFrontFacing: 1
-  presentationMode: 3
+  presentationMode: 1
   subtitlePresentation: {fileID: 0}
   hintSprite: {fileID: 0}
-  sequencePresentation: {fileID: 0}
   useCameraPresentation: 1
   cameraPresentation: {fileID: 8832379143698834966}
   hintId: Monitor_Running
@@ -12364,7 +12361,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1269080871
 RectTransform:
   m_ObjectHideFlags: 0
@@ -12374,7 +12371,7 @@ RectTransform:
   m_GameObject: {fileID: 1269080870}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 236294328}
@@ -14013,7 +14010,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -19202,7 +19199,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -21338,7 +21335,6 @@ MonoBehaviour:
   presentationMode: 1
   subtitlePresentation: {fileID: 0}
   hintSprite: {fileID: 0}
-  sequencePresentation: {fileID: 0}
   useCameraPresentation: 1
   cameraPresentation: {fileID: 8424344033849766708}
   hintId: TV
@@ -23253,7 +23249,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.8674295, b: 0, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -25423,6 +25419,7 @@ GameObject:
   - component: {fileID: 2688633783258987872}
   - component: {fileID: 3170553133379982269}
   - component: {fileID: 440209614615661424}
+  - component: {fileID: 3170553133379982270}
   m_Layer: 5
   m_Name: InteractionProgress
   m_TagString: Untagged
@@ -29591,6 +29588,21 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1417705417498643622}
   m_CullTransparentMesh: 1
+--- !u!114 &3170553133379982270
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1417705417498643622}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Outline
+  m_EffectColor: {r: 0, g: 0, b: 0, a: 0.5}
+  m_EffectDistance: {x: 1, y: -1}
+  m_UseGraphicAlpha: 1
 --- !u!33 &3172932512408408083
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -31094,7 +31106,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColor: {r: 0.2784314, g: 0.49411765, b: 0.5803922, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -31111,8 +31123,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 60
-  m_fontSizeBase: 60
+  m_fontSize: 100
+  m_fontSizeBase: 100
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -31121,7 +31133,7 @@ MonoBehaviour:
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 256
   m_textAlignment: 65535
-  m_characterSpacing: 0
+  m_characterSpacing: 8.87
   m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
@@ -38124,6 +38136,7 @@ GameObject:
   - component: {fileID: 4078477890372957313}
   - component: {fileID: 3465709300277058303}
   - component: {fileID: 8716185366530299051}
+  - component: {fileID: 8716185366530299052}
   m_Layer: 5
   m_Name: Crosshair
   m_TagString: Untagged
@@ -43105,7 +43118,6 @@ MonoBehaviour:
   presentationMode: 2
   subtitlePresentation: {fileID: 7712296854155119982}
   hintSprite: {fileID: 0}
-  sequencePresentation: {fileID: 0}
   useCameraPresentation: 0
   cameraPresentation: {fileID: 0}
   hintId: Report
@@ -44719,6 +44731,11 @@ MonoBehaviour:
   displayDuration: 3
   allowEscapeToSkip: 1
   videoPlayer: {fileID: 8424344033849766709}
+  videoRenderer: {fileID: 5534666053543306792}
+  videoMaterialIndex: 1
+  videoTextureProperty: _BaseColorMap
+  applyVideoToEmission: 1
+  videoEmissionTextureProperty: _EmissiveColorMap
   desktopRoot: {fileID: 0}
 --- !u!328 &8424344033849766709
 VideoPlayer:
@@ -44879,7 +44896,6 @@ MonoBehaviour:
   presentationMode: 2
   subtitlePresentation: {fileID: 0}
   hintSprite: {fileID: 0}
-  sequencePresentation: {fileID: 0}
   useCameraPresentation: 0
   cameraPresentation: {fileID: 0}
   hintId: WhiteBoard_Conf
@@ -45468,8 +45484,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.5943396, g: 0.5943396, b: 0.5943396, a: 0.050980393}
-  m_RaycastTarget: 1
+  m_Color: {r: 1, g: 1, b: 1, a: 0.19607843}
+  m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
@@ -45485,6 +45501,21 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &8716185366530299052
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5891934708129567545}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Outline
+  m_EffectColor: {r: 0, g: 0, b: 0, a: 1}
+  m_EffectDistance: {x: 2, y: -2}
+  m_UseGraphicAlpha: 1
 --- !u!4 &8727317185703597451
 Transform:
   m_ObjectHideFlags: 0
@@ -45703,6 +45734,11 @@ MonoBehaviour:
   displayDuration: 3
   allowEscapeToSkip: 1
   videoPlayer: {fileID: 0}
+  videoRenderer: {fileID: 0}
+  videoMaterialIndex: 0
+  videoTextureProperty: _BaseColorMap
+  applyVideoToEmission: 1
+  videoEmissionTextureProperty: _EmissiveColorMap
   desktopRoot: {fileID: 1269080870}
 --- !u!1 &8834791969452356813
 GameObject:

@@ -79,6 +79,8 @@ public readonly struct DownloadCommand
 
     public string FullText => string.Join("_", tokens);
 
+    public int TokenCount => tokens.Length;
+
     public string TokenAt(int index) => tokens[index];
 
     public string ObscuredText(int hiddenIndex)

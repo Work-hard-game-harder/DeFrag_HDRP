@@ -5,11 +5,32 @@ using UnityEngine.Events;
 
 namespace DeFrag.B1F
 {
+    public enum DistributionCameraView : byte
+    {
+        BankA,
+        BankB,
+        BankC,
+        MainKnob
+    }
+
+    public enum DistributionPuzzlePhase : byte
+    {
+        WaitingForBankAData,
+        BankA,
+        WaitingForBankBData,
+        BankB,
+        WaitingForBankCData,
+        BankC,
+        MainKnob,
+        Completed
+    }
+
     [DisallowMultipleComponent]
     [RequireComponent(typeof(NetworkObject))]
     public sealed class DistributionBoxController : NetworkBehaviour, IInteractable
     {
         private const int SwitchCount = 15;
+        private const int SwitchesPerBank = 5;
         private const ushort SwitchMask = (1 << SwitchCount) - 1;
         private const ulong NoClient = ulong.MaxValue;
 
@@ -26,6 +47,15 @@ namespace DeFrag.B1F
         [Tooltip("조작 중에만 활성화할 배전함 전용 Camera입니다.")]
         [SerializeField] private Camera interactionCamera;
         [SerializeField, Min(0.5f)] private float localInteractionDistance = 4f;
+
+        [Header("Camera Presets")]
+        [Tooltip("These cameras are disabled pose/FOV presets. Only Interaction Camera renders.")]
+        [SerializeField] private Camera bankACameraPreset;
+        [SerializeField] private Camera bankBCameraPreset;
+        [SerializeField] private Camera bankCCameraPreset;
+        [SerializeField] private Camera mainKnobCameraPreset;
+        [SerializeField, Range(1f, 179f)] private float bankFieldOfView = 39.5f;
+        [SerializeField, Range(1f, 179f)] private float mainKnobFieldOfView = 60f;
 
         [Header("Local Camera Presentation")]
         [SerializeField, Min(0.01f)] private float cameraBlendDuration = 0.75f;
@@ -62,6 +92,12 @@ namespace DeFrag.B1F
         [SerializeField] private UnityEvent onFailureElectricalEffect = new();
         [SerializeField] private UnityEvent onSuccess = new();
 
+        [Header("Shared Audio")]
+        [SerializeField] private AudioSource interactionAudioSource;
+        [SerializeField] private AudioClip switchToggleClip;
+        [SerializeField] private AudioClip mainKnobPullClip;
+        [SerializeField] private AudioClip mainKnobFailureClip;
+
         private readonly NetworkVariable<ulong> controllingClient = new(
             NoClient,
             NetworkVariableReadPermission.Everyone,
@@ -72,6 +108,10 @@ namespace DeFrag.B1F
             NetworkVariableWritePermission.Server);
         private readonly NetworkVariable<bool> completed = new(
             false,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server);
+        private readonly NetworkVariable<DistributionPuzzlePhase> phase = new(
+            DistributionPuzzlePhase.WaitingForBankAData,
             NetworkVariableReadPermission.Everyone,
             NetworkVariableWritePermission.Server);
 
@@ -88,6 +128,7 @@ namespace DeFrag.B1F
 
         public bool IsCompleted => completed.Value;
         public bool IsHintSessionActive => hintSessionActive;
+        public DistributionPuzzlePhase Phase => phase.Value;
 
         private void Awake()
         {
@@ -106,6 +147,7 @@ namespace DeFrag.B1F
             controllingClient.OnValueChanged += OnControllerChanged;
             currentSwitchMask.OnValueChanged += OnSwitchMaskChanged;
             completed.OnValueChanged += OnCompletedChanged;
+            phase.OnValueChanged += OnPhaseChanged;
             if (IsServer && NetworkManager != null)
                 NetworkManager.OnClientDisconnectCallback += OnClientDisconnected;
 
@@ -119,6 +161,7 @@ namespace DeFrag.B1F
             controllingClient.OnValueChanged -= OnControllerChanged;
             currentSwitchMask.OnValueChanged -= OnSwitchMaskChanged;
             completed.OnValueChanged -= OnCompletedChanged;
+            phase.OnValueChanged -= OnPhaseChanged;
             if (NetworkManager != null)
                 NetworkManager.OnClientDisconnectCallback -= OnClientDisconnected;
         }
@@ -164,13 +207,19 @@ namespace DeFrag.B1F
         public void RequestToggleFromLocalPlayer(int index)
         {
             if (index < 0 || index >= SwitchCount) return;
+            if (!IsSwitchInActiveBank(index)) return;
             if (IsSpawned) ToggleSwitchServerRpc(index);
             else ApplyOfflineToggle(index);
         }
 
         public void RequestSubmitFromLocalPlayer()
         {
+            Debug.Log(
+                $"[DistributionBox] MainKnob pressed. IsSpawned={IsSpawned}, " +
+                $"IsOwner={IsOwner}, IsHintActive={hintSessionActive}.",
+                this);
             if (IsSpawned) SubmitServerRpc();
+            else ApplyOfflineSubmit();
         }
 
         public void RequestReleaseFromLocalPlayer()
@@ -186,6 +235,7 @@ namespace DeFrag.B1F
         public void RequestHintSessionFromLocalPlayer()
         {
             if (IsSpawned) StartHintSessionServerRpc();
+            else StartOfflineHintSession();
         }
 
         [ServerRpc(RequireOwnership = false)]
@@ -216,37 +266,35 @@ namespace DeFrag.B1F
         [ServerRpc(RequireOwnership = false)]
         private void ToggleSwitchServerRpc(int index, ServerRpcParams rpc = default)
         {
-            if (!CanControllerAct(rpc.Receive.SenderClientId) || index < 0 || index >= SwitchCount)
+            if (!CanControllerAct(rpc.Receive.SenderClientId) || index < 0 ||
+                index >= SwitchCount || !IsSwitchInActiveBank(index))
                 return;
 
             currentSwitchMask.Value ^= (ushort)(1 << index);
+            TryCompleteActiveBank();
         }
 
         [ServerRpc(RequireOwnership = false)]
         private void SubmitServerRpc(ServerRpcParams rpc = default)
         {
             ulong sender = rpc.Receive.SenderClientId;
-            if (!CanControllerAct(sender) || !hintSessionActive)
+            if (!CanControllerAct(sender))
+            {
+                Debug.LogWarning(
+                    $"[DistributionBox] MainKnob submit from client {sender} was rejected: " +
+                    $"controller={controllingClient.Value}, completed={completed.Value}, " +
+                    $"canUse={CanUseForCurrentPowerState()}.",
+                    this);
                 return;
+            }
 
-            if ((currentSwitchMask.Value & SwitchMask) == answerMask)
+            if (phase.Value != DistributionPuzzlePhase.MainKnob)
             {
-                completed.Value = true;
-                hintSessionActive = false;
-                HideHintClientRpc(Target(hintOwnerClient));
-                hintOwnerClient = NoClient;
-                PlaySuccessClientRpc();
-                onSuccess?.Invoke();
-                if (isBoxA) powerController?.SetEmergencyPowerServer();
-                else powerController?.SetFullPowerServer();
-                EndSessionClientRpc(Target(sender));
-                controllingClient.Value = NoClient;
+                PlayRejectedSubmitClientRpc(Target(sender));
+                return;
             }
-            else
-            {
-                PlayFailureClientRpc();
-                InvalidateHintSession(true);
-            }
+
+            CompletePuzzle(sender);
         }
 
         [ServerRpc(RequireOwnership = false)]
@@ -261,8 +309,15 @@ namespace DeFrag.B1F
         {
             if (completed.Value || !CanUseForCurrentPowerState()) return;
             if (controllingClient.Value == rpc.Receive.SenderClientId) return;
+            if (!IsWaitingForBankData(phase.Value)) return;
             hintOwnerClient = rpc.Receive.SenderClientId;
             hintSessionActive = true;
+            phase.Value = phase.Value switch
+            {
+                DistributionPuzzlePhase.WaitingForBankAData => DistributionPuzzlePhase.BankA,
+                DistributionPuzzlePhase.WaitingForBankBData => DistributionPuzzlePhase.BankB,
+                _ => DistributionPuzzlePhase.BankC
+            };
             GenerateAndSendHint();
         }
 
@@ -280,9 +335,13 @@ namespace DeFrag.B1F
         }
 
         [ClientRpc]
-        private void ShowHintClientRpc(ushort mask, float duration, ClientRpcParams rpc = default)
+        private void ShowHintClientRpc(
+            ushort mask,
+            int bankIndex,
+            float duration,
+            ClientRpcParams rpc = default)
         {
-            DistributionHintPresenter.GetOrCreate().Show(mask, duration);
+            DistributionHintPresenter.GetOrCreate().Show(mask, bankIndex, duration);
         }
 
         [ClientRpc]
@@ -301,27 +360,108 @@ namespace DeFrag.B1F
         [ClientRpc]
         private void PlayFailureClientRpc()
         {
+            PlayOneShot(mainKnobPullClip);
+            PlayOneShot(mainKnobFailureClip);
             AnimateMainKnobFailure();
             onFailureElectricalEffect?.Invoke();
         }
 
         [ClientRpc]
+        private void AdvanceTerminalClientRpc(
+            DistributionPuzzlePhase nextPhase,
+            ClientRpcParams rpc = default)
+        {
+            DistributionHintPresenter.TryHide();
+            B1FDistributionTerminalAdapter.NotifyLocalBankAdvanced(nextPhase);
+        }
+
+        [ClientRpc]
+        private void PlayRejectedSubmitClientRpc(ClientRpcParams rpc = default)
+        {
+            PlayOneShot(mainKnobPullClip);
+            AnimateMainKnobFailure();
+        }
+
+        [ClientRpc]
         private void PlaySuccessClientRpc()
         {
+            PlayOneShot(mainKnobPullClip);
             AnimateMainKnob(mainKnobSuccessLocalEuler, false);
         }
 
         private void GenerateAndSendHint()
         {
             if (!IsServer || hintOwnerClient == NoClient) return;
-
-            ushort next;
-            do next = (ushort)Random.Range(0, SwitchMask + 1);
-            while (next == answerMask);
-            answerMask = next;
+            int bankIndex = GetActiveBankIndex();
+            if (bankIndex < 0) return;
+            ushort bankMask = GetBankMask(bankIndex);
+            int bankOffset = bankIndex * SwitchesPerBank;
+            ushort currentLocalMask =
+                (ushort)((currentSwitchMask.Value & bankMask) >> bankOffset);
+            ushort nextLocalMask;
+            do nextLocalMask = (ushort)Random.Range(1, 1 << SwitchesPerBank);
+            while (nextLocalMask == currentLocalMask);
+            answerMask = (ushort)((currentSwitchMask.Value & ~bankMask) |
+                                  (nextLocalMask << bankOffset));
             nextHintRefreshTime = NetworkManager.ServerTime.Time + hintRefreshSeconds;
-            ShowHintClientRpc(answerMask, hintRefreshSeconds, Target(hintOwnerClient));
+            ShowHintClientRpc(answerMask, bankIndex, hintRefreshSeconds, Target(hintOwnerClient));
         }
+
+        private void TryCompleteActiveBank()
+        {
+            if (!IsServer || !hintSessionActive) return;
+            int bankIndex = GetActiveBankIndex();
+            if (bankIndex < 0) return;
+            ushort bankMask = GetBankMask(bankIndex);
+            if ((currentSwitchMask.Value & bankMask) != (answerMask & bankMask)) return;
+
+            hintSessionActive = false;
+            DistributionPuzzlePhase nextPhase = bankIndex switch
+            {
+                0 => DistributionPuzzlePhase.WaitingForBankBData,
+                1 => DistributionPuzzlePhase.WaitingForBankCData,
+                _ => DistributionPuzzlePhase.MainKnob
+            };
+            phase.Value = nextPhase;
+            ulong terminalClient = hintOwnerClient;
+            hintOwnerClient = NoClient;
+            answerMask = 0;
+            AdvanceTerminalClientRpc(nextPhase, Target(terminalClient));
+        }
+
+        private void CompletePuzzle(ulong controllingPlayer)
+        {
+            completed.Value = true;
+            phase.Value = DistributionPuzzlePhase.Completed;
+            PlaySuccessClientRpc();
+            onSuccess?.Invoke();
+            if (isBoxA) powerController?.SetEmergencyPowerServer();
+            else powerController?.SetFullPowerServer();
+            EndSessionClientRpc(Target(controllingPlayer));
+            controllingClient.Value = NoClient;
+        }
+
+        private static bool IsWaitingForBankData(DistributionPuzzlePhase value) =>
+            value == DistributionPuzzlePhase.WaitingForBankAData ||
+            value == DistributionPuzzlePhase.WaitingForBankBData ||
+            value == DistributionPuzzlePhase.WaitingForBankCData;
+
+        private int GetActiveBankIndex() => phase.Value switch
+        {
+            DistributionPuzzlePhase.BankA => 0,
+            DistributionPuzzlePhase.BankB => 1,
+            DistributionPuzzlePhase.BankC => 2,
+            _ => -1
+        };
+
+        private bool IsSwitchInActiveBank(int index)
+        {
+            int bankIndex = GetActiveBankIndex();
+            return bankIndex >= 0 && index / SwitchesPerBank == bankIndex;
+        }
+
+        private static ushort GetBankMask(int bankIndex) =>
+            (ushort)(((1 << SwitchesPerBank) - 1) << (bankIndex * SwitchesPerBank));
 
         private void InvalidateHintSession(bool resetTerminal)
         {
@@ -380,7 +520,11 @@ namespace DeFrag.B1F
         }
 
         private void OnControllerChanged(ulong previous, ulong next) => AnimateDoor(next != NoClient);
-        private void OnSwitchMaskChanged(ushort previous, ushort next) => ApplySwitchMask(next, false);
+        private void OnSwitchMaskChanged(ushort previous, ushort next)
+        {
+            ApplySwitchMask(next, false);
+            if (previous != next) PlayOneShot(switchToggleClip);
+        }
         private void OnCompletedChanged(bool previous, bool next)
         {
             if (next) SetDoorImmediate(false);
@@ -402,6 +546,74 @@ namespace DeFrag.B1F
         {
             offlineSwitchMask ^= (ushort)(1 << index);
             ApplySwitchMask(offlineSwitchMask, false);
+            PlayOneShot(switchToggleClip);
+        }
+
+        private void OnPhaseChanged(
+            DistributionPuzzlePhase previous,
+            DistributionPuzzlePhase next)
+        {
+            ShowLocalCameraView(GetCameraViewForPhase(next));
+        }
+
+        private static DistributionCameraView GetCameraViewForPhase(
+            DistributionPuzzlePhase value) => value switch
+            {
+                DistributionPuzzlePhase.BankB or DistributionPuzzlePhase.WaitingForBankBData =>
+                    DistributionCameraView.BankB,
+                DistributionPuzzlePhase.BankC or DistributionPuzzlePhase.WaitingForBankCData =>
+                    DistributionCameraView.BankC,
+                DistributionPuzzlePhase.MainKnob or DistributionPuzzlePhase.Completed =>
+                    DistributionCameraView.MainKnob,
+                _ => DistributionCameraView.BankA
+            };
+
+        private void StartOfflineHintSession()
+        {
+            if (completed.Value || !CanUseForCurrentPowerState()) return;
+
+            hintSessionActive = true;
+            answerMask = GenerateDifferentMask(answerMask);
+            DistributionHintPresenter.GetOrCreate().Show(answerMask, 0, hintRefreshSeconds);
+        }
+
+        private void ApplyOfflineSubmit()
+        {
+            if (!offlineOccupied || completed.Value || !CanUseForCurrentPowerState())
+                return;
+
+            if (!hintSessionActive)
+            {
+                PlayOneShot(mainKnobPullClip);
+                AnimateMainKnobFailure();
+                return;
+            }
+
+            if ((offlineSwitchMask & SwitchMask) == answerMask)
+            {
+                hintSessionActive = false;
+                DistributionHintPresenter.TryHide();
+                PlayOneShot(mainKnobPullClip);
+                AnimateMainKnob(mainKnobSuccessLocalEuler, false);
+                onSuccess?.Invoke();
+                return;
+            }
+
+            PlayOneShot(mainKnobPullClip);
+            PlayOneShot(mainKnobFailureClip);
+            AnimateMainKnobFailure();
+            hintSessionActive = false;
+            answerMask = 0;
+            DistributionHintPresenter.TryHide();
+            B1FDistributionTerminalAdapter.ResetLocalTerminal();
+        }
+
+        private static ushort GenerateDifferentMask(ushort previous)
+        {
+            ushort next;
+            do next = (ushort)Random.Range(0, SwitchMask + 1);
+            while (next == previous);
+            return next;
         }
 
         private void BeginLocalSession(PlayerInteraction player)
@@ -422,6 +634,8 @@ namespace DeFrag.B1F
                 player,
                 camera,
                 interactionCamera,
+                GetCameraPreset(GetCameraViewForPhase(phase.Value)),
+                GetCameraFieldOfView(GetCameraViewForPhase(phase.Value)),
                 localInteractionDistance,
                 cameraBlendDuration,
                 cameraBlendCurve,
@@ -429,6 +643,39 @@ namespace DeFrag.B1F
                 cameraYawLimit,
                 cameraPitchLimit,
                 cameraDownPitchLimit);
+        }
+
+        public void ShowLocalCameraView(DistributionCameraView view)
+        {
+            DistributionBoxLocalSession session = DistributionBoxLocalSession.Active;
+            if (session == null || !session.IsFor(this)) return;
+            session.BlendToPreset(
+                GetCameraPreset(view),
+                GetCameraFieldOfView(view),
+                cameraBlendDuration,
+                cameraBlendCurve);
+        }
+
+        private Camera GetCameraPreset(DistributionCameraView view)
+        {
+            Camera preset = view switch
+            {
+                DistributionCameraView.BankA => bankACameraPreset,
+                DistributionCameraView.BankB => bankBCameraPreset,
+                DistributionCameraView.BankC => bankCCameraPreset,
+                _ => mainKnobCameraPreset
+            };
+
+            return preset != null ? preset : interactionCamera;
+        }
+
+        private float GetCameraFieldOfView(DistributionCameraView view) =>
+            view == DistributionCameraView.MainKnob ? mainKnobFieldOfView : bankFieldOfView;
+
+        private void PlayOneShot(AudioClip clip)
+        {
+            if (interactionAudioSource != null && clip != null)
+                interactionAudioSource.PlayOneShot(clip);
         }
 
         private static PlayerInteraction FindLocalPlayerInteraction()
@@ -506,11 +753,47 @@ namespace DeFrag.B1F
         {
             if (camera == null || mainKnobPivot == null) return false;
 
-            Vector3 viewportPoint = camera.WorldToViewportPoint(mainKnobPivot.position);
-            if (viewportPoint.z <= 0f || viewportPoint.z > maximumDistance) return false;
+            Renderer knobRenderer = mainKnobPivot.GetComponent<Renderer>() ??
+                                    mainKnobPivot.GetComponentInChildren<Renderer>(true);
+            if (knobRenderer == null)
+            {
+                Vector3 pivotViewport = camera.WorldToViewportPoint(mainKnobPivot.position);
+                if (pivotViewport.z <= 0f || pivotViewport.z > maximumDistance) return false;
+                Vector2 pivotOffset = new(pivotViewport.x - 0.5f, pivotViewport.y - 0.5f);
+                return pivotOffset.sqrMagnitude <=
+                       mainKnobAimViewportRadius * mainKnobAimViewportRadius;
+            }
 
-            Vector2 offset = new(viewportPoint.x - 0.5f, viewportPoint.y - 0.5f);
-            return offset.sqrMagnitude <= mainKnobAimViewportRadius * mainKnobAimViewportRadius;
+            Bounds bounds = knobRenderer.bounds;
+            Vector3 min = bounds.min;
+            Vector3 max = bounds.max;
+            Vector2 viewportMin = new(float.PositiveInfinity, float.PositiveInfinity);
+            Vector2 viewportMax = new(float.NegativeInfinity, float.NegativeInfinity);
+            float nearestDepth = float.PositiveInfinity;
+
+            for (int i = 0; i < 8; i++)
+            {
+                Vector3 corner = new(
+                    (i & 1) == 0 ? min.x : max.x,
+                    (i & 2) == 0 ? min.y : max.y,
+                    (i & 4) == 0 ? min.z : max.z);
+                Vector3 viewport = camera.WorldToViewportPoint(corner);
+                if (viewport.z <= 0f) continue;
+
+                nearestDepth = Mathf.Min(nearestDepth, viewport.z);
+                viewportMin = Vector2.Min(viewportMin, viewport);
+                viewportMax = Vector2.Max(viewportMax, viewport);
+            }
+
+            if (nearestDepth == float.PositiveInfinity || nearestDepth > maximumDistance)
+                return false;
+
+            Vector2 crosshair = new(0.5f, 0.5f);
+            Vector2 padding = Vector2.one * mainKnobAimViewportRadius;
+            return crosshair.x >= viewportMin.x - padding.x &&
+                   crosshair.x <= viewportMax.x + padding.x &&
+                   crosshair.y >= viewportMin.y - padding.y &&
+                   crosshair.y <= viewportMax.y + padding.y;
         }
 
         private static IEnumerator RotateRoutine(

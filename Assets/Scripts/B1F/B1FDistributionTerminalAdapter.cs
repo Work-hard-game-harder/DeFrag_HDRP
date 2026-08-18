@@ -1,4 +1,4 @@
-using System.Collections;
+using System;
 using UnityEngine;
 
 namespace DeFrag.B1F
@@ -8,13 +8,19 @@ namespace DeFrag.B1F
     {
         [SerializeField] private ConnectionDevice terminal;
         [SerializeField] private DistributionBoxController distributionBoxA;
-        [SerializeField] private bool closeTerminalAfterDownload = true;
+        public static event Action<DistributionPuzzlePhase> LocalBankAdvanced;
 
         public void BeginDistributionHintSession()
         {
             distributionBoxA?.RequestHintSessionFromLocalPlayer();
-            if (closeTerminalAfterDownload)
-                StartCoroutine(CloseTerminalNextFrame());
+        }
+
+        public static void NotifyLocalBankAdvanced(DistributionPuzzlePhase nextPhase)
+        {
+            B1FDistributionTerminalAdapter adapter =
+                FindAnyObjectByType<B1FDistributionTerminalAdapter>();
+            adapter?.terminal?.ResetCommandCompletion(TerminalCommands.DownloadData);
+            LocalBankAdvanced?.Invoke(nextPhase);
         }
 
         public static void ResetLocalTerminal()
@@ -24,12 +30,6 @@ namespace DeFrag.B1F
             if (adapter == null) return;
 
             adapter.terminal?.ResetCommandCompletion(TerminalCommands.DownloadData);
-            Camera.main?.GetComponent<HackingSessionController>()?.End();
-        }
-
-        private IEnumerator CloseTerminalNextFrame()
-        {
-            yield return null;
             Camera.main?.GetComponent<HackingSessionController>()?.End();
         }
 
