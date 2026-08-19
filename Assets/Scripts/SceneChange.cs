@@ -79,6 +79,13 @@ public class SceneChange : MonoBehaviour
     public void BackMainScene()
     {
         AudioManager.Instance.PlaySFX("Button1");
+
+        if (LobbyManager.Instance != null)
+        {
+            LobbyManager.Instance.ReturnToMainLobby();
+            return;
+        }
+
         SceneManager.LoadScene(mainLobbySceneName, LoadSceneMode.Single);
     }
 }

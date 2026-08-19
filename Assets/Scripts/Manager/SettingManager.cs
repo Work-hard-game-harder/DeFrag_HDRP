@@ -1208,6 +1208,13 @@ public class SettingManager : MonoBehaviour
     {
         SetPausePanelState(false);
         AudioManager.Instance?.PlaySFX("Button1");
+
+        if (LobbyManager.Instance != null)
+        {
+            LobbyManager.Instance.ReturnToMainLobby();
+            return;
+        }
+
         SceneManager.LoadScene("MainLobby", LoadSceneMode.Single);
     }
 

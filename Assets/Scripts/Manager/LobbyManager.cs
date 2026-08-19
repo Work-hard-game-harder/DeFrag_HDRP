@@ -47,6 +47,7 @@ public sealed class LobbyManager : MonoBehaviour
     private readonly Dictionary<ulong, NetworkObject> lobbyAvatars = new();
     private NetworkManager networkManager;
     private bool isStartingSession;
+    private bool isReturningToMainLobby;
 
     private void Awake()
     {
@@ -62,7 +63,11 @@ public sealed class LobbyManager : MonoBehaviour
 
     private void OnEnable()
     {
-        warningText.SetActive(false);
+        if (warningText != null)
+        {
+            warningText.SetActive(false);
+        }
+
         if (joinCodeInput != null)
         {
             joinCodeInput.onSubmit.AddListener(HandleJoinCodeSubmitted);
@@ -219,7 +224,42 @@ public sealed class LobbyManager : MonoBehaviour
     private bool CanStartSession()
     {
         NetworkManager manager = NetworkManager.Singleton;
-        return !isStartingSession && (manager == null || !manager.IsListening);
+        return !isStartingSession && !isReturningToMainLobby &&
+               (manager == null || !manager.IsListening);
+    }
+
+    public void ReturnToMainLobby()
+    {
+        if (!isReturningToMainLobby)
+        {
+            StartCoroutine(ReturnToMainLobbyRoutine());
+        }
+    }
+
+    private IEnumerator ReturnToMainLobbyRoutine()
+    {
+        isReturningToMainLobby = true;
+        isStartingSession = false;
+
+        NetworkManager manager = NetworkManager.Singleton;
+        UnsubscribeFromNetworkEvents();
+        lobbyAvatars.Clear();
+        SavedJoinCode = null;
+
+        if (manager != null && manager.IsListening && !manager.ShutdownInProgress)
+        {
+            manager.Shutdown();
+        }
+
+        while (manager != null && manager.ShutdownInProgress)
+        {
+            yield return null;
+        }
+
+        networkManager = null;
+        Instance = null;
+        Destroy(gameObject);
+        SceneManager.LoadScene(transportFailureSceneName, LoadSceneMode.Single);
     }
 
     private NetworkManager PrepareNetworkManager()
