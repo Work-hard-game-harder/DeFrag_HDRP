@@ -615,8 +615,8 @@ MonoBehaviour:
   normalLoopSource: {fileID: 5437467317855441615}
   chaseLoopSource: {fileID: 860178043366021527}
   outputAudioMixerGroup: {fileID: -1756255783097824108, guid: 2f73f41f978fecb46a4479e077c1712e, type: 2}
-  normalSound: {fileID: 8300000, guid: 5816620f915440b4787cafc34a40eacc, type: 3}
-  chaseSound: {fileID: 8300000, guid: 8614c0edc5fb24041b19018d92c99520, type: 3}
+  normalSound: {fileID: 8300000, guid: 9613bfb0a58b2294687d0aea6eb914ca, type: 3}
+  chaseSound: {fileID: 8300000, guid: d36e293e7cc5c8843a8ef41090f977aa, type: 3}
   normalSoundVolume: 1
   chaseSoundVolume: 1
   stateSoundFadeDuration: 0.1
@@ -639,7 +639,7 @@ MonoBehaviour:
     volume: 1
     pitchRange: {x: 1, y: 1}
     clips:
-    - {fileID: 8300000, guid: ae1b027dc6760ae4586650c4742508c3, type: 3}
+    - {fileID: 8300000, guid: ac58b777831fd2744a38c6a5d0e24a81, type: 3}
 --- !u!114 &6955514322569177049
 MonoBehaviour:
   m_ObjectHideFlags: 0
