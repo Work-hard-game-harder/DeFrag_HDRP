@@ -8,6 +8,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using TMPro;
 using UnityEngine.Rendering.HighDefinition;
+using Unity.Netcode;
 using DeFrag.UI;
 
 /// <summary>
@@ -85,8 +86,10 @@ public class SettingManager : MonoBehaviour
     [Header("Toggle")]
     [SerializeField] private Toggle invertYToggle;
 
-    [Header("Post Processing")]
+    [Header("UI Effect")]
     [SerializeField] private Volume globalVolume;
+    [SerializeField] private GameObject uiBlur;
+
 
     [Header("MIC Control")]
     [SerializeField] private AudioSource micAudioSource; // 마이크 입력용 AudioSource
@@ -203,6 +206,7 @@ public class SettingManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
+        ResolvePersistentBlurReference();
         CacheColorAdjustments();
         ConfigureUICameraForGlobalVolume(settingCanvas != null ? settingCanvas.worldCamera : null);
         ConfigurePausePanelCanvas();
@@ -254,6 +258,7 @@ public class SettingManager : MonoBehaviour
         RestartManagedMicrophone();
 
         SetPausePanelState(false);
+        RefreshMenuBlur();
     }
 
     private void OnDestroy()
@@ -302,8 +307,113 @@ public class SettingManager : MonoBehaviour
         {
             Debug.LogWarning("[SettingManager] UI 카메라를 찾을 수 없습니다.");
         }
+        yield return ReconnectBlurCamera();
     }
 
+    private IEnumerator ReconnectBlurCamera()
+    {
+        if (!ResolvePersistentBlurReference())
+        {
+            Debug.LogWarning(
+                "[SettingManager] SettingManager 자식에서 UI Blur CustomPassVolume을 찾지 못했습니다.");
+            yield break;
+        }
+
+        CustomPassVolume blurVolume =
+            uiBlur.GetComponent<CustomPassVolume>();
+
+        if (blurVolume == null)
+            yield break;
+
+        const float timeout = 15f;
+        float endTime = Time.unscaledTime + timeout;
+        Camera localCamera = null;
+
+        // Gameplay scenes enable the owning network player's camera after the
+        // scene itself has loaded. Wait for that local presentation camera
+        // instead of binding the effect to an inactive scene camera.
+        while (localCamera == null && Time.unscaledTime < endTime)
+        {
+            localCamera = FindLocalPlayerCamera();
+
+            if (localCamera == null)
+                yield return null;
+        }
+
+        if (localCamera == null)
+        {
+            Debug.LogWarning(
+                "[SettingManager] 로컬 플레이어 카메라를 찾지 못해 UI Blur를 연결하지 못했습니다.");
+            yield break;
+        }
+
+        blurVolume.targetCamera = localCamera;
+
+        HDAdditionalCameraData cameraData =
+            localCamera.GetComponent<HDAdditionalCameraData>();
+
+        if (cameraData != null)
+        {
+            cameraData.customRenderingSettings = true;
+            cameraData.renderingPathCustomFrameSettings.SetEnabled(
+                FrameSettingsField.CustomPass,
+                true);
+            cameraData.renderingPathCustomFrameSettingsOverrideMask.mask[
+                (uint)FrameSettingsField.CustomPass] = true;
+        }
+
+        Debug.Log(
+            $"[SettingManager] UI Blur 카메라 연결 완료: {localCamera.name}");
+    }
+
+    private Camera FindLocalPlayerCamera()
+    {
+        NetworkManager networkManager = NetworkManager.Singleton;
+
+        if (networkManager != null && networkManager.IsListening)
+        {
+            NetworkObject localPlayer = networkManager.LocalClient?.PlayerObject;
+
+            if (localPlayer != null)
+            {
+                Camera[] playerCameras =
+                    localPlayer.GetComponentsInChildren<Camera>(true);
+
+                foreach (Camera playerCamera in playerCameras)
+                {
+                    if (playerCamera != null && playerCamera.isActiveAndEnabled)
+                        return playerCamera;
+                }
+            }
+        }
+
+        // MainLobby and other non-networked scenes use the active tagged camera.
+        Camera mainCamera = Camera.main;
+        return mainCamera != null && mainCamera.isActiveAndEnabled
+            ? mainCamera
+            : null;
+    }
+
+    private bool ResolvePersistentBlurReference()
+    {
+        // Scene instances can override this field with a scene-owned object.
+        // SettingManager survives scene loads, so only a child owned by this
+        // persistent hierarchy is a valid long-lived blur reference.
+        if (uiBlur != null && uiBlur.transform.IsChildOf(transform))
+            return uiBlur.GetComponent<CustomPassVolume>() != null;
+
+        CustomPassVolume persistentBlur =
+            GetComponentInChildren<CustomPassVolume>(true);
+
+        if (persistentBlur == null)
+        {
+            uiBlur = null;
+            return false;
+        }
+
+        uiBlur = persistentBlur.gameObject;
+        return true;
+    }
 
     // ──────────────────────────────────────────────
     // 초기화
@@ -426,6 +536,19 @@ public class SettingManager : MonoBehaviour
             cameraData.volumeLayerMask = cameraData.volumeLayerMask | volumeLayer;
             cameraData.volumeAnchorOverride = uiCamera.transform;
         }
+    }
+
+    private void RefreshMenuBlur()
+    {
+        bool shouldEnable =
+            (PausePanel != null && PausePanel.activeInHierarchy) ||
+            (settingPanel != null && settingPanel.activeInHierarchy);
+
+        if (!ResolvePersistentBlurReference())
+            return;
+
+        if (uiBlur.activeSelf != shouldEnable)
+            uiBlur.SetActive(shouldEnable);
     }
 
     private void RefreshMicDevicesPreservingSelection()
@@ -1099,9 +1222,12 @@ public class SettingManager : MonoBehaviour
         {
             ConfigureSettingPanelCanvas();
             settingPanel.transform.SetAsLastSibling();
+            AudioManager.Instance?.PlaySFX("Button1");
             settingPanel.SetActive(true);
+            RefreshMenuBlur();
             KeepMenuPanelsAboveAllCanvases();
             StartMicPreview();
+
         }
 
     }
@@ -1111,6 +1237,7 @@ public class SettingManager : MonoBehaviour
         if (settingPanel != null)
         {
             settingPanel.SetActive(false);
+            RefreshMenuBlur();
         }
         StopMicPreview();
 
@@ -1327,9 +1454,8 @@ public class SettingManager : MonoBehaviour
             uiCamera.cullingMask |= 1 << 5; // UI layer
 
             ConfigureUICameraForGlobalVolume(uiCamera);
-            menuOverlayCanvas.renderMode = RenderMode.ScreenSpaceCamera;
-            menuOverlayCanvas.worldCamera = uiCamera;
-            menuOverlayCanvas.planeDistance = Mathf.Max(uiCamera.nearClipPlane + 0.1f, 1f);
+            menuOverlayCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            menuOverlayCanvas.worldCamera = null;
         }
         else
         {
@@ -1373,6 +1499,7 @@ public class SettingManager : MonoBehaviour
         }
 
         PausePanel.SetActive(isOpen);
+        RefreshMenuBlur();
         SetPlayerInputLock(isOpen);
 
         if (isOpen)
