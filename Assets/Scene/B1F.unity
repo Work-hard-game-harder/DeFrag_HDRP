@@ -9560,6 +9560,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 14d91fb2a04141ccb1e9a0be7676ba03, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Doors.VerticalDoorMotor
+--- !u!65 &630597653 stripped
+BoxCollider:
+  m_CorrespondingSourceObject: {fileID: 1596134167943067776, guid: f161c0901ae09f34eb0e86bee8fe3b2e, type: 3}
+  m_PrefabInstance: {fileID: 828907135}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &630597654 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 5131612616392956583, guid: f161c0901ae09f34eb0e86bee8fe3b2e, type: 3}
+  m_PrefabInstance: {fileID: 828907135}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &634745403
 GameObject:
   m_ObjectHideFlags: 0
@@ -10419,12 +10429,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 70848e7cdd69cca4e89a151572f59303, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkWorldItem
+  ShowTopMostFoldoutHeaderGroup: 1
   itemData: {fileID: 11400000, guid: a285e91e13984ac0a9ce86fc0181666e, type: 2}
   itemRigidbody: {fileID: 698339784}
-  worldColliders: []
-  worldRenderers: []
+  worldColliders:
+  - {fileID: 984844979}
+  worldRenderers:
+  - {fileID: 984844978}
 --- !u!64 &709979805
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -12452,12 +12465,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 70848e7cdd69cca4e89a151572f59303, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkWorldItem
+  ShowTopMostFoldoutHeaderGroup: 1
   itemData: {fileID: 11400000, guid: 6512afb4422d25345afab928ffd8ac0c, type: 2}
   itemRigidbody: {fileID: 828907139}
-  worldColliders: []
-  worldRenderers: []
+  worldColliders:
+  - {fileID: 630597653}
+  worldRenderers:
+  - {fileID: 630597654}
 --- !u!1 &836666017
 GameObject:
   m_ObjectHideFlags: 0
@@ -16016,6 +16032,16 @@ Light:
   m_LightUnit: 0
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!23 &984844978 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 3188655048510925450, guid: 56216992bf47ec240b2e3a44c9293894, type: 3}
+  m_PrefabInstance: {fileID: 698339780}
+  m_PrefabAsset: {fileID: 0}
+--- !u!65 &984844979 stripped
+BoxCollider:
+  m_CorrespondingSourceObject: {fileID: 5947076998867086555, guid: 56216992bf47ec240b2e3a44c9293894, type: 3}
+  m_PrefabInstance: {fileID: 698339780}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &984920298
 GameObject:
   m_ObjectHideFlags: 0
@@ -24307,6 +24333,16 @@ Light:
   m_LightUnit: 0
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!65 &1529078655 stripped
+BoxCollider:
+  m_CorrespondingSourceObject: {fileID: 2610691384483631207, guid: 39b14f9c0367bdc43866efea45616ef4, type: 3}
+  m_PrefabInstance: {fileID: 2026124175}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &1529078656 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 6152522797204515973, guid: 39b14f9c0367bdc43866efea45616ef4, type: 3}
+  m_PrefabInstance: {fileID: 2026124175}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1532430308
 GameObject:
   m_ObjectHideFlags: 0
@@ -30384,12 +30420,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 70848e7cdd69cca4e89a151572f59303, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkWorldItem
+  ShowTopMostFoldoutHeaderGroup: 1
   itemData: {fileID: 11400000, guid: f19f9650a108c6f4b841b314b75f54a4, type: 2}
   itemRigidbody: {fileID: 2026124179}
-  worldColliders: []
-  worldRenderers: []
+  worldColliders:
+  - {fileID: 1529078655}
+  worldRenderers:
+  - {fileID: 1529078656}
 --- !u!1 &2032590381
 GameObject:
   m_ObjectHideFlags: 0
@@ -31992,12 +32031,30 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 70848e7cdd69cca4e89a151572f59303, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkWorldItem
+  ShowTopMostFoldoutHeaderGroup: 1
   itemData: {fileID: 11400000, guid: 8bc2e24d4126165439a2c6052d23ef6d, type: 2}
-  itemRigidbody: {fileID: 0}
-  worldColliders: []
-  worldRenderers: []
+  itemRigidbody: {fileID: 4609237498574060729}
+  worldColliders:
+  - {fileID: 4609237498574060730}
+  worldRenderers:
+  - {fileID: 4609237498574060731}
+--- !u!54 &4609237498574060729 stripped
+Rigidbody:
+  m_CorrespondingSourceObject: {fileID: 1088692865959297093, guid: 3f15381c5ea4aa94f9a74d763c5c7988, type: 3}
+  m_PrefabInstance: {fileID: 4609237498574060724}
+  m_PrefabAsset: {fileID: 0}
+--- !u!65 &4609237498574060730 stripped
+BoxCollider:
+  m_CorrespondingSourceObject: {fileID: 4572751251275419095, guid: 3f15381c5ea4aa94f9a74d763c5c7988, type: 3}
+  m_PrefabInstance: {fileID: 4609237498574060724}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &4609237498574060731 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 4381996014699201422, guid: 3f15381c5ea4aa94f9a74d763c5c7988, type: 3}
+  m_PrefabInstance: {fileID: 4609237498574060724}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &4815791829056155451 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4815791829546902939, guid: e9a402d670858f441a3cc1e138d19cce, type: 3}
@@ -32087,17 +32144,18 @@ SceneRoots:
   - {fileID: 591514272}
   - {fileID: 909327726}
   - {fileID: 975668000}
-  - {fileID: 4609237498574060724}
   - {fileID: 2090376762}
   - {fileID: 909534061}
   - {fileID: 1822663241}
   - {fileID: 398466057}
   - {fileID: 1548949277}
   - {fileID: 642360372}
+  - {fileID: 4609237498574060724}
   - {fileID: 231522695}
   - {fileID: 828907135}
   - {fileID: 2026124175}
   - {fileID: 49073257}
+  - {fileID: 698339780}
   - {fileID: 2116658091}
   - {fileID: 1613940799}
   - {fileID: 924678994}
@@ -32106,7 +32164,6 @@ SceneRoots:
   - {fileID: 334875399}
   - {fileID: 766419727}
   - {fileID: 1620183490}
-  - {fileID: 698339780}
   - {fileID: 1715665261}
   - {fileID: 1497909635}
   - {fileID: 8524021100002}
