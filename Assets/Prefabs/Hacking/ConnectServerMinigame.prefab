@@ -50,7 +50,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ConnectServerMinigame
   displayName: REMOTE UPLINK AUTHENTICATION
   authenticationRounds: 3
-  roundTimeLimit: 12
+  roundTimeLimit: 30
   authenticationTokens:
   - CIPHER
   - HANDSHAKE
@@ -63,3 +63,4 @@ MonoBehaviour:
   monsterAlertRadius: 45
   glitchIntensity: 1
   glitchDuration: 1.2
+  terminalFont: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}

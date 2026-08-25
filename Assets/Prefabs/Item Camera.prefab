@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: 8103531403792616351}
   - component: {fileID: 2182119991523373891}
   - component: {fileID: 8401942452513033178}
+  - component: {fileID: 918371209511874331}
   m_Layer: 0
   m_Name: Item Camera
   m_TagString: MainCamera
@@ -444,3 +445,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NightVisionController
   nightVisionVolume: {fileID: 0}
+--- !u!114 &918371209511874331
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4350568401084198369}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43df2d253c0f4850b491cb4116b0bf5f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraOpticalRelayScanner
+  scanCamera: {fileID: 1605877065579972899}
+  lockDuration: 0.7
+  scanMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  audioSource: {fileID: 8103531403792616351}
+  lockAcquiredClip: {fileID: 8300000, guid: c2f74f673d9b99e4db4f4e7b28ca79ab, type: 3}
+  acceptedClip: {fileID: 8300000, guid: e78f0a5302d0b6e4892778fba15301ba, type: 3}
+  rejectedClip: {fileID: 8300000, guid: d48df3aa1d9967842aaebff1c717aedb, type: 3}

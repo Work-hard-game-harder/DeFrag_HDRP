@@ -7,6 +7,9 @@ public static class GameplayInputGate
     private static int escapeConsumedFrame = -1;
 
     public static bool IsBlocked => owner != null;
+    public static string BlockingOwnerName => owner == null
+        ? "NONE"
+        : $"{owner.name} ({owner.GetType().Name})";
     public static bool SuppressPauseEscape => IsBlocked || escapeConsumedFrame == Time.frameCount;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]

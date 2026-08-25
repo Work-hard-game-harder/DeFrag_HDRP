@@ -26,6 +26,10 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
     [SerializeField, Range(0f, 1f)] private float glitchIntensity = 1f;
     [SerializeField, Min(0f)] private float glitchDuration = 1.2f;
 
+    [Header("Presentation")]
+    [Tooltip("Explicit font for runtime-created terminal labels and input text.")]
+    [SerializeField] private TMP_FontAsset terminalFont;
+
     private ConnectionDevice device;
     private CooperativeTerminalHintRelay hintRelay;
     private TvMonsterProximityGlitch localGlitch;
@@ -33,11 +37,16 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
     private TMP_Text challenge;
     private TMP_Text timer;
     private TMP_InputField input;
+    private TerminalSfxPlayer terminalSfx;
     private string expectedResponse;
     private int currentRound;
     private float remainingTime;
     private bool acceptingInput;
     private bool finished;
+    private ConnectServerCoordinator coordinator;
+    private bool opticalRelayMode;
+    private ConnectServerUplinkPhase displayedPhase;
+    private bool hasDisplayedPhase;
 
     public override bool ConsumesTextInput => true;
     public override bool CloseTerminalOnSuccess => true;
@@ -46,9 +55,31 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
     public override void Begin(ConnectionDevice terminal, TerminalCommands command)
     {
         device = terminal;
-        hintRelay = Camera.main.GetComponentInParent<CooperativeTerminalHintRelay>();
-        localGlitch = Camera.main.GetComponentInParent<TvMonsterProximityGlitch>();
+        terminalSfx = terminal.TerminalSfx;
+        if (Camera.main != null)
+        {
+            hintRelay = Camera.main.GetComponentInParent<CooperativeTerminalHintRelay>();
+            localGlitch = Camera.main.GetComponentInParent<TvMonsterProximityGlitch>();
+        }
         BuildInterface();
+
+        ConnectServerTerminalLink link = terminal.GetComponent<ConnectServerTerminalLink>();
+        coordinator = link != null ? link.Coordinator : null;
+        opticalRelayMode = coordinator != null && coordinator.IsSpawned;
+        if (opticalRelayMode)
+        {
+            coordinator.LocalVerificationResolved += OnVerificationResolved;
+            log.text =
+                "> EXEC CONNECT_SERVER\n" +
+                "> OPTICAL RELAY HANDSHAKE REQUIRED\n" +
+                "> SECOND OPERATOR: IR CAMERA REQUIRED";
+            acceptingInput = false;
+            input.interactable = false;
+            coordinator.RequestStartOrResume();
+            RefreshOpticalInterface();
+            return;
+        }
+
         log.text =
             "> EXEC CONNECT_SERVER\n" +
             "> REMOTE OPERATOR AUTHENTICATION REQUIRED\n" +
@@ -58,6 +89,12 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
 
     private void Update()
     {
+        if (opticalRelayMode)
+        {
+            UpdateOpticalMode();
+            return;
+        }
+
         if (!acceptingInput || finished)
             return;
 
@@ -71,6 +108,157 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
     {
         StopAllCoroutines();
         hintRelay?.HideForTeammate();
+        if (coordinator != null)
+        {
+            coordinator.LocalVerificationResolved -= OnVerificationResolved;
+            if (opticalRelayMode && !finished)
+                coordinator.RequestSuspend();
+        }
+    }
+
+    private void UpdateOpticalMode()
+    {
+        if (coordinator == null || !coordinator.IsSpawned || finished)
+            return;
+
+        if (Input.GetKeyDown(KeyCode.Tab) &&
+            coordinator.Phase == ConnectServerUplinkPhase.AwaitingVerification)
+            TryAutocompleteVerifyCommand();
+
+        RefreshOpticalInterface();
+    }
+
+    private void RefreshOpticalInterface()
+    {
+        if (coordinator == null)
+            return;
+
+        ConnectServerUplinkPhase phase = coordinator.Phase;
+        float timeLeft = Mathf.Max(0f, (float)(coordinator.Deadline - coordinator.ServerTime));
+        timer.text = phase == ConnectServerUplinkPhase.AwaitingOpticalScan ||
+                     phase == ConnectServerUplinkPhase.AwaitingVerification
+            ? $"UPLINK WINDOW: {timeLeft:00.0}s    TRACE: {coordinator.Trace:00}%"
+            : $"TRACE: {coordinator.Trace:00}%";
+
+        if (!hasDisplayedPhase || phase != displayedPhase)
+        {
+            hasDisplayedPhase = true;
+            displayedPhase = phase;
+            AppendPhaseLog(phase);
+        }
+
+        switch (phase)
+        {
+            case ConnectServerUplinkPhase.Idle:
+                challenge.color = DimGreen;
+                challenge.text = "REQUESTING SERVER HANDSHAKE...";
+                SetInputEnabled(false);
+                break;
+            case ConnectServerUplinkPhase.Connecting:
+                challenge.color = Green;
+                challenge.text = "CONNECTING TO OPTICAL RELAY NETWORK...";
+                SetInputEnabled(false);
+                break;
+            case ConnectServerUplinkPhase.AwaitingOpticalScan:
+                challenge.color = Green;
+                challenge.text =
+                    $"RELAY {coordinator.CompletedRounds + 1:00}/{coordinator.RequiredRounds:00}\n" +
+                    $"TARGET: {coordinator.TargetRelayId}\n" +
+                    $"SECTOR: {coordinator.TargetSector}\n" +
+                    "WAITING FOR IR CAMERA CAPTURE";
+                SetInputEnabled(false);
+                break;
+            case ConnectServerUplinkPhase.AwaitingVerification:
+                challenge.color = Green;
+                challenge.text =
+                    $"{coordinator.TargetRelayId} OPTICAL LOCK ACCEPTED\n" +
+                    "ENTER TEAMMATE AUTH WORD\n" +
+                    "FORMAT: VERIFY [WORD]";
+                SetInputEnabled(true);
+                break;
+            case ConnectServerUplinkPhase.Suspended:
+                challenge.color = DimGreen;
+                challenge.text = "UPLINK SESSION SUSPENDED";
+                SetInputEnabled(false);
+                break;
+            case ConnectServerUplinkPhase.Completed:
+                challenge.color = Green;
+                challenge.text = "SERVER CONNECTION ESTABLISHED";
+                SetInputEnabled(false);
+                finished = true;
+                StartCoroutine(CompleteAfterDelay());
+                break;
+            case ConnectServerUplinkPhase.Failed:
+                challenge.color = ErrorRed;
+                challenge.text = "TRACE LIMIT EXCEEDED\nUPLINK TERMINATED";
+                SetInputEnabled(false);
+                finished = true;
+                StartCoroutine(FailOpticalAfterDelay());
+                break;
+        }
+    }
+
+    private void SetInputEnabled(bool enabled)
+    {
+        if (acceptingInput == enabled && input.interactable == enabled)
+            return;
+
+        acceptingInput = enabled;
+        input.interactable = enabled;
+        if (!enabled)
+        {
+            input.SetTextWithoutNotify(string.Empty);
+            return;
+        }
+
+        input.ActivateInputField();
+        if (EventSystem.current != null)
+            EventSystem.current.SetSelectedGameObject(input.gameObject);
+    }
+
+    private void AppendPhaseLog(ConnectServerUplinkPhase phase)
+    {
+        string message = phase switch
+        {
+            ConnectServerUplinkPhase.Connecting => "NEGOTIATING RELAY ROUTE",
+            ConnectServerUplinkPhase.AwaitingOpticalScan =>
+                $"ROUTE ISSUED: {coordinator.TargetRelayId} / {coordinator.TargetSector}",
+            ConnectServerUplinkPhase.AwaitingVerification => "OPTICAL CAPTURE ACCEPTED",
+            ConnectServerUplinkPhase.Suspended => "SESSION SUSPENDED",
+            ConnectServerUplinkPhase.Completed => "ALL RELAYS VERIFIED",
+            ConnectServerUplinkPhase.Failed => "TRACE LIMIT EXCEEDED",
+            _ => string.Empty
+        };
+        if (!string.IsNullOrEmpty(message))
+            log.text += $"\n> {message}";
+    }
+
+    private void TryAutocompleteVerifyCommand()
+    {
+        string value = input.text.Trim().ToUpperInvariant();
+        if (value.Length < 2 || !"VERIFY".StartsWith(value))
+            return;
+
+        input.SetTextWithoutNotify("VERIFY ");
+        input.caretPosition = input.text.Length;
+        input.ActivateInputField();
+    }
+
+    private void OnVerificationResolved(bool success, string message)
+    {
+        log.text += $"\n> {message}";
+        if (!success)
+            terminalSfx?.PlayIncorrectAnswer();
+        input.SetTextWithoutNotify(string.Empty);
+        if (!success && coordinator != null &&
+            coordinator.Phase == ConnectServerUplinkPhase.AwaitingVerification)
+            SetInputEnabled(true);
+    }
+
+    private IEnumerator FailOpticalAfterDelay()
+    {
+        yield return new WaitForSecondsRealtime(1.1f);
+        ReportFailure();
     }
 
     private void StartRound()
@@ -105,8 +293,17 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
         if (!acceptingInput || finished)
             return;
 
+        if (opticalRelayMode)
+        {
+            acceptingInput = false;
+            input.interactable = false;
+            coordinator.SubmitVerification(submitted);
+            return;
+        }
+
         if (submitted.Trim().ToUpperInvariant() != expectedResponse)
         {
+            terminalSfx?.PlayIncorrectAnswer();
             FailAuthentication("INVALID REMOTE KEY");
             return;
         }
@@ -194,7 +391,7 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
         TMP_Text placeholder = CreateText(
             "Placeholder", 25f, TextAlignmentOptions.MidlineLeft, inputObject.transform);
         Stretch(placeholder.rectTransform, new Vector2(18f, 6f), new Vector2(-18f, -6f));
-        placeholder.text = "> ENTER REMOTE KEY";
+        placeholder.text = "> ENGLISH INPUT ONLY // VERIFY [WORD]";
         placeholder.color = new Color(Green.r, Green.g, Green.b, 0.35f);
 
         input = inputObject.GetComponent<TMP_InputField>();
@@ -203,8 +400,11 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
         input.lineType = TMP_InputField.LineType.SingleLine;
         input.characterLimit = 64;
         input.caretColor = Green;
+        input.selectionColor = new Color(0.1f, 1f, 0.2f, 0.3f);
+        input.onValidateInput = ValidateCommandCharacter;
         input.onValueChanged.AddListener(ForceUppercase);
         input.onSubmit.AddListener(Submit);
+        terminalSfx?.BindTyping(input);
     }
 
     private void ForceUppercase(string value)
@@ -227,12 +427,25 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
         GameObject child = new(name, typeof(RectTransform), typeof(TextMeshProUGUI));
         child.transform.SetParent(parent == null ? transform : parent, false);
         TMP_Text text = child.GetComponent<TMP_Text>();
+        if (terminalFont != null)
+            text.font = terminalFont;
         text.fontSize = size;
         text.color = Green;
         text.alignment = alignment;
         text.fontStyle = FontStyles.Bold;
         text.raycastTarget = false;
         return text;
+    }
+
+    private static char ValidateCommandCharacter(string _, int __, char character)
+    {
+        char uppercase = char.ToUpperInvariant(character);
+        if ((uppercase >= 'A' && uppercase <= 'Z') ||
+            (uppercase >= '0' && uppercase <= '9') ||
+            uppercase == ' ' || uppercase == '_')
+            return uppercase;
+
+        return '\0';
     }
 
     private static void Stretch(RectTransform rect, Vector2 min, Vector2 max)

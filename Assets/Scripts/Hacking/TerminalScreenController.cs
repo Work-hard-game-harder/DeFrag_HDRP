@@ -21,14 +21,17 @@ public sealed class TerminalScreenController : MonoBehaviour
     private TerminalCommands activeCommand;
     private System.Action closeRequested;
     private Coroutine deniedRoutine;
+    private TerminalSfxPlayer terminalSfx;
     private int selection;
 
     public void Initialize(ConnectionDevice terminal, System.Action onClose)
     {
         device = terminal;
+        terminalSfx = terminal.TerminalSfx;
         closeRequested = onClose;
         BuildFrame();
         ShowMenu();
+        terminalSfx?.PlaySessionOpened();
     }
 
     private void Update()
@@ -37,6 +40,7 @@ public sealed class TerminalScreenController : MonoBehaviour
             ((activeMinigame.ConsumesTextInput && Input.GetKeyDown(KeyCode.Escape)) ||
              (!activeMinigame.ConsumesTextInput && Input.GetKeyDown(KeyCode.Backspace))))
         {
+            terminalSfx?.PlayMenuBack();
             CancelMinigame();
             return;
         }
@@ -97,8 +101,8 @@ public sealed class TerminalScreenController : MonoBehaviour
         AddCommand(TerminalCommands.UnlockDoor);
         AddCommand(TerminalCommands.DownloadData);
         AddCommand(TerminalCommands.ConnectServer);
-        AddButton("> EXIT TERMINAL", closeRequested);
-        Select(0);
+        AddButton("> EXIT TERMINAL", ExitTerminal);
+        Select(0, false);
     }
 
     private void AddCommand(TerminalCommands command)
@@ -110,6 +114,7 @@ public sealed class TerminalScreenController : MonoBehaviour
 
     private void Execute(TerminalCommands command)
     {
+        terminalSfx?.PlayMenuSelected();
         HackingMinigameBase prefab = device.GetMinigame(command);
         if (!device.IsCommandEnabled(command) || prefab == null || device.IsCompleted(command))
         {
@@ -131,6 +136,7 @@ public sealed class TerminalScreenController : MonoBehaviour
 
     private void ShowDeniedAccess()
     {
+        terminalSfx?.PlayIncorrectAnswer();
         if (deniedRoutine != null)
             StopCoroutine(deniedRoutine);
         deniedRoutine = StartCoroutine(BlinkDeniedAccess());
@@ -159,6 +165,12 @@ public sealed class TerminalScreenController : MonoBehaviour
     {
         DestroyMinigame();
         ShowMenu();
+    }
+
+    private void ExitTerminal()
+    {
+        terminalSfx?.PlayMenuBack();
+        closeRequested();
     }
 
     private void FinishMinigame(string message)
@@ -223,10 +235,12 @@ public sealed class TerminalScreenController : MonoBehaviour
         buttons.Add(button);
     }
 
-    private void Select(int index)
+    private void Select(int index, bool playSound = true)
     {
         selection = (index + buttons.Count) % buttons.Count;
         EventSystem.current.SetSelectedGameObject(buttons[selection].gameObject);
+        if (playSound)
+            terminalSfx?.PlayMenuSelected();
     }
 
     private void ClearContent()

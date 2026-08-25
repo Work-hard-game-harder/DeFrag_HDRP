@@ -1,4 +1,5 @@
 using System.Collections;
+using DeFrag.Doors;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Events;
@@ -97,6 +98,8 @@ namespace DeFrag.B1F
         [SerializeField, Min(0.1f)] private float maximumTimingInputAge = 0.5f;
 
         [Header("Shared Effects")]
+        [Tooltip("If assigned, this door follows the synchronized completed state on every peer.")]
+        [SerializeField] private TerminalDoorLock successDoor;
         [SerializeField] private UnityEvent onFailureElectricalEffect = new();
         [SerializeField] private UnityEvent onSuccess = new();
 
@@ -142,7 +145,31 @@ namespace DeFrag.B1F
 
         public bool IsCompleted => completed.Value;
         public bool IsHintSessionActive => hintSessionActive;
+        public bool IsBoxA => isBoxA;
         public DistributionPuzzlePhase Phase => phase.Value;
+
+        /// <summary>
+        /// Editor/Development Build shortcut that enters the same authoritative
+        /// completion path as a successful main-knob timing input.
+        /// </summary>
+        public bool TryCompleteForStoryDebugServer()
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (!IsSpawned || !IsServer || completed.Value || timingSuccessRoutine != null)
+                return false;
+
+            hintSessionActive = false;
+            hintOwnerClient = NoClient;
+            answerMask = 0;
+            timingAttemptActive = false;
+            timingInputLocked = true;
+            timingSuccessRoutine = StartCoroutine(
+                CompletePuzzleAfterPresentation(NoClient));
+            return true;
+#else
+            return false;
+#endif
+        }
 
         private void Awake()
         {
@@ -167,7 +194,11 @@ namespace DeFrag.B1F
 
             ApplySwitchMask(currentSwitchMask.Value, true);
             SetDoorImmediate(controllingClient.Value != NoClient);
-            if (completed.Value) SetMainKnobImmediate(mainKnobSuccessLocalEuler);
+            if (completed.Value)
+            {
+                SetMainKnobImmediate(mainKnobSuccessLocalEuler);
+                successDoor?.Unlock();
+            }
         }
 
         public override void OnNetworkDespawn()
@@ -513,12 +544,14 @@ namespace DeFrag.B1F
             completed.Value = true;
             phase.Value = DistributionPuzzlePhase.Completed;
             PlaySuccessClientRpc();
-            TimingSuccessClientRpc(Target(controllingPlayer));
+            if (controllingPlayer != NoClient)
+                TimingSuccessClientRpc(Target(controllingPlayer));
             onSuccess?.Invoke();
             yield return new WaitForSecondsRealtime(timingSuccessPresentationDuration);
             if (isBoxA) powerController?.SetEmergencyPowerServer();
             else powerController?.SetFullPowerServer();
-            EndSessionClientRpc(Target(controllingPlayer));
+            if (controllingPlayer != NoClient)
+                EndSessionClientRpc(Target(controllingPlayer));
             controllingClient.Value = NoClient;
             timingSuccessRoutine = null;
         }
@@ -642,7 +675,11 @@ namespace DeFrag.B1F
         }
         private void OnCompletedChanged(bool previous, bool next)
         {
-            if (next) timingAttemptActive = false;
+            if (!next)
+                return;
+
+            timingAttemptActive = false;
+            successDoor?.Unlock();
         }
 
         private void ConfigureSwitches()

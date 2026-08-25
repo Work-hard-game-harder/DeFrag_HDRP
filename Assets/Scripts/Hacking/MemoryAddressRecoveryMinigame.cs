@@ -28,9 +28,11 @@ public sealed class MemoryAddressRecoveryMinigame : HackingMinigameBase
     private int nextAddress;
     private bool acceptingInput;
     private bool finished;
+    private TerminalSfxPlayer terminalSfx;
 
     public override void Begin(ConnectionDevice device, TerminalCommands command)
     {
+        terminalSfx = device.TerminalSfx;
         BuildInterface();
         GenerateUniqueAddresses();
         StartCoroutine(RevealAndShuffle());
@@ -97,6 +99,7 @@ public sealed class MemoryAddressRecoveryMinigame : HackingMinigameBase
 
         if (address != originalSequence[nextAddress])
         {
+            terminalSfx?.PlayIncorrectAnswer();
             acceptingInput = false;
             instructionText.color = ErrorRed;
             instructionText.text = "INVALID ADDRESS ORDER // MEMORY RESET";

@@ -1,6 +1,7 @@
 using System;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace DeFrag.Player
 {
@@ -30,9 +31,34 @@ namespace DeFrag.Player
 
         private void Update()
         {
-            if (CanReadLocalInput && !SettingManager.IsGamePaused &&
-                !GameplayInputGate.IsBlocked && Input.GetKeyDown(toggleKey))
-                SetState(!IsOn);
+            bool togglePressed = Keyboard.current != null
+                ? Keyboard.current.tKey.wasPressedThisFrame
+                : Input.GetKeyDown(toggleKey);
+            if (!togglePressed)
+                return;
+
+            if (!CanReadLocalInput)
+            {
+                Debug.LogWarning(
+                    $"[PlayerFlashlight] T ignored: local ownership is false. " +
+                    $"Spawned={networkObject != null && networkObject.IsSpawned}, " +
+                    $"Owner={networkObject != null && networkObject.IsOwner}.",
+                    this);
+                return;
+            }
+
+            if (SettingManager.IsGamePaused)
+                return;
+
+            if (GameplayInputGate.IsBlocked)
+            {
+                Debug.LogWarning(
+                    $"[PlayerFlashlight] T blocked by {GameplayInputGate.BlockingOwnerName}.",
+                    this);
+                return;
+            }
+
+            SetState(!IsOn);
         }
 
         /// <summary>

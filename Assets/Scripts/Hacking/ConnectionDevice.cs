@@ -33,10 +33,12 @@ public sealed class ConnectionDevice : MonoBehaviour, IInteractable
     private int interactableLayer;
     private int inactiveLayer;
     private TerminalCommands completedCommands;
+    private TerminalSfxPlayer terminalSfx;
 
     public string TerminalId => terminalId;
     public string DisplayName => displayName;
     public int ArchiveNumber => TerminalArchiveNumberRegistry.GetNumber(this);
+    public TerminalSfxPlayer TerminalSfx => terminalSfx;
     public event Action<ConnectionDevice, TerminalCommands> CommandCompletionRequested;
 
     public bool IsCompleted(TerminalCommands command)
@@ -68,6 +70,7 @@ public sealed class ConnectionDevice : MonoBehaviour, IInteractable
 
     private void Awake()
     {
+        terminalSfx = GetComponent<TerminalSfxPlayer>();
         interactableLayer = LayerMask.NameToLayer("Interactable");
         inactiveLayer = LayerMask.NameToLayer("Default");
         FitColliderToModel();

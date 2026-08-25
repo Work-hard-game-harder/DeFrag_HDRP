@@ -22,6 +22,7 @@ public sealed class DownloadDataTypingMinigame : HackingMinigameBase
     private TMP_Text target;
     private TMP_Text progress;
     private TMP_InputField input;
+    private TerminalSfxPlayer terminalSfx;
     private DownloadCommand currentCommand;
     private int currentRound;
     private int hiddenTokenIndex;
@@ -35,6 +36,7 @@ public sealed class DownloadDataTypingMinigame : HackingMinigameBase
     public override void Begin(ConnectionDevice terminal, TerminalCommands command)
     {
         device = terminal;
+        terminalSfx = terminal.TerminalSfx;
         EnsureWordLibrary();
         hintRelay = Camera.main != null
             ? Camera.main.GetComponentInParent<CooperativeTerminalHintRelay>()
@@ -145,6 +147,7 @@ public sealed class DownloadDataTypingMinigame : HackingMinigameBase
         string normalized = submitted.Trim().ToUpperInvariant();
         if (normalized != currentCommand.FullText)
         {
+            terminalSfx?.PlayIncorrectAnswer();
             log.text += $"\n> ERROR: CHECKSUM MISMATCH [{currentRound:00}]";
             input.text = string.Empty;
             input.ActivateInputField();
@@ -254,6 +257,7 @@ public sealed class DownloadDataTypingMinigame : HackingMinigameBase
         input.selectionColor = new Color(0.1f, 1f, 0.2f, 0.3f);
         input.onValueChanged.AddListener(ForceUppercase);
         input.onSubmit.AddListener(Submit);
+        terminalSfx?.BindTyping(input);
     }
 
     private void ForceUppercase(string value)

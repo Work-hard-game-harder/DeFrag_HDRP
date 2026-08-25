@@ -62,6 +62,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ca8095548941e1748a00e9d06d60b902, type: 3}
       insertIndex: -1
       addedObject: {fileID: 618710890111500002}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ca8095548941e1748a00e9d06d60b902, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 618710890111500003}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ca8095548941e1748a00e9d06d60b902, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 618710890111500004}
   m_SourcePrefab: {fileID: 100100000, guid: ca8095548941e1748a00e9d06d60b902, type: 3}
 --- !u!1 &7427562240513797059 stripped
 GameObject:
@@ -89,8 +95,16 @@ MonoBehaviour:
   downloadDataEnabled: 1
   downloadDataMinigame: {fileID: 100002, guid: a5555555555555555555555555555555, type: 3}
   connectServerEnabled: 0
-  connectServerMinigame: {fileID: 0}
   connectServerMinigame: {fileID: 300002, guid: c2222222222222222222222222222222, type: 3}
+  onUnlockDoorRequested:
+    m_PersistentCalls:
+      m_Calls: []
+  onDownloadDataRequested:
+    m_PersistentCalls:
+      m_Calls: []
+  onConnectServerRequested:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!65 &618710890111500002
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -112,3 +126,37 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &618710890111500003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7427562240513797059}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c4d630a1c864c4b8e923f94463e4049, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TerminalSfxPlayer
+  audioSource: {fileID: 0}
+  volume: 1
+  sessionOpenedClip: {fileID: 8300000, guid: 3d4c08a1ef73b054f829ed0ebcb63ce6, type: 3}
+  characterTypedClip: {fileID: 8300000, guid: 89a2cb0b39980624e9124812ba0e7b7e, type: 3}
+  menuSelectedClip: {fileID: 8300000, guid: 83bc66eee79669e499f72427b3057699, type: 3}
+  menuBackClip: {fileID: 8300000, guid: c86673834042e7a45b927d4d6baa9433, type: 3}
+  incorrectAnswerClip: {fileID: 8300000, guid: 3d07a55d19343964fa396b65af7b3ba0, type: 3}
+  minimumTypingInterval: 0.025
+  typingPitchRange: {x: 0.96, y: 1.04}
+--- !u!114 &618710890111500004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7427562240513797059}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b08055ee2b50440a82d7d2cd571d89ee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ConnectServerTerminalLink
+  coordinator: {fileID: 0}

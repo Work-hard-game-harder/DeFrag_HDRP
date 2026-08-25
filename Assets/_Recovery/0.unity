@@ -450,9 +450,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SubtitleTrigger
   subtitlesScript: {fileID: 8430087059669167798}
   mySubtitles:
-  - "\uC9C1\uC6D0\uB4E4\uC758 \uADFC\uBB34\uC9C0\uAC00 \uC801\uD600\uC788\uB2E4."
-  - "\uC544\uAE4C \uCC38\uACE0\uD560\uB9CC\uD55C \uC0AC\uC6D0\uC99D\uC774 \uC788\uB358
-    \uAC83 \uAC19\uC740\uB370.."
+  - "\uC9C1\uC6D0\uB4E4\uC758 \uADFC\uBB34\uC9C0\uAC00 \uC801\uD600\uC788\uB2E4..."
   walkietakie: {fileID: 0}
   revealPendingQuestAfterSubtitle: 0
 --- !u!1 &103334515 stripped
@@ -1586,7 +1584,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b7a31090088b42444ae707bf48f9a0d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
-  itemName: "\uC0AC\uC6D0\uC99D"
+  itemName: "\uBA85\uCC30\uD45C"
   isHoldInteraction: 0
   requireFrontFacing: 1
   presentationMode: 2
@@ -1642,8 +1640,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SubtitleTrigger
   subtitlesScript: {fileID: 8430087059669167798}
   mySubtitles:
-  - "\uB204\uAD70\uAC00\uAC00 \uB193\uACE0 \uAC04 \uC0AC\uC6D0\uC99D."
-  - "\uC55E\uC5D0\uB294 07\uC774\uB77C\uACE0 \uC801\uD600\uC788\uB2E4."
+  - "07\uC774\uB77C\uACE0 \uC801\uD78C \uBA85\uCC30\uC774\uB2E4."
   walkietakie: {fileID: 0}
   revealPendingQuestAfterSubtitle: 0
 --- !u!1 &275213209
@@ -21631,102 +21628,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2356460683572222620, guid: 6e2477ebacb9b8c47816f3edbdf5ba08, type: 3}
   m_PrefabInstance: {fileID: 2071330171}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &2075840020
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2075840021}
-  - component: {fileID: 2075840024}
-  - component: {fileID: 2075840023}
-  - component: {fileID: 2075840022}
-  m_Layer: 5
-  m_Name: QuestBackground
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &2075840021
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2075840020}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 4431316743949581040}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &2075840022
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2075840020}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 306cc8c2b49d7114eaa3623786fc2126, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.LayoutElement
-  m_IgnoreLayout: 1
-  m_MinWidth: -1
-  m_MinHeight: -1
-  m_PreferredWidth: -1
-  m_PreferredHeight: -1
-  m_FlexibleWidth: -1
-  m_FlexibleHeight: -1
-  m_LayoutPriority: 1
---- !u!114 &2075840023
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2075840020}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 0
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 21300014, guid: 56d84991286850f428b4e7df0cca7380, type: 3}
-  m_Type: 1
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 5
---- !u!222 &2075840024
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2075840020}
-  m_CullTransparentMesh: 1
 --- !u!1 &2083736049
 GameObject:
   m_ObjectHideFlags: 0
@@ -23352,8 +23253,6 @@ GameObject:
   - component: {fileID: 4431316743949581040}
   - component: {fileID: 5564119946223115185}
   - component: {fileID: 2515945762621302049}
-  - component: {fileID: 5564119946223115187}
-  - component: {fileID: 5564119946223115186}
   m_Layer: 5
   m_Name: QuestUIPanel
   m_TagString: Untagged
@@ -28116,20 +28015,20 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 431463845528877712}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.392}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -29694,7 +29593,7 @@ GameObject:
   - component: {fileID: 6533923655092351476}
   - component: {fileID: 3460160040197453879}
   m_Layer: 5
-  m_Name: QuestText
+  m_Name: QuestUI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -30940,8 +30839,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 35
-  m_fontSizeBase: 35
+  m_fontSize: 36
+  m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -33842,17 +33741,16 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 1
+  m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 2075840021}
   - {fileID: 7412415163837165607}
   m_Father: {fileID: 5435327681673261511}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.5}
-  m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 55, y: 430}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0, y: 0.5}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!4 &4440505911444320499
 Transform:
   m_ObjectHideFlags: 0
@@ -37306,46 +37204,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 431463845528877712}
   m_CullTransparentMesh: 1
---- !u!114 &5564119946223115186
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 431463845528877712}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 59f8146938fff824cb5fd77236b75775, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.VerticalLayoutGroup
-  m_Padding:
-    m_Left: 50
-    m_Right: 50
-    m_Top: 30
-    m_Bottom: 30
-  m_ChildAlignment: 3
-  m_Spacing: 0
-  m_ChildForceExpandWidth: 0
-  m_ChildForceExpandHeight: 0
-  m_ChildControlWidth: 1
-  m_ChildControlHeight: 1
-  m_ChildScaleWidth: 0
-  m_ChildScaleHeight: 0
-  m_ReverseArrangement: 0
---- !u!114 &5564119946223115187
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 431463845528877712}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.ContentSizeFitter
-  m_HorizontalFit: 2
-  m_VerticalFit: 2
 --- !u!33 &5579420899920252713
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -42307,11 +42165,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 4431316743949581040}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0, y: 0.5}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 350, y: -250}
+  m_SizeDelta: {x: 600, y: 300}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!64 &7425844823472176747
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -44959,7 +44817,7 @@ MonoBehaviour:
   videoPrepareTimeout: 20
   synchronizeVideoPlayback: 1
   sharedBroadcastId: TV
-  debugAutoPlayVideoOnStart: 0
+  debugAutoPlayVideoOnStart: 1
   desktopRoot: {fileID: 0}
 --- !u!328 &8424344033849766709
 VideoPlayer:
@@ -45118,7 +44976,7 @@ MonoBehaviour:
   isHoldInteraction: 0
   requireFrontFacing: 1
   presentationMode: 2
-  subtitlePresentation: {fileID: 8454829487890125833}
+  subtitlePresentation: {fileID: 0}
   hintSprite: {fileID: 0}
   useCameraPresentation: 0
   cameraPresentation: {fileID: 0}
@@ -45146,7 +45004,7 @@ MonoBehaviour:
   mySubtitles:
   - "\uC9C1\uC6D0\uB4E4\uC774 \uADFC\uBB34\uD55C \uB0A0\uC9DC\uAC00 \uCC28\uB840\uB85C
     \uC801\uD600 \uC788\uB2E4"
-  - 290703..290705.......
+  - 290703..290705...290711..
   - "\uAE30\uB85D\uC740 290807\uC5D0\uC11C \uB05D\uB098 \uC788\uB2E4."
   walkietakie: {fileID: 0}
   revealPendingQuestAfterSubtitle: 0

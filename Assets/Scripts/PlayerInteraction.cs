@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Collections;
 using EasyPeasyFirstPersonController;
 using Unity.Netcode;
+using UnityEngine.InputSystem;
 
 public class PlayerInteraction : MonoBehaviour
 {
@@ -102,7 +103,7 @@ public class PlayerInteraction : MonoBehaviour
     {
         if (activeSequence != null)
         {
-            if (Input.GetKeyDown(KeyCode.Escape))
+            if (EscapePressedThisFrame())
             {
                 GameplayInputGate.ConsumeEscape(this);
                 CloseSequence();
@@ -130,7 +131,7 @@ public class PlayerInteraction : MonoBehaviour
         }
 
         if (heldInteractable == null && targetInteractable != null &&
-            targetInteractable.IsHoldInteraction() && Input.GetKeyDown(KeyCode.E))
+            targetInteractable.IsHoldInteraction() && InteractPressedThisFrame())
             heldInteractable = targetInteractable;
 
         // Once a hold starts, keep the same logical target. Complex props can have
@@ -204,7 +205,7 @@ public class PlayerInteraction : MonoBehaviour
     {
         if (targetInteractable == null)
         {
-            if (Input.GetKeyDown(KeyCode.E))
+            if (InteractPressedThisFrame())
             {
                 EquipmentController equipmentController = GetComponent<EquipmentController>();
                 equipmentController?.TryUseEquippedItem();
@@ -216,14 +217,14 @@ public class PlayerInteraction : MonoBehaviour
         if (!targetInteractable.IsHoldInteraction())
         {
             if (progressCircle != null) progressCircle.fillAmount = 0f;
-            if (Input.GetKeyDown(KeyCode.E))
+            if (InteractPressedThisFrame())
             {
                 ExecuteInteraction();
             }
             return;
         }
 
-        if (Input.GetKey(KeyCode.E))
+        if (InteractIsPressed())
         {
             if (heldInteractable == null)
                 heldInteractable = targetInteractable;
@@ -240,7 +241,7 @@ public class PlayerInteraction : MonoBehaviour
             }
         }
 
-        if (Input.GetKeyUp(KeyCode.E))
+        if (InteractReleasedThisFrame())
         {
             heldInteractable = null;
             ResetTimer();
@@ -261,7 +262,7 @@ public class PlayerInteraction : MonoBehaviour
     public void ResetTarget()
     {
         targetInteractable = null;
-        if (!Input.GetKey(KeyCode.E))
+        if (!InteractIsPressed())
             heldInteractable = null;
         if (interactionHUD != null && interactionHUD.activeSelf)
             interactionHUD.SetActive(false);
@@ -356,6 +357,34 @@ public class PlayerInteraction : MonoBehaviour
             CloseSequence();
         else
             GameplayInputGate.Release(this);
+    }
+
+    private static bool InteractPressedThisFrame()
+    {
+        return Keyboard.current != null
+            ? Keyboard.current.eKey.wasPressedThisFrame
+            : Input.GetKeyDown(KeyCode.E);
+    }
+
+    private static bool InteractReleasedThisFrame()
+    {
+        return Keyboard.current != null
+            ? Keyboard.current.eKey.wasReleasedThisFrame
+            : Input.GetKeyUp(KeyCode.E);
+    }
+
+    private static bool InteractIsPressed()
+    {
+        return Keyboard.current != null
+            ? Keyboard.current.eKey.isPressed
+            : Input.GetKey(KeyCode.E);
+    }
+
+    private static bool EscapePressedThisFrame()
+    {
+        return Keyboard.current != null
+            ? Keyboard.current.escapeKey.wasPressedThisFrame
+            : Input.GetKeyDown(KeyCode.Escape);
     }
 }
 

@@ -21,9 +21,11 @@ public sealed class PasswordCrackingMinigame : HackingMinigameBase
     private int attempts;
     private int selection;
     private bool finished;
+    private TerminalSfxPlayer terminalSfx;
 
     public override void Begin(ConnectionDevice device, TerminalCommands command)
     {
+        terminalSfx = device.TerminalSfx;
         BuildInterface();
         password = Words[Random.Range(0, Words.Length)];
         attempts = 4;
@@ -86,6 +88,7 @@ public sealed class PasswordCrackingMinigame : HackingMinigameBase
         }
 
         attempts--;
+        terminalSfx?.PlayIncorrectAnswer();
         feedback.text = attempts > 0
             ? $"INVALID: {candidate}   MATCH {Similarity(candidate, password)}/{password.Length}   ATTEMPTS: {attempts}"
             : "PASSWORD REJECTED";

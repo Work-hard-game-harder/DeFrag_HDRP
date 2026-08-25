@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: 270800950170456108}
   - component: {fileID: 665347420046235369}
   - component: {fileID: 244701537457181808}
+  - component: {fileID: 718306025907811749}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -24,6 +25,27 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &718306025907811749
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6840429513332726010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43df2d253c0f4850b491cb4116b0bf5f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraOpticalRelayScanner
+  scanCamera: {fileID: 4546345519545454201}
+  lockDuration: 0.7
+  scanMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  audioSource: {fileID: 270800950170456108}
+  lockAcquiredClip: {fileID: 0}
+  acceptedClip: {fileID: 0}
+  rejectedClip: {fileID: 0}
 --- !u!4 &783964585612059733
 Transform:
   m_ObjectHideFlags: 0
