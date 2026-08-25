@@ -1,7 +1,11 @@
 using System.Collections;
 using EasyPeasyFirstPersonController;
+using DeFrag.UI;
+using TMPro;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Rendering.HighDefinition;
+using UnityEngine.UI;
 
 namespace DeFrag.B1F
 {
@@ -151,10 +155,16 @@ namespace DeFrag.B1F
             if (!cameraTransitionComplete)
                 return;
 
-            UpdateCameraLook();
+            if (controller.Phase != DistributionPuzzlePhase.MainKnob)
+                UpdateCameraLook();
 
             if (Input.GetKeyDown(KeyCode.E))
-                InteractWithFocusedControl();
+            {
+                if (controller.Phase == DistributionPuzzlePhase.MainKnob)
+                    controller.RequestSubmitFromLocalPlayer();
+                else
+                    InteractWithFocusedControl();
+            }
         }
 
         public void EndSession()
@@ -183,6 +193,7 @@ namespace DeFrag.B1F
             }
 
             if (movement != null) movement.enabled = true;
+            DistributionTimingGaugePresenter.TryHideImmediate();
             playerInteraction?.TogglePlayerControl(true);
             viewSwitcher?.SetInteractionLocked(false);
             GameplayInputGate.Release(this);
@@ -193,6 +204,30 @@ namespace DeFrag.B1F
             interactionCamera = null;
             interactionAudioListener = null;
             if (Active == this) Active = null;
+        }
+
+        public void ShowTimingGauge(
+            double startServerTime,
+            float targetCenter,
+            float successWidth,
+            float roundTripDuration)
+        {
+            if (!active) return;
+            DistributionTimingGaugePresenter.GetOrCreate().ShowAttempt(
+                startServerTime,
+                targetCenter,
+                successWidth,
+                roundTripDuration);
+        }
+
+        public void ShowTimingFailure()
+        {
+            if (active) DistributionTimingGaugePresenter.TryShowFailure();
+        }
+
+        public void ShowTimingSuccess()
+        {
+            if (active) DistributionTimingGaugePresenter.TryShowSuccess();
         }
 
         public void BlendToPreset(
@@ -330,6 +365,211 @@ namespace DeFrag.B1F
             if (active) EndSession();
             if (Active == this) Active = null;
             GameplayInputGate.Release(this);
+        }
+    }
+}
+
+namespace DeFrag.B1F
+{
+    [DisallowMultipleComponent]
+    public sealed class DistributionTimingGaugePresenter : MonoBehaviour
+    {
+        private static readonly Color TerminalGreen = new(0.1f, 1f, 0.2f, 1f);
+        private static readonly Color FailureRed = new(1f, 0.12f, 0.08f, 1f);
+        private static DistributionTimingGaugePresenter instance;
+
+        private RectTransform panel;
+        private RectTransform successZone;
+        private RectTransform movingBar;
+        private Image trackImage;
+        private Image successImage;
+        private Image barImage;
+        private TMP_Text instruction;
+        private CanvasGroup canvasGroup;
+        private double startServerTime;
+        private float roundTripDuration;
+        private bool running;
+        private Coroutine feedbackRoutine;
+
+        public static DistributionTimingGaugePresenter GetOrCreate()
+        {
+            if (instance != null) return instance;
+
+            GameObject canvasObject = new(
+                "Distribution Timing Gauge Canvas",
+                typeof(RectTransform),
+                typeof(Canvas),
+                typeof(CanvasScaler),
+                typeof(GraphicRaycaster));
+            Canvas canvas = canvasObject.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 126;
+            ResponsiveCanvasUtility.Configure(canvasObject.GetComponent<CanvasScaler>());
+            instance = canvasObject.AddComponent<DistributionTimingGaugePresenter>();
+            instance.Build();
+            return instance;
+        }
+
+        public static void TryHideImmediate()
+        {
+            if (instance == null) return;
+            instance.running = false;
+            instance.gameObject.SetActive(false);
+        }
+
+        public static void TryShowFailure()
+        {
+            if (instance != null) instance.PlayFailure();
+        }
+
+        public static void TryShowSuccess()
+        {
+            if (instance != null) instance.PlaySuccess();
+        }
+
+        public void ShowAttempt(
+            double serverStartTime,
+            float targetCenter,
+            float successWidth,
+            float duration)
+        {
+            if (feedbackRoutine != null)
+            {
+                StopCoroutine(feedbackRoutine);
+                feedbackRoutine = null;
+            }
+
+            gameObject.SetActive(true);
+            canvasGroup.alpha = 1f;
+            panel.anchoredPosition = Vector2.zero;
+            trackImage.color = new Color(0f, 0.04f, 0.01f, 0.94f);
+            successImage.color = new Color(0.1f, 0.85f, 0.2f, 0.72f);
+            barImage.color = Color.white;
+            instruction.color = Color.white;
+            instruction.text = "MAIN KNOB SYNCHRONIZATION  //  PRESS [E] IN THE GREEN ZONE";
+
+            float halfWidth = successWidth * 0.5f;
+            successZone.anchorMin = new Vector2(targetCenter - halfWidth, 0f);
+            successZone.anchorMax = new Vector2(targetCenter + halfWidth, 1f);
+            successZone.offsetMin = Vector2.zero;
+            successZone.offsetMax = Vector2.zero;
+            startServerTime = serverStartTime;
+            roundTripDuration = Mathf.Max(0.4f, duration);
+            running = true;
+            UpdateBar();
+        }
+
+        private void Update()
+        {
+            if (running) UpdateBar();
+        }
+
+        private void UpdateBar()
+        {
+            double serverTime = NetworkManager.Singleton != null
+                ? NetworkManager.Singleton.ServerTime.Time
+                : Time.unscaledTimeAsDouble;
+            double elapsed = System.Math.Max(0d, serverTime - startServerTime);
+            float position = Mathf.PingPong(
+                (float)(elapsed / (roundTripDuration * 0.5f)),
+                1f);
+            movingBar.anchorMin = new Vector2(position, 0f);
+            movingBar.anchorMax = new Vector2(position, 1f);
+            movingBar.anchoredPosition = Vector2.zero;
+        }
+
+        private void PlayFailure()
+        {
+            running = false;
+            if (feedbackRoutine != null) StopCoroutine(feedbackRoutine);
+            feedbackRoutine = StartCoroutine(FailureRoutine());
+        }
+
+        private IEnumerator FailureRoutine()
+        {
+            instruction.text = "SYNCHRONIZATION FAILED // RECALIBRATING";
+            instruction.color = FailureRed;
+            barImage.color = FailureRed;
+            Vector2 origin = panel.anchoredPosition;
+            float elapsed = 0f;
+            const float duration = 0.42f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float strength = 18f * (1f - elapsed / duration);
+                panel.anchoredPosition = origin + Vector2.right *
+                    Mathf.Sin(elapsed * 95f) * strength;
+                yield return null;
+            }
+            panel.anchoredPosition = origin;
+            feedbackRoutine = null;
+        }
+
+        private void PlaySuccess()
+        {
+            running = false;
+            if (feedbackRoutine != null) StopCoroutine(feedbackRoutine);
+            feedbackRoutine = StartCoroutine(SuccessRoutine());
+        }
+
+        private IEnumerator SuccessRoutine()
+        {
+            instruction.text = "SYNCHRONIZATION COMPLETE";
+            instruction.color = TerminalGreen;
+            barImage.color = TerminalGreen;
+            float elapsed = 0f;
+            const float duration = 0.3f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                canvasGroup.alpha = 1f - Mathf.Clamp01(elapsed / duration);
+                yield return null;
+            }
+            gameObject.SetActive(false);
+            feedbackRoutine = null;
+        }
+
+        private void Build()
+        {
+            canvasGroup = gameObject.AddComponent<CanvasGroup>();
+            GameObject panelObject = new("Timing Panel", typeof(RectTransform), typeof(Image));
+            panelObject.transform.SetParent(transform, false);
+            panel = (RectTransform)panelObject.transform;
+            panel.anchorMin = new Vector2(0.23f, 0.11f);
+            panel.anchorMax = new Vector2(0.77f, 0.25f);
+            panel.offsetMin = panel.offsetMax = Vector2.zero;
+            panelObject.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.76f);
+
+            GameObject track = new("Track", typeof(RectTransform), typeof(Image));
+            track.transform.SetParent(panel, false);
+            RectTransform trackRect = (RectTransform)track.transform;
+            trackRect.anchorMin = new Vector2(0.08f, 0.2f);
+            trackRect.anchorMax = new Vector2(0.92f, 0.57f);
+            trackRect.offsetMin = trackRect.offsetMax = Vector2.zero;
+            trackImage = track.GetComponent<Image>();
+
+            GameObject zone = new("Success Zone", typeof(RectTransform), typeof(Image));
+            zone.transform.SetParent(trackRect, false);
+            successZone = (RectTransform)zone.transform;
+            successImage = zone.GetComponent<Image>();
+
+            GameObject bar = new("Moving Bar", typeof(RectTransform), typeof(Image));
+            bar.transform.SetParent(trackRect, false);
+            movingBar = (RectTransform)bar.transform;
+            movingBar.sizeDelta = new Vector2(12f, 0f);
+            barImage = bar.GetComponent<Image>();
+
+            GameObject textObject = new(
+                "Instruction", typeof(RectTransform), typeof(TextMeshProUGUI));
+            textObject.transform.SetParent(panel, false);
+            instruction = textObject.GetComponent<TextMeshProUGUI>();
+            instruction.rectTransform.anchorMin = new Vector2(0.04f, 0.62f);
+            instruction.rectTransform.anchorMax = new Vector2(0.96f, 0.95f);
+            instruction.rectTransform.offsetMin = instruction.rectTransform.offsetMax = Vector2.zero;
+            instruction.fontSize = 22f;
+            instruction.fontStyle = FontStyles.Bold;
+            instruction.alignment = TextAlignmentOptions.Center;
+            instruction.raycastTarget = false;
         }
     }
 }

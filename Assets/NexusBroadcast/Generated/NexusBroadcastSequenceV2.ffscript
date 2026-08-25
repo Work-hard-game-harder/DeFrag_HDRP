@@ -1,0 +1,33 @@
+[0:v]scale=1408:792,zoompan=z='min(zoom+0.0018,1.20)':x='iw/2-(iw/zoom/2)+sin(on/10)*6':y='ih/2-(ih/zoom/2)+cos(on/14)*4':d=120:s=1280x720:fps=24,setsar=1,
+drawbox=x=0:y=0:w=iw:h=44:color=0x123940@0.92:t=fill,
+drawtext=fontfile='Assets/UISource/DungGeunMo.ttf':text='NEXUS 공익 정보망':x=28:y=10:fontsize=22:fontcolor=0xE7E8DF,
+drawtext=fontfile='Assets/UISource/DungGeunMo.ttf':text='SYSTEM CHANNEL 01':x=w-tw-28:y=12:fontsize=18:fontcolor=0xB6C9C8,
+drawbox=x='if(lt(t,0.7),-1040,if(lt(t,1.35),-1040+(t-0.7)*1710,70))':y=396:w=940:h=232:color=0xD7DDDA@0.93:t=fill:enable='between(t,0.7,4.8)',
+drawbox=x='if(lt(t,0.7),-1040,if(lt(t,1.35),-1040+(t-0.7)*1710,70))':y=396:w=7:h=232:color=0xEEE5A3:t=fill:enable='between(t,0.7,4.8)',
+drawtext=fontfile='Assets/UISource/DungGeunMo.ttf':text='시스템은 안전합니다':x=108:y=430:fontsize=45:fontcolor=0x17333A:alpha='if(lt(t,1.35),0,min(1,(t-1.35)/0.22))':enable='between(t,1.35,4.8)',
+drawtext=fontfile='Assets/UISource/DungGeunMo.ttf':text='모든 이상 신호는 정상 범위로 확인되었습니다':x=112:y=507:fontsize=25:fontcolor=0x3F5C62:alpha='if(lt(t,1.95),0,min(1,(t-1.95)/0.22))':enable='between(t,1.95,4.8)',
+drawtext=fontfile='Assets/UISource/DungGeunMo.ttf':text='별도의 대피 조치는 필요하지 않습니다':x=112:y=557:fontsize=21:fontcolor=0x687D80:alpha='if(lt(t,2.55),0,min(1,(t-2.55)/0.22))':enable='between(t,2.55,4.8)'[normal1];
+color=c=0x111417:s=1280x720:r=24:d=1.2,noise=alls=92:allf=t+u,chromashift=cbh=18:cbv=4:crh=-18:crv=-4,drawgrid=w=iw:h=7:t=2:c=white@0.32,drawbox=x=0:y='mod(t*1250,720)':w=iw:h=76:color=white@0.52:t=fill,
+drawtext=fontfile='Assets/UISource/DungGeunMo.ttf':text='신호 탐색중...':x=(w-tw)/2:y=(h-th)/2:fontsize=34:fontcolor=white[noise1];
+[1:v]scale=1360:765,zoompan=z='min(zoom+0.0014,1.15)':x='iw/2-(iw/zoom/2)+sin(on/8)*5':y='ih/2-(ih/zoom/2)+cos(on/11)*3':d=58:s=1280x720:fps=24,setsar=1[lure1a];
+[2:v]scale=1360:765,zoompan=z='min(zoom+0.0032,1.22)':x='iw/2-(iw/zoom/2)+sin(on/3)*11':y='ih/2-(ih/zoom/2)+cos(on/3)*8':d=58:s=1280x720:fps=24,setsar=1[lure1b];
+[lure1a][lure1b]xfade=transition=fade:duration=0.17:offset=2.25,tmix=frames=3:weights='1 2 1',noise=alls=8:allf=t,drawgrid=w=iw:h=5:t=1:c=black@0.13,
+drawtext=fontfile='Assets/UISource/DungGeunMo.ttf':text='CAM 03  REC':x=28:y=24:fontsize=20:fontcolor=0xE8E8DF[lure1];
+color=c=0x101316:s=1280x720:r=24:d=1.2,noise=alls=96:allf=t+u,chromashift=cbh=22:cbv=-3:crh=-22:crv=3,drawgrid=w=iw:h=8:t=3:c=white@0.38,drawbox=x=0:y='720-mod(t*1320,800)':w=iw:h=92:color=black@0.8:t=fill,
+drawtext=fontfile='Assets/UISource/DungGeunMo.ttf':text='신호 탐색중...':x=(w-tw)/2:y=(h-th)/2:fontsize=34:fontcolor=white[noise2];
+[3:v]scale=1408:792,zoompan=z='min(zoom+0.0020,1.21)':x='iw/2-(iw/zoom/2)+sin(on/10)*6':y='ih/2-(ih/zoom/2)+cos(on/13)*4':d=108:s=1280x720:fps=24,setsar=1,
+drawbox=x=0:y=0:w=iw:h=44:color=0x123940@0.92:t=fill,
+drawtext=fontfile='Assets/UISource/DungGeunMo.ttf':text='NEXUS 공익 정보망':x=28:y=10:fontsize=22:fontcolor=0xE7E8DF,
+drawbox=x='if(lt(t,0.4),1280,if(lt(t,1.0),1280-(t-0.4)*860,764))':y=118:w=468:h=190:color=0x173A40@0.9:t=fill,
+drawtext=fontfile='Assets/UISource/DungGeunMo.ttf':text='시설 안전 지수':x=796:y=148:fontsize=28:fontcolor=0xE7E8DF:alpha='if(lt(t,0.95),0,min(1,(t-0.95)/0.2))',
+drawtext=fontfile='Assets/UISource/DungGeunMo.ttf':text='모든 구역 정상 작동 중':x=798:y=211:fontsize=21:fontcolor=0xA9DADD:alpha='if(lt(t,1.45),0,min(1,(t-1.45)/0.2))'[normal2];
+[4:v]scale=1360:765,zoompan=z='min(zoom+0.0015,1.16)':x='iw/2-(iw/zoom/2)+sin(on/9)*5':y='ih/2-(ih/zoom/2)+cos(on/12)*3':d=60:s=1280x720:fps=24,setsar=1[lure2a];
+[5:v]scale=1360:765,zoompan=z='min(zoom+0.0030,1.21)':x='iw/2-(iw/zoom/2)+sin(on/3)*10':y='ih/2-(ih/zoom/2)+cos(on/3)*8':d=54:s=1280x720:fps=24,setsar=1[lure2b];
+[lure2a][lure2b]xfade=transition=fade:duration=0.2:offset=2.3,tmix=frames=3:weights='1 2 1',noise=alls=9:allf=t,drawgrid=w=iw:h=5:t=1:c=black@0.13,
+drawtext=fontfile='Assets/UISource/DungGeunMo.ttf':text='CAM 06  REC':x=28:y=24:fontsize=20:fontcolor=0xE8E8DF[lure2];
+color=c=0x090B0C:s=1280x720:r=24:d=3.1,noise=alls=78:allf=t+u,drawgrid=w=iw:h=9:t=3:c=white@0.28,
+drawbox=x=0:y='mod(t*630,720)':w=iw:h=108:color=black@0.9:t=fill,
+drawbox=x=0:y='mod(t*970+310,720)':w=iw:h=48:color=white@0.55:t=fill,
+drawtext=fontfile='Assets/UISource/DungGeunMo.ttf':text='신호 연결 끊김':x=(w-tw)/2:y=326:fontsize=44:fontcolor=white,
+drawtext=fontfile='Assets/UISource/DungGeunMo.ttf':text='NEXUS RELAY 07 / 재연결 시도 중':x=(w-tw)/2:y=388:fontsize=20:fontcolor=0xC7C7C0[disconnect];
+[normal1][noise1][lure1][noise2][normal2][lure2][disconnect]concat=n=7:v=1:a=0,fade=t=out:st=23.72:d=0.35[out]

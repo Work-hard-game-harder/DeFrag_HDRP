@@ -8341,6 +8341,12 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  timingRoundTripDuration: 1.6
+  timingSuccessWidth: 0.2
+  timingBoundaryTolerance: 0.02
+  timingFailureCooldown: 1.1
+  timingSuccessPresentationDuration: 0.35
+  maximumTimingInputAge: 0.5
   onFailureElectricalEffect:
     m_PersistentCalls:
       m_Calls:
@@ -8807,6 +8813,7 @@ Transform:
   - {fileID: 225591964}
   - {fileID: 297934403}
   - {fileID: 1406943016}
+  - {fileID: 1087804065}
   - {fileID: 2084632195}
   - {fileID: 1389630055}
   - {fileID: 986842689}
@@ -9685,6 +9692,136 @@ PrefabInstance:
 Transform:
   m_CorrespondingSourceObject: {fileID: 7809189173366993273, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
   m_PrefabInstance: {fileID: 1076619110}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &1087804064
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 975668000}
+    m_Modifications:
+    - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: terminalId
+      value: terminal_31
+      objectReference: {fileID: 0}
+    - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: displayName
+      value: TERMINAL 31
+      objectReference: {fileID: 0}
+    - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: availableCommands
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: unlockDoorEnabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: downloadDataEnabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: connectServerEnabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: downloadDataMinigame
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: focusLocalEulerAngles.x
+      value: -90
+      objectReference: {fileID: 0}
+    - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: onUnlockDoorRequested.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: onUnlockDoorRequested.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: onUnlockDoorRequested.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1298950518}
+    - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: onUnlockDoorRequested.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: onUnlockDoorRequested.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: Unlock
+      objectReference: {fileID: 0}
+    - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: onUnlockDoorRequested.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: DeFrag.Doors.TerminalDoorLock, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: onUnlockDoorRequested.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
+    - target: {fileID: 618710890111500002, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: m_Size.y
+      value: 2.02
+      objectReference: {fileID: 0}
+    - target: {fileID: 618710890111500002, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: m_Center.y
+      value: 0.93
+      objectReference: {fileID: 0}
+    - target: {fileID: 7427562240513797059, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: m_Name
+      value: Terminal_31 (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 7809189173366993273, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -27.239
+      objectReference: {fileID: 0}
+    - target: {fileID: 7809189173366993273, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7809189173366993273, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -71.45
+      objectReference: {fileID: 0}
+    - target: {fileID: 7809189173366993273, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: -0.9063077
+      objectReference: {fileID: 0}
+    - target: {fileID: 7809189173366993273, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7809189173366993273, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.42261845
+      objectReference: {fileID: 0}
+    - target: {fileID: 7809189173366993273, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7809189173366993273, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7809189173366993273, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 310
+      objectReference: {fileID: 0}
+    - target: {fileID: 7809189173366993273, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+--- !u!4 &1087804065 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7809189173366993273, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+  m_PrefabInstance: {fileID: 1087804064}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &1120666419
 GameObject:
@@ -11425,6 +11562,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 14d91fb2a04141ccb1e9a0be7676ba03, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Doors.VerticalDoorMotor
+--- !u!114 &1298950518 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 832494278767604469, guid: 4fc2bacc10c214046ba2d260d7558a4e, type: 3}
+  m_PrefabInstance: {fileID: 1298950515}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b48495f54b04f5c88afc3731ac3bcc9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Doors.TerminalDoorLock
 --- !u!1 &1312607698
 GameObject:
   m_ObjectHideFlags: 0
@@ -12602,6 +12750,34 @@ PrefabInstance:
       propertyPath: focusLocalEulerAngles.x
       value: -90
       objectReference: {fileID: 0}
+    - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: onUnlockDoorRequested.m_PersistentCalls.m_Calls.Array.size
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: onUnlockDoorRequested.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: onUnlockDoorRequested.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1619229138}
+    - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: onUnlockDoorRequested.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: onUnlockDoorRequested.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: Unlock
+      objectReference: {fileID: 0}
+    - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: onUnlockDoorRequested.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: DeFrag.Doors.TerminalDoorLock, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: onUnlockDoorRequested.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
     - target: {fileID: 618710890111500002, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
       propertyPath: m_Size.y
       value: 2.02
@@ -13700,6 +13876,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6176536335486044068, guid: 4fc2bacc10c214046ba2d260d7558a4e, type: 3}
   m_PrefabInstance: {fileID: 1619229136}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1619229138 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 832494278767604469, guid: 4fc2bacc10c214046ba2d260d7558a4e, type: 3}
+  m_PrefabInstance: {fileID: 1619229136}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b48495f54b04f5c88afc3731ac3bcc9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Doors.TerminalDoorLock
 --- !u!1 &1620183489
 GameObject:
   m_ObjectHideFlags: 0

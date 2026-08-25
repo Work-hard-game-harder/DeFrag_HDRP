@@ -14,10 +14,16 @@ public sealed class HintConfirmationTracker : MonoBehaviour
     [SerializeField] private LobbyPowerController powerController;
     [SerializeField] private UnityEvent<int> onConfirmedHintCountChanged;
 
+    [Header("Shared Broadcast")]
+    [SerializeField] private string sharedBroadcastId = "TV";
+    [SerializeField] private HintCameraPresentation sharedBroadcastPresentation;
+
     // Presentation progress exists on every peer. Only the server writes the
     // authoritative set used for duplicate rejection and threshold decisions.
     private readonly HashSet<string> confirmedHintIds = new();
     private readonly HashSet<string> serverConfirmedHintIds = new();
+    private double serverBroadcastStartTime = double.NegativeInfinity;
+    private float serverBroadcastDuration;
 
     public int ConfirmedHintCount => confirmedHintIds.Count;
 
@@ -94,5 +100,82 @@ public sealed class HintConfirmationTracker : MonoBehaviour
         }
 
         powerController?.PlayHintWarning(emergency);
+    }
+
+    public void RequestSharedBroadcast(string broadcastId, float duration, Object context)
+    {
+        if (string.IsNullOrWhiteSpace(broadcastId) || duration <= 0f) return;
+
+        NetworkManager networkManager = NetworkManager.Singleton;
+        if (networkManager != null && networkManager.IsListening)
+        {
+            NetworkObject localPlayer = networkManager.LocalClient?.PlayerObject;
+            PersonController relay = localPlayer != null
+                ? localPlayer.GetComponent<PersonController>()
+                : null;
+            if (relay == null)
+            {
+                Debug.LogError("[LobbyBroadcast] Local network player relay was not found.", context);
+                return;
+            }
+
+            relay.RequestLobbyBroadcastStart(broadcastId, duration);
+            return;
+        }
+
+        ApplyServerBroadcastStart(broadcastId, Time.unscaledTimeAsDouble, duration, context);
+    }
+
+    public bool TryStartBroadcastOnServer(
+        string broadcastId,
+        float duration,
+        out double startTime)
+    {
+        NetworkManager networkManager = NetworkManager.Singleton;
+        double now = networkManager != null
+            ? networkManager.ServerTime.Time
+            : Time.unscaledTimeAsDouble;
+
+        startTime = serverBroadcastStartTime;
+        bool sameBroadcastIsActive = broadcastId == sharedBroadcastId &&
+                                     now - serverBroadcastStartTime < serverBroadcastDuration;
+        if (sameBroadcastIsActive) return false;
+        if (broadcastId != sharedBroadcastId || duration <= 0f) return false;
+
+        serverBroadcastStartTime = now;
+        serverBroadcastDuration = duration;
+        startTime = now;
+        return true;
+    }
+
+    public bool TryGetActiveBroadcastOnServer(
+        out string broadcastId,
+        out double startTime,
+        out float duration)
+    {
+        broadcastId = sharedBroadcastId;
+        startTime = serverBroadcastStartTime;
+        duration = serverBroadcastDuration;
+
+        NetworkManager networkManager = NetworkManager.Singleton;
+        double now = networkManager != null
+            ? networkManager.ServerTime.Time
+            : Time.unscaledTimeAsDouble;
+        return duration > 0f && now - startTime < duration;
+    }
+
+    public void ApplyServerBroadcastStart(
+        string broadcastId,
+        double serverStartTime,
+        float duration,
+        Object context = null)
+    {
+        if (broadcastId != sharedBroadcastId || sharedBroadcastPresentation == null)
+            return;
+
+        Debug.Log(
+            $"[LobbyBroadcast] '{broadcastId}' started at server time {serverStartTime:0.000}.",
+            context);
+        sharedBroadcastPresentation.PlaySharedNetworkBroadcast(serverStartTime, duration);
     }
 }

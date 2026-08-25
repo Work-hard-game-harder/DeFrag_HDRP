@@ -604,6 +604,7 @@ namespace StarterAssets
                 TvMonsterProximityGlitch glitch =
                     GetComponentInChildren<TvMonsterProximityGlitch>(true);
                 glitch?.InitializeForConfirmedLocalOwner();
+                RequestLobbyBroadcastStateServerRpc();
             }
 
             // 내가 이 캐릭터의 주인(로컬 플레이어)일 때만 위치 변경 작업 수행
@@ -670,6 +671,62 @@ namespace StarterAssets
         {
             HintConfirmationTracker.Instance?.ApplyServerConfirmation(
                 hintId, count, emergency, this);
+        }
+
+        public void RequestLobbyBroadcastStart(string broadcastId, float duration)
+        {
+            if (string.IsNullOrWhiteSpace(broadcastId) || duration <= 0f) return;
+
+            if (IsSpawned && IsOwner)
+                StartLobbyBroadcastServerRpc(broadcastId, duration);
+        }
+
+        [ServerRpc]
+        private void StartLobbyBroadcastServerRpc(string broadcastId, float duration)
+        {
+            HintConfirmationTracker tracker = HintConfirmationTracker.Instance;
+            float safeDuration = Mathf.Clamp(duration, 1f, 300f);
+            if (tracker == null ||
+                !tracker.TryStartBroadcastOnServer(
+                    broadcastId,
+                    safeDuration,
+                    out double startTime))
+                return;
+
+            ApplyLobbyBroadcastClientRpc(broadcastId, startTime, safeDuration);
+        }
+
+        [ServerRpc]
+        private void RequestLobbyBroadcastStateServerRpc(ServerRpcParams rpcParams = default)
+        {
+            HintConfirmationTracker tracker = HintConfirmationTracker.Instance;
+            if (tracker == null ||
+                !tracker.TryGetActiveBroadcastOnServer(
+                    out string broadcastId,
+                    out double startTime,
+                    out float duration))
+                return;
+
+            ClientRpcParams target = new()
+            {
+                Send = new ClientRpcSendParams
+                {
+                    TargetClientIds = new[] { rpcParams.Receive.SenderClientId }
+                }
+            };
+            ApplyLobbyBroadcastClientRpc(
+                broadcastId, startTime, duration, target);
+        }
+
+        [ClientRpc]
+        private void ApplyLobbyBroadcastClientRpc(
+            string broadcastId,
+            double startTime,
+            float duration,
+            ClientRpcParams rpcParams = default)
+        {
+            HintConfirmationTracker.Instance?.ApplyServerBroadcastStart(
+                broadcastId, startTime, duration, this);
         }
 
         private void ConfigureLocalPlayerPresentation()

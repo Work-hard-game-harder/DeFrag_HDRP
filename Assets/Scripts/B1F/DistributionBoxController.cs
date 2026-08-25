@@ -88,6 +88,14 @@ namespace DeFrag.B1F
         [SerializeField] private AnimationCurve mainKnobCurve =
             AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
+        [Header("Main Knob Timing Game")]
+        [SerializeField, Min(0.4f)] private float timingRoundTripDuration = 1.6f;
+        [SerializeField, Range(0.05f, 0.6f)] private float timingSuccessWidth = 0.2f;
+        [SerializeField, Range(0f, 0.1f)] private float timingBoundaryTolerance = 0.02f;
+        [SerializeField, Min(0.1f)] private float timingFailureCooldown = 1.1f;
+        [SerializeField, Min(0f)] private float timingSuccessPresentationDuration = 0.35f;
+        [SerializeField, Min(0.1f)] private float maximumTimingInputAge = 0.5f;
+
         [Header("Shared Effects")]
         [SerializeField] private UnityEvent onFailureElectricalEffect = new();
         [SerializeField] private UnityEvent onSuccess = new();
@@ -125,6 +133,12 @@ namespace DeFrag.B1F
         private Quaternion capturedMainKnobRestLocalRotation = Quaternion.identity;
         private ushort offlineSwitchMask;
         private bool offlineOccupied;
+        private double timingAttemptStartTime;
+        private float timingTargetCenter;
+        private bool timingAttemptActive;
+        private bool timingInputLocked;
+        private Coroutine timingFailureRoutine;
+        private Coroutine timingSuccessRoutine;
 
         public bool IsCompleted => completed.Value;
         public bool IsHintSessionActive => hintSessionActive;
@@ -218,7 +232,13 @@ namespace DeFrag.B1F
                 $"[DistributionBox] MainKnob pressed. IsSpawned={IsSpawned}, " +
                 $"IsOwner={IsOwner}, IsHintActive={hintSessionActive}.",
                 this);
-            if (IsSpawned) SubmitServerRpc();
+            if (IsSpawned)
+            {
+                double observedServerTime = NetworkManager != null
+                    ? NetworkManager.ServerTime.Time
+                    : 0d;
+                SubmitServerRpc(observedServerTime);
+            }
             else ApplyOfflineSubmit();
         }
 
@@ -261,6 +281,8 @@ namespace DeFrag.B1F
             controllingClient.Value = sender;
             Debug.Log($"[DistributionBox] Client {sender} acquired control.", this);
             BeginSessionClientRpc(Target(sender));
+            if (phase.Value == DistributionPuzzlePhase.MainKnob)
+                StartTimingAttempt(sender);
         }
 
         [ServerRpc(RequireOwnership = false)]
@@ -275,7 +297,7 @@ namespace DeFrag.B1F
         }
 
         [ServerRpc(RequireOwnership = false)]
-        private void SubmitServerRpc(ServerRpcParams rpc = default)
+        private void SubmitServerRpc(double observedServerTime, ServerRpcParams rpc = default)
         {
             ulong sender = rpc.Receive.SenderClientId;
             if (!CanControllerAct(sender))
@@ -294,7 +316,30 @@ namespace DeFrag.B1F
                 return;
             }
 
-            CompletePuzzle(sender);
+            if (!timingAttemptActive || timingInputLocked)
+                return;
+
+            double serverNow = NetworkManager.ServerTime.Time;
+            double inputAge = serverNow - observedServerTime;
+            if (inputAge < -0.1d || inputAge > maximumTimingInputAge)
+                observedServerTime = serverNow;
+
+            float barPosition = EvaluateTimingBar(observedServerTime);
+            float allowedHalfWidth = timingSuccessWidth * 0.5f + timingBoundaryTolerance;
+            if (Mathf.Abs(barPosition - timingTargetCenter) <= allowedHalfWidth)
+            {
+                timingInputLocked = true;
+                timingAttemptActive = false;
+                timingSuccessRoutine = StartCoroutine(
+                    CompletePuzzleAfterPresentation(sender));
+                return;
+            }
+
+            timingInputLocked = true;
+            PlayFailureClientRpc();
+            TimingFailureClientRpc(Target(sender));
+            if (timingFailureRoutine != null) StopCoroutine(timingFailureRoutine);
+            timingFailureRoutine = StartCoroutine(RestartTimingAfterFailure(sender));
         }
 
         [ServerRpc(RequireOwnership = false)]
@@ -389,6 +434,37 @@ namespace DeFrag.B1F
             AnimateMainKnob(mainKnobSuccessLocalEuler, false);
         }
 
+        [ClientRpc]
+        private void StartTimingAttemptClientRpc(
+            double startServerTime,
+            float targetCenter,
+            float successWidth,
+            float roundTripDuration,
+            ClientRpcParams rpc = default)
+        {
+            DistributionBoxLocalSession session = DistributionBoxLocalSession.Active;
+            if (session != null && session.IsFor(this))
+                session.ShowTimingGauge(
+                    startServerTime,
+                    targetCenter,
+                    successWidth,
+                    roundTripDuration);
+        }
+
+        [ClientRpc]
+        private void TimingFailureClientRpc(ClientRpcParams rpc = default)
+        {
+            DistributionBoxLocalSession session = DistributionBoxLocalSession.Active;
+            if (session != null && session.IsFor(this)) session.ShowTimingFailure();
+        }
+
+        [ClientRpc]
+        private void TimingSuccessClientRpc(ClientRpcParams rpc = default)
+        {
+            DistributionBoxLocalSession session = DistributionBoxLocalSession.Active;
+            if (session != null && session.IsFor(this)) session.ShowTimingSuccess();
+        }
+
         private void GenerateAndSendHint()
         {
             if (!IsServer || hintOwnerClient == NoClient) return;
@@ -427,18 +503,57 @@ namespace DeFrag.B1F
             hintOwnerClient = NoClient;
             answerMask = 0;
             AdvanceTerminalClientRpc(nextPhase, Target(terminalClient));
+            if (nextPhase == DistributionPuzzlePhase.MainKnob &&
+                controllingClient.Value != NoClient)
+                StartTimingAttempt(controllingClient.Value);
         }
 
-        private void CompletePuzzle(ulong controllingPlayer)
+        private IEnumerator CompletePuzzleAfterPresentation(ulong controllingPlayer)
         {
             completed.Value = true;
             phase.Value = DistributionPuzzlePhase.Completed;
             PlaySuccessClientRpc();
+            TimingSuccessClientRpc(Target(controllingPlayer));
             onSuccess?.Invoke();
+            yield return new WaitForSecondsRealtime(timingSuccessPresentationDuration);
             if (isBoxA) powerController?.SetEmergencyPowerServer();
             else powerController?.SetFullPowerServer();
             EndSessionClientRpc(Target(controllingPlayer));
             controllingClient.Value = NoClient;
+            timingSuccessRoutine = null;
+        }
+
+        private void StartTimingAttempt(ulong controllerClient)
+        {
+            if (!IsServer || controllerClient == NoClient) return;
+            float halfWidth = timingSuccessWidth * 0.5f;
+            timingTargetCenter = Random.Range(halfWidth + 0.05f, 0.95f - halfWidth);
+            timingAttemptStartTime = NetworkManager.ServerTime.Time + 0.15d;
+            timingAttemptActive = true;
+            timingInputLocked = false;
+            StartTimingAttemptClientRpc(
+                timingAttemptStartTime,
+                timingTargetCenter,
+                timingSuccessWidth,
+                timingRoundTripDuration,
+                Target(controllerClient));
+        }
+
+        private IEnumerator RestartTimingAfterFailure(ulong controllerClient)
+        {
+            float delay = Mathf.Max(timingFailureCooldown, mainKnobMoveDuration * 2f + 0.1f);
+            yield return new WaitForSecondsRealtime(delay);
+            timingFailureRoutine = null;
+            if (phase.Value == DistributionPuzzlePhase.MainKnob &&
+                controllingClient.Value == controllerClient)
+                StartTimingAttempt(controllerClient);
+        }
+
+        private float EvaluateTimingBar(double serverTime)
+        {
+            double elapsed = System.Math.Max(0d, serverTime - timingAttemptStartTime);
+            float halfTripDuration = Mathf.Max(0.2f, timingRoundTripDuration * 0.5f);
+            return Mathf.PingPong((float)(elapsed / halfTripDuration), 1f);
         }
 
         private static bool IsWaitingForBankData(DistributionPuzzlePhase value) =>
@@ -527,7 +642,7 @@ namespace DeFrag.B1F
         }
         private void OnCompletedChanged(bool previous, bool next)
         {
-            if (next) SetDoorImmediate(false);
+            if (next) timingAttemptActive = false;
         }
 
         private void ConfigureSwitches()

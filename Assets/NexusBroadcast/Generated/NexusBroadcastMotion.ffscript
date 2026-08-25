@@ -1,0 +1,28 @@
+[0:v]scale=1408:792,zoompan=z='min(zoom+0.0009,1.11)':x='iw/2-(iw/zoom/2)+sin(on/18)*4':y='ih/2-(ih/zoom/2)+cos(on/23)*3':d=132:s=1280x720:fps=24,setsar=1[s0];
+[1:v]scale=1408:792,zoompan=z='min(zoom+0.0011,1.13)':x='iw/2-(iw/zoom/2)+sin(on/16)*3':y='ih/2-(ih/zoom/2)+cos(on/21)*2':d=144:s=1280x720:fps=24,setsar=1[s1];
+[2:v]scale=1408:792,zoompan=z='min(zoom+0.0010,1.12)':x='iw/2-(iw/zoom/2)+sin(on/20)*3':y='ih/2-(ih/zoom/2)+cos(on/25)*2':d=144:s=1280x720:fps=24,setsar=1[s2];
+[s0][s1]xfade=transition=fade:duration=0.6:offset=4.9[x1];
+[x1][s2]xfade=transition=fade:duration=0.6:offset=10.3,trim=duration=16.125,setpts=PTS-STARTPTS,
+drawbox=x=0:y=0:w=iw:h=46:color=0x071923@0.72:t=fill,
+drawtext=fontfile='C\:/Windows/Fonts/malgun.ttf':text='NEXUS  공익 정보망':x=32:y=12:fontsize=20:fontcolor=0xD9F5FF,
+drawtext=fontfile='C\:/Windows/Fonts/malgun.ttf':text='AI · DATA · PUBLIC TRUST':x=w-tw-32:y=14:fontsize=16:fontcolor=0x9FC4D2,
+drawbox=x='if(lt(t,0.8),-1040,if(lt(t,1.5),-1040+(t-0.8)*1600,72))':y=398:w=930:h=238:color=white@0.91:t=fill:enable='between(t,0.8,4.7)',
+drawbox=x='if(lt(t,0.8),-1040,if(lt(t,1.5),-1040+(t-0.8)*1600,72))':y=398:w=8:h=238:color=0x35CFE1@1:t=fill:enable='between(t,0.8,4.7)',
+drawtext=fontfile='C\:/Windows/Fonts/malgun.ttf':text='시스템은 안전합니다':x=112:y=432:fontsize=48:fontcolor=0x102F3A:alpha='if(lt(t,1.5),0,min(1,(t-1.5)/0.28))':enable='between(t,1.5,4.7)',
+drawtext=fontfile='C\:/Windows/Fonts/malgun.ttf':text='모든 이상 신호는 정상 범위로 확인되었습니다':x=116:y=510:fontsize=26:fontcolor=0x315A68:alpha='if(lt(t,2.05),0,min(1,(t-2.05)/0.28))':enable='between(t,2.05,4.7)',
+drawtext=fontfile='C\:/Windows/Fonts/malgun.ttf':text='별도의 대피 조치는 필요하지 않습니다':x=116:y=558:fontsize=21:fontcolor=0x64818B:alpha='if(lt(t,2.65),0,min(1,(t-2.65)/0.28))':enable='between(t,2.65,4.7)',
+drawbox=x='if(lt(t,6),1280,if(lt(t,6.6),1280-(t-6)*890,746))':y=118:w=470:h=214:color=0x061B26@0.82:t=fill:enable='between(t,6,9.65)',
+drawtext=fontfile='C\:/Windows/Fonts/malgun.ttf':text='지능형 안전 관리 시스템':x=782:y=151:fontsize=28:fontcolor=0xDDF8FF:alpha='if(lt(t,6.55),0,min(1,(t-6.55)/0.25))':enable='between(t,6.55,9.65)',
+drawtext=fontfile='C\:/Windows/Fonts/malgun.ttf':text='환경 안정성     99.98 퍼센트':x=786:y=211:fontsize=20:fontcolor=0x78DCE8:alpha='if(lt(t,7.05),0,min(1,(t-7.05)/0.25))':enable='between(t,7.05,9.65)',
+drawtext=fontfile='C\:/Windows/Fonts/malgun.ttf':text='연산 무결성     정상':x=786:y=252:fontsize=20:fontcolor=0xA8C9D2:alpha='if(lt(t,7.5),0,min(1,(t-7.5)/0.25))':enable='between(t,7.5,9.65)',
+drawbox=x='if(lt(t,10.55),-1100,if(lt(t,11.1),-1100+(t-10.55)*2180,98))':y=448:w=1080:h=154:color=white@0.88:t=fill:enable='between(t,10.55,12.45)',
+drawtext=fontfile='C\:/Windows/Fonts/malgun.ttf':text='더 나은 내일을 계산합니다':x=(w-tw)/2:y=478:fontsize=45:fontcolor=0x102F3A:alpha='if(lt(t,11.05),0,min(1,(t-11.05)/0.3))':enable='between(t,11.05,12.45)',
+drawtext=fontfile='C\:/Windows/Fonts/malgun.ttf':text='공공 AI 빅데이터 연구소 · NEXUS':x=(w-tw)/2:y=545:fontsize=20:fontcolor=0x52727D:alpha='if(lt(t,11.55),0,min(1,(t-11.55)/0.3))':enable='between(t,11.55,12.45)'[ui];
+[ui]split=2[clean][errsrc];
+[errsrc]noise=alls=32:allf=t+u,chromashift=cbh=12:cbv=3:crh=-12:crv=-3,eq=contrast=1.3:brightness=-0.14[err];
+[clean][err]blend=all_expr='if(lt(T,12.35),A,if(lt(mod(T-12.35,0.46),0.14),B,0.62*A+0.38*B))',
+drawbox=x=0:y=0:w=iw:h=ih:color=0x031015@0.48:t=fill:enable='gte(t,12.35)',
+drawtext=fontfile='C\:/Windows/Fonts/malgun.ttf':text='NO SIGNAL':x=34:y=24:fontsize=20:fontcolor=0xD9E6E8:enable='gte(t,12.55)',
+drawtext=fontfile='C\:/Windows/Fonts/malgun.ttf':text='신호 연결 끊김':x=(w-tw)/2:y=465:fontsize=48:fontcolor=white:enable='gte(t,12.75)',
+drawtext=fontfile='C\:/Windows/Fonts/malgun.ttf':text='NEXUS RELAY 07  /  재연결 시도 중':x=(w-tw)/2:y=530:fontsize=21:fontcolor=0x91ABB2:enable='gte(t,13.05)',
+fade=t=out:st=15.75:d=0.375[out]
