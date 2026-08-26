@@ -115,10 +115,14 @@ public class PlayerInteraction : MonoBehaviour
         // ESC는 로컬 UI를 닫고 조작을 복구하는 역할만 담당한다.
         if (hintPanel != null && hintPanel.activeSelf)
         {
-            if (Input.GetMouseButtonDown(0))
+            if (EscapePressedThisFrame())
             {
-                CloseAllUI();
-                TogglePlayerControl(true);
+                GameplayInputGate.ConsumeEscape(this);
+                CloseHintPanel();
+            }
+            else if (Input.GetMouseButtonDown(0))
+            {
+                CloseHintPanel();
             }
             return;
         }
@@ -292,9 +296,21 @@ public class PlayerInteraction : MonoBehaviour
         if (hintPanel == null || hintImage == null || sprite == null)
             return;
 
+        if (!GameplayInputGate.TryAcquire(this))
+            return;
+
         hintImage.sprite = sprite;
         hintPanel.SetActive(true);
         TogglePlayerControl(false);
+    }
+
+    private void CloseHintPanel()
+    {
+        if (hintPanel != null)
+            hintPanel.SetActive(false);
+
+        GameplayInputGate.Release(this);
+        TogglePlayerControl(true);
     }
 
     public void OpenSequence(HintSequencePresentation presentation)

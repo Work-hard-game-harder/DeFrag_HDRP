@@ -41,6 +41,12 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
     public float minIdleTime = 2f;
     public float maxIdleTime = 5f;
 
+    [Header("Initial Search Destination")]
+    [Tooltip("스폰 직후 최초 한 번만 우선 이동할 씬 목적지입니다. 스폰 담당자가 주입합니다.")]
+    [SerializeField] private Transform initialSearchDestination;
+    [SerializeField, Min(0.1f)] private float initialDestinationArrivalDistance = 0.75f;
+    [SerializeField, Min(0.1f)] private float initialDestinationSampleRadius = 5f;
+
     [Header("Rotation Settings")]
     public float rotationSpeed = 10f;
 
@@ -104,6 +110,7 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
     private bool initialized;
     private float attackCycleStartedAt;
     private NetworkMonsterPlayerTargetResolver targetResolver;
+    private bool initialDestinationPending;
 
     public MonsterState CurrentState => currentState;
     public bool UsesBehaviorDesigner => useBehaviorDesigner;
@@ -123,6 +130,15 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
 
         if (target != null && initialized)
             lastKnownPlayerPos = target.position;
+    }
+
+    public void SetInitialSearchDestination(Transform destination)
+    {
+        initialSearchDestination = destination;
+        initialDestinationPending = destination != null;
+
+        if (initialized && currentState == MonsterState.Search)
+            SetSearchDestination();
     }
 
     public bool HasSimulationAuthority
@@ -175,6 +191,7 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
         chaseNavigator = new ChaseDetourNavigator(agent, detourSampleCount, detourSampleRadius, detourRecheckInterval);
         randomDestinationPath = new NavMeshPath();
         catchUpNavigator = new CatchUpNavigator(agent, maxChaseDistance, catchUpRadius, catchUpCooldown);   // 이 줄이 있는지 확인
+        initialDestinationPending = initialSearchDestination != null;
 
         currentState = MonsterState.Idle;
         ChangeState(MonsterState.Search);
@@ -430,8 +447,17 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
     {
         RotateTowardsMoveDirection();
         CheckIfStuck();
-        if (!agent.pathPending && agent.hasPath && agent.remainingDistance < 0.5f)
+        float arrivalDistance = initialDestinationPending
+            ? Mathf.Max(agent.stoppingDistance, initialDestinationArrivalDistance)
+            : 0.5f;
+        bool reachedDestination = !agent.pathPending &&
+                                  agent.hasPath &&
+                                  agent.remainingDistance <= arrivalDistance;
+        if (reachedDestination)
+        {
+            initialDestinationPending = false;
             ChangeState(MonsterState.Idle);
+        }
     }
 
     void HandleChase()
@@ -543,6 +569,47 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
         SetRandomDestinationNear(transform.position, searchRadius);
     }
 
+    private void SetSearchDestination()
+    {
+        if (TrySetInitialSearchDestination())
+            return;
+
+        SetRandomDestination();
+    }
+
+    private bool TrySetInitialSearchDestination()
+    {
+        if (!initialDestinationPending)
+            return false;
+
+        if (initialSearchDestination == null)
+        {
+            initialDestinationPending = false;
+            return false;
+        }
+
+        if (randomDestinationPath == null)
+            randomDestinationPath = new NavMeshPath();
+
+        if (!NavMesh.SamplePosition(
+                initialSearchDestination.position,
+                out NavMeshHit hit,
+                initialDestinationSampleRadius,
+                agent.areaMask) ||
+            !agent.CalculatePath(hit.position, randomDestinationPath) ||
+            randomDestinationPath.status != NavMeshPathStatus.PathComplete)
+        {
+            Debug.LogWarning(
+                "[MonsterAI] 최초 배전함 목적지까지 완전한 NavMesh 경로를 찾지 못해 랜덤 순찰로 전환합니다.",
+                this);
+            initialDestinationPending = false;
+            return false;
+        }
+
+        agent.SetDestination(hit.position);
+        return true;
+    }
+
     // 특정 위치 근처에서 랜덤 목적지 설정 (재사용 가능하도록 분리)
     void SetRandomDestinationNear(Vector3 center, float radius)
     {
@@ -608,7 +675,10 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
             if (movedDistance < stuckThreshold && agent.hasPath)
             {
                 agent.ResetPath();
-                SetRandomDestination();
+                if (currentState == MonsterState.Search)
+                    SetSearchDestination();
+                else
+                    SetRandomDestination();
             }
             lastPosition = transform.position;
             stuckTimer = 0f;
@@ -637,7 +707,7 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
             case MonsterState.Search:
                 agent.speed = walkSpeed;
                 animator.SetBool(IsWalking, true);
-                SetRandomDestination();
+                SetSearchDestination();
                 break;
 
             case MonsterState.Chase:
@@ -691,6 +761,13 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
 
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, attackRange);
+
+        if (initialSearchDestination != null && initialDestinationPending)
+        {
+            Gizmos.color = Color.green;
+            Gizmos.DrawLine(transform.position, initialSearchDestination.position);
+            Gizmos.DrawWireSphere(initialSearchDestination.position, initialDestinationArrivalDistance);
+        }
 
         Gizmos.color = Color.cyan;
         Vector3 leftDir = Quaternion.Euler(0, -fieldOfView * 0.5f, 0) * transform.forward;

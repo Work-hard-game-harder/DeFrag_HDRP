@@ -23,6 +23,8 @@ namespace DeFrag.B1F
         [Header("Emergency Spawn")]
         [SerializeField] private NetworkObject tvMonsterPrefab;
         [SerializeField] private Transform tvMonsterSpawnPoint;
+        [Tooltip("스폰된 몬스터가 최초 한 번 먼저 이동할 배전함 쪽 목적지입니다.")]
+        [SerializeField] private Transform tvMonsterInitialDestination;
 
         [Header("Power Transition")]
         [SerializeField, Min(0f)] private float transitionDelay = 1f;
@@ -204,6 +206,15 @@ namespace DeFrag.B1F
                 tvMonsterPrefab,
                 tvMonsterSpawnPoint.position,
                 tvMonsterSpawnPoint.rotation);
+
+            MonsterAI monsterAI = monster.GetComponentInChildren<MonsterAI>(true);
+            if (monsterAI != null)
+                monsterAI.SetInitialSearchDestination(tvMonsterInitialDestination);
+            else
+                Debug.LogWarning(
+                    "[B1FPowerController] Spawned TV Monster has no MonsterAI component.",
+                    monster);
+
             monster.Spawn(true);
             tvMonsterSpawned = true;
         }

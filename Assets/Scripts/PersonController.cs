@@ -110,6 +110,7 @@ namespace StarterAssets
         private int _animIDJump;
         private int _animIDFreeFall;
         private int _animIDMotionSpeed;
+        private int _animIDCrouching = Animator.StringToHash("IsCrouching");
 
 #if ENABLE_INPUT_SYSTEM 
         private PlayerInput _playerInput;
@@ -219,10 +220,18 @@ namespace StarterAssets
 
         private void LateUpdate()
         {
-            // 마우스 움직임에 따라 시야 회전 로직도 차단
-            // if (SceneManager.GetActiveScene().name == "LobbyScene") return;
-            // 다른 사람 캐릭터의 카메라는 내가 마우스를 돌려도 안 움직이게 차단
+            // 마우스 움직임에 따라 시야 회전 로직도 차단
+            // if (SceneManager.GetActiveScene().name == "LobbyScene") return;
+            // 다른 사람 캐릭터의 카메라는 내가 마우스를 돌려도 안 움직이게 차단
             if ((IsSpawned && !IsOwner) || IsSubtitleLocked) return;
+
+            // 메뉴는 각 클라이언트의 로컬 UI이므로 소유 플레이어의 시야 입력만 차단한다.
+            if (SettingManager.IsMenuOpen)
+            {
+                _input?.LookInput(Vector2.zero);
+                return;
+            }
+
             CameraRotation();
         }
 
@@ -233,6 +242,7 @@ namespace StarterAssets
             _animIDJump = Animator.StringToHash("Jump");
             _animIDFreeFall = Animator.StringToHash("FreeFall");
             _animIDMotionSpeed = Animator.StringToHash("MotionSpeed");
+            _animIDCrouching = Animator.StringToHash("IsCrouching");
         }
 
         private void GroundedCheck()
@@ -486,6 +496,7 @@ namespace StarterAssets
 
             _localIsCrouching = crouching;
             _localIsHiding = hiding;
+            ApplyCrouchAnimation(crouching);
 
             if (!IsSpawned)
                 return;
@@ -518,6 +529,21 @@ namespace StarterAssets
                         _standingControllerCenter.z)
                     : _standingControllerCenter;
             }
+        }
+
+        private void ApplyCrouchAnimation(bool crouching)
+        {
+            if (_animator == null)
+                _animator = GetComponent<Animator>();
+
+            if (_animator != null && _animator.runtimeAnimatorController != null)
+                _animator.SetBool(_animIDCrouching, crouching);
+        }
+
+        private void OnNetworkCrouchingChanged(bool previousValue, bool currentValue)
+        {
+            if (!IsOwner)
+                ApplyCrouchAnimation(currentValue);
         }
 
         private static float ClampAngle(float lfAngle, float lfMin, float lfMax)
@@ -594,10 +620,13 @@ namespace StarterAssets
 
         public override void OnNetworkSpawn()
         {
+            _networkIsCrouching.OnValueChanged += OnNetworkCrouchingChanged;
+
             if (_soundEmitter == null)
                 _soundEmitter = GetComponentInChildren<SoundEmitter>(true);
 
             ConfigureLocalPlayerPresentation();
+            ApplyCrouchAnimation(IsCrouching);
 
             if (IsOwner)
             {
@@ -640,6 +669,7 @@ namespace StarterAssets
 
         public override void OnNetworkDespawn()
         {
+            _networkIsCrouching.OnValueChanged -= OnNetworkCrouchingChanged;
             SetLocalInputEnabled(false);
             base.OnNetworkDespawn();
         }

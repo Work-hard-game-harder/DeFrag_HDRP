@@ -31,6 +31,7 @@ public class ElevatorPanel : MonoBehaviour, IInteractable
     private bool isKeypadActive = false;
     private bool waitForInteractionKeyRelease;
     private PlayerInteraction savedPlayer;
+    private Coroutine cursorRestoreRoutine;
 
     private void Awake()
     {
@@ -77,6 +78,9 @@ public class ElevatorPanel : MonoBehaviour, IInteractable
 
         if (Input.GetKeyDown(KeyCode.Escape) || Input.GetMouseButtonDown(1))
         {
+            if (Input.GetKeyDown(KeyCode.Escape))
+                GameplayInputGate.ConsumeEscape(this);
+
             CloseKeypad();
             return;
         }
@@ -133,6 +137,12 @@ public class ElevatorPanel : MonoBehaviour, IInteractable
 
         savedPlayer = player;
         OpenKeypad();
+        if (!isKeypadActive)
+        {
+            savedPlayer = null;
+            return;
+        }
+
         player.TogglePlayerControl(false);
     }
 
@@ -154,6 +164,9 @@ public class ElevatorPanel : MonoBehaviour, IInteractable
 
     public void OpenKeypad()
     {
+        if (!GameplayInputGate.TryAcquire(this))
+            return;
+
         isKeypadActive = true;
         waitForInteractionKeyRelease = true;
         currentInput = "";
@@ -167,12 +180,47 @@ public class ElevatorPanel : MonoBehaviour, IInteractable
         isKeypadActive = false;
         waitForInteractionKeyRelease = false;
         if (keypadUIPanel != null) keypadUIPanel.SetActive(false);
+        GameplayInputGate.Release(this);
         
         if (savedPlayer != null)
         {
             savedPlayer.TogglePlayerControl(true);
             savedPlayer = null;
         }
+
+        RestoreGameplayCursor();
+        if (cursorRestoreRoutine != null)
+            StopCoroutine(cursorRestoreRoutine);
+        cursorRestoreRoutine = StartCoroutine(RestoreGameplayCursorAfterEscapeRelease());
+    }
+
+    private IEnumerator RestoreGameplayCursorAfterEscapeRelease()
+    {
+        // Unity Editor는 ESC가 눌려 있는 동안 CursorLockMode를 계속 해제할 수 있다.
+        // 한 프레임만 기다리면 일반적인 키 입력 시간보다 짧으므로, 키를 완전히
+        // 놓은 다음 프레임에 다시 잠가야 Editor 단독 실행에서도 유지된다.
+        while (Input.GetKey(KeyCode.Escape))
+            yield return null;
+
+        yield return null;
+        RestoreGameplayCursor();
+        cursorRestoreRoutine = null;
+    }
+
+    private static void RestoreGameplayCursor()
+    {
+        // Pause/Setting은 자체적으로 메뉴 커서를 유지해야 한다.
+        if (SettingManager.IsMenuOpen)
+            return;
+
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
+
+    private void OnDisable()
+    {
+        cursorRestoreRoutine = null;
+        GameplayInputGate.Release(this);
     }
 
     void AppendCharacter(string ch)

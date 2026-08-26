@@ -118,6 +118,7 @@ public class SettingManager : MonoBehaviour
     private Canvas pauseCanvas;
     private Canvas settingPanelCanvas;
     private Canvas menuOverlayCanvas;
+    private bool settingOpenedFromPause;
     private readonly Dictionary<Canvas, CanvasRenderState> overriddenCanvases = new Dictionary<Canvas, CanvasRenderState>();
     private readonly Dictionary<GraphicRaycaster, bool> overriddenRaycasters =
         new Dictionary<GraphicRaycaster, bool>();
@@ -163,6 +164,9 @@ public class SettingManager : MonoBehaviour
     public float MicGain => Mathf.Max(0f, MicVolume / DEFAULT_MIC_VOLUME);
     public StableMicrophoneInput MicrophoneInput => micLowLatency;
     public bool IsPausePanelOpen => PausePanel != null && PausePanel.activeSelf;
+    public bool IsSettingPanelOpen => settingPanel != null && settingPanel.activeInHierarchy;
+    public static bool IsMenuOpen =>
+        Instance != null && (Instance.IsPausePanelOpen || Instance.IsSettingPanelOpen);
     public static bool IsGamePaused => Instance != null && Instance.IsPausePanelOpen;
 
     public StablePlayerVoice playerVoice;
@@ -226,23 +230,50 @@ public class SettingManager : MonoBehaviour
             ConnectPlayerVoiceSources();
         }
 
-        string currentSceneName = SceneManager.GetActiveScene().name;
-
-        // MainLobby 씬에서는 ESC 입력 무시
-        if (currentSceneName == "MainLobby")
-            return;
-
-
-        // 다른 씬에서는 ESC 입력 처리
-        if (!GameplayInputGate.SuppressPauseEscape &&
-            Input.GetKeyDown(KeyCode.Escape) && PausePanel != null)
-            SetPausePanelState(!PausePanel.activeSelf);
     }
 
     private void LateUpdate()
     {
-        if (IsPausePanelOpen || (settingPanel != null && settingPanel.activeInHierarchy))
+        HandlePauseEscape();
+
+        if (IsPausePanelOpen || IsSettingPanelOpen)
+        {
             KeepMenuPanelsAboveAllCanvases();
+            // 플레이어 컨트롤러가 커서를 다시 잠그더라도 메뉴가 열린 동안 복구한다.
+            SetPlayerInputLock(true);
+            return;
+        }
+
+        // LobbyF/B1F/B2F 등의 게임 플레이 씬에서는 다른 UI가 커서를
+        // 해제하더라도 Pause/Setting이 닫혀 있는 동안 항상 잠금 상태를 유지한다.
+        // MainLobby/LobbyScene/CreateLobby는 SetPlayerInputLock 내부의
+        // cursorVisibleSceneNames 정책에 따라 기존처럼 커서를 표시한다.
+        SetPlayerInputLock(false);
+    }
+
+    private void HandlePauseEscape()
+    {
+        if (!Input.GetKeyDown(KeyCode.Escape) || PausePanel == null)
+            return;
+
+        if (SceneManager.GetActiveScene().name == "MainLobby")
+            return;
+
+        // 이미 열린 Pause Panel 자신은 ESC로 닫을 수 있다.
+        if (IsPausePanelOpen)
+        {
+            SetPausePanelState(false);
+            return;
+        }
+
+        // 설정을 포함한 다른 모달 UI가 열려 있거나 이번 프레임의 ESC를
+        // 먼저 소비했다면 Pause Panel을 새로 열지 않는다.
+        if (IsSettingPanelOpen ||
+            settingOpenedFromPause ||
+            GameplayInputGate.SuppressPauseEscape)
+            return;
+
+        SetPausePanelState(true);
     }
     private void Start()
     {
@@ -268,7 +299,7 @@ public class SettingManager : MonoBehaviour
         StopMicPreview();
         StopManagedMicrophoneSafely();
         RestoreOverriddenCanvases();
-        if (IsPausePanelOpen)
+        if (IsPausePanelOpen || IsSettingPanelOpen)
             SetPlayerInputLock(false);
         AudioSettings.OnAudioConfigurationChanged -= OnAudioConfigurationChanged;
         SceneManager.sceneLoaded -= OnSceneLoaded;
@@ -347,7 +378,14 @@ public class SettingManager : MonoBehaviour
             yield break;
         }
 
+        // Background canvases are transparent geometry. Run the pass after
+        // transparents so lobby/gameplay HUD canvases are included in the blur.
+        blurVolume.injectionPoint = CustomPassInjectionPoint.BeforePostProcess;
         blurVolume.targetCamera = localCamera;
+
+        Camera menuCamera = settingCanvas != null ? settingCanvas.worldCamera : null;
+        if (menuCamera != null && menuCamera != localCamera)
+            menuCamera.depth = Mathf.Max(menuCamera.depth, localCamera.depth + 1f);
 
         HDAdditionalCameraData cameraData =
             localCamera.GetComponent<HDAdditionalCameraData>();
@@ -1220,11 +1258,17 @@ public class SettingManager : MonoBehaviour
     {
         if (settingPanel != null)
         {
+            if (!IsSettingPanelOpen)
+                settingOpenedFromPause = IsPausePanelOpen;
+
             ConfigureSettingPanelCanvas();
             settingPanel.transform.SetAsLastSibling();
             AudioManager.Instance?.PlaySFX("Button1");
+            if(PausePanel != null && PausePanel.activeInHierarchy)
+                SetPausePanelState(false);
             settingPanel.SetActive(true);
             RefreshMenuBlur();
+            RefreshMenuCursorState();
             KeepMenuPanelsAboveAllCanvases();
             StartMicPreview();
 
@@ -1234,11 +1278,16 @@ public class SettingManager : MonoBehaviour
 
     public void ClosePanel()
     {
+
         if (settingPanel != null)
         {
             settingPanel.SetActive(false);
+            //if (PausePanel != null && PausePanel.activeInHierarchy)
+                //SetPausePanelState(true);
             RefreshMenuBlur();
         }
+        settingOpenedFromPause = false;
+        RefreshMenuCursorState();
         StopMicPreview();
 
         if (!IsPausePanelOpen)
@@ -1500,7 +1549,7 @@ public class SettingManager : MonoBehaviour
 
         PausePanel.SetActive(isOpen);
         RefreshMenuBlur();
-        SetPlayerInputLock(isOpen);
+        RefreshMenuCursorState();
 
         if (isOpen)
             KeepMenuPanelsAboveAllCanvases();
@@ -1513,6 +1562,7 @@ public class SettingManager : MonoBehaviour
         Camera uiCamera = settingCanvas != null ? settingCanvas.worldCamera : null;
         Canvas[] canvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include);
         int topLayerId = GetTopSortingLayerId();
+        bool preserveBackgroundCanvasCamera = uiBlur != null && uiBlur.activeInHierarchy;
 
         foreach (Canvas canvas in canvases)
         {
@@ -1541,7 +1591,13 @@ public class SettingManager : MonoBehaviour
 
             DisableCanvasRaycasters(canvas);
 
-            if (canvas.isRootCanvas && canvas.renderMode != RenderMode.WorldSpace && uiCamera != null)
+            // When blur is active, background canvases must stay on their original
+            // scene/player camera. Moving them to the menu camera would bypass the
+            // Main Camera custom pass and leave lobby/HUD UI sharp.
+            if (!preserveBackgroundCanvasCamera &&
+                canvas.isRootCanvas &&
+                canvas.renderMode != RenderMode.WorldSpace &&
+                uiCamera != null)
             {
                 if (canvas.renderMode == RenderMode.ScreenSpaceOverlay)
                     canvas.renderMode = RenderMode.ScreenSpaceCamera;
@@ -1611,6 +1667,11 @@ public class SettingManager : MonoBehaviour
         bool shouldShowCursor = isLocked || IsCursorVisibleScene(SceneManager.GetActiveScene().name);
         Cursor.lockState = shouldShowCursor ? CursorLockMode.None : CursorLockMode.Locked;
         Cursor.visible = shouldShowCursor;
+    }
+
+    private void RefreshMenuCursorState()
+    {
+        SetPlayerInputLock(IsPausePanelOpen || IsSettingPanelOpen);
     }
 
     private bool IsCursorVisibleScene(string sceneName)

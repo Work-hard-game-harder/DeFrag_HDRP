@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.UI;
-using System.Collections;
 
 public class FloorButtonManager : MonoBehaviour
 {
@@ -11,23 +10,33 @@ public class FloorButtonManager : MonoBehaviour
         public Button button;
         public Sprite lockedSprite;
         public Sprite unlockedSprite;
+        [Tooltip("ì„ íƒ í›„ ë‹¤ë¥¸ UIë¥¼ ëˆŒëŸ¬ë„ ìœ ì§€í•  ìŠ¤í”„ë¼ì´íŠ¸ì…ë‹ˆë‹¤. ë¹„ì–´ ìˆìœ¼ë©´ Buttonì˜ Selected/Pressed Spriteë¥¼ ì‚¬ìš©í•©ë‹ˆë‹¤.")]
+        public Sprite selectedSprite;
     }
 
     [SerializeField] private FloorButtonInfo[] floorButtons;
+    private FloorButtonInfo selectedFloor;
 
-    // Start() ´ë½Å OnEnable() »ç¿ë
-    // Äµ¹ö½º°¡ SetActive(true) µÉ ¶§¸¶´Ù ÀÚµ¿À¸·Î ¹öÆ° °»½Å
+    public string SelectedFloorName => selectedFloor != null ? selectedFloor.floorName : string.Empty;
+
+    private void Awake()
+    {
+        RegisterButtonListeners();
+    }
+
+    // Start() ëŒ€ì‹  OnEnable() ì‚¬ìš©
+    // ìº”ë²„ìŠ¤ê°€ SetActive(true) ë  ë•Œë§ˆë‹¤ ìë™ìœ¼ë¡œ ë²„íŠ¼ ê°±ì‹ 
     void OnEnable()
     {
         foreach (var fb in floorButtons)
         {
-            //¿ø·¡ ÄÚµå
+            //ì›ë˜ ì½”ë“œ
             // bool result = SettingManager.Instance.IsUnlocked(fb.floorName);
 
-            // Å×½ºÆ®¿ë(Ç×»ó true)
+            // í…ŒìŠ¤íŠ¸ìš©(í•­ìƒ true)
             bool result = true;
 
-            Debug.Log($"[FloorButtonManager] floorName: '{fb.floorName}' ¡æ isUnlocked: {result} / PlayerPrefs key: 'Unlocked_{fb.floorName}' = {PlayerPrefs.GetInt("Unlocked_" + fb.floorName, 0)}");
+            Debug.Log($"[FloorButtonManager] floorName: '{fb.floorName}' â†’ isUnlocked: {result} / PlayerPrefs key: 'Unlocked_{fb.floorName}' = {PlayerPrefs.GetInt("Unlocked_" + fb.floorName, 0)}");
         }
 
         RefreshAllButtons();
@@ -37,17 +46,77 @@ public class FloorButtonManager : MonoBehaviour
     {
         foreach (var fb in floorButtons)
         {
-            //¿ø·¡ ÄÚµå
+            if (fb == null || fb.button == null)
+                continue;
+
+            //ì›ë˜ ì½”ë“œ
             //bool isUnlocked = SettingManager.Instance.IsUnlocked(fb.floorName);
 
-            // Å×½ºÆ®¿ë(°­Á¦ÇØ±İ)
+            // í…ŒìŠ¤íŠ¸ìš©(ê°•ì œí•´ê¸ˆ)
             bool isUnlocked = true;
 
-            var image = fb.button.GetComponent<Image>();
+            var image = GetButtonImage(fb.button);
             if (image != null)
-                image.sprite = isUnlocked ? fb.unlockedSprite : fb.lockedSprite;
+            {
+                image.sprite = isUnlocked
+                    ? (fb == selectedFloor ? GetSelectedSprite(fb) : fb.unlockedSprite)
+                    : fb.lockedSprite;
+            }
 
             fb.button.interactable = isUnlocked;
         }
+    }
+
+    public void ClearSelection()
+    {
+        selectedFloor = null;
+        RefreshAllButtons();
+    }
+
+    private void RegisterButtonListeners()
+    {
+        if (floorButtons == null)
+            return;
+
+        foreach (var floorButton in floorButtons)
+        {
+            if (floorButton == null || floorButton.button == null)
+                continue;
+
+            FloorButtonInfo capturedFloor = floorButton;
+            capturedFloor.button.onClick.AddListener(() => SelectFloor(capturedFloor));
+        }
+    }
+
+    private void SelectFloor(FloorButtonInfo floorButton)
+    {
+        if (floorButton == null || floorButton.button == null || !floorButton.button.interactable)
+            return;
+
+        selectedFloor = floorButton;
+        RefreshAllButtons();
+    }
+
+    private static Image GetButtonImage(Button button)
+    {
+        if (button == null)
+            return null;
+
+        return button.targetGraphic as Image ?? button.GetComponent<Image>();
+    }
+
+    private static Sprite GetSelectedSprite(FloorButtonInfo floorButton)
+    {
+        if (floorButton.selectedSprite != null)
+            return floorButton.selectedSprite;
+
+        SpriteState spriteState = floorButton.button.spriteState;
+        if (spriteState.selectedSprite != null)
+            return spriteState.selectedSprite;
+
+        if (spriteState.pressedSprite != null)
+            return spriteState.pressedSprite;
+
+        return floorButton.unlockedSprite;
     }
 }

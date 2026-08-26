@@ -569,6 +569,9 @@ MonoBehaviour:
   runSpeed: 5
   minIdleTime: 2
   maxIdleTime: 5
+  initialSearchDestination: {fileID: 0}
+  initialDestinationArrivalDistance: 0.75
+  initialDestinationSampleRadius: 5
   rotationSpeed: 10
   detourSampleCount: 8
   detourSampleRadius: 6
