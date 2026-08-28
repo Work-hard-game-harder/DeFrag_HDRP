@@ -11,6 +11,12 @@ public sealed class CameraBattery : MonoBehaviour
 
     public event Action<float> ChargeChanged;
 
+    public void SetChargeRatio(float ratio)
+    {
+        charge = capacity * Mathf.Clamp01(ratio);
+        ChargeChanged?.Invoke(ChargeRatio);
+    }
+
     public bool TryRecharge(float ratio)
     {
         if (ratio <= 0f || charge >= capacity)

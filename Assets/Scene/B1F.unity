@@ -13132,6 +13132,9 @@ MonoBehaviour:
   runSpeed: 0.4
   minIdleTime: 2
   maxIdleTime: 4
+  initialSearchDestination: {fileID: 0}
+  initialDestinationArrivalDistance: 0.75
+  initialDestinationSampleRadius: 5
   rotationSpeed: 5
   detourSampleCount: 8
   detourSampleRadius: 6

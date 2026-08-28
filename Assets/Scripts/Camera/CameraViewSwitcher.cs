@@ -134,6 +134,9 @@ public sealed class CameraViewSwitcher : MonoBehaviour
         Transform target = itemCamera.transform;
 
         target.SetPositionAndRotation(source.position, source.rotation);
+        itemCamera.cullingMask = playerCamera.cullingMask;
+        itemCamera.nearClipPlane = playerCamera.nearClipPlane;
+        itemCamera.farClipPlane = playerCamera.farClipPlane;
         itemCamera.fieldOfView = playerCamera.fieldOfView;
     }
 }

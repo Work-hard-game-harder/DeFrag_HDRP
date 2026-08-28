@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using EasyPeasyFirstPersonController;
+using Unity.Netcode;
+using System.Collections.Generic;
 
 public class InventoryUI : MonoBehaviour
 {
@@ -133,6 +135,9 @@ public sealed class EquipmentController : MonoBehaviour
     private WalkieTalkieController walkieTalkieController;
     private CameraBattery cameraBattery;
     private CameraViewSwitcher cameraViewSwitcher;
+    private ulong equippedNetworkObjectId;
+    private ulong batteryStateNetworkObjectId;
+    private readonly Dictionary<ulong, float> localCameraBatteryRatios = new();
 
     public ItemData EquippedData => equippedData;
     public GameObject HeldVisual => heldVisual;
@@ -141,7 +146,14 @@ public sealed class EquipmentController : MonoBehaviour
     {
         walkieTalkieController = transform.root.GetComponentInChildren<WalkieTalkieController>(true);
         cameraBattery = GetComponent<CameraBattery>();
+        cameraBattery.ChargeChanged += HandleCameraChargeChanged;
         EnsureHandPoint(transform);
+    }
+
+    private void OnDestroy()
+    {
+        if (cameraBattery != null)
+            cameraBattery.ChargeChanged -= HandleCameraChargeChanged;
     }
 
     private void Update()
@@ -167,10 +179,20 @@ public sealed class EquipmentController : MonoBehaviour
 
     public void RefreshSelectedItem()
     {
-        ItemData selectedData = inventoryUI?.GetSelectedItem()?.itemData;
-        if (selectedData == equippedData && (selectedData == null || heldVisual != null)) return;
+        RemoveReleasedCameraBatteryStates();
 
-        Equip(selectedData);
+        InventoryInfo selectedItem = inventoryUI?.GetSelectedItem();
+        ItemData selectedData = selectedItem?.itemData;
+        ulong selectedNetworkObjectId = 0;
+        InventoryManager.Instance?.TryGetNetworkObjectId(
+            selectedItem, out selectedNetworkObjectId);
+
+        if (selectedData == equippedData &&
+            selectedNetworkObjectId == equippedNetworkObjectId &&
+            (selectedData == null || heldVisual != null))
+            return;
+
+        Equip(selectedData, selectedNetworkObjectId);
     }
 
     public bool TryUseEquippedItem()
@@ -191,11 +213,15 @@ public sealed class EquipmentController : MonoBehaviour
         return true;
     }
 
-    private void Equip(ItemData data)
+    private void Equip(ItemData data, ulong networkObjectId)
     {
         ClearHeldVisual();
         equippedData = data;
+        equippedNetworkObjectId = networkObjectId;
         cameraViewSwitcher?.SetCameraEquipped(data is CameraItemData);
+
+        if (data is CameraItemData && networkObjectId != 0)
+            RestoreNetworkCameraBattery(networkObjectId);
 
         if (data == null || handPoint == null) return;
 
@@ -236,6 +262,67 @@ public sealed class EquipmentController : MonoBehaviour
 
             // Capture only after the equipment pose has been fully applied.
             heldController.CaptureNormalPose();
+        }
+    }
+
+    private void RestoreNetworkCameraBattery(ulong networkObjectId)
+    {
+        batteryStateNetworkObjectId = networkObjectId;
+
+        if (localCameraBatteryRatios.TryGetValue(
+                networkObjectId, out float cachedRatio))
+        {
+            cameraBattery.SetChargeRatio(cachedRatio);
+            return;
+        }
+
+        NetworkManager manager = NetworkManager.Singleton;
+        if (manager == null ||
+            !manager.SpawnManager.SpawnedObjects.TryGetValue(
+                networkObjectId, out NetworkObject itemObject) ||
+            !itemObject.TryGetComponent(out NetworkWorldItem networkItem))
+        {
+            Debug.LogWarning(
+                $"[Equipment] NVCam 네트워크 오브젝트 {networkObjectId}의 배터리 상태를 찾지 못했습니다.",
+                this);
+            return;
+        }
+
+        cameraBattery.SetChargeRatio(networkItem.CameraBatteryRatio);
+    }
+
+    private void HandleCameraChargeChanged(float ratio)
+    {
+        if (batteryStateNetworkObjectId != 0)
+            localCameraBatteryRatios[batteryStateNetworkObjectId] = ratio;
+    }
+
+    private void RemoveReleasedCameraBatteryStates()
+    {
+        InventoryManager inventory = InventoryManager.Instance;
+        if (inventory == null || localCameraBatteryRatios.Count == 0)
+            return;
+
+        List<ulong> releasedIds = null;
+        foreach (ulong networkObjectId in localCameraBatteryRatios.Keys)
+        {
+            if (inventory.ContainsNetworkObjectId(networkObjectId))
+                continue;
+
+            releasedIds ??= new List<ulong>();
+            releasedIds.Add(networkObjectId);
+        }
+
+        if (releasedIds == null)
+            return;
+
+        foreach (ulong networkObjectId in releasedIds)
+            localCameraBatteryRatios.Remove(networkObjectId);
+
+        if (batteryStateNetworkObjectId != 0 &&
+            !inventory.ContainsNetworkObjectId(batteryStateNetworkObjectId))
+        {
+            batteryStateNetworkObjectId = 0;
         }
     }
 
