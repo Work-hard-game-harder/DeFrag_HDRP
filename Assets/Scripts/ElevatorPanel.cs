@@ -2,6 +2,7 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.SceneManagement;
 using System.Collections;
+using Unity.Netcode;
 
 [RequireComponent(typeof(ElevatorWrongCodeAlarm))]
 public class ElevatorPanel : MonoBehaviour, IInteractable
@@ -294,7 +295,24 @@ public class ElevatorPanel : MonoBehaviour, IInteractable
         }
 
         yield return new WaitForSeconds(1.5f);
-        SceneManager.LoadScene(nextSceneName);
+
+        NetworkManager manager = NetworkManager.Singleton;
+        if (manager != null && manager.IsListening)
+        {
+            StarterAssets.PersonController playerController =
+                savedPlayer != null ? savedPlayer.GetComponentInParent<StarterAssets.PersonController>() : null;
+
+            if (playerController == null)
+            {
+                Debug.LogError("[ElevatorPanel] 씬 전환을 요청할 로컬 네트워크 플레이어를 찾지 못했습니다.", this);
+                yield break;
+            }
+
+            playerController.RequestNetworkSceneLoad(nextSceneName);
+            yield break;
+        }
+
+        SceneManager.LoadScene(nextSceneName, LoadSceneMode.Single);
     }
 
     IEnumerator ShowErrorRoutine()
