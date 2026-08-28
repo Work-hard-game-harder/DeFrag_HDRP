@@ -37,6 +37,7 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
     private TMP_Text challenge;
     private TMP_Text timer;
     private TMP_InputField input;
+    private TMP_Text inputPlaceholder;
     private TerminalSfxPlayer terminalSfx;
     private string expectedResponse;
     private int currentRound;
@@ -121,7 +122,7 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
         if (coordinator == null || !coordinator.IsSpawned || finished)
             return;
 
-        if (Input.GetKeyDown(KeyCode.Tab) &&
+        if (TerminalKeyboardInput.TabPressed &&
             coordinator.Phase == ConnectServerUplinkPhase.AwaitingVerification)
             TryAutocompleteVerifyCommand();
 
@@ -152,12 +153,12 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
             case ConnectServerUplinkPhase.Idle:
                 challenge.color = DimGreen;
                 challenge.text = "REQUESTING SERVER HANDSHAKE...";
-                SetInputEnabled(false);
+                SetInputEnabled(false, "> INPUT LOCKED // REQUESTING HANDSHAKE");
                 break;
             case ConnectServerUplinkPhase.Connecting:
                 challenge.color = Green;
                 challenge.text = "CONNECTING TO OPTICAL RELAY NETWORK...";
-                SetInputEnabled(false);
+                SetInputEnabled(false, "> INPUT LOCKED // NEGOTIATING RELAY ROUTE");
                 break;
             case ConnectServerUplinkPhase.AwaitingOpticalScan:
                 challenge.color = Green;
@@ -166,7 +167,8 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
                     $"TARGET: {coordinator.TargetRelayId}\n" +
                     $"SECTOR: {coordinator.TargetSector}\n" +
                     "WAITING FOR IR CAMERA CAPTURE";
-                SetInputEnabled(false);
+                SetInputEnabled(false,
+                    $"> INPUT LOCKED // CAMERA MUST CAPTURE {coordinator.TargetRelayId}");
                 break;
             case ConnectServerUplinkPhase.AwaitingVerification:
                 challenge.color = Green;
@@ -174,32 +176,37 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
                     $"{coordinator.TargetRelayId} OPTICAL LOCK ACCEPTED\n" +
                     "ENTER TEAMMATE AUTH WORD\n" +
                     "FORMAT: VERIFY [WORD]";
-                SetInputEnabled(true);
+                SetInputEnabled(true, "> TYPE VERIFY [AUTH WORD], THEN PRESS ENTER");
                 break;
             case ConnectServerUplinkPhase.Suspended:
                 challenge.color = DimGreen;
                 challenge.text = "UPLINK SESSION SUSPENDED";
-                SetInputEnabled(false);
+                SetInputEnabled(false, "> INPUT LOCKED // SESSION SUSPENDED");
                 break;
             case ConnectServerUplinkPhase.Completed:
                 challenge.color = Green;
                 challenge.text = "SERVER CONNECTION ESTABLISHED";
-                SetInputEnabled(false);
+                SetInputEnabled(false, "> CONNECTION ESTABLISHED");
                 finished = true;
                 StartCoroutine(CompleteAfterDelay());
                 break;
             case ConnectServerUplinkPhase.Failed:
                 challenge.color = ErrorRed;
                 challenge.text = "TRACE LIMIT EXCEEDED\nUPLINK TERMINATED";
-                SetInputEnabled(false);
+                SetInputEnabled(false, "> INPUT LOCKED // TRACE LIMIT EXCEEDED");
                 finished = true;
                 StartCoroutine(FailOpticalAfterDelay());
                 break;
         }
     }
 
-    private void SetInputEnabled(bool enabled)
+    private void SetInputEnabled(bool enabled, string prompt = null)
     {
+        if (inputPlaceholder != null)
+            inputPlaceholder.text = string.IsNullOrWhiteSpace(prompt)
+                ? "> ENGLISH INPUT ONLY"
+                : prompt;
+
         if (acceptingInput == enabled && input.interactable == enabled)
             return;
 
@@ -252,7 +259,7 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
         input.SetTextWithoutNotify(string.Empty);
         if (!success && coordinator != null &&
             coordinator.Phase == ConnectServerUplinkPhase.AwaitingVerification)
-            SetInputEnabled(true);
+            SetInputEnabled(true, "> RETRY: VERIFY [AUTH WORD], THEN PRESS ENTER");
     }
 
     private IEnumerator FailOpticalAfterDelay()
@@ -279,6 +286,8 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
             "AWAITING REMOTE OPERATOR KEY";
         input.text = string.Empty;
         input.interactable = true;
+        if (inputPlaceholder != null)
+            inputPlaceholder.text = "> TYPE COMPLETE AUTHENTICATION KEY";
         input.ActivateInputField();
         EventSystem.current.SetSelectedGameObject(input.gameObject);
 
@@ -388,15 +397,15 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
         TMP_Text inputText = CreateText(
             "Text", 25f, TextAlignmentOptions.MidlineLeft, inputObject.transform);
         Stretch(inputText.rectTransform, new Vector2(18f, 6f), new Vector2(-18f, -6f));
-        TMP_Text placeholder = CreateText(
+        inputPlaceholder = CreateText(
             "Placeholder", 25f, TextAlignmentOptions.MidlineLeft, inputObject.transform);
-        Stretch(placeholder.rectTransform, new Vector2(18f, 6f), new Vector2(-18f, -6f));
-        placeholder.text = "> ENGLISH INPUT ONLY // VERIFY [WORD]";
-        placeholder.color = new Color(Green.r, Green.g, Green.b, 0.35f);
+        Stretch(inputPlaceholder.rectTransform, new Vector2(18f, 6f), new Vector2(-18f, -6f));
+        inputPlaceholder.text = "> INPUT LOCKED // INITIALIZING";
+        inputPlaceholder.color = new Color(Green.r, Green.g, Green.b, 0.5f);
 
         input = inputObject.GetComponent<TMP_InputField>();
         input.textComponent = inputText;
-        input.placeholder = placeholder;
+        input.placeholder = inputPlaceholder;
         input.lineType = TMP_InputField.LineType.SingleLine;
         input.characterLimit = 64;
         input.caretColor = Green;

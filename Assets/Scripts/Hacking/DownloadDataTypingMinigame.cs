@@ -101,7 +101,7 @@ public sealed class DownloadDataTypingMinigame : HackingMinigameBase
 
     private void Update()
     {
-        if (acceptingInput && Input.GetKeyDown(KeyCode.Tab))
+        if (acceptingInput && TerminalKeyboardInput.TabPressed)
             AutoCompleteCurrentToken();
     }
 

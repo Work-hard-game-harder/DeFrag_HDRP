@@ -5,6 +5,10 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
+
 public sealed class TerminalScreenController : MonoBehaviour
 {
     private static readonly Color TerminalGreen = new(0.1f, 1f, 0.2f);
@@ -37,8 +41,8 @@ public sealed class TerminalScreenController : MonoBehaviour
     private void Update()
     {
         if (activeMinigame != null &&
-            ((activeMinigame.ConsumesTextInput && Input.GetKeyDown(KeyCode.Escape)) ||
-             (!activeMinigame.ConsumesTextInput && Input.GetKeyDown(KeyCode.Backspace))))
+            ((activeMinigame.ConsumesTextInput && TerminalKeyboardInput.EscapePressed) ||
+             (!activeMinigame.ConsumesTextInput && TerminalKeyboardInput.BackPressed)))
         {
             terminalSfx?.PlayMenuBack();
             CancelMinigame();
@@ -48,11 +52,11 @@ public sealed class TerminalScreenController : MonoBehaviour
         if (activeMinigame != null || buttons.Count == 0)
             return;
 
-        if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow))
+        if (TerminalKeyboardInput.UpPressed)
             Select(selection - 1);
-        else if (Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow))
+        else if (TerminalKeyboardInput.DownPressed)
             Select(selection + 1);
-        else if (Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.Return))
+        else if (TerminalKeyboardInput.ConfirmPressed)
             buttons[selection].onClick.Invoke();
     }
 
@@ -294,4 +298,101 @@ public sealed class TerminalScreenController : MonoBehaviour
         rect.offsetMin = minOffset;
         rect.offsetMax = maxOffset;
     }
+}
+
+/// <summary>
+/// Keyboard navigation used only while the local terminal UI owns gameplay input.
+/// It lives beside the terminal controller so Unity compiles the adapter together
+/// with the already-imported terminal source file.
+/// </summary>
+public static class TerminalKeyboardInput
+{
+    public static bool UpPressed => WasPressed(KeyCode.W, KeyCode.UpArrow);
+    public static bool DownPressed => WasPressed(KeyCode.S, KeyCode.DownArrow);
+    public static bool LeftPressed => WasPressed(KeyCode.A, KeyCode.LeftArrow);
+    public static bool RightPressed => WasPressed(KeyCode.D, KeyCode.RightArrow);
+    public static bool ConfirmPressed => WasPressed(KeyCode.E, KeyCode.Return, KeyCode.KeypadEnter);
+    public static bool BackPressed => WasPressed(KeyCode.Backspace);
+    public static bool EscapePressed => WasPressed(KeyCode.Escape);
+    public static bool TabPressed => WasPressed(KeyCode.Tab);
+
+    public static bool TryGetRhythmKeyPressed(out char pressedKey)
+    {
+#if ENABLE_INPUT_SYSTEM
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard != null)
+        {
+            if (keyboard.qKey.wasPressedThisFrame) { pressedKey = 'Q'; return true; }
+            if (keyboard.wKey.wasPressedThisFrame) { pressedKey = 'W'; return true; }
+            if (keyboard.eKey.wasPressedThisFrame) { pressedKey = 'E'; return true; }
+            if (keyboard.rKey.wasPressedThisFrame) { pressedKey = 'R'; return true; }
+            if (keyboard.aKey.wasPressedThisFrame) { pressedKey = 'A'; return true; }
+            if (keyboard.sKey.wasPressedThisFrame) { pressedKey = 'S'; return true; }
+            if (keyboard.dKey.wasPressedThisFrame) { pressedKey = 'D'; return true; }
+            if (keyboard.fKey.wasPressedThisFrame) { pressedKey = 'F'; return true; }
+        }
+#else
+        if (Input.GetKeyDown(KeyCode.Q)) { pressedKey = 'Q'; return true; }
+        if (Input.GetKeyDown(KeyCode.W)) { pressedKey = 'W'; return true; }
+        if (Input.GetKeyDown(KeyCode.E)) { pressedKey = 'E'; return true; }
+        if (Input.GetKeyDown(KeyCode.R)) { pressedKey = 'R'; return true; }
+        if (Input.GetKeyDown(KeyCode.A)) { pressedKey = 'A'; return true; }
+        if (Input.GetKeyDown(KeyCode.S)) { pressedKey = 'S'; return true; }
+        if (Input.GetKeyDown(KeyCode.D)) { pressedKey = 'D'; return true; }
+        if (Input.GetKeyDown(KeyCode.F)) { pressedKey = 'F'; return true; }
+#endif
+        pressedKey = '\0';
+        return false;
+    }
+
+    private static bool WasPressed(params KeyCode[] legacyKeys)
+    {
+#if ENABLE_INPUT_SYSTEM
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard == null)
+            return false;
+
+        foreach (KeyCode legacyKey in legacyKeys)
+        {
+            if (GetKeyControl(keyboard, legacyKey)?.wasPressedThisFrame == true)
+                return true;
+        }
+
+        return false;
+#else
+        foreach (KeyCode key in legacyKeys)
+        {
+            if (Input.GetKeyDown(key))
+                return true;
+        }
+
+        return false;
+#endif
+    }
+
+#if ENABLE_INPUT_SYSTEM
+    private static UnityEngine.InputSystem.Controls.KeyControl GetKeyControl(
+        Keyboard keyboard,
+        KeyCode key)
+    {
+        return key switch
+        {
+            KeyCode.W => keyboard.wKey,
+            KeyCode.S => keyboard.sKey,
+            KeyCode.A => keyboard.aKey,
+            KeyCode.D => keyboard.dKey,
+            KeyCode.UpArrow => keyboard.upArrowKey,
+            KeyCode.DownArrow => keyboard.downArrowKey,
+            KeyCode.LeftArrow => keyboard.leftArrowKey,
+            KeyCode.RightArrow => keyboard.rightArrowKey,
+            KeyCode.E => keyboard.eKey,
+            KeyCode.Return => keyboard.enterKey,
+            KeyCode.KeypadEnter => keyboard.numpadEnterKey,
+            KeyCode.Backspace => keyboard.backspaceKey,
+            KeyCode.Escape => keyboard.escapeKey,
+            KeyCode.Tab => keyboard.tabKey,
+            _ => null
+        };
+    }
+#endif
 }
