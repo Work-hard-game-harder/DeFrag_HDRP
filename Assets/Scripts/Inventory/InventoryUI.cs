@@ -13,6 +13,10 @@ public class InventoryUI : MonoBehaviour
     [SerializeField] private GameObject quickSlotsPanel;
     public InventorySlot[] quickSlots;
     private EquipmentController equipmentController;
+    private CameraViewSwitcher cameraViewSwitcher;
+    private bool inventoryUiHiddenByCamera;
+    private bool quickSlotsWereActive;
+    private bool inventoryPanelWasActive;
 
     public void SetQuickSlotsPanel(GameObject panel)
     {
@@ -34,6 +38,11 @@ public class InventoryUI : MonoBehaviour
             if (equipmentController == null)
                 equipmentController = playerCamera.gameObject.AddComponent<EquipmentController>();
             equipmentController.Configure(this, playerCamera.transform);
+
+            cameraViewSwitcher =
+                playerCamera.transform.root.GetComponentInChildren<CameraViewSwitcher>(true);
+            if (cameraViewSwitcher != null)
+                cameraViewSwitcher.CameraViewActiveChanged += HandleCameraViewActiveChanged;
         }
 
         SelectSlot(0);
@@ -43,6 +52,9 @@ public class InventoryUI : MonoBehaviour
     private void Update()
     {
         if (GameplayInputGate.IsBlocked)
+            return;
+
+        if (cameraViewSwitcher != null && cameraViewSwitcher.IsCameraViewActive)
             return;
 
         if (Keyboard.current != null && Keyboard.current.iKey.wasPressedThisFrame && quickSlotsPanel != null)
@@ -123,6 +135,38 @@ public class InventoryUI : MonoBehaviour
         var items = InventoryManager.Instance.items;
         return SelectedIndex >= 0 && SelectedIndex < items.Count ? items[SelectedIndex] : null;
     }
+
+    private void OnDestroy()
+    {
+        if (cameraViewSwitcher != null)
+            cameraViewSwitcher.CameraViewActiveChanged -= HandleCameraViewActiveChanged;
+    }
+
+    private void HandleCameraViewActiveChanged(bool active)
+    {
+        if (active)
+        {
+            if (inventoryUiHiddenByCamera)
+                return;
+
+            inventoryUiHiddenByCamera = true;
+            quickSlotsWereActive = quickSlotsPanel != null && quickSlotsPanel.activeSelf;
+            inventoryPanelWasActive = inventoryPanel != null && inventoryPanel.activeSelf;
+
+            quickSlotsPanel?.SetActive(false);
+            if (inventoryPanel != quickSlotsPanel)
+                inventoryPanel?.SetActive(false);
+            return;
+        }
+
+        if (!inventoryUiHiddenByCamera)
+            return;
+
+        inventoryUiHiddenByCamera = false;
+        quickSlotsPanel?.SetActive(quickSlotsWereActive);
+        if (inventoryPanel != quickSlotsPanel)
+            inventoryPanel?.SetActive(inventoryPanelWasActive);
+    }
 }
 
 [RequireComponent(typeof(CameraBattery), typeof(HackingSessionController))]
@@ -162,9 +206,12 @@ public sealed class EquipmentController : MonoBehaviour
 
         bool walkieTalkieVisible = walkieTalkieController != null &&
                                    walkieTalkieController.IsEquipped;
+        bool cameraViewActive = cameraViewSwitcher != null &&
+                                cameraViewSwitcher.IsCameraViewActive;
+        bool shouldShowHeldVisual = !walkieTalkieVisible && !cameraViewActive;
 
-        if (heldVisual.activeSelf == walkieTalkieVisible)
-            heldVisual.SetActive(!walkieTalkieVisible);
+        if (heldVisual.activeSelf != shouldShowHeldVisual)
+            heldVisual.SetActive(shouldShowHeldVisual);
     }
 
     public void Configure(InventoryUI ui, Transform cameraTransform)

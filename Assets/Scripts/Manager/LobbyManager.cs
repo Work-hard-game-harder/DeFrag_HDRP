@@ -392,6 +392,15 @@ public sealed class LobbyManager : MonoBehaviour
 
     private void HandleClientDisconnected(ulong clientId)
     {
+        if (networkManager != null &&
+            !networkManager.IsServer &&
+            clientId == networkManager.LocalClientId)
+        {
+            Debug.Log("호스트와의 연결이 종료되어 메인 로비로 돌아갑니다.");
+            ReturnToMainLobby();
+            return;
+        }
+
         if (!lobbyAvatars.Remove(clientId, out NetworkObject avatar) || avatar == null)
         {
             return;
