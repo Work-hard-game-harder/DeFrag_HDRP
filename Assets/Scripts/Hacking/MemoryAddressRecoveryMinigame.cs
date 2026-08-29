@@ -11,13 +11,20 @@ public sealed class MemoryAddressRecoveryMinigame : HackingMinigameBase
     private static readonly Color DimGreen = new(0.02f, 0.45f, 0.08f);
     private static readonly Color ErrorRed = new(1f, 0.1f, 0.08f);
     private static readonly Color AcceptedWhite = new(0.8f, 1f, 0.82f);
+    private static readonly Color BrightSelection = new(0.12f, 1f, 0.22f, 1f);
+    private static readonly Color NormalButton = new(0f, 0.1f, 0.02f, 0.95f);
+    private static readonly Color CompletedButton = new(0.02f, 0.24f, 0.07f, 0.9f);
 
     [Header("Memory Sequence")]
     [SerializeField, Min(1)] private int addressCount = 4;
     [SerializeField, Min(0.25f)] private float revealDuration = 2.4f;
     [SerializeField, Min(0f)] private float shufflePause = 0.35f;
 
+    [Header("Presentation")]
+    [SerializeField] private TMP_FontAsset terminalFont;
+
     private readonly List<string> originalSequence = new();
+    private readonly List<string> displayedAddresses = new();
     private readonly List<Button> addressButtons = new();
     private readonly List<TMP_Text> addressLabels = new();
 
@@ -29,6 +36,9 @@ public sealed class MemoryAddressRecoveryMinigame : HackingMinigameBase
     private bool acceptingInput;
     private bool finished;
     private TerminalSfxPlayer terminalSfx;
+
+    public override string ControlHint =>
+        "[A/D] SELECT    [E/ENTER] CONFIRM    [BACKSPACE] RETURN";
 
     public override void Begin(ConnectionDevice device, TerminalCommands command)
     {
@@ -48,11 +58,11 @@ public sealed class MemoryAddressRecoveryMinigame : HackingMinigameBase
         if (!acceptingInput || finished)
             return;
 
-        if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftArrow))
+        if (TerminalKeyboardInput.LeftPressed)
             MoveSelection(-1);
-        else if (Input.GetKeyDown(KeyCode.D) || Input.GetKeyDown(KeyCode.RightArrow))
+        else if (TerminalKeyboardInput.RightPressed)
             MoveSelection(1);
-        else if (Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.Return))
+        else if (TerminalKeyboardInput.ConfirmPressed)
             addressButtons[selection].onClick.Invoke();
     }
 
@@ -61,12 +71,12 @@ public sealed class MemoryAddressRecoveryMinigame : HackingMinigameBase
         acceptingInput = false;
         dumpText.text = BuildDump(originalSequence);
         instructionText.text =
-            "VOLATILE MEMORY DUMP DETECTED\n" +
-            "MEMORIZE EXECUTION ORDER";
+            "휘발성 메모리 덤프 감지\n" +
+            "현재 실행 순서를 확인하십시오";
         nextAddress = 0;
         UpdateRestoredSequence();
 
-        yield return new WaitForSecondsRealtime(revealDuration);
+        yield return new WaitForSecondsRealtime(Mathf.Max(4.5f, revealDuration));
 
         dumpText.text = "> MEMORY SIGNAL LOST\n> RECONSTRUCTING ADDRESS TABLE...";
         yield return new WaitForSecondsRealtime(shufflePause);
@@ -76,23 +86,25 @@ public sealed class MemoryAddressRecoveryMinigame : HackingMinigameBase
         if (MatchesOriginal(shuffled))
             SwapFirstTwo(shuffled);
 
+        displayedAddresses.Clear();
         for (int i = 0; i < addressButtons.Count; i++)
         {
             string address = shuffled[i];
+            int buttonIndex = i;
+            displayedAddresses.Add(address);
             addressLabels[i].text = address;
             addressLabels[i].color = Green;
             addressButtons[i].onClick.RemoveAllListeners();
-            addressButtons[i].onClick.AddListener(() => Submit(address));
+            addressButtons[i].onClick.AddListener(() => Submit(buttonIndex, address));
             addressButtons[i].interactable = true;
         }
 
-        dumpText.text = "> ADDRESS TABLE SCRAMBLED\n> MANUAL RECOVERY REQUIRED";
-        instructionText.text = "RESTORE ORIGINAL EXECUTION ORDER";
+        UpdateRecoveryGuide();
         acceptingInput = true;
         Select(0);
     }
 
-    private void Submit(string address)
+    private void Submit(int buttonIndex, string address)
     {
         if (!acceptingInput || finished)
             return;
@@ -102,17 +114,20 @@ public sealed class MemoryAddressRecoveryMinigame : HackingMinigameBase
             terminalSfx?.PlayIncorrectAnswer();
             acceptingInput = false;
             instructionText.color = ErrorRed;
-            instructionText.text = "INVALID ADDRESS ORDER // MEMORY RESET";
-            StartCoroutine(RestartAfterError());
+            instructionText.text =
+                "주소 불일치 // 밝은 초록색 선택을 확인하세요\n" +
+                $"현재 단서: {BuildSignature(originalSequence[nextAddress])}";
+            StartCoroutine(ResumeAfterWrongSelection());
             return;
         }
 
         nextAddress++;
         UpdateRestoredSequence();
-        DisableButton(address);
+        DisableButton(buttonIndex);
 
         if (nextAddress < originalSequence.Count)
         {
+            UpdateRecoveryGuide();
             SelectNextInteractable();
             return;
         }
@@ -120,19 +135,16 @@ public sealed class MemoryAddressRecoveryMinigame : HackingMinigameBase
         finished = true;
         acceptingInput = false;
         instructionText.color = AcceptedWhite;
-        instructionText.text = "MAGLOCK MEMORY RESTORED // ACCESS GRANTED";
+        instructionText.text = "메모리 복구 완료 // 접근 승인";
         StartCoroutine(ReportSuccessAfterDelay());
     }
 
-    private IEnumerator RestartAfterError()
+    private IEnumerator ResumeAfterWrongSelection()
     {
-        foreach (Button button in addressButtons)
-            button.interactable = false;
-
-        yield return new WaitForSecondsRealtime(0.75f);
-        nextAddress = 0;
+        yield return new WaitForSecondsRealtime(0.65f);
         instructionText.color = Green;
-        StartCoroutine(RevealAndShuffle());
+        UpdateRecoveryGuide();
+        acceptingInput = true;
     }
 
     private IEnumerator ReportSuccessAfterDelay()
@@ -145,12 +157,14 @@ public sealed class MemoryAddressRecoveryMinigame : HackingMinigameBase
     {
         originalSequence.Clear();
         HashSet<int> generated = new();
+        HashSet<string> signatures = new();
 
         while (originalSequence.Count < addressCount)
         {
             int value = Random.Range(0x1000, 0x10000);
-            if (generated.Add(value))
-                originalSequence.Add($"0x{value:X4}");
+            string address = $"0x{value:X4}";
+            if (generated.Add(value) && signatures.Add(BuildSignature(address)))
+                originalSequence.Add(address);
         }
     }
 
@@ -194,12 +208,7 @@ public sealed class MemoryAddressRecoveryMinigame : HackingMinigameBase
         buttonObject.GetComponent<Image>().color = new Color(0f, 0.12f, 0.02f, 0.9f);
 
         Button button = buttonObject.GetComponent<Button>();
-        ColorBlock colors = button.colors;
-        colors.normalColor = new Color(0f, 0.12f, 0.02f, 0.9f);
-        colors.highlightedColor = new Color(0.02f, 0.38f, 0.07f, 1f);
-        colors.selectedColor = colors.highlightedColor;
-        colors.pressedColor = new Color(0.08f, 0.65f, 0.14f, 1f);
-        button.colors = colors;
+        button.transition = Selectable.Transition.None;
         button.interactable = false;
 
         TMP_Text label = CreateText(
@@ -218,20 +227,16 @@ public sealed class MemoryAddressRecoveryMinigame : HackingMinigameBase
         string[] slots = new string[originalSequence.Count];
         for (int i = 0; i < slots.Length; i++)
             slots[i] = i < nextAddress ? originalSequence[i] : "--";
-        restoredText.text = $"RESTORED: [ {string.Join(" ] [ ", slots)} ]";
+        restoredText.text =
+            $"RESTORED {nextAddress:00}/{originalSequence.Count:00}: " +
+            $"[ {string.Join(" ] [ ", slots)} ]";
     }
 
-    private void DisableButton(string address)
+    private void DisableButton(int index)
     {
-        for (int i = 0; i < addressLabels.Count; i++)
-        {
-            if (addressLabels[i].text != address)
-                continue;
-
-            addressButtons[i].interactable = false;
-            addressLabels[i].color = AcceptedWhite;
-            break;
-        }
+        addressButtons[index].interactable = false;
+        addressLabels[index].color = AcceptedWhite;
+        RefreshSelectionVisual();
     }
 
     private void SelectNextInteractable()
@@ -265,7 +270,9 @@ public sealed class MemoryAddressRecoveryMinigame : HackingMinigameBase
     private void Select(int index)
     {
         selection = (index + addressButtons.Count) % addressButtons.Count;
-        EventSystem.current.SetSelectedGameObject(addressButtons[selection].gameObject);
+        if (EventSystem.current != null)
+            EventSystem.current.SetSelectedGameObject(addressButtons[selection].gameObject);
+        RefreshSelectionVisual();
     }
 
     private static string BuildDump(IReadOnlyList<string> addresses)
@@ -274,6 +281,58 @@ public sealed class MemoryAddressRecoveryMinigame : HackingMinigameBase
         for (int i = 0; i < addresses.Count; i++)
             result += $"  [{i + 1:00}]  {addresses[i]}\n";
         return result;
+    }
+
+    private void UpdateRecoveryGuide()
+    {
+        dumpText.text = BuildRecoveryGuide(originalSequence, nextAddress);
+        instructionText.text =
+            $"현재 목표: 슬롯 {nextAddress + 1:00}  " +
+            $"{BuildSignature(originalSequence[nextAddress])}\n" +
+            "밝은 초록색 주소 중 보이는 숫자가 같은 것을 선택하세요";
+    }
+
+    private static string BuildRecoveryGuide(IReadOnlyList<string> addresses, int currentSlot)
+    {
+        string result =
+            "> 주소 복구 방법\n" +
+            "> '?'는 손실된 숫자입니다. 보이는 숫자만 비교하세요.\n" +
+            "> 예시: 0x8??6  ->  0x8066\n" +
+            "> 슬롯 01부터 순서대로 복구하세요.\n";
+
+        for (int i = 0; i < addresses.Count; i++)
+        {
+            string marker = i == currentSlot ? ">>" : "  ";
+            string state = i < currentSlot ? "완료" : BuildSignature(addresses[i]);
+            result += $"{marker} 슬롯 {i + 1:00}  {state}\n";
+        }
+
+        return result;
+    }
+
+    private static string BuildSignature(string address)
+    {
+        return $"0x{address[2]}??{address[5]}";
+    }
+
+    private void RefreshSelectionVisual()
+    {
+        if (displayedAddresses.Count != addressLabels.Count)
+            return;
+
+        for (int i = 0; i < addressLabels.Count; i++)
+        {
+            string address = displayedAddresses[i];
+            bool enabled = addressButtons[i].interactable;
+            bool selected = i == selection && enabled;
+            addressButtons[i].image.color = !enabled
+                ? CompletedButton
+                : selected ? BrightSelection : NormalButton;
+            addressLabels[i].color = selected
+                ? Color.black
+                : enabled ? Green : AcceptedWhite;
+            addressLabels[i].text = selected ? $"> {address} <" : address;
+        }
     }
 
     private static void Shuffle<T>(IList<T> values)
@@ -308,6 +367,8 @@ public sealed class MemoryAddressRecoveryMinigame : HackingMinigameBase
         GameObject child = new(name, typeof(RectTransform), typeof(TextMeshProUGUI));
         child.transform.SetParent(parent == null ? transform : parent, false);
         TMP_Text text = child.GetComponent<TMP_Text>();
+        if (terminalFont != null)
+            text.font = terminalFont;
         text.fontSize = size;
         text.color = Green;
         text.alignment = alignment;

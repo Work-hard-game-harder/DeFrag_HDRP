@@ -80,6 +80,14 @@ public class PlayerItemDropper : MonoBehaviour
         InventoryInfo selectedItem = inventoryUI.GetSelectedItem();
         if (selectedItem?.itemData == null) return;
 
+        if (InventoryManager.Instance != null &&
+            InventoryManager.Instance.TryGetNetworkObjectId(
+                selectedItem, out ulong networkObjectId))
+        {
+            RequestNetworkDrop(selectedItem, networkObjectId, shouldThrow);
+            return;
+        }
+
         GameObject prefab = selectedItem.itemData.itemPrefab;
         if (prefab == null)
         {
@@ -143,6 +151,44 @@ public class PlayerItemDropper : MonoBehaviour
         }
 
         InventoryManager.Instance.RemoveItem(selectedItem);
+    }
+
+    private void RequestNetworkDrop(
+        InventoryInfo selectedItem,
+        ulong networkObjectId,
+        bool shouldThrow)
+    {
+        if (!TryFindSpawnPosition(out Vector3 spawnPosition))
+        {
+            Debug.Log("[Drop] 앞 공간이 막혀 있어 아이템을 놓을 수 없습니다.");
+            return;
+        }
+
+        NetworkPlayerInventory networkInventory =
+            transform.root.GetComponentInChildren<NetworkPlayerInventory>(true);
+        if (networkInventory == null)
+        {
+            Debug.LogError("[Drop] 로컬 플레이어에 NetworkPlayerInventory가 없습니다.", this);
+            return;
+        }
+
+        Vector3 velocity = shouldThrow
+            ? dropOrigin.forward * throwForce + Vector3.up * upwardThrowForce
+            : Vector3.zero;
+
+        float cameraBatteryRatio = -1f;
+        if (selectedItem.itemData is CameraItemData &&
+            TryGetComponent(out CameraBattery cameraBattery))
+        {
+            cameraBatteryRatio = cameraBattery.ChargeRatio;
+        }
+
+        networkInventory.RequestDrop(
+            networkObjectId,
+            spawnPosition,
+            dropOrigin.rotation,
+            velocity,
+            cameraBatteryRatio);
     }
 
     private void PlaceOnGround(Transform itemTransform, Collider[] itemColliders, Rigidbody rb)

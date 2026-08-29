@@ -629,7 +629,7 @@ MonoBehaviour:
       time: 0
       value: 0
       inSlope: 0
-      outSlope: 0.25
+      outSlope: 0
       tangentMode: 0
       weightedMode: 0
       inWeight: 0.33333334
@@ -638,16 +638,16 @@ MonoBehaviour:
       time: 0.55
       value: 0.18
       inSlope: 0.35
-      outSlope: 1.1
+      outSlope: 0.35
       tangentMode: 0
       weightedMode: 0
       inWeight: 0.33333334
       outWeight: 0.33333334
     - serializedVersion: 3
-      time: 1
-      value: 1
+      time: 0.9833374
+      value: 0.80952454
       inSlope: 2.2
-      outSlope: 0
+      outSlope: 2.2
       tangentMode: 0
       weightedMode: 0
       inWeight: 0.33333334
@@ -2745,6 +2745,7 @@ GameObject:
   - component: {fileID: 7255047732428418656}
   - component: {fileID: 1264422813971240959}
   - component: {fileID: 7851964327015289634}
+  - component: {fileID: 7851964327015289635}
   m_Layer: 7
   m_Name: PlayerCharacter(H)
   m_TagString: Player
@@ -3137,6 +3138,10 @@ MonoBehaviour:
       NameHash: 1939466105
       Synchronize: 1
       ParameterType: 1
+    - name: IsCrouching
+      NameHash: -1154928320
+      Synchronize: 1
+      ParameterType: 4
   AnimatorParametersExpanded: 0
 --- !u!114 &7349012846091223101
 MonoBehaviour:
@@ -3439,6 +3444,23 @@ MonoBehaviour:
   saturation: -55
   postExposure: -0.35
   volumePriority: 1200
+--- !u!114 &7851964327015289635
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8628133643110585351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 878bbe47510fab146a0abde0571d8b98, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkPlayerInventory
+  ShowTopMostFoldoutHeaderGroup: 1
+  maximumSlots: 4
+  maximumPickupDistance: 7
+  maximumDropDistance: 2.5
+  maximumThrowSpeed: 12
 --- !u!1 &8846232740498023747
 GameObject:
   m_ObjectHideFlags: 0

@@ -218,6 +218,48 @@ namespace StarterAssets
             Move(IsSubtitleLocked);
         }
 
+        public void RequestNetworkSceneLoad(string targetSceneName)
+        {
+            if (!IsSpawned || !IsOwner || string.IsNullOrWhiteSpace(targetSceneName))
+            {
+                return;
+            }
+
+            if (IsServer)
+            {
+                TryLoadNetworkScene(targetSceneName);
+                return;
+            }
+
+            RequestNetworkSceneLoadServerRpc(targetSceneName);
+        }
+
+        [ServerRpc]
+        private void RequestNetworkSceneLoadServerRpc(string targetSceneName)
+        {
+            TryLoadNetworkScene(targetSceneName);
+        }
+
+        private static void TryLoadNetworkScene(string targetSceneName)
+        {
+            NetworkManager manager = NetworkManager.Singleton;
+            if (manager == null || !manager.IsServer || manager.SceneManager == null)
+            {
+                return;
+            }
+
+            if (!Application.CanStreamedLevelBeLoaded(targetSceneName))
+            {
+                Debug.LogError($"네트워크로 전환할 씬을 불러올 수 없습니다: {targetSceneName}");
+                return;
+            }
+
+            if (SceneManager.GetActiveScene().name != targetSceneName)
+            {
+                manager.SceneManager.LoadScene(targetSceneName, LoadSceneMode.Single);
+            }
+        }
+
         private void LateUpdate()
         {
             // 마우스 움직임에 따라 시야 회전 로직도 차단

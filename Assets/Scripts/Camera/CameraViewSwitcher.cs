@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public sealed class CameraViewSwitcher : MonoBehaviour
@@ -17,6 +18,7 @@ public sealed class CameraViewSwitcher : MonoBehaviour
 
     public bool IsCameraEquipped { get; private set; }
     public bool IsCameraViewActive { get; private set; }
+    public event Action<bool> CameraViewActiveChanged;
     public Camera ActiveCamera =>
         IsCameraViewActive && itemCamera != null ? itemCamera : playerCamera;
 
@@ -104,6 +106,7 @@ public sealed class CameraViewSwitcher : MonoBehaviour
         // 카메라 아이템을 장착하지 않았다면 ItemCam을 켤 수 없다.
         active &= IsCameraEquipped && !interactionLocked;
 
+        bool changed = IsCameraViewActive != active;
         IsCameraViewActive = active;
 
         if (active)
@@ -123,6 +126,9 @@ public sealed class CameraViewSwitcher : MonoBehaviour
 
         if (cameraOverlayCanvas != null)
             cameraOverlayCanvas.enabled = localPresentationEnabled && active;
+
+        if (changed)
+            CameraViewActiveChanged?.Invoke(active);
     }
 
     private void SynchronizeItemCameraPose()
@@ -134,6 +140,9 @@ public sealed class CameraViewSwitcher : MonoBehaviour
         Transform target = itemCamera.transform;
 
         target.SetPositionAndRotation(source.position, source.rotation);
+        itemCamera.cullingMask = playerCamera.cullingMask;
+        itemCamera.nearClipPlane = playerCamera.nearClipPlane;
+        itemCamera.farClipPlane = playerCamera.farClipPlane;
         itemCamera.fieldOfView = playerCamera.fieldOfView;
     }
 }

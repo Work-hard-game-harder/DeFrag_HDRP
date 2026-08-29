@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using TMPro;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using Unity.Netcode.Transports.UTP;
 using Unity.Networking.Transport.Relay;
 using Unity.Services.Authentication;
@@ -392,6 +393,15 @@ public sealed class LobbyManager : MonoBehaviour
 
     private void HandleClientDisconnected(ulong clientId)
     {
+        if (networkManager != null &&
+            !networkManager.IsServer &&
+            clientId == networkManager.LocalClientId)
+        {
+            Debug.Log("호스트와의 연결이 종료되어 메인 로비로 돌아갑니다.");
+            ReturnToMainLobby();
+            return;
+        }
+
         if (!lobbyAvatars.Remove(clientId, out NetworkObject avatar) || avatar == null)
         {
             return;
@@ -467,14 +477,41 @@ public sealed class LobbyManager : MonoBehaviour
         int spawnIndex = 0;
         foreach (ulong clientId in networkManager.ConnectedClientsIds)
         {
-            if (networkManager.ConnectedClients[clientId].PlayerObject != null)
+            Transform spawnPoint = spawnPoints.GetSpawnPoint(spawnIndex++);
+            NetworkObject playerObject = networkManager.ConnectedClients[clientId].PlayerObject;
+            if (playerObject != null)
             {
+                MovePlayerToSpawnPoint(playerObject, spawnPoint);
                 continue;
             }
 
-            Transform spawnPoint = spawnPoints.GetSpawnPoint(spawnIndex++);
             GameObject instance = Instantiate(gameplayPlayerPrefab, spawnPoint.position, spawnPoint.rotation);
             instance.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId, true);
+        }
+    }
+
+    private static void MovePlayerToSpawnPoint(NetworkObject playerObject, Transform spawnPoint)
+    {
+        CharacterController characterController = playerObject.GetComponent<CharacterController>();
+        if (characterController != null)
+        {
+            characterController.enabled = false;
+        }
+
+        playerObject.transform.SetPositionAndRotation(spawnPoint.position, spawnPoint.rotation);
+
+        NetworkTransform networkTransform = playerObject.GetComponent<NetworkTransform>();
+        if (networkTransform != null)
+        {
+            networkTransform.Teleport(
+                spawnPoint.position,
+                spawnPoint.rotation,
+                playerObject.transform.localScale);
+        }
+
+        if (characterController != null)
+        {
+            characterController.enabled = true;
         }
     }
 

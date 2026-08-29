@@ -32,17 +32,19 @@ public sealed class NetworkWorldItem : NetworkBehaviour
             NetworkVariableReadPermission.Everyone,
             NetworkVariableWritePermission.Server);
 
+    private readonly NetworkVariable<float> cameraBatteryRatio =
+        new NetworkVariable<float>(
+            1f,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server);
+
     public ItemData Data => itemData;
     public NetworkItemState State => state.Value;
     public ulong HolderClientId => holderClientId.Value;
     public bool IsAvailable => state.Value == NetworkItemState.World;
+    public float CameraBatteryRatio => cameraBatteryRatio.Value;
 
     private void Reset()
-    {
-        EnsureWorldComponentReferences();
-    }
-
-    private void OnValidate()
     {
         EnsureWorldComponentReferences();
     }
@@ -69,19 +71,19 @@ public sealed class NetworkWorldItem : NetworkBehaviour
     {
         if (!Application.isPlaying)
         {
-            Debug.LogWarning("Play Mode���� �����ؾ� �մϴ�.", this);
+            Debug.LogWarning("Play Mode에서 실행해야 합니다.", this);
             return;
         }
 
         if (!IsSpawned)
         {
-            Debug.LogWarning("�� �������� ���� ��Ʈ��ũ�� Spawn���� �ʾҽ��ϴ�.", this);
+            Debug.LogWarning("이 아이템은 아직 네트워크에 Spawn되지 않았습니다.", this);
             return;
         }
 
         if (!IsServer)
         {
-            Debug.LogWarning("�� �׽�Ʈ�� Host/Server���� �����ؾ� �մϴ�.", this);
+            Debug.LogWarning("이 테스트는 Host/Server에서 실행해야 합니다.", this);
             return;
         }
 
@@ -94,7 +96,7 @@ public sealed class NetworkWorldItem : NetworkBehaviour
         if (!Application.isPlaying || !IsSpawned || !IsServer)
             return;
 
-        SetWorldServer(transform.position, transform.rotation);
+        SetWorldServer(transform.position, transform.rotation, Vector3.zero);
     }
 
     public bool SetHeldServer(ulong newHolderClientId)
@@ -102,7 +104,7 @@ public sealed class NetworkWorldItem : NetworkBehaviour
         if (!IsServer)
         {
             Debug.LogError(
-                "[NetworkWorldItem] SetHeldServer�� ���������� ȣ���� �� �ֽ��ϴ�.",
+                "[NetworkWorldItem] SetHeldServer는 서버에서만 호출할 수 있습니다.",
                 this);
             return false;
         }
@@ -115,12 +117,15 @@ public sealed class NetworkWorldItem : NetworkBehaviour
         return true;
     }
 
-    public bool SetWorldServer(Vector3 position, Quaternion rotation)
+    public bool SetWorldServer(
+        Vector3 position,
+        Quaternion rotation,
+        Vector3 initialVelocity)
     {
         if (!IsServer)
         {
             Debug.LogError(
-                "[NetworkWorldItem] SetWorldServer�� ���������� ȣ���� �� �ֽ��ϴ�.",
+                "[NetworkWorldItem] SetWorldServer는 서버에서만 호출할 수 있습니다.",
                 this);
             return false;
         }
@@ -128,7 +133,30 @@ public sealed class NetworkWorldItem : NetworkBehaviour
         transform.SetPositionAndRotation(position, rotation);
         holderClientId.Value = NoHolder;
         state.Value = NetworkItemState.World;
+
+        if (itemRigidbody != null)
+        {
+            itemRigidbody.isKinematic = false;
+            itemRigidbody.useGravity = true;
+            itemRigidbody.linearVelocity = initialVelocity;
+            itemRigidbody.angularVelocity = Vector3.zero;
+        }
+
         return true;
+    }
+
+    public void SetCameraBatteryRatioServer(float ratio)
+    {
+        if (!IsServer)
+        {
+            Debug.LogError(
+                "[NetworkWorldItem] 배터리 상태는 서버에서만 변경할 수 있습니다.",
+                this);
+            return;
+        }
+
+        if (itemData is CameraItemData)
+            cameraBatteryRatio.Value = Mathf.Clamp01(ratio);
     }
 
     private void HandleStateChanged(

@@ -55,6 +55,27 @@ public class GetItem : MonoBehaviour, IInteractable
             return;
         }
 
+        NetworkWorldItem networkItem = GetComponentInParent<NetworkWorldItem>();
+        if (networkItem != null && networkItem.IsSpawned)
+        {
+            if (player == null)
+                return;
+
+            NetworkPlayerInventory networkInventory =
+                player.GetComponentInParent<NetworkPlayerInventory>();
+            if (networkInventory == null)
+            {
+                Debug.LogError(
+                    "[GetItem] 플레이어에 NetworkPlayerInventory가 없습니다.",
+                    player);
+                return;
+            }
+
+            networkInventory.RequestPickup(networkItem);
+            player.CloseAllUI();
+            return;
+        }
+
         if (InventoryManager.Instance == null)
         {
             Debug.LogWarning("[GetItem] 씬에 InventoryManager가 없습니다.", this);
@@ -86,5 +107,20 @@ public class GetItem : MonoBehaviour, IInteractable
         }
 
         Destroy(gameObject);
+    }
+
+    public void CompleteNetworkPickupPresentation(PlayerInteraction player)
+    {
+        if (player != null && GameDataManager.Instance != null)
+        {
+            PlayerStats playerStats = player.GetComponentInParent<PlayerStats>();
+            playerStats?.SaveData();
+        }
+
+        if (progressesQuest && QuestManager.Instance != null)
+            QuestManager.Instance.ProgressActiveQuest(questProgressAmount);
+
+        onPickedUp?.Invoke();
+        player?.CloseAllUI();
     }
 }
