@@ -26,6 +26,11 @@ namespace DeFrag.B1F
         [Tooltip("스폰된 몬스터가 최초 한 번 먼저 이동할 배전함 쪽 목적지입니다.")]
         [SerializeField] private Transform tvMonsterInitialDestination;
 
+        [Header("Monster Spawn Presentation")]
+        [SerializeField] private B1FMonsterSpawnTimeline spawnTimeline;
+        [Tooltip("클라이언트가 컷씬 시작 알림을 수신할 여유 시간입니다. 연출 종료 후 서버가 몬스터를 스폰합니다.")]
+        [SerializeField, Min(0f)] private float spawnPresentationLeadTime = 0.2f;
+
         [Header("Power Transition")]
         [SerializeField, Min(0f)] private float transitionDelay = 1f;
         [SerializeField, Min(0.01f)] private float flickerOnDuration = 0.12f;
@@ -49,6 +54,7 @@ namespace DeFrag.B1F
         private bool tvMonsterSpawned;
         private Coroutine localTransitionRoutine;
         private Coroutine serverTransitionRoutine;
+        private Coroutine monsterSpawnRoutine;
 
         public B1FPowerState CurrentState => currentState.Value;
 
@@ -59,12 +65,15 @@ namespace DeFrag.B1F
             currentState.OnValueChanged += OnPowerStateChanged;
             ApplyState(currentState.Value);
             if (IsServer && currentState.Value >= B1FPowerState.EmergencyPower)
-                SpawnTvMonsterOnce();
+                BeginMonsterSpawnSequence();
         }
 
         public override void OnNetworkDespawn()
         {
             currentState.OnValueChanged -= OnPowerStateChanged;
+            if (monsterSpawnRoutine != null) StopCoroutine(monsterSpawnRoutine);
+            monsterSpawnRoutine = null;
+            spawnTimeline?.StopPlayback();
         }
 
         public bool CanUseBoxA => !powerTransitioning.Value &&
@@ -120,7 +129,7 @@ namespace DeFrag.B1F
             serverTransitionRoutine = null;
 
             if (targetState == B1FPowerState.EmergencyPower)
-                SpawnTvMonsterOnce();
+                BeginMonsterSpawnSequence();
         }
 
         [ClientRpc]
@@ -190,9 +199,9 @@ namespace DeFrag.B1F
             _ => null
         };
 
-        private void SpawnTvMonsterOnce()
+        private void BeginMonsterSpawnSequence()
         {
-            if (tvMonsterSpawned)
+            if (!IsServer || !IsSpawned || tvMonsterSpawned || monsterSpawnRoutine != null)
                 return;
             if (tvMonsterPrefab == null || tvMonsterSpawnPoint == null)
             {
@@ -201,6 +210,49 @@ namespace DeFrag.B1F
                     this);
                 return;
             }
+
+            if (spawnTimeline == null || !spawnTimeline.TryGetDuration(out double duration))
+            {
+                // Optional/missing presentation must not prevent the gameplay spawn.
+                Debug.LogWarning("[B1FPowerController] 유효한 Timeline이 없어 컷씬 없이 몬스터를 스폰합니다.", this);
+                SpawnTvMonsterOnce();
+                return;
+            }
+
+            double startServerTime = NetworkManager.ServerTime.Time + spawnPresentationLeadTime;
+            PlayMonsterSpawnTimelineClientRpc(startServerTime, duration);
+            monsterSpawnRoutine = StartCoroutine(SpawnMonsterAfterTimeline(startServerTime + duration));
+        }
+
+        private IEnumerator SpawnMonsterAfterTimeline(double endServerTime)
+        {
+            try
+            {
+                // Clients never authorize spawns. A shared server deadline also avoids
+                // duplicate spawns or waiting forever for a disconnected client's callback.
+                while (IsServer && IsSpawned && NetworkManager != null && NetworkManager.IsListening)
+                {
+                    if (NetworkManager.ServerTime.Time >= endServerTime)
+                    {
+                        // Restore the host immediately and notify clients before Spawn.
+                        StopMonsterSpawnTimelineClientRpc();
+                        SpawnTvMonsterOnce();
+                        yield break;
+                    }
+                    yield return null;
+                }
+            }
+            finally
+            {
+                monsterSpawnRoutine = null;
+            }
+        }
+
+        private void SpawnTvMonsterOnce()
+        {
+            if (!IsServer || !IsSpawned || tvMonsterSpawned ||
+                tvMonsterPrefab == null || tvMonsterSpawnPoint == null)
+                return;
 
             NetworkObject monster = Instantiate(
                 tvMonsterPrefab,
@@ -217,6 +269,20 @@ namespace DeFrag.B1F
 
             monster.Spawn(true);
             tvMonsterSpawned = true;
+        }
+
+        [ClientRpc]
+        private void PlayMonsterSpawnTimelineClientRpc(
+            double startServerTime, double duration)
+        {
+            if (spawnTimeline != null)
+                spawnTimeline.PlayOnce(startServerTime, duration);
+        }
+
+        [ClientRpc]
+        private void StopMonsterSpawnTimelineClientRpc()
+        {
+            spawnTimeline?.StopPlayback();
         }
     }
 }
