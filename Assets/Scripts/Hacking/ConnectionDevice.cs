@@ -1,10 +1,14 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
 [RequireComponent(typeof(BoxCollider))]
 public sealed class ConnectionDevice : MonoBehaviour, IInteractable
 {
+    private static readonly Dictionary<string, ConnectionDevice> ActiveDevices =
+        new(StringComparer.OrdinalIgnoreCase);
+
     [Header("Terminal Identity")]
     [SerializeField] private string terminalId = "terminal_01";
     [SerializeField] private string displayName = "TERMINAL 01";
@@ -76,6 +80,18 @@ public sealed class ConnectionDevice : MonoBehaviour, IInteractable
         FitColliderToModel();
     }
 
+    private void OnEnable()
+    {
+        ActiveDevices[NormalizeTerminalId(terminalId)] = this;
+    }
+
+    private void OnDisable()
+    {
+        string key = NormalizeTerminalId(terminalId);
+        if (ActiveDevices.TryGetValue(key, out ConnectionDevice registered) && registered == this)
+            ActiveDevices.Remove(key);
+    }
+
     private void Update()
     {
         if (equipment == null && Camera.main != null)
@@ -104,6 +120,44 @@ public sealed class ConnectionDevice : MonoBehaviour, IInteractable
         if (IsCompleted(command))
             return;
 
+        CooperativeTerminalHintRelay relay = Camera.main != null
+            ? Camera.main.GetComponentInParent<CooperativeTerminalHintRelay>()
+            : null;
+        if (relay != null && relay.IsSpawned)
+        {
+            relay.RequestTerminalCommandCompletion(terminalId, command);
+            return;
+        }
+
+        ApplyCommandCompletion(command);
+    }
+
+    public static void ApplySynchronizedCompletion(
+        string synchronizedTerminalId,
+        TerminalCommands command)
+    {
+        if (ActiveDevices.TryGetValue(
+                NormalizeTerminalId(synchronizedTerminalId),
+                out ConnectionDevice device))
+            device.ApplyCommandCompletion(command);
+    }
+
+    public static bool CanSynchronizeCompletion(
+        string synchronizedTerminalId,
+        TerminalCommands command)
+    {
+        return ActiveDevices.TryGetValue(
+                   NormalizeTerminalId(synchronizedTerminalId),
+                   out ConnectionDevice device) &&
+               device.IsCommandEnabled(command) &&
+               device.GetMinigame(command) != null;
+    }
+
+    private void ApplyCommandCompletion(TerminalCommands command)
+    {
+        if (IsCompleted(command))
+            return;
+
         completedCommands |= command;
         CommandCompletionRequested?.Invoke(this, command);
 
@@ -121,6 +175,13 @@ public sealed class ConnectionDevice : MonoBehaviour, IInteractable
             default:
                 throw new ArgumentOutOfRangeException(nameof(command), command, null);
         }
+    }
+
+    private static string NormalizeTerminalId(string value)
+    {
+        return string.IsNullOrWhiteSpace(value)
+            ? string.Empty
+            : value.Trim().Replace(' ', '_').ToUpperInvariant();
     }
 
     public void ResetCommandCompletion(TerminalCommands command)

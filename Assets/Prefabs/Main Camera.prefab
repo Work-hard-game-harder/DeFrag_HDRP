@@ -42,6 +42,10 @@ MonoBehaviour:
   scanMask:
     serializedVersion: 2
     m_Bits: 4294967295
+  frequencyNearDistance: 2
+  frequencyFarDistance: 60
+  minimumFrequency: 0.5
+  maximumFrequency: 9
   audioSource: {fileID: 270800950170456108}
   lockAcquiredClip: {fileID: 0}
   acceptedClip: {fileID: 0}

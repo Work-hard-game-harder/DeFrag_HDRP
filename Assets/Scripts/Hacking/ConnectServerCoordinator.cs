@@ -20,6 +20,7 @@ public enum ConnectServerUplinkPhase : byte
 public sealed class ConnectServerCoordinator : NetworkBehaviour
 {
     private const ulong NoClient = ulong.MaxValue;
+    private const int CameraWordCount = 4;
 
     [Header("Relay Pool")]
     [SerializeField] private List<OpticalRelayNode> relayNodes = new();
@@ -43,6 +44,11 @@ public sealed class ConnectServerCoordinator : NetworkBehaviour
     [SerializeField, Range(1f, 100f)] private float wrongRelayTrace = 28f;
     [SerializeField, Range(1f, 100f)] private float timeoutTrace = 20f;
     [SerializeField, Range(1f, 100f)] private float traceLimit = 100f;
+
+    [Header("Wrong Capture Alarm")]
+    [SerializeField, Min(0f)] private float wrongRelayAlarmRadius = 60f;
+    [SerializeField] private AudioClip wrongRelayAlarmClip;
+    [SerializeField, Range(0f, 1f)] private float wrongRelayAlarmVolume = 1f;
 
     private readonly NetworkVariable<ConnectServerUplinkPhase> phase = new(
         ConnectServerUplinkPhase.Idle,
@@ -72,9 +78,14 @@ public sealed class ConnectServerCoordinator : NetworkBehaviour
         NoClient,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
+    private readonly NetworkVariable<int> requestedWordIndex = new(
+        -1,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
 
     private OpticalRelayNode currentTarget;
     private string expectedAuthorization;
+    private readonly string[] currentCameraWords = new string[CameraWordCount];
     private int previousTargetIndex = -1;
     private double connectAt;
 
@@ -89,6 +100,7 @@ public sealed class ConnectServerCoordinator : NetworkBehaviour
     public float Trace => trace.Value;
     public double Deadline => deadline.Value;
     public ulong TerminalOperatorClientId => terminalOperator.Value;
+    public int RequestedWordNumber => requestedWordIndex.Value + 1;
     public double ServerTime => NetworkManager != null && NetworkManager.IsListening
         ? NetworkManager.ServerTime.Time
         : Time.unscaledTimeAsDouble;
@@ -106,6 +118,7 @@ public sealed class ConnectServerCoordinator : NetworkBehaviour
         trace.OnValueChanged += OnFloatChanged;
         deadline.OnValueChanged += OnDoubleChanged;
         terminalOperator.OnValueChanged += OnUlongChanged;
+        requestedWordIndex.OnValueChanged += OnIntChanged;
 
         LocalInstance = this;
         LocalInstanceAvailable?.Invoke(this);
@@ -121,6 +134,7 @@ public sealed class ConnectServerCoordinator : NetworkBehaviour
         trace.OnValueChanged -= OnFloatChanged;
         deadline.OnValueChanged -= OnDoubleChanged;
         terminalOperator.OnValueChanged -= OnUlongChanged;
+        requestedWordIndex.OnValueChanged -= OnIntChanged;
         if (LocalInstance == this)
             LocalInstance = null;
     }
@@ -200,6 +214,7 @@ public sealed class ConnectServerCoordinator : NetworkBehaviour
                 completedRounds.Value = 0;
                 trace.Value = 0f;
                 expectedAuthorization = string.Empty;
+                requestedWordIndex.Value = -1;
                 phase.Value = ConnectServerUplinkPhase.Connecting;
                 deadline.Value = 0d;
                 connectAt = ServerTime + connectionDelay;
@@ -223,6 +238,7 @@ public sealed class ConnectServerCoordinator : NetworkBehaviour
             return;
 
         expectedAuthorization = string.Empty;
+        requestedWordIndex.Value = -1;
         deadline.Value = 0d;
         phase.Value = ConnectServerUplinkPhase.Suspended;
     }
@@ -249,17 +265,23 @@ public sealed class ConnectServerCoordinator : NetworkBehaviour
         if (photographed != currentTarget)
         {
             AddTrace(wrongRelayTrace);
-            PhotoResolvedClientRpc(false, relayId, "WRONG RELAY", Target(sender));
+            WorldNoiseSystem.EmitUrgent(photographed.ScanAnchor.position, wrongRelayAlarmRadius);
+            RelayAlarmClientRpc(relayId);
+            PhotoResolvedClientRpc(
+                false,
+                relayId,
+                "WRONG RELAY // ALARM TRIGGERED",
+                Target(sender));
             return;
         }
 
-        expectedAuthorization = PickAuthorizationWord();
+        expectedAuthorization = currentCameraWords[requestedWordIndex.Value];
         deadline.Value = ServerTime + verificationTimeLimit;
         phase.Value = ConnectServerUplinkPhase.AwaitingVerification;
         PhotoResolvedClientRpc(
             true,
             relayId,
-            expectedAuthorization,
+            FormatCameraWordList(),
             Target(sender));
     }
 
@@ -272,8 +294,14 @@ public sealed class ConnectServerCoordinator : NetworkBehaviour
             return;
 
         string normalized = submitted.Trim().ToUpperInvariant();
-        if (normalized.StartsWith("VERIFY "))
-            normalized = normalized.Substring(7).Trim();
+        if (!normalized.StartsWith("UPLOAD "))
+        {
+            AddTrace(wrongRelayTrace);
+            VerificationResolvedClientRpc(false, "USE: UPLOAD [WORD]", Target(sender));
+            return;
+        }
+
+        normalized = normalized.Substring(7).Trim();
 
         if (!string.Equals(normalized, expectedAuthorization, StringComparison.Ordinal))
         {
@@ -285,6 +313,7 @@ public sealed class ConnectServerCoordinator : NetworkBehaviour
         completedRounds.Value++;
         VerificationResolvedClientRpc(true, "RELAY VERIFIED", Target(sender));
         expectedAuthorization = string.Empty;
+        requestedWordIndex.Value = -1;
 
         if (completedRounds.Value >= requiredRounds)
         {
@@ -358,7 +387,7 @@ public sealed class ConnectServerCoordinator : NetworkBehaviour
         currentTarget = relayNodes[selected];
         targetRelayId.Value = currentTarget.RelayId;
         targetSector.Value = currentTarget.Sector;
-        expectedAuthorization = string.Empty;
+        GenerateWordChallenge();
         deadline.Value = ServerTime + scanTimeLimit;
         phase.Value = ConnectServerUplinkPhase.AwaitingOpticalScan;
     }
@@ -370,6 +399,7 @@ public sealed class ConnectServerCoordinator : NetworkBehaviour
             return;
 
         expectedAuthorization = string.Empty;
+        requestedWordIndex.Value = -1;
         deadline.Value = 0d;
         phase.Value = ConnectServerUplinkPhase.Failed;
     }
@@ -392,22 +422,57 @@ public sealed class ConnectServerCoordinator : NetworkBehaviour
         return null;
     }
 
-    private string PickAuthorizationWord()
+    private void GenerateWordChallenge()
     {
-        if (authorizationWords.Count == 0)
-            return "LIMA";
-        string value = authorizationWords[UnityEngine.Random.Range(0, authorizationWords.Count)];
-        return string.IsNullOrWhiteSpace(value) ? "LIMA" : value.Trim().ToUpperInvariant();
+        string[] fallbacks = { "LIMA", "OSCAR", "SIERRA", "VICTOR", "ECHO", "KILO" };
+        List<string> pool = new();
+        foreach (string configured in authorizationWords)
+        {
+            string normalized = string.IsNullOrWhiteSpace(configured)
+                ? string.Empty
+                : configured.Trim().ToUpperInvariant();
+            if (!string.IsNullOrEmpty(normalized) && !pool.Contains(normalized))
+                pool.Add(normalized);
+        }
+
+        foreach (string fallback in fallbacks)
+            if (!pool.Contains(fallback))
+                pool.Add(fallback);
+
+        for (int i = 0; i < CameraWordCount; i++)
+        {
+            int selected = UnityEngine.Random.Range(0, pool.Count);
+            currentCameraWords[i] = pool[selected];
+            pool.RemoveAt(selected);
+        }
+
+        requestedWordIndex.Value = UnityEngine.Random.Range(0, CameraWordCount);
+        expectedAuthorization = string.Empty;
+    }
+
+    private string FormatCameraWordList()
+    {
+        return $"[01] {currentCameraWords[0]}\n" +
+               $"[02] {currentCameraWords[1]}\n" +
+               $"[03] {currentCameraWords[2]}\n" +
+               $"[04] {currentCameraWords[3]}";
     }
 
     [ClientRpc]
     private void PhotoResolvedClientRpc(
         bool success,
         FixedString64Bytes relayId,
-        FixedString64Bytes message,
+        FixedString128Bytes message,
         ClientRpcParams rpc = default)
     {
         LocalPhotoResolved?.Invoke(success, relayId.ToString(), message.ToString());
+    }
+
+    [ClientRpc]
+    private void RelayAlarmClientRpc(FixedString64Bytes relayId)
+    {
+        OpticalRelayNode relay = FindRelay(relayId.ToString());
+        relay?.PlayLocalAlarm(wrongRelayAlarmClip, wrongRelayAlarmVolume);
     }
 
     [ClientRpc]

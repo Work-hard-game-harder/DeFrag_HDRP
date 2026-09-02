@@ -15,6 +15,12 @@ public sealed class CameraOpticalRelayScanner : MonoBehaviour
     [SerializeField, Min(0.05f)] private float lockDuration = 0.7f;
     [SerializeField] private LayerMask scanMask = ~0;
 
+    [Header("Target Frequency Finder")]
+    [SerializeField, Min(0.1f)] private float frequencyNearDistance = 2f;
+    [SerializeField, Min(0.2f)] private float frequencyFarDistance = 60f;
+    [SerializeField, Min(0.1f)] private float minimumFrequency = 0.5f;
+    [SerializeField, Min(0.1f)] private float maximumFrequency = 9f;
+
     [Header("HUD Audio")]
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip lockAcquiredClip;
@@ -30,8 +36,12 @@ public sealed class CameraOpticalRelayScanner : MonoBehaviour
     private Canvas canvas;
     private TMP_Text targetText;
     private TMP_Text scanText;
+    private TMP_Text frequencyText;
     private Image lockFill;
-    private string privateAuthorizationWord;
+    private readonly Image[] signalBars = new Image[5];
+    private GameObject wordGrid;
+    private readonly TMP_Text[] wordLabels = new TMP_Text[4];
+    private string privateWordList;
     private string transientStatus;
     private float transientUntil;
 
@@ -163,7 +173,7 @@ public sealed class CameraOpticalRelayScanner : MonoBehaviour
         coordinator = value;
         if (coordinator != null)
             coordinator.LocalPhotoResolved += OnPhotoResolved;
-        privateAuthorizationWord = string.Empty;
+        privateWordList = string.Empty;
         ResetLock();
     }
 
@@ -171,13 +181,15 @@ public sealed class CameraOpticalRelayScanner : MonoBehaviour
     {
         if (success)
         {
-            privateAuthorizationWord = message;
+            privateWordList = message;
+            PopulateWordGrid(message);
             ShowTransient($"{relayId} // CAPTURE ACCEPTED", true);
             Play(acceptedClip);
         }
         else
         {
-            privateAuthorizationWord = string.Empty;
+            privateWordList = string.Empty;
+            SetWordGridVisible(false);
             ShowTransient($"{relayId} // {message}", false);
             Play(rejectedClip);
         }
@@ -192,16 +204,20 @@ public sealed class CameraOpticalRelayScanner : MonoBehaviour
             $"ROUND {coordinator.CompletedRounds + 1:00}/{coordinator.RequiredRounds:00}    " +
             $"TRACE {coordinator.Trace:00}%    {timeLeft:00.0}s";
 
+        bool showFrequency = coordinator.Phase == ConnectServerUplinkPhase.AwaitingOpticalScan;
+        RefreshTargetFrequency(showFrequency);
+        bool showWordGrid = !string.IsNullOrEmpty(privateWordList) &&
+                            coordinator.Phase == ConnectServerUplinkPhase.AwaitingVerification;
+        SetWordGridVisible(showWordGrid);
+
         if (Time.unscaledTime < transientUntil)
         {
             scanText.text = transientStatus;
         }
-        else if (!string.IsNullOrEmpty(privateAuthorizationWord) &&
+        else if (!string.IsNullOrEmpty(privateWordList) &&
                  coordinator.Phase == ConnectServerUplinkPhase.AwaitingVerification)
         {
-            scanText.text =
-                $"AUTH WORD: <color=#FFFFFF>{privateAuthorizationWord}</color>\n" +
-                "READ IT TO THE TERMINAL OPERATOR";
+            scanText.text = "WORD GRID DECODED // REPORT THE REQUESTED NUMBER";
         }
         else if (aimedRelay == null)
         {
@@ -269,6 +285,157 @@ public sealed class CameraOpticalRelayScanner : MonoBehaviour
         lockFill.type = Image.Type.Filled;
         lockFill.fillMethod = Image.FillMethod.Horizontal;
         lockFill.fillAmount = 0f;
+
+        CreateWordGrid(canvasObject.transform);
+        CreateFrequencyDisplay(canvasObject.transform);
+    }
+
+    private void CreateWordGrid(Transform parent)
+    {
+        wordGrid = new GameObject(
+            "Decoded Word Grid",
+            typeof(RectTransform),
+            typeof(Image),
+            typeof(Outline));
+        wordGrid.transform.SetParent(parent, false);
+        RectTransform gridRect = (RectTransform)wordGrid.transform;
+        Place(gridRect, new Vector2(0.22f, 0.23f), new Vector2(0.78f, 0.68f));
+        wordGrid.GetComponent<Image>().color = new Color(0f, 0.025f, 0.01f, 0.34f);
+        Outline outline = wordGrid.GetComponent<Outline>();
+        outline.effectColor = new Color(IrGreen.r, IrGreen.g, IrGreen.b, 0.95f);
+        outline.effectDistance = new Vector2(3f, -3f);
+
+        CreateWordLabel(0, gridRect, new Vector2(0f, 0.5f), new Vector2(0.5f, 1f),
+            TextAlignmentOptions.TopLeft);
+        CreateWordLabel(1, gridRect, new Vector2(0.5f, 0.5f), Vector2.one,
+            TextAlignmentOptions.TopRight);
+        CreateWordLabel(2, gridRect, Vector2.zero, new Vector2(0.5f, 0.5f),
+            TextAlignmentOptions.BottomLeft);
+        CreateWordLabel(3, gridRect, new Vector2(0.5f, 0f), new Vector2(1f, 0.5f),
+            TextAlignmentOptions.BottomRight);
+        wordGrid.SetActive(false);
+    }
+
+    private void CreateWordLabel(
+        int index,
+        Transform parent,
+        Vector2 anchorMin,
+        Vector2 anchorMax,
+        TextAlignmentOptions alignment)
+    {
+        TMP_Text label = CreateText($"Word {index + 1:00}", parent, 38f, alignment);
+        Place(label.rectTransform, anchorMin, anchorMax);
+        label.rectTransform.offsetMin = new Vector2(28f, 24f);
+        label.rectTransform.offsetMax = new Vector2(-28f, -24f);
+        wordLabels[index] = label;
+    }
+
+    private void CreateFrequencyDisplay(Transform parent)
+    {
+        GameObject display = new(
+            "Target Frequency",
+            typeof(RectTransform),
+            typeof(Image));
+        display.transform.SetParent(parent, false);
+        RectTransform displayRect = (RectTransform)display.transform;
+        Place(displayRect, new Vector2(0.33f, 0.11f), new Vector2(0.67f, 0.19f));
+        display.GetComponent<Image>().color = new Color(0f, 0.04f, 0.015f, 0.82f);
+
+        frequencyText = CreateText(
+            "Frequency Text",
+            display.transform,
+            23f,
+            TextAlignmentOptions.MidlineLeft);
+        Place(frequencyText.rectTransform, Vector2.zero, new Vector2(0.68f, 1f));
+        frequencyText.rectTransform.offsetMin = new Vector2(24f, 4f);
+        frequencyText.rectTransform.offsetMax = new Vector2(-8f, -4f);
+
+        CreateSignalBars(display.transform);
+    }
+
+    private void CreateSignalBars(Transform parent)
+    {
+        const float startX = 0.70f;
+        const float barWidth = 0.042f;
+        const float gap = 0.012f;
+        for (int i = 0; i < signalBars.Length; i++)
+        {
+            GameObject bar = new($"Signal Bar {i + 1}", typeof(RectTransform), typeof(Image));
+            bar.transform.SetParent(parent, false);
+            RectTransform rect = (RectTransform)bar.transform;
+            float x = startX + i * (barWidth + gap);
+            float height = Mathf.Lerp(0.2f, 0.82f, i / (signalBars.Length - 1f));
+            rect.anchorMin = new Vector2(x, 0.09f);
+            rect.anchorMax = new Vector2(x + barWidth, 0.09f + height);
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+            signalBars[i] = bar.GetComponent<Image>();
+            signalBars[i].color = new Color(IrGreen.r, IrGreen.g, IrGreen.b, 0.14f);
+        }
+    }
+
+    private void PopulateWordGrid(string message)
+    {
+        string[] lines = message.Split('\n');
+        for (int i = 0; i < wordLabels.Length; i++)
+        {
+            if (wordLabels[i] == null)
+                continue;
+
+            string line = i < lines.Length ? lines[i].Trim() : $"[{i + 1:00}] ---";
+            int separator = line.IndexOf(' ');
+            string number = separator > 0 ? line.Substring(0, separator) : $"[{i + 1:00}]";
+            string word = separator > 0 ? line.Substring(separator + 1).Trim() : "---";
+            wordLabels[i].text =
+                $"<color=#35FF70>{number}</color>\n" +
+                $"<color=#FFFFFF>{word}</color>";
+        }
+    }
+
+    private void RefreshTargetFrequency(bool visible)
+    {
+        if (frequencyText == null)
+            return;
+
+        frequencyText.transform.parent.gameObject.SetActive(visible);
+        if (!visible)
+            return;
+
+        if (!coordinator.TryGetRelay(coordinator.TargetRelayId, out OpticalRelayNode target))
+        {
+            frequencyText.text = "TARGET FREQUENCY // SIGNAL LOST";
+            return;
+        }
+
+        float distance = Vector3.Distance(
+            scanCamera.transform.position,
+            target.ScanAnchor.position);
+        float far = Mathf.Max(frequencyNearDistance + 0.1f, frequencyFarDistance);
+        float proximity = 1f - Mathf.InverseLerp(frequencyNearDistance, far, distance);
+        float frequency = Mathf.Lerp(minimumFrequency, maximumFrequency, proximity);
+        int activeBars = proximity <= 0.01f
+            ? 0
+            : Mathf.Clamp(Mathf.CeilToInt(proximity * signalBars.Length), 1, signalBars.Length);
+        float wave = Mathf.Sin(Time.unscaledTime * frequency * Mathf.PI * 2f) * 0.5f + 0.5f;
+        frequencyText.text = $"TARGET SIGNAL\n{frequency:00.0} Hz";
+        for (int i = 0; i < signalBars.Length; i++)
+        {
+            if (signalBars[i] == null)
+                continue;
+
+            bool active = i < activeBars;
+            signalBars[i].color = new Color(
+                IrGreen.r,
+                IrGreen.g,
+                IrGreen.b,
+                active ? Mathf.Lerp(0.72f, 1f, wave) : 0.14f);
+        }
+    }
+
+    private void SetWordGridVisible(bool visible)
+    {
+        if (wordGrid != null && wordGrid.activeSelf != visible)
+            wordGrid.SetActive(visible);
     }
 
     private static TMP_Text CreateText(

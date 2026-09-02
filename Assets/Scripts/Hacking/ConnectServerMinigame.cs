@@ -51,7 +51,7 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
 
     public override bool ConsumesTextInput => true;
     public override bool CloseTerminalOnSuccess => true;
-    public override string ControlHint => "[ENTER] AUTHENTICATE    [ESC] ABORT";
+    public override string ControlHint => "[TAB] AUTOCOMPLETE    [ENTER] UPLOAD    [ESC] ABORT";
 
     public override void Begin(ConnectionDevice terminal, TerminalCommands command)
     {
@@ -124,7 +124,7 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
 
         if (TerminalKeyboardInput.TabPressed &&
             coordinator.Phase == ConnectServerUplinkPhase.AwaitingVerification)
-            TryAutocompleteVerifyCommand();
+            TryAutocompleteUploadCommand();
 
         RefreshOpticalInterface();
     }
@@ -163,20 +163,18 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
             case ConnectServerUplinkPhase.AwaitingOpticalScan:
                 challenge.color = Green;
                 challenge.text =
-                    $"RELAY {coordinator.CompletedRounds + 1:00}/{coordinator.RequiredRounds:00}\n" +
-                    $"TARGET: {coordinator.TargetRelayId}\n" +
-                    $"SECTOR: {coordinator.TargetSector}\n" +
-                    "WAITING FOR IR CAMERA CAPTURE";
+                    $"연결 {coordinator.CompletedRounds + 1:00}/{coordinator.RequiredRounds:00}\n" +
+                    $"카메라 목표: {coordinator.TargetRelayId}\n" +
+                    "이 번호를 카메라 담당자에게 알려주세요";
                 SetInputEnabled(false,
-                    $"> INPUT LOCKED // CAMERA MUST CAPTURE {coordinator.TargetRelayId}");
+                    $"> 카메라가 {coordinator.TargetRelayId} 촬영 대기 중");
                 break;
             case ConnectServerUplinkPhase.AwaitingVerification:
                 challenge.color = Green;
                 challenge.text =
-                    $"{coordinator.TargetRelayId} OPTICAL LOCK ACCEPTED\n" +
-                    "ENTER TEAMMATE AUTH WORD\n" +
-                    "FORMAT: VERIFY [WORD]";
-                SetInputEnabled(true, "> TYPE VERIFY [AUTH WORD], THEN PRESS ENTER");
+                    $"촬영 승인 // 카메라 화면의 [{coordinator.RequestedWordNumber:00}]번째 단어 요청\n" +
+                    "[TAB] UPLOAD 자동완성  →  단어 입력  →  [ENTER]";
+                SetInputEnabled(true, "> TAB을 눌러 UPLOAD를 자동완성하세요");
                 break;
             case ConnectServerUplinkPhase.Suspended:
                 challenge.color = DimGreen;
@@ -240,13 +238,13 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
             log.text += $"\n> {message}";
     }
 
-    private void TryAutocompleteVerifyCommand()
+    private void TryAutocompleteUploadCommand()
     {
         string value = input.text.Trim().ToUpperInvariant();
-        if (value.Length < 2 || !"VERIFY".StartsWith(value))
+        if (value.Length > 0 && !"UPLOAD".StartsWith(value))
             return;
 
-        input.SetTextWithoutNotify("VERIFY ");
+        input.SetTextWithoutNotify("UPLOAD ");
         input.caretPosition = input.text.Length;
         input.ActivateInputField();
     }
@@ -259,7 +257,7 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
         input.SetTextWithoutNotify(string.Empty);
         if (!success && coordinator != null &&
             coordinator.Phase == ConnectServerUplinkPhase.AwaitingVerification)
-            SetInputEnabled(true, "> RETRY: VERIFY [AUTH WORD], THEN PRESS ENTER");
+            SetInputEnabled(true, "> 다시 시도: [TAB] UPLOAD + 단어 + [ENTER]");
     }
 
     private IEnumerator FailOpticalAfterDelay()

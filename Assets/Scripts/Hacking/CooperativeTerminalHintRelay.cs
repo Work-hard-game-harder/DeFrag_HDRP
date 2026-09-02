@@ -13,6 +13,16 @@ public sealed class CooperativeTerminalHintRelay : NetworkBehaviour
     private TMP_Text hintText;
     private Coroutine hideRoutine;
 
+    public void RequestTerminalCommandCompletion(
+        string terminalId,
+        TerminalCommands command)
+    {
+        if (!IsOwner || !IsSpawned || string.IsNullOrWhiteSpace(terminalId))
+            return;
+
+        RequestTerminalCommandCompletionServerRpc(terminalId, (int)command);
+    }
+
     public void ShowForTeammate(
         string terminalLabel,
         string value,
@@ -52,6 +62,32 @@ public sealed class CooperativeTerminalHintRelay : NetworkBehaviour
         }
 
         BroadcastEmergencyAlarm(alarmPosition, alertRadius);
+    }
+
+    [ServerRpc]
+    private void RequestTerminalCommandCompletionServerRpc(
+        string terminalId,
+        int rawCommand)
+    {
+        TerminalCommands command = (TerminalCommands)rawCommand;
+        if (command != TerminalCommands.UnlockDoor &&
+            command != TerminalCommands.DownloadData &&
+            command != TerminalCommands.ConnectServer)
+            return;
+        if (!ConnectionDevice.CanSynchronizeCompletion(terminalId, command))
+            return;
+
+        ApplyTerminalCommandCompletionClientRpc(terminalId, rawCommand);
+    }
+
+    [ClientRpc]
+    private void ApplyTerminalCommandCompletionClientRpc(
+        string terminalId,
+        int rawCommand)
+    {
+        ConnectionDevice.ApplySynchronizedCompletion(
+            terminalId,
+            (TerminalCommands)rawCommand);
     }
 
     [ServerRpc]

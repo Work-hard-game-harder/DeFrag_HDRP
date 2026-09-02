@@ -49,6 +49,17 @@ public sealed class OpticalRelayNode : MonoBehaviour
         return candidate.GetComponentInParent<OpticalRelayNode>() == this;
     }
 
+    public void PlayLocalAlarm(AudioClip alarmClip, float volume)
+    {
+        if (alarmClip == null)
+            return;
+
+        AudioSource.PlayClipAtPoint(
+            alarmClip,
+            ScanAnchor.position,
+            Mathf.Clamp01(volume));
+    }
+
     private void Reset()
     {
         scanAnchor = transform;

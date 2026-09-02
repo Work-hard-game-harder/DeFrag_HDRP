@@ -31681,6 +31681,9 @@ MonoBehaviour:
   wrongRelayTrace: 28
   timeoutTrace: 20
   traceLimit: 100
+  wrongRelayAlarmRadius: 60
+  wrongRelayAlarmClip: {fileID: 8300000, guid: cbe1faa802817414abaecc1a53d83c64, type: 3}
+  wrongRelayAlarmVolume: 1
 --- !u!1 &2142683271
 GameObject:
   m_ObjectHideFlags: 0

@@ -175,11 +175,13 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
     private void OnEnable()
     {
         WorldNoiseSystem.NoiseEmitted += OnWorldNoiseHeard;
+        WorldNoiseSystem.UrgentNoiseEmitted += OnUrgentWorldNoiseHeard;
     }
 
     private void OnDisable()
     {
         WorldNoiseSystem.NoiseEmitted -= OnWorldNoiseHeard;
+        WorldNoiseSystem.UrgentNoiseEmitted -= OnUrgentWorldNoiseHeard;
         attackHitbox?.EndAttackCycle();
     }
 
@@ -435,6 +437,29 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
             ChangeState(MonsterState.Investigate);
         else
             SetRandomDestinationNear(lastKnownPlayerPos, investigateRadius);
+    }
+
+    private void OnUrgentWorldNoiseHeard(Vector3 noisePosition, float noiseRadius)
+    {
+        if (!HasSimulationAuthority || agent == null || !agent.isOnNavMesh)
+            return;
+
+        float audibleRange = Mathf.Min(noiseRadius, soundDetectionRange);
+        if (Vector3.Distance(transform.position, noisePosition) > audibleRange)
+            return;
+
+        lastKnownPlayerPos = noisePosition;
+        investigateTimer = 0f;
+
+        // An active chase always has priority over a relay alarm.
+        if (currentState == MonsterState.Chase || currentState == MonsterState.Attack)
+            return;
+
+        if (currentState != MonsterState.Investigate)
+            ChangeState(MonsterState.Investigate);
+
+        agent.speed = runSpeed;
+        agent.SetDestination(lastKnownPlayerPos);
     }
     void HandleIdle()
     {
