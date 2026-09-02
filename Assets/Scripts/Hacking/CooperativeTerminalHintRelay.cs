@@ -23,6 +23,22 @@ public sealed class CooperativeTerminalHintRelay : NetworkBehaviour
         RequestTerminalCommandCompletionServerRpc(terminalId, (int)command);
     }
 
+    public bool TryCompleteTerminalCommandForStoryDebugServer(
+        string terminalId,
+        TerminalCommands command)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (!IsSpawned || !IsServer || string.IsNullOrWhiteSpace(terminalId) ||
+            !ConnectionDevice.CanSynchronizeCompletion(terminalId, command))
+            return false;
+
+        ApplyTerminalCommandCompletionClientRpc(terminalId, (int)command);
+        return true;
+#else
+        return false;
+#endif
+    }
+
     public void ShowForTeammate(
         string terminalLabel,
         string value,

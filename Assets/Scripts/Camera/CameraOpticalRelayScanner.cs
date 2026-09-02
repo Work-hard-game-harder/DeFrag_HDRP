@@ -48,6 +48,8 @@ public sealed class CameraOpticalRelayScanner : MonoBehaviour
     private void Awake()
     {
         cameraItem = GetComponent<CameraItem>();
+        if (GetComponent<CameraFuelSignalPresenter>() == null)
+            gameObject.AddComponent<CameraFuelSignalPresenter>();
         if (scanCamera == null)
             scanCamera = GetComponent<Camera>();
         if (audioSource == null)

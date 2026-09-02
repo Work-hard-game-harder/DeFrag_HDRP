@@ -16,6 +16,9 @@ public class GetItem : MonoBehaviour, IInteractable
     [Header("Quest")]
     [Tooltip("Enable this only when picking up this item should advance the active quest.")]
     [SerializeField] private bool progressesQuest;
+    [Tooltip("이 아이템 획득이 보고할 퀘스트 신호입니다. 비어 있으면 진행하지 않습니다.")]
+    [SerializeField] private string questSignal;
+    [SerializeField] private string questSourceId;
     [Min(1)]
     [SerializeField] private int questProgressAmount = 1;
 
@@ -94,10 +97,7 @@ public class GetItem : MonoBehaviour, IInteractable
             playerStats?.SaveData();
         }
 
-        if (progressesQuest && QuestManager.Instance != null)
-        {
-            QuestManager.Instance.ProgressActiveQuest(questProgressAmount);
-        }
+        ReportQuestProgress(null);
 
         onPickedUp?.Invoke();
 
@@ -117,10 +117,26 @@ public class GetItem : MonoBehaviour, IInteractable
             playerStats?.SaveData();
         }
 
-        if (progressesQuest && QuestManager.Instance != null)
-            QuestManager.Instance.ProgressActiveQuest(questProgressAmount);
+        ReportQuestProgress(GetComponentInParent<NetworkWorldItem>());
 
         onPickedUp?.Invoke();
         player?.CloseAllUI();
+    }
+
+    private void ReportQuestProgress(NetworkWorldItem networkItem)
+    {
+        if (!progressesQuest || QuestManager.Instance == null ||
+            string.IsNullOrWhiteSpace(questSignal))
+            return;
+
+        string source = questSourceId;
+        if (string.IsNullOrWhiteSpace(source))
+        {
+            source = networkItem != null && networkItem.IsSpawned
+                ? $"WORLD_ITEM_{networkItem.NetworkObjectId}"
+                : gameObject.name;
+        }
+
+        QuestManager.Instance.ReportProgress(questSignal, source, questProgressAmount);
     }
 }

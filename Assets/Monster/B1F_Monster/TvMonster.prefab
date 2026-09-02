@@ -565,6 +565,8 @@ MonoBehaviour:
   missingDuration: 2
   investigateDuration: 10
   investigateRadius: 5
+  forcedInvestigationArrivalDistance: 0.8
+  forcedInvestigationSampleRadius: 5
   walkSpeed: 2
   runSpeed: 5
   minIdleTime: 2

@@ -52,6 +52,8 @@ namespace DeFrag.B1F
             NetworkVariableReadPermission.Everyone,
             NetworkVariableWritePermission.Server);
         private bool tvMonsterSpawned;
+        private MonsterAI spawnedTvMonster;
+        private bool storyDebugFreezeTvMonster;
         private Coroutine localTransitionRoutine;
         private Coroutine serverTransitionRoutine;
         private Coroutine monsterSpawnRoutine;
@@ -97,6 +99,25 @@ namespace DeFrag.B1F
                 return;
 
             BeginPowerTransition(B1FPowerState.FullPower);
+        }
+
+        public bool ForceTvMonsterInvestigateServer(Vector3 destination)
+        {
+            if (!IsServer || spawnedTvMonster == null)
+                return false;
+
+            return spawnedTvMonster.ForceInvestigatePosition(destination);
+        }
+
+        public void SetTvMonsterStoryDebugFrozenServer(bool frozen)
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (!IsServer)
+                return;
+
+            storyDebugFreezeTvMonster = frozen;
+            spawnedTvMonster?.SetStoryDebugFrozen(frozen);
+#endif
         }
 
         private void OnPowerStateChanged(B1FPowerState previous, B1FPowerState next) =>
@@ -261,7 +282,13 @@ namespace DeFrag.B1F
 
             MonsterAI monsterAI = monster.GetComponentInChildren<MonsterAI>(true);
             if (monsterAI != null)
-                monsterAI.SetInitialSearchDestination(tvMonsterInitialDestination);
+            {
+                spawnedTvMonster = monsterAI;
+                if (storyDebugFreezeTvMonster)
+                    monsterAI.SetStoryDebugFrozen(true);
+                else
+                    monsterAI.SetInitialSearchDestination(tvMonsterInitialDestination);
+            }
             else
                 Debug.LogWarning(
                     "[B1FPowerController] Spawned TV Monster has no MonsterAI component.",

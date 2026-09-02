@@ -23,6 +23,8 @@ public class ElevatorPanel : MonoBehaviour, IInteractable
     [Header("상호작용 조건 (QuestManager 연동)")]
     [Tooltip("엘리베이터를 열기 위해 현재 활성화되어야 하는 퀘스트 인덱스 번호")]
     [SerializeField] private int requiredQuestIndex = 4; 
+    [Tooltip("권장: 순서가 바뀌어도 안전한 Quest ID. 비어 있을 때만 기존 인덱스를 사용합니다.")]
+    [SerializeField] private string requiredQuestId;
 
     [Header("상호작용 HUD 문구")]
     [SerializeField] private string activeInteractionText = "키패드 열기 (E)";
@@ -157,8 +159,9 @@ public class ElevatorPanel : MonoBehaviour, IInteractable
             return false;
         }
 
-        // QuestManager에 새로 개설한 IsQuestActive 함수를 통해 현재 4번 퀘스트가 진행 중인지 검증
-        return QuestManager.Instance.IsQuestActive(requiredQuestIndex);
+        return !string.IsNullOrWhiteSpace(requiredQuestId)
+            ? QuestManager.Instance.IsQuestActive(requiredQuestId)
+            : QuestManager.Instance.IsQuestActive(requiredQuestIndex);
     }
 
     // ===== 내부 UI 제어 로직 =====

@@ -69,7 +69,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GetItem
   itemData: {fileID: 11400000, guid: a285e91e13984ac0a9ce86fc0181666e, type: 2}
   isHoldInteraction: 0
-  progressesQuest: 0
+  progressesQuest: 1
+  questSignal: B1F_EQUIPMENT_COLLECTED
+  questSourceId: ''
   questProgressAmount: 1
   canThrow: 1
   onPickedUp:

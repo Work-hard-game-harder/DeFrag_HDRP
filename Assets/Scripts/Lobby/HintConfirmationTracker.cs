@@ -91,14 +91,7 @@ public sealed class HintConfirmationTracker : MonoBehaviour
             context);
         onConfirmedHintCountChanged?.Invoke(count);
 
-        // Hint-linked quest progress is shared. Personal acquisition quests
-        // remain on their original local path.
-        if (QuestManager.Instance != null)
-        {
-            QuestManager.Instance.ProgressActiveQuest(1);
-            QuestManager.Instance.RevealPendingQuestAfterSubtitle();
-        }
-
+        // Lobby hints are shared world state, not personal walkie quest progress.
         powerController?.PlayHintWarning(emergency);
     }
 

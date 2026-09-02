@@ -7,6 +7,8 @@ namespace DeFrag.Doors
         [Header("Detection")]
         [SerializeField, Min(0.1f)] private float detectionRadius = 4f;
         [SerializeField] private LayerMask actorLayers = 1 << 7;
+        [Tooltip("Collider가 없는 TV몬스터처럼 AutomaticDoorActor로 등록된 액터도 감지합니다.")]
+        [SerializeField] private bool detectRegisteredActors = true;
 
         [Header("Door")]
         [SerializeField] private VerticalDoorMotor door;
@@ -20,6 +22,9 @@ namespace DeFrag.Doors
                 detectedActors,
                 actorLayers,
                 QueryTriggerInteraction.Ignore) > 0;
+
+            if (!detected && detectRegisteredActors)
+                detected = AutomaticDoorActor.IsAnyActorWithin(transform.position, detectionRadius);
 
             if (detected)
                 door.Open();

@@ -35,6 +35,9 @@ public class InteractableItem : MonoBehaviour, IInteractable
 
     [Header("Quest")]
     [SerializeField] protected bool progressesQuest = true;
+    [Tooltip("이 상호작용이 완료할 퀘스트 신호입니다. 비어 있으면 진행하지 않습니다.")]
+    [SerializeField] protected string questSignal;
+    [SerializeField] protected string questSourceId;
     [Min(1)]
     [SerializeField] protected int questProgressAmount = 1;
 
@@ -115,9 +118,11 @@ public class InteractableItem : MonoBehaviour, IInteractable
         // player progresses exactly once. Untracked items stay personal.
         bool usesSharedHintProgress = hintConfirmationTracker != null &&
                                       !string.IsNullOrWhiteSpace(hintId);
-        if (progressesQuest && !usesSharedHintProgress && QuestManager.Instance != null)
+        if (progressesQuest && !usesSharedHintProgress && QuestManager.Instance != null &&
+            !string.IsNullOrWhiteSpace(questSignal))
         {
-            QuestManager.Instance.ProgressActiveQuest(questProgressAmount);
+            string source = string.IsNullOrWhiteSpace(questSourceId) ? gameObject.name : questSourceId;
+            QuestManager.Instance.ReportProgress(questSignal, source, questProgressAmount);
             QuestManager.Instance.RevealPendingQuestAfterSubtitle();
         }
 

@@ -716,6 +716,72 @@ namespace StarterAssets
             base.OnNetworkDespawn();
         }
 
+        public void RequestSharedQuestProgress(string signal, string sourceId, int amount)
+        {
+            if (string.IsNullOrWhiteSpace(signal) || amount <= 0)
+                return;
+
+            if (IsSpawned && IsOwner)
+                ReportSharedQuestProgressServerRpc(signal, sourceId ?? string.Empty, amount);
+        }
+
+        [ServerRpc]
+        private void ReportSharedQuestProgressServerRpc(
+            string signal,
+            string sourceId,
+            int amount)
+        {
+            QuestManager manager = QuestManager.Instance;
+            if (manager == null ||
+                !manager.TryReportSharedProgressOnServer(signal, sourceId, amount))
+                return;
+
+            manager.BroadcastSharedSnapshotFromServer();
+        }
+
+        public void RequestSharedQuestReveal()
+        {
+            if (IsSpawned && IsOwner)
+                RevealSharedQuestServerRpc();
+        }
+
+        [ServerRpc]
+        private void RevealSharedQuestServerRpc()
+        {
+            QuestManager manager = QuestManager.Instance;
+            if (manager == null || !manager.TryRevealSharedPendingOnServer())
+                return;
+
+            manager.BroadcastSharedSnapshotFromServer();
+        }
+
+        public void BroadcastSharedQuestSnapshotFromServer(
+            int currentStepIndex,
+            int pendingStepIndex,
+            int currentCount)
+        {
+            if (IsSpawned && IsServer)
+                ApplySharedQuestSnapshotClientRpc(
+                    currentStepIndex,
+                    pendingStepIndex,
+                    currentCount);
+        }
+
+        [ClientRpc]
+        private void ApplySharedQuestSnapshotClientRpc(
+            int currentStepIndex,
+            int pendingStepIndex,
+            int currentCount)
+        {
+            if (IsServer)
+                return;
+
+            QuestManager.Instance?.ApplySharedSnapshot(
+                currentStepIndex,
+                pendingStepIndex,
+                currentCount);
+        }
+
         public void RequestLobbyHintConfirmation(string hintId)
         {
             if (string.IsNullOrWhiteSpace(hintId)) return;

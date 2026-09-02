@@ -1,6 +1,7 @@
 ﻿using EasyPeasyFirstPersonController;
 using DeFrag.Monsters.Common;
 using DeFrag.Combat;
+using DeFrag.Doors;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
@@ -32,6 +33,8 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
     [Header("Investigate Settings")]
     public float investigateDuration = 10f;     // 수색 유지 시간
     public float investigateRadius = 5f;         // 수색 반경
+    [SerializeField, Min(0.1f)] private float forcedInvestigationArrivalDistance = 0.8f;
+    [SerializeField, Min(0.1f)] private float forcedInvestigationSampleRadius = 5f;
 
     [Header("Speed Settings")]
     public float walkSpeed = 2f;
@@ -111,6 +114,9 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
     private float attackCycleStartedAt;
     private NetworkMonsterPlayerTargetResolver targetResolver;
     private bool initialDestinationPending;
+    private bool forcedInvestigationPending;
+    private Vector3 forcedInvestigationDestination;
+    private bool storyDebugFrozen;
 
     public MonsterState CurrentState => currentState;
     public bool UsesBehaviorDesigner => useBehaviorDesigner;
@@ -141,6 +147,58 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
             SetSearchDestination();
     }
 
+    public void SetStoryDebugFrozen(bool frozen)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        storyDebugFrozen = frozen;
+        if (!initialized || agent == null || !agent.isOnNavMesh)
+            return;
+
+        agent.isStopped = frozen;
+        if (frozen)
+        {
+            forcedInvestigationPending = false;
+            initialDestinationPending = false;
+            agent.ResetPath();
+            attackHitbox?.EndAttackCycle();
+            SetAllAnimationsFalse();
+            animator?.SetBool(IsIdle, true);
+        }
+        else
+        {
+            ChangeState(MonsterState.Search);
+        }
+#endif
+    }
+
+    public bool ForceInvestigatePosition(Vector3 destination)
+    {
+        if (storyDebugFrozen || !initialized || !HasSimulationAuthority ||
+            agent == null || !agent.isOnNavMesh)
+            return false;
+
+        if (!NavMesh.SamplePosition(
+                destination,
+                out NavMeshHit hit,
+                forcedInvestigationSampleRadius,
+                NavMesh.AllAreas))
+            return false;
+
+        forcedInvestigationPending = true;
+        forcedInvestigationDestination = hit.position;
+        lastKnownPlayerPos = hit.position;
+        investigateTimer = 0f;
+        canSeePlayer = false;
+        canDetectPlayer = false;
+        ChangeState(MonsterState.Investigate);
+        agent.speed = runSpeed;
+        agent.ResetPath();
+        bool accepted = agent.SetDestination(forcedInvestigationDestination);
+        if (!accepted)
+            forcedInvestigationPending = false;
+        return accepted;
+    }
+
     public bool HasSimulationAuthority
     {
         get
@@ -154,6 +212,9 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
 
     private void Awake()
     {
+        if (GetComponent<AutomaticDoorActor>() == null)
+            gameObject.AddComponent<AutomaticDoorActor>();
+
         targetResolver = GetComponent<NetworkMonsterPlayerTargetResolver>();
         if (targetResolver == null)
             targetResolver = gameObject.AddComponent<NetworkMonsterPlayerTargetResolver>();
@@ -198,6 +259,8 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
         currentState = MonsterState.Idle;
         ChangeState(MonsterState.Search);
         initialized = true;
+        if (storyDebugFrozen)
+            SetStoryDebugFrozen(true);
     }
 
     void Update()
@@ -205,7 +268,8 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
         if (useBehaviorDesigner)
             return;
 
-        if (!initialized || !HasSimulationAuthority || agent == null || !agent.isOnNavMesh)
+        if (storyDebugFrozen || !initialized || !HasSimulationAuthority ||
+            agent == null || !agent.isOnNavMesh)
             return;
 
         RefreshNetworkPlayerTarget();
@@ -222,6 +286,9 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
     /// </summary>
     public bool TickBehaviorState(MonsterState state)
     {
+        if (storyDebugFrozen)
+            return true;
+
         if (!initialized || !HasSimulationAuthority || agent == null || !agent.isOnNavMesh)
             return false;
 
@@ -244,6 +311,13 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
             return;
 
         preparedFrame = Time.frameCount;
+
+        if (forcedInvestigationPending)
+        {
+            canSeePlayer = false;
+            canDetectPlayer = false;
+            return;
+        }
 
         canSeePlayer = CheckPlayerVisibility();
         float distToPlayer = Vector3.Distance(transform.position, player.position);
@@ -420,7 +494,8 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
     }
     private void OnWorldNoiseHeard(Vector3 noisePosition, float noiseRadius)
     {
-        if (!HasSimulationAuthority || agent == null || !agent.isOnNavMesh) return;
+        if (storyDebugFrozen || !HasSimulationAuthority || agent == null || !agent.isOnNavMesh) return;
+        if (forcedInvestigationPending) return;
 
         float audibleRange = Mathf.Min(noiseRadius, soundDetectionRange);
         if (Vector3.Distance(transform.position, noisePosition) > audibleRange) return;
@@ -441,7 +516,9 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
 
     private void OnUrgentWorldNoiseHeard(Vector3 noisePosition, float noiseRadius)
     {
-        if (!HasSimulationAuthority || agent == null || !agent.isOnNavMesh)
+        if (storyDebugFrozen || !HasSimulationAuthority || agent == null || !agent.isOnNavMesh)
+            return;
+        if (forcedInvestigationPending)
             return;
 
         float audibleRange = Mathf.Min(noiseRadius, soundDetectionRange);
@@ -554,6 +631,29 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
 
     void HandleInvestigate()
     {
+        if (forcedInvestigationPending)
+        {
+            agent.speed = runSpeed;
+            if (!agent.pathPending &&
+                ((!agent.hasPath && Vector3.Distance(
+                      transform.position, forcedInvestigationDestination) <=
+                  forcedInvestigationArrivalDistance) ||
+                 (agent.hasPath && agent.remainingDistance <=
+                  Mathf.Max(agent.stoppingDistance, forcedInvestigationArrivalDistance))))
+            {
+                forcedInvestigationPending = false;
+                investigateTimer = 0f;
+                agent.speed = walkSpeed;
+                SetRandomDestinationNear(lastKnownPlayerPos, investigateRadius);
+                return;
+            }
+
+            if (!agent.pathPending && !agent.hasPath)
+                agent.SetDestination(forcedInvestigationDestination);
+            RotateTowardsMoveDirection();
+            return;
+        }
+
         investigateTimer += Time.deltaTime;
 
         // 마지막 위치 근처를 돌아다님

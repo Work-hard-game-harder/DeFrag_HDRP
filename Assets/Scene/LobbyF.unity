@@ -479,6 +479,7 @@ MonoBehaviour:
   correctPassword: 7H36BE
   nextSceneName: B1F
   requiredQuestIndex: 1
+  requiredQuestId: lobby_find_elevator
   activeInteractionText: "\uD0A4\uD328\uB4DC \uC5F4\uAE30 (E)"
   lockedInteractionText: "\uC5D8\uB9AC\uBCA0\uC774\uD130\uB97C \uC870\uC0AC\uD560
     \uC218 \uC5C6\uB2E4."
@@ -6463,6 +6464,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0c14031be22ea8347b41c6c40bb8453d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestBarrier
+  blockingQuestId: lobby_walkie
   blockingStepIndex: 0
 --- !u!1 &846301374
 GameObject:
@@ -6571,13 +6573,21 @@ MonoBehaviour:
   questContainerPanel: {fileID: 431463845528877712}
   questProgressText: {fileID: 3460160040197453879}
   questList:
-  - questTitle: "\uBB34\uC804\uAE30\uB97C \uCC3E\uC73C\uC2DC\uC624"
+  - questId: lobby_walkie
+    questTitle: "\uBB34\uC804\uAE30\uB97C \uCC3E\uC73C\uC2DC\uC624"
+    requiredSignal: LOBBY_WALKIE_ACQUIRED
+    progressScope: 1
     targetCount: 1
+    rejectDuplicateSources: 1
     persistUntilSceneChange: 0
     currentCount: 0
-  - questTitle: "\uC9C0\uD558 1\uCE35\uC73C\uB85C \uB0B4\uB824\uAC08 \uBC29\uBC95\uC744
+  - questId: lobby_find_elevator
+    questTitle: "\uC9C0\uD558 1\uCE35\uC73C\uB85C \uB0B4\uB824\uAC08 \uBC29\uBC95\uC744
       \uCC3E\uC544\uB77C"
+    requiredSignal: ''
+    progressScope: 1
     targetCount: 1
+    rejectDuplicateSources: 1
     persistUntilSceneChange: 1
     currentCount: 0
 --- !u!4 &878033522
@@ -35597,6 +35607,8 @@ MonoBehaviour:
   itemName: "\uBB34\uC804\uAE30"
   isHoldInteraction: 0
   grantsWalkieTalkie: 1
+  questSignal: LOBBY_WALKIE_ACQUIRED
+  questSourceId: LOBBY_WALKIE
   onInteractEvent:
     m_PersistentCalls:
       m_Calls:

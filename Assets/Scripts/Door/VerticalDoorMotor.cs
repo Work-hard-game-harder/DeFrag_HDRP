@@ -26,6 +26,8 @@ namespace DeFrag.Doors
 
         public bool IsOpen { get; private set; }
         public bool IsTemporarilyLocked { get; private set; }
+        public bool IsAccessLocked { get; private set; }
+        public bool IsLocked => IsAccessLocked || IsTemporarilyLocked;
 
         private void Awake()
         {
@@ -45,7 +47,7 @@ namespace DeFrag.Doors
 
         public void Open()
         {
-            if (IsTemporarilyLocked || IsOpen)
+            if (IsLocked || IsOpen)
                 return;
 
             IsOpen = true;
@@ -74,6 +76,14 @@ namespace DeFrag.Doors
             MoveTo(closedPosition, forcedCloseSpeed);
             timedLockRoutine = StartCoroutine(TimedLockRoutine(duration));
             return true;
+        }
+
+        public void SetAccessLocked(bool locked)
+        {
+            IsAccessLocked = locked;
+
+            if (locked && IsOpen)
+                Close();
         }
 
         private void PlayDoorSound(AudioClip clip)

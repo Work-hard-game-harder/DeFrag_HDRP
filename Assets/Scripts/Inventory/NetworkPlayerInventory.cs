@@ -1,4 +1,6 @@
 using System.Collections;
+using System;
+using DeFrag.B1F;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -13,6 +15,8 @@ public sealed class NetworkPlayerInventory : NetworkBehaviour
 
     private NetworkList<ulong> heldItemIds;
 
+    public event Action HeldItemsChanged;
+
     private void Awake()
     {
         heldItemIds = new NetworkList<ulong>();
@@ -23,7 +27,11 @@ public sealed class NetworkPlayerInventory : NetworkBehaviour
         heldItemIds.OnListChanged += HandleHeldItemsChanged;
 
         if (IsOwner)
+        {
+            if (GetComponent<InventoryCarrySpeedController>() == null)
+                gameObject.AddComponent<InventoryCarrySpeedController>();
             StartCoroutine(SynchronizeWhenLocalInventoryIsReady());
+        }
     }
 
     public override void OnNetworkDespawn()
@@ -177,26 +185,82 @@ public sealed class NetworkPlayerInventory : NetworkBehaviour
                itemObject.TryGetComponent(out item);
     }
 
+    public float GetHeldMovementMultiplier()
+    {
+        float multiplier = 1f;
+        for (int i = 0; i < heldItemIds.Count; i++)
+        {
+            if (!TryResolveItem(heldItemIds[i], out NetworkWorldItem item))
+                continue;
+
+            GeneratorFuelCan fuelCan = item.GetComponent<GeneratorFuelCan>();
+            if (fuelCan != null)
+                multiplier = Mathf.Min(multiplier, fuelCan.MovementMultiplier);
+        }
+
+        return multiplier;
+    }
+
+    public bool ContainsHeldItem(ItemData itemData)
+    {
+        if (itemData == null)
+            return false;
+
+        for (int i = 0; i < heldItemIds.Count; i++)
+        {
+            if (TryResolveItem(heldItemIds[i], out NetworkWorldItem item) &&
+                item.Data == itemData)
+                return true;
+        }
+
+        return false;
+    }
+
+    public bool TryConsumeHeldItemServer(ulong itemNetworkObjectId)
+    {
+        if (!IsServer)
+        {
+            Debug.LogError("[NetworkInventory] Held item consumption is server-only.", this);
+            return false;
+        }
+
+        int heldIndex = FindHeldItemIndex(itemNetworkObjectId);
+        if (heldIndex < 0 ||
+            !TryResolveItem(itemNetworkObjectId, out NetworkWorldItem item) ||
+            item.HolderClientId != OwnerClientId)
+            return false;
+
+        heldItemIds.RemoveAt(heldIndex);
+        if (item.NetworkObject != null && item.NetworkObject.IsSpawned)
+            item.NetworkObject.Despawn(true);
+        return true;
+    }
+
     private void HandleHeldItemsChanged(NetworkListEvent<ulong> change)
     {
-        if (!IsOwner || InventoryManager.Instance == null)
+        if (!IsOwner)
             return;
 
-        switch (change.Type)
+        if (InventoryManager.Instance != null)
         {
-            case NetworkListEvent<ulong>.EventType.Add:
-                AddLocalNetworkItem(change.Value, true);
-                break;
+            switch (change.Type)
+            {
+                case NetworkListEvent<ulong>.EventType.Add:
+                    AddLocalNetworkItem(change.Value, true);
+                    break;
 
-            case NetworkListEvent<ulong>.EventType.Remove:
-            case NetworkListEvent<ulong>.EventType.RemoveAt:
-                InventoryManager.Instance.RemoveNetworkItem(change.Value);
-                break;
+                case NetworkListEvent<ulong>.EventType.Remove:
+                case NetworkListEvent<ulong>.EventType.RemoveAt:
+                    InventoryManager.Instance.RemoveNetworkItem(change.Value);
+                    break;
 
-            default:
-                SynchronizeLocalInventory();
-                break;
+                default:
+                    SynchronizeLocalInventory();
+                    break;
+            }
         }
+
+        HeldItemsChanged?.Invoke();
     }
 
     private IEnumerator SynchronizeWhenLocalInventoryIsReady()
@@ -205,7 +269,10 @@ public sealed class NetworkPlayerInventory : NetworkBehaviour
             yield return null;
 
         if (IsSpawned && IsOwner)
+        {
             SynchronizeLocalInventory();
+            HeldItemsChanged?.Invoke();
+        }
     }
 
     private void SynchronizeLocalInventory()

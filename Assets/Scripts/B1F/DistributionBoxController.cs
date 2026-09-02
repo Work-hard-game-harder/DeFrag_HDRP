@@ -103,6 +103,10 @@ namespace DeFrag.B1F
         [SerializeField] private UnityEvent onFailureElectricalEffect = new();
         [SerializeField] private UnityEvent onSuccess = new();
 
+        [Header("Quest Signals")]
+        [SerializeField] private string boxACompletionSignal = QuestSignals.B1FDistributionACompleted;
+        [SerializeField] private string boxBCompletionSignal;
+
         [Header("Shared Audio")]
         [SerializeField] private AudioSource interactionAudioSource;
         [SerializeField] private AudioClip switchToggleClip;
@@ -547,6 +551,7 @@ namespace DeFrag.B1F
             if (controllingPlayer != NoClient)
                 TimingSuccessClientRpc(Target(controllingPlayer));
             onSuccess?.Invoke();
+            ReportQuestCompletion();
             yield return new WaitForSecondsRealtime(timingSuccessPresentationDuration);
             if (isBoxA) powerController?.SetEmergencyPowerServer();
             else powerController?.SetFullPowerServer();
@@ -748,6 +753,7 @@ namespace DeFrag.B1F
                 PlayOneShot(mainKnobPullClip);
                 AnimateMainKnob(mainKnobSuccessLocalEuler, false);
                 onSuccess?.Invoke();
+                ReportQuestCompletion();
                 return;
             }
 
@@ -758,6 +764,17 @@ namespace DeFrag.B1F
             answerMask = 0;
             DistributionHintPresenter.TryHide();
             B1FDistributionTerminalAdapter.ResetLocalTerminal();
+        }
+
+        private void ReportQuestCompletion()
+        {
+            string signal = isBoxA ? boxACompletionSignal : boxBCompletionSignal;
+            if (string.IsNullOrWhiteSpace(signal) || QuestManager.Instance == null)
+                return;
+
+            QuestManager.Instance.ReportProgress(
+                signal,
+                isBoxA ? "DISTRIBUTION_BOX_A" : "DISTRIBUTION_BOX_B");
         }
 
         private static ushort GenerateDifferentMask(ushort previous)

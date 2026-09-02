@@ -12,6 +12,11 @@ public class WorldQuestItem : MonoBehaviour, IInteractable
     [Tooltip("실제로 상호작용한 플레이어에게 워키토키 소유권을 부여합니다.")]
     [SerializeField] private bool grantsWalkieTalkie;
 
+    [Header("Personal Quest")]
+    [Tooltip("무전기 획득은 각 플레이어의 Local Player 퀘스트에만 보고됩니다.")]
+    [SerializeField] private string questSignal = QuestSignals.LobbyWalkieAcquired;
+    [SerializeField] private string questSourceId = "LOBBY_WALKIE";
+
     [Header("트리거 성공 시 실행할 추가 이벤트")]
     // 여기에 팀원의 무전기 줍기 함수(PickUpWakieTakie) 등을 연결하세요.
     public UnityEvent onInteractEvent; 
@@ -42,11 +47,8 @@ public class WorldQuestItem : MonoBehaviour, IInteractable
 
         Debug.Log($"[월드 아이템] '{itemName}' 작동/획득 완료.");
 
-        // 1. 퀘스트 매니저 카운트 증가
-        if (QuestManager.Instance != null)
-        {
-            QuestManager.Instance.ProgressActiveQuest(1);
-        }
+        if (QuestManager.Instance != null && !string.IsNullOrWhiteSpace(questSignal))
+            QuestManager.Instance.ReportProgress(questSignal, questSourceId);
 
         // 2. 인스펙터에 연결된 팀원의 고유 기능 실행
         if (onInteractEvent != null)

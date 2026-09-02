@@ -50,6 +50,10 @@ public sealed class ConnectServerCoordinator : NetworkBehaviour
     [SerializeField] private AudioClip wrongRelayAlarmClip;
     [SerializeField, Range(0f, 1f)] private float wrongRelayAlarmVolume = 1f;
 
+    [Header("Quest Signal")]
+    [SerializeField] private string completionQuestSignal = QuestSignals.B1FConnectServerCompleted;
+    [SerializeField] private string completionQuestSourceId = "CONNECT_SERVER";
+
     private readonly NetworkVariable<ConnectServerUplinkPhase> phase = new(
         ConnectServerUplinkPhase.Idle,
         NetworkVariableReadPermission.Everyone,
@@ -107,6 +111,28 @@ public sealed class ConnectServerCoordinator : NetworkBehaviour
 
     public event Action StateChanged;
     public event Action<bool, string, string> LocalPhotoResolved;
+
+    public bool TryCompleteForStoryDebugServer()
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (!IsSpawned || !IsServer)
+            return false;
+        if (phase.Value == ConnectServerUplinkPhase.Completed)
+            return true;
+
+        completedRounds.Value = requiredRounds;
+        deadline.Value = 0d;
+        targetRelayId.Value = default;
+        targetSector.Value = default;
+        requestedWordIndex.Value = -1;
+        terminalOperator.Value = NoClient;
+        expectedAuthorization = string.Empty;
+        phase.Value = ConnectServerUplinkPhase.Completed;
+        return true;
+#else
+        return false;
+#endif
+    }
     public event Action<bool, string> LocalVerificationResolved;
 
     public override void OnNetworkSpawn()
@@ -319,6 +345,10 @@ public sealed class ConnectServerCoordinator : NetworkBehaviour
         {
             deadline.Value = 0d;
             phase.Value = ConnectServerUplinkPhase.Completed;
+            if (QuestManager.Instance != null && !string.IsNullOrWhiteSpace(completionQuestSignal))
+                QuestManager.Instance.ReportProgress(
+                    completionQuestSignal,
+                    completionQuestSourceId);
         }
         else
         {

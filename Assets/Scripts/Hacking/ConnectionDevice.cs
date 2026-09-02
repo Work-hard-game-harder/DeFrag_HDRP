@@ -33,6 +33,12 @@ public sealed class ConnectionDevice : MonoBehaviour, IInteractable
     [SerializeField] private UnityEvent onDownloadDataRequested = new();
     [SerializeField] private UnityEvent onConnectServerRequested = new();
 
+    [Header("Optional Quest Signals")]
+    [Tooltip("비워두면 해당 명령 완료가 퀘스트를 진행하지 않습니다.")]
+    [SerializeField] private string unlockDoorQuestSignal;
+    [SerializeField] private string downloadDataQuestSignal;
+    [SerializeField] private string connectServerQuestSignal;
+
     private EquipmentController equipment;
     private int interactableLayer;
     private int inactiveLayer;
@@ -175,6 +181,28 @@ public sealed class ConnectionDevice : MonoBehaviour, IInteractable
             default:
                 throw new ArgumentOutOfRangeException(nameof(command), command, null);
         }
+
+        ReportQuestCompletion(command);
+    }
+
+    private void ReportQuestCompletion(TerminalCommands command)
+    {
+        if (QuestManager.Instance == null)
+            return;
+
+        Unity.Netcode.NetworkManager manager = Unity.Netcode.NetworkManager.Singleton;
+        if (manager != null && manager.IsListening && !manager.IsServer)
+            return;
+
+        string signal = command switch
+        {
+            TerminalCommands.UnlockDoor => unlockDoorQuestSignal,
+            TerminalCommands.DownloadData => downloadDataQuestSignal,
+            TerminalCommands.ConnectServer => connectServerQuestSignal,
+            _ => string.Empty
+        };
+        if (!string.IsNullOrWhiteSpace(signal))
+            QuestManager.Instance.ReportProgress(signal, $"{terminalId}:{command}");
     }
 
     private static string NormalizeTerminalId(string value)
