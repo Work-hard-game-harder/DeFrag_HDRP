@@ -410,6 +410,8 @@ MonoBehaviour:
   hintId: Office1Schedule
   hintConfirmationTracker: {fileID: 291870992}
   progressesQuest: 1
+  questSignal: 
+  questSourceId: 
   questProgressAmount: 1
   onInteractEvent:
     m_PersistentCalls:
@@ -1598,6 +1600,8 @@ MonoBehaviour:
   hintId: EmployeeBadge
   hintConfirmationTracker: {fileID: 291870992}
   progressesQuest: 1
+  questSignal: 
+  questSourceId: 
   questProgressAmount: 1
   onInteractEvent:
     m_PersistentCalls:
@@ -4683,6 +4687,8 @@ MonoBehaviour:
   hintId: Monitor_Running
   hintConfirmationTracker: {fileID: 291870992}
   progressesQuest: 0
+  questSignal: 
+  questSourceId: 
   questProgressAmount: 1
   onInteractEvent:
     m_PersistentCalls:
@@ -6577,6 +6583,7 @@ MonoBehaviour:
     questTitle: "\uBB34\uC804\uAE30\uB97C \uCC3E\uC73C\uC2DC\uC624"
     requiredSignal: LOBBY_WALKIE_ACQUIRED
     progressScope: 1
+    revealMode: 0
     targetCount: 1
     rejectDuplicateSources: 1
     persistUntilSceneChange: 0
@@ -6584,8 +6591,9 @@ MonoBehaviour:
   - questId: lobby_find_elevator
     questTitle: "\uC9C0\uD558 1\uCE35\uC73C\uB85C \uB0B4\uB824\uAC08 \uBC29\uBC95\uC744
       \uCC3E\uC544\uB77C"
-    requiredSignal: ''
+    requiredSignal: 
     progressScope: 1
+    revealMode: 0
     targetCount: 1
     rejectDuplicateSources: 1
     persistUntilSceneChange: 1
@@ -21587,6 +21595,8 @@ MonoBehaviour:
   hintId: TV
   hintConfirmationTracker: {fileID: 291870992}
   progressesQuest: 0
+  questSignal: 
+  questSourceId: 
   questProgressAmount: 1
   onInteractEvent:
     m_PersistentCalls:
@@ -43512,6 +43522,8 @@ MonoBehaviour:
   hintId: Report
   hintConfirmationTracker: {fileID: 291870992}
   progressesQuest: 0
+  questSignal: 
+  questSourceId: 
   questProgressAmount: 1
   onInteractEvent:
     m_PersistentCalls:
@@ -45307,6 +45319,8 @@ MonoBehaviour:
   hintId: WhiteBoard_Conf
   hintConfirmationTracker: {fileID: 291870992}
   progressesQuest: 0
+  questSignal: 
+  questSourceId: 
   questProgressAmount: 1
   onInteractEvent:
     m_PersistentCalls:

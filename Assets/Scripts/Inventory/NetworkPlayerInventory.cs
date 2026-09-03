@@ -216,6 +216,22 @@ public sealed class NetworkPlayerInventory : NetworkBehaviour
         return false;
     }
 
+    /// <summary>
+    /// 서버가 소유 플레이어의 장착 표현 요청을 검증할 때 사용합니다.
+    /// 전달받은 ID가 실제 이 인벤토리에 있고 소유자도 일치해야 합니다.
+    /// </summary>
+    public bool ServerOwnsHeldItem(ulong itemNetworkObjectId)
+    {
+        if (!IsServer || itemNetworkObjectId == 0 ||
+            FindHeldItemIndex(itemNetworkObjectId) < 0 ||
+            !TryResolveItem(itemNetworkObjectId, out NetworkWorldItem item))
+        {
+            return false;
+        }
+
+        return item.HolderClientId == OwnerClientId;
+    }
+
     public bool TryConsumeHeldItemServer(ulong itemNetworkObjectId)
     {
         if (!IsServer)

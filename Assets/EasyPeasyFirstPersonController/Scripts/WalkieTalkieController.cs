@@ -23,6 +23,21 @@ namespace EasyPeasyFirstPersonController
         [SerializeField] private GameObject walkieTalkieVisualPrefab;
         [Tooltip("생성된 1인칭 워키토키 모델의 부모입니다. 비어 있으면 소유자 카메라를 사용합니다.")]
         [SerializeField] private Transform visualParent;
+
+        [Header("First Person Orientation")]
+        [Tooltip("송신 애니메이션이 워키토키 루트 회전을 덮어써 뒤집히는 것을 방지합니다.")]
+        [SerializeField] private bool lockFirstPersonLocalRotation = true;
+        [Tooltip("카메라에서 워키토키의 앞면을 바라보도록 고정할 로컬 회전입니다.")]
+        [SerializeField] private Vector3 firstPersonLocalEulerAngles =
+            new(74.57f, -180f, -42.3f);
+
+        [Header("Third Person Hand Visual")]
+        [Tooltip("상대 플레이어 손에 표시할 전용 프리팹입니다. 비어 있으면 1인칭 프리팹을 사용합니다.")]
+        [SerializeField] private GameObject worldVisualPrefab;
+        [SerializeField] private HumanBodyBones worldAttachmentBone = HumanBodyBones.RightHand;
+        [SerializeField] private Vector3 worldHandLocalPosition;
+        [SerializeField] private Vector3 worldHandLocalEulerAngles;
+        [SerializeField] private Vector3 worldHandLocalScale = Vector3.one;
         [SerializeField] private GameObject pickupHint;
         [SerializeField] private Animator walkieTalkieAnimator;
         [SerializeField] private SoundEmitter soundEmitter;
@@ -46,8 +61,15 @@ namespace EasyPeasyFirstPersonController
         public bool IsEquipped { get; private set; }
         public bool IsTransmitting { get; private set; }
         public bool IsLocalOwner => CanReadLocalInput;
+        public GameObject WorldVisualPrefab =>
+            worldVisualPrefab != null ? worldVisualPrefab : walkieTalkieVisualPrefab;
+        public HumanBodyBones WorldAttachmentBone => worldAttachmentBone;
+        public Vector3 WorldHandLocalPosition => worldHandLocalPosition;
+        public Vector3 WorldHandLocalEulerAngles => worldHandLocalEulerAngles;
+        public Vector3 WorldHandLocalScale => worldHandLocalScale;
 
         private NetworkObject networkObject;
+        private StarterAssets.PersonController playerController;
         private int talkingParameterId;
         private int playbackSpeedParameterId;
 
@@ -102,6 +124,14 @@ namespace EasyPeasyFirstPersonController
 
             if (Input.GetMouseButtonUp(transmitMouseButton))
                 EndTransmission();
+        }
+
+        private void LateUpdate()
+        {
+            // Animator가 루트 Transform을 갱신한 다음 회전을 복구해야
+            // 좌클릭 시작/종료 프레임에도 모델이 뒤집히지 않습니다.
+            if (IsEquipped)
+                ApplyFirstPersonOrientation();
         }
 
         public void Configure(
@@ -204,6 +234,9 @@ namespace EasyPeasyFirstPersonController
 
         private void ResolveReferences()
         {
+            if (playerController == null)
+                playerController = transform.root.GetComponent<StarterAssets.PersonController>();
+
             if (walkieTalkieAnimator == null && walkieTalkieVisual != null)
                 walkieTalkieAnimator = walkieTalkieVisual.GetComponentInChildren<Animator>(true);
 
@@ -232,6 +265,7 @@ namespace EasyPeasyFirstPersonController
 
             walkieTalkieVisual = Instantiate(walkieTalkieVisualPrefab, parent, false);
             walkieTalkieVisual.name = walkieTalkieVisualPrefab.name;
+            ApplyFirstPersonOrientation();
             SetLayerRecursively(walkieTalkieVisual, LayerMask.NameToLayer("Ignore Raycast"));
 
             foreach (Collider visualCollider in walkieTalkieVisual.GetComponentsInChildren<Collider>(true))
@@ -258,13 +292,19 @@ namespace EasyPeasyFirstPersonController
 
         private void ApplyEquippedPresentation()
         {
+            playerController?.SetWalkieTalkieEquipped(IsEquipped);
+
             // Animator가 재생 가능한 상태일 때 전송 파라미터를 먼저 초기화합니다.
             // 비주얼을 먼저 끄면 비활성 Animator에 SetBool/SetFloat을 호출하게 됩니다.
             if (!IsEquipped)
                 ApplyTransmissionPresentation(false);
 
             if (walkieTalkieVisual != null)
+            {
                 walkieTalkieVisual.SetActive(IsEquipped);
+                if (IsEquipped)
+                    ApplyFirstPersonOrientation();
+            }
 
             if (!CanReadLocalInput)
                 return;
@@ -290,6 +330,18 @@ namespace EasyPeasyFirstPersonController
                 playbackSpeedParameterId,
                 transmitting ? talkingPlaybackSpeed : idlePlaybackSpeed);
             walkieTalkieAnimator.SetBool(talkingParameterId, transmitting);
+        }
+
+        private void ApplyFirstPersonOrientation()
+        {
+            if (!CanReadLocalInput || !lockFirstPersonLocalRotation ||
+                walkieTalkieVisual == null)
+            {
+                return;
+            }
+
+            walkieTalkieVisual.transform.localRotation =
+                Quaternion.Euler(firstPersonLocalEulerAngles);
         }
 
         private void OnDisable()

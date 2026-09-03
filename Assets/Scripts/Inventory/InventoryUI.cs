@@ -177,6 +177,7 @@ public sealed class EquipmentController : MonoBehaviour
     private ItemData equippedData;
     private GameObject heldVisual;
     private WalkieTalkieController walkieTalkieController;
+    private StarterAssets.PersonController playerController;
     private CameraBattery cameraBattery;
     private CameraViewSwitcher cameraViewSwitcher;
     private ulong equippedNetworkObjectId;
@@ -189,6 +190,7 @@ public sealed class EquipmentController : MonoBehaviour
     private void Awake()
     {
         walkieTalkieController = transform.root.GetComponentInChildren<WalkieTalkieController>(true);
+        playerController = transform.root.GetComponent<StarterAssets.PersonController>();
         cameraBattery = GetComponent<CameraBattery>();
         cameraBattery.ChargeChanged += HandleCameraChargeChanged;
         EnsureHandPoint(transform);
@@ -218,6 +220,7 @@ public sealed class EquipmentController : MonoBehaviour
     {
         inventoryUI = ui;
         walkieTalkieController = cameraTransform.root.GetComponentInChildren<WalkieTalkieController>(true);
+        playerController = cameraTransform.root.GetComponent<StarterAssets.PersonController>();
         cameraViewSwitcher = cameraTransform.root.GetComponentInChildren<CameraViewSwitcher>(true);
         cameraViewSwitcher?.BindBattery(cameraBattery);
         EnsureHandPoint(cameraTransform);
@@ -233,6 +236,8 @@ public sealed class EquipmentController : MonoBehaviour
         ulong selectedNetworkObjectId = 0;
         InventoryManager.Instance?.TryGetNetworkObjectId(
             selectedItem, out selectedNetworkObjectId);
+
+        playerController?.SetInventorySelectedItem(selectedData, selectedNetworkObjectId);
 
         if (selectedData == equippedData &&
             selectedNetworkObjectId == equippedNetworkObjectId &&

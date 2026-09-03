@@ -18,10 +18,15 @@ MonoBehaviour:
   type: 2
   itemPrefab: {fileID: 318093036, guid: b496b27f889048d2bcbfc9adb4e38e15, type: 3}
   heldPrefab: {fileID: 3843316520115761962, guid: c04e2363023677243a5b3768e2948041, type: 3}
-  heldLocalPosition: {x: 0.35, y: -0.25, z: 0.55}
-  heldLocalEulerAngles: {x: 0, y: 0, z: 0}
+  heldLocalPosition: {x: 0.32, y: -0.26, z: 0.48}
+  heldLocalEulerAngles: {x: 0, y: -180, z: 0}
   heldLocalScale: {x: 0.65, y: 0.65, z: 0.65}
   supportsCloseInspection: 0
+  worldHeldPrefab: {fileID: 0}
+  attachmentBone: 18
+  worldHandLocalPosition: {x: -0.03627876, y: 0.1756928, z: 0.2156151}
+  worldHandLocalEulerAngles: {x: 0.88, y: -96.113, z: 89.727}
+  worldHandLocalScale: {x: 1, y: 1, z: 1}
   impactSound: {fileID: 0}
   impactVolume: 1
   impactNoiseRadius: 15

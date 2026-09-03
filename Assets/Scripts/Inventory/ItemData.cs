@@ -30,6 +30,14 @@ public class ItemData : ScriptableObject
     [Tooltip("Adds the reusable close-inspection behaviour to the equipped visual.")]
     public bool supportsCloseInspection;
 
+    [Header("Third Person Hand Visual")]
+    [Tooltip("상대 플레이어 화면에서 손에 표시할 프리팹입니다. 비어 있으면 Held Prefab, Item Prefab 순서로 사용합니다.")]
+    public GameObject worldHeldPrefab;
+    public HumanBodyBones attachmentBone = HumanBodyBones.RightHand;
+    public Vector3 worldHandLocalPosition;
+    public Vector3 worldHandLocalEulerAngles;
+    public Vector3 worldHandLocalScale = Vector3.one;
+
     [Header("Thrown Impact")]
     public AudioClip impactSound;
     [Range(0f, 1f)] public float impactVolume = 1f;

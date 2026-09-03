@@ -100,6 +100,7 @@ public class GetItem : MonoBehaviour, IInteractable
         ReportQuestProgress(null);
 
         onPickedUp?.Invoke();
+        PlayPickupAnimation(player);
 
         if (player != null)
         {
@@ -120,7 +121,17 @@ public class GetItem : MonoBehaviour, IInteractable
         ReportQuestProgress(GetComponentInParent<NetworkWorldItem>());
 
         onPickedUp?.Invoke();
+        PlayPickupAnimation(player);
         player?.CloseAllUI();
+    }
+
+    private static void PlayPickupAnimation(PlayerInteraction player)
+    {
+        StarterAssets.PersonController controller =
+            player != null
+                ? player.GetComponentInParent<StarterAssets.PersonController>(true)
+                : null;
+        controller?.PlayPickupAnimation();
     }
 
     private void ReportQuestProgress(NetworkWorldItem networkItem)

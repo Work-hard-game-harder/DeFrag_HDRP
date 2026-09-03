@@ -111,6 +111,8 @@ namespace StarterAssets
         private int _animIDFreeFall;
         private int _animIDMotionSpeed;
         private int _animIDCrouching = Animator.StringToHash("IsCrouching");
+        private int _animIDPickup = Animator.StringToHash("Pickup");
+        private int _animIDHolding = Animator.StringToHash("IsHolding");
 
 #if ENABLE_INPUT_SYSTEM 
         private PlayerInput _playerInput;
@@ -134,11 +136,31 @@ namespace StarterAssets
         private bool _localIsCrouching;
         private bool _localIsHiding;
         private bool _hidingRequested;
+        private bool _inventoryItemSelected;
+        private bool _walkieTalkieEquipped;
         private ISprintGate _sprintGate;
+        private PlayerHeldItemVisualPresenter _heldItemVisualPresenter;
+        private ulong _localSelectedItemNetworkId;
+        private ulong _appliedWorldItemNetworkId;
+        private bool _appliedWorldWalkieTalkie;
+        private bool _isHoldingPresentation;
+        private bool _pickupPresentationPending;
+        private bool _pickupStateEntered;
+        private int _itemUpperBodyLayerIndex = -1;
+
+        private const string ItemUpperBodyLayerName = "Upper Body Item";
+        private static readonly int ItemPickupStateHash = Animator.StringToHash("Picking Up");
+        private static readonly int ItemHoldingStateHash = Animator.StringToHash("Holding Item");
 
         private readonly NetworkVariable<bool> _networkIsCrouching = new(
             false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
         private readonly NetworkVariable<bool> _networkIsHiding = new(
+            false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+        private readonly NetworkVariable<bool> _networkIsHolding = new(
+            false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+        private readonly NetworkVariable<ulong> _networkSelectedItemId = new(
+            0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+        private readonly NetworkVariable<bool> _networkWalkieTalkieEquipped = new(
             false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
         public bool IsCrouching => !IsSpawned || IsOwner
@@ -166,6 +188,9 @@ namespace StarterAssets
         private void Awake()
         {
             _soundEmitter = GetComponentInChildren<SoundEmitter>(true);
+            _heldItemVisualPresenter = GetComponent<PlayerHeldItemVisualPresenter>();
+            if (_heldItemVisualPresenter == null)
+                _heldItemVisualPresenter = gameObject.AddComponent<PlayerHeldItemVisualPresenter>();
             if (_mainCamera == null)
             {
                 _mainCamera = GameObject.FindGameObjectWithTag("MainCamera");
@@ -193,7 +218,8 @@ namespace StarterAssets
 			Debug.LogError( "Starter Assets package is missing dependencies. Please use Tools/Starter Assets/Reinstall Dependencies to fix it");
 #endif
 
-            AssignAnimationIDs();
+            AssignAnimationIDs();
+            SetItemUpperBodyLayerWeight(_isHoldingPresentation ? 1f : 0f);
 
             // reset our timeouts on start
             _jumpTimeoutDelta = JumpTimeout;
@@ -207,8 +233,12 @@ namespace StarterAssets
             // 현재 활성화된 씬이 LobbyScene일 경우, 움직임 및 점프 로직 차단
             // if (SceneManager.GetActiveScene().name == "LobbyScene") return;
 
-            // 내 화면에 생성된 다른 사람의 캐릭터라면 여기서 조작 로직 통과 차단
-            if (IsSpawned && !IsOwner) return;
+            // 내 화면에 생성된 다른 사람의 캐릭터는 손 아이템 표현만 갱신하고 입력을 차단합니다.
+            if (IsSpawned && !IsOwner)
+            {
+                RefreshWorldHeldItemVisual();
+                return;
+            }
 
             _hasAnimator = TryGetComponent(out _animator);
 
@@ -262,6 +292,8 @@ namespace StarterAssets
 
         private void LateUpdate()
         {
+            RefreshItemUpperBodyLayer();
+
             // 마우스 움직임에 따라 시야 회전 로직도 차단
             // if (SceneManager.GetActiveScene().name == "LobbyScene") return;
             // 다른 사람 캐릭터의 카메라는 내가 마우스를 돌려도 안 움직이게 차단
@@ -285,6 +317,8 @@ namespace StarterAssets
             _animIDFreeFall = Animator.StringToHash("FreeFall");
             _animIDMotionSpeed = Animator.StringToHash("MotionSpeed");
             _animIDCrouching = Animator.StringToHash("IsCrouching");
+            _animIDPickup = Animator.StringToHash("Pickup");
+            _animIDHolding = Animator.StringToHash("IsHolding");
         }
 
         private void GroundedCheck()
@@ -308,13 +342,22 @@ namespace StarterAssets
             if (_input.look.sqrMagnitude >= _threshold && !LockCameraPosition)
             {
                 float deltaTimeMultiplier = IsCurrentDeviceMouse ? 1.0f : Time.deltaTime;
+                SettingManager settings = SettingManager.Instance;
+                float sensitivityMultiplier = settings != null
+                    ? settings.LookSensitivityMultiplier
+                    : 1f;
+                float verticalDirection = settings != null && settings.InvertY
+                    ? -1f
+                    : 1f;
 
-                // 1. 좌우 회전 - 마우스 좌우 입력으로 캐릭터 몸통 회전
-                float rotationVelocity = _input.look.x * deltaTimeMultiplier;
+                // 1. 좌우 회전 - 마우스 좌우 입력으로 캐릭터 몸통 회전
+                float rotationVelocity =
+                    _input.look.x * sensitivityMultiplier * deltaTimeMultiplier;
                 transform.Rotate(Vector3.up * rotationVelocity);
 
-                // 2. 상하 회전 - 마우스 위아래 입력으로 고개 각도 계산
-                _cinemachineTargetPitch += _input.look.y * deltaTimeMultiplier;
+                // 2. 상하 회전 - 마우스 위아래 입력으로 고개 각도 계산
+                _cinemachineTargetPitch +=
+                    _input.look.y * verticalDirection * sensitivityMultiplier * deltaTimeMultiplier;
             }
 
             // 위아래 시야각 제한
@@ -588,6 +631,356 @@ namespace StarterAssets
                 ApplyCrouchAnimation(currentValue);
         }
 
+        /// <summary>
+        /// 로컬 인벤토리에서 현재 슬롯에 실제 아이템이 선택됐을 때 호출합니다.
+        /// 워키토키 장착 상태와 합쳐 최종 홀딩 자세를 계산합니다.
+        /// </summary>
+        public void SetInventorySelectedItem(ItemData itemData, ulong networkObjectId)
+        {
+            if (IsSpawned && !IsOwner)
+                return;
+
+            _inventoryItemSelected = itemData != null;
+            _localSelectedItemNetworkId = _inventoryItemSelected ? networkObjectId : 0;
+            SubmitHoldingState(_inventoryItemSelected || _walkieTalkieEquipped);
+            SubmitSelectedItemState(_localSelectedItemNetworkId);
+        }
+
+        /// <summary>
+        /// 소유 플레이어가 워키토키를 실제로 장착하거나 해제할 때 호출합니다.
+        /// </summary>
+        public void SetWalkieTalkieEquipped(bool equipped)
+        {
+            if (IsSpawned && !IsOwner)
+                return;
+
+            _walkieTalkieEquipped = equipped;
+            SubmitHoldingState(_inventoryItemSelected || _walkieTalkieEquipped);
+            SubmitWalkieTalkieState(equipped);
+        }
+
+        /// <summary>
+        /// 아이템 획득이 확정된 뒤 Picking Up 일회성 모션을 실행합니다.
+        /// 소유자는 즉시 재생하고 서버는 나머지 클라이언트에 같은 캐릭터의 표현만 전달합니다.
+        /// </summary>
+        public void PlayPickupAnimation()
+        {
+            if (IsSpawned && !IsOwner)
+                return;
+
+            ApplyPickupAnimation();
+
+            if (!IsSpawned)
+                return;
+
+            if (IsServer)
+                PlayPickupAnimationClientRpc();
+            else
+                PlayPickupAnimationServerRpc();
+        }
+
+        private void SubmitHoldingState(bool isHolding)
+        {
+            ApplyHoldingAnimation(isHolding);
+
+            if (!IsSpawned)
+                return;
+
+            if (IsServer)
+                _networkIsHolding.Value = isHolding;
+            else
+                SetHoldingStateServerRpc(isHolding);
+        }
+
+        private void SubmitSelectedItemState(ulong networkObjectId)
+        {
+            // 소유자는 카메라용 아이템만 사용하므로 손 부착 월드 표현을 항상 제거합니다.
+            ClearWorldHeldItemVisual();
+
+            if (!IsSpawned)
+                return;
+
+            if (IsServer)
+                SetSelectedItemOnServer(networkObjectId);
+            else
+                SetSelectedItemServerRpc(networkObjectId);
+        }
+
+        private void SubmitWalkieTalkieState(bool equipped)
+        {
+            ClearWorldHeldItemVisual();
+
+            if (!IsSpawned)
+                return;
+
+            if (IsServer)
+                _networkWalkieTalkieEquipped.Value = equipped;
+            else
+                SetWalkieTalkieStateServerRpc(equipped);
+        }
+
+        [ServerRpc]
+        private void SetHoldingStateServerRpc(bool isHolding)
+        {
+            _networkIsHolding.Value = isHolding;
+        }
+
+        [ServerRpc]
+        private void SetSelectedItemServerRpc(ulong networkObjectId)
+        {
+            SetSelectedItemOnServer(networkObjectId);
+        }
+
+        [ServerRpc]
+        private void SetWalkieTalkieStateServerRpc(bool equipped)
+        {
+            _networkWalkieTalkieEquipped.Value = equipped;
+        }
+
+        private void SetSelectedItemOnServer(ulong networkObjectId)
+        {
+            if (networkObjectId == 0)
+            {
+                _networkSelectedItemId.Value = 0;
+                return;
+            }
+
+            NetworkPlayerInventory inventory = GetComponent<NetworkPlayerInventory>();
+            _networkSelectedItemId.Value =
+                inventory != null && inventory.ServerOwnsHeldItem(networkObjectId)
+                    ? networkObjectId
+                    : 0;
+        }
+
+        [ServerRpc]
+        private void PlayPickupAnimationServerRpc()
+        {
+            ApplyPickupAnimation();
+            PlayPickupAnimationClientRpc();
+        }
+
+        [ClientRpc]
+        private void PlayPickupAnimationClientRpc()
+        {
+            // 서버 표현은 ServerRpc에서, 소유자 표현은 입력 시점에 이미 적용됐습니다.
+            if (IsServer || IsOwner)
+                return;
+
+            ApplyPickupAnimation();
+        }
+
+        private void OnNetworkHoldingChanged(bool previousValue, bool currentValue)
+        {
+            if (!IsOwner)
+            {
+                ApplyHoldingAnimation(currentValue);
+                RefreshWorldHeldItemVisual();
+            }
+        }
+
+        private void OnNetworkSelectedItemChanged(ulong previousValue, ulong currentValue)
+        {
+            _appliedWorldItemNetworkId = 0;
+            if (!IsOwner)
+                RefreshWorldHeldItemVisual();
+        }
+
+        private void OnNetworkWalkieTalkieChanged(bool previousValue, bool currentValue)
+        {
+            _appliedWorldWalkieTalkie = false;
+            if (!IsOwner)
+                RefreshWorldHeldItemVisual();
+        }
+
+        private void RefreshWorldHeldItemVisual()
+        {
+            if (IsOwner || (IsServer && !IsClient))
+            {
+                ClearWorldHeldItemVisual();
+                return;
+            }
+
+            ulong targetId = _networkSelectedItemId.Value;
+            bool shouldShowWalkieTalkie = _networkWalkieTalkieEquipped.Value ||
+                                         (_networkIsHolding.Value && targetId == 0);
+            if (shouldShowWalkieTalkie)
+            {
+                if (_appliedWorldWalkieTalkie &&
+                    _heldItemVisualPresenter != null &&
+                    _heldItemVisualPresenter.HasVisual)
+                {
+                    return;
+                }
+
+                _appliedWorldWalkieTalkie = false;
+
+                WalkieTalkieController walkieTalkie =
+                    GetComponentInChildren<WalkieTalkieController>(true);
+                if (walkieTalkie == null || walkieTalkie.WorldVisualPrefab == null)
+                    return;
+
+                _heldItemVisualPresenter?.Show(
+                    walkieTalkie.WorldVisualPrefab,
+                    "WalkieTalkie",
+                    walkieTalkie.WorldAttachmentBone,
+                    walkieTalkie.WorldHandLocalPosition,
+                    walkieTalkie.WorldHandLocalEulerAngles,
+                    walkieTalkie.WorldHandLocalScale);
+                _appliedWorldWalkieTalkie =
+                    _heldItemVisualPresenter != null &&
+                    _heldItemVisualPresenter.HasVisual;
+                _appliedWorldItemNetworkId = 0;
+                return;
+            }
+
+            if (targetId == 0)
+            {
+                ClearWorldHeldItemVisual();
+                return;
+            }
+
+            if (_appliedWorldItemNetworkId == targetId &&
+                _heldItemVisualPresenter != null &&
+                _heldItemVisualPresenter.HasVisual)
+            {
+                return;
+            }
+
+            _appliedWorldItemNetworkId = 0;
+
+            if (NetworkManager == null ||
+                !NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(
+                    targetId, out NetworkObject itemObject) ||
+                !itemObject.TryGetComponent(out NetworkWorldItem worldItem) ||
+                worldItem.Data == null)
+            {
+                return;
+            }
+
+            _heldItemVisualPresenter?.Show(worldItem.Data);
+            if (_heldItemVisualPresenter != null && _heldItemVisualPresenter.HasVisual)
+                _appliedWorldItemNetworkId = targetId;
+        }
+
+        private void ClearWorldHeldItemVisual()
+        {
+            _heldItemVisualPresenter?.Clear();
+            _appliedWorldItemNetworkId = 0;
+            _appliedWorldWalkieTalkie = false;
+        }
+
+        private void ApplyHoldingAnimation(bool isHolding)
+        {
+            _isHoldingPresentation = isHolding;
+
+            if (TryResolveAnimatorParameter(
+                    _animIDHolding,
+                    AnimatorControllerParameterType.Bool))
+            {
+                _animator.SetBool(_animIDHolding, isHolding);
+            }
+
+            if (isHolding)
+            {
+                SetItemUpperBodyLayerWeight(1f);
+            }
+            else if (!_pickupPresentationPending)
+            {
+                // 아무것도 들지 않을 때는 Override 레이어를 완전히 제외해
+                // 기본 이동 애니메이션의 팔을 내린 자세로 즉시 복귀시킵니다.
+                SetItemUpperBodyLayerWeight(0f);
+            }
+        }
+
+        private void ApplyPickupAnimation()
+        {
+            if (!TryResolveAnimatorParameter(
+                    _animIDPickup,
+                    AnimatorControllerParameterType.Trigger))
+            {
+                return;
+            }
+
+            _animator.ResetTrigger(_animIDPickup);
+            _pickupPresentationPending = true;
+            _pickupStateEntered = false;
+            SetItemUpperBodyLayerWeight(1f);
+            _animator.SetTrigger(_animIDPickup);
+        }
+
+        private void RefreshItemUpperBodyLayer()
+        {
+            if (!TryResolveItemUpperBodyLayer())
+                return;
+
+            AnimatorStateInfo current =
+                _animator.GetCurrentAnimatorStateInfo(_itemUpperBodyLayerIndex);
+            bool isInTransition = _animator.IsInTransition(_itemUpperBodyLayerIndex);
+            AnimatorStateInfo next = isInTransition
+                ? _animator.GetNextAnimatorStateInfo(_itemUpperBodyLayerIndex)
+                : default;
+            bool isPickupState = current.shortNameHash == ItemPickupStateHash ||
+                                 (isInTransition && next.shortNameHash == ItemPickupStateHash);
+
+            if (isPickupState)
+                _pickupStateEntered = true;
+
+            if (_pickupPresentationPending && _pickupStateEntered && !isPickupState)
+            {
+                bool reachedHolding = current.shortNameHash == ItemHoldingStateHash ||
+                                      (isInTransition &&
+                                       next.shortNameHash == ItemHoldingStateHash);
+                if (reachedHolding || !_isHoldingPresentation)
+                    _pickupPresentationPending = false;
+            }
+
+            bool shouldUseItemLayer = _isHoldingPresentation || _pickupPresentationPending;
+            _animator.SetLayerWeight(_itemUpperBodyLayerIndex, shouldUseItemLayer ? 1f : 0f);
+        }
+
+        private void SetItemUpperBodyLayerWeight(float weight)
+        {
+            if (TryResolveItemUpperBodyLayer())
+                _animator.SetLayerWeight(_itemUpperBodyLayerIndex, weight);
+        }
+
+        private bool TryResolveItemUpperBodyLayer()
+        {
+            if (_animator == null)
+                _animator = GetComponent<Animator>();
+
+            if (_animator == null || _animator.runtimeAnimatorController == null)
+                return false;
+
+            if (_itemUpperBodyLayerIndex < 0 ||
+                _itemUpperBodyLayerIndex >= _animator.layerCount)
+            {
+                _itemUpperBodyLayerIndex =
+                    _animator.GetLayerIndex(ItemUpperBodyLayerName);
+            }
+
+            return _itemUpperBodyLayerIndex >= 0;
+        }
+
+        private bool TryResolveAnimatorParameter(
+            int parameterId,
+            AnimatorControllerParameterType expectedType)
+        {
+            if (_animator == null)
+                _animator = GetComponent<Animator>();
+
+            if (_animator == null || _animator.runtimeAnimatorController == null)
+                return false;
+
+            foreach (AnimatorControllerParameter parameter in _animator.parameters)
+            {
+                if (parameter.nameHash == parameterId && parameter.type == expectedType)
+                    return true;
+            }
+
+            return false;
+        }
+
         private static float ClampAngle(float lfAngle, float lfMin, float lfMax)
         {
             if (lfAngle < -360f) lfAngle += 360f;
@@ -663,12 +1056,26 @@ namespace StarterAssets
         public override void OnNetworkSpawn()
         {
             _networkIsCrouching.OnValueChanged += OnNetworkCrouchingChanged;
+            _networkIsHolding.OnValueChanged += OnNetworkHoldingChanged;
+            _networkSelectedItemId.OnValueChanged += OnNetworkSelectedItemChanged;
+            _networkWalkieTalkieEquipped.OnValueChanged += OnNetworkWalkieTalkieChanged;
 
             if (_soundEmitter == null)
                 _soundEmitter = GetComponentInChildren<SoundEmitter>(true);
 
             ConfigureLocalPlayerPresentation();
             ApplyCrouchAnimation(IsCrouching);
+            if (IsOwner)
+            {
+                SubmitHoldingState(_inventoryItemSelected || _walkieTalkieEquipped);
+                SubmitSelectedItemState(_localSelectedItemNetworkId);
+                SubmitWalkieTalkieState(_walkieTalkieEquipped);
+            }
+            else
+            {
+                ApplyHoldingAnimation(_networkIsHolding.Value);
+                RefreshWorldHeldItemVisual();
+            }
 
             if (IsOwner)
             {
@@ -712,6 +1119,10 @@ namespace StarterAssets
         public override void OnNetworkDespawn()
         {
             _networkIsCrouching.OnValueChanged -= OnNetworkCrouchingChanged;
+            _networkIsHolding.OnValueChanged -= OnNetworkHoldingChanged;
+            _networkSelectedItemId.OnValueChanged -= OnNetworkSelectedItemChanged;
+            _networkWalkieTalkieEquipped.OnValueChanged -= OnNetworkWalkieTalkieChanged;
+            ClearWorldHeldItemVisual();
             SetLocalInputEnabled(false);
             base.OnNetworkDespawn();
         }

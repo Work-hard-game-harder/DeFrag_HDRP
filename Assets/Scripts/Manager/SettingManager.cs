@@ -30,6 +30,7 @@ public class SettingManager : MonoBehaviour
     private const string KEY_BGM = "Setting_BGM";
     private const string KEY_SFX = "Setting_SFX";
     private const string KEY_MOUSE_SENSITIVITY = "Setting_MouseSensitivity";
+    private const string KEY_MOUSE_SENSITIVITY_VERSION = "Setting_MouseSensitivityVersion";
     private const string KEY_BRIGHTNESS = "brightness.exposure";  // BrightnessScript와 동일 키 유지
     private const string KEY_BRIGHTNESS_FIRST = "brightness.firstRun";
     private const string KEY_MIC_VOLUME = "Setting_MicVolume";
@@ -46,7 +47,12 @@ public class SettingManager : MonoBehaviour
     // ──────────────────────────────────────────────
     private const float DEFAULT_BGM = 1.0f;
     private const float DEFAULT_SFX = 1.0f;
-    private const float DEFAULT_MOUSE_SENSITIVITY = 0.5f;
+    private const int MOUSE_SENSITIVITY_VERSION = 2;
+    private const float MIN_MOUSE_SENSITIVITY = 0f;
+    private const float DEFAULT_MOUSE_SENSITIVITY = 5f;
+    private const float MAX_MOUSE_SENSITIVITY = 10f;
+    private const float MIN_LOOK_MULTIPLIER = 0.1f;
+    private const float MAX_LOOK_MULTIPLIER = 2f;
     private const float DEFAULT_BRIGHTNESS = 0f;
     private const float DEFAULT_MIC_VOLUME = 10f;  // MicVolumeController 기본값과 동일
     private const int DEFAULT_MIC_INDEX = 0;
@@ -147,6 +153,32 @@ public class SettingManager : MonoBehaviour
     public int DisplayModeIndex { get; private set; } // 0 = FullScreenWindow, 1 = Window
 
     /// <summary>
+    /// UI 감도 0~10을 실제 시야 회전 배율로 변환합니다.
+    /// 0 = 0.1배, 5 = 1배, 10 = 2배입니다.
+    /// </summary>
+    public float LookSensitivityMultiplier
+    {
+        get
+        {
+            float sensitivity = Mathf.Clamp(
+                MouseSensitivity,
+                MIN_MOUSE_SENSITIVITY,
+                MAX_MOUSE_SENSITIVITY);
+
+            if (sensitivity <= DEFAULT_MOUSE_SENSITIVITY)
+            {
+                float normalized = sensitivity / DEFAULT_MOUSE_SENSITIVITY;
+                return Mathf.Lerp(MIN_LOOK_MULTIPLIER, 1f, normalized);
+            }
+
+            float upperNormalized =
+                (sensitivity - DEFAULT_MOUSE_SENSITIVITY) /
+                (MAX_MOUSE_SENSITIVITY - DEFAULT_MOUSE_SENSITIVITY);
+            return Mathf.Lerp(1f, MAX_LOOK_MULTIPLIER, upperNormalized);
+        }
+    }
+
+    /// <summary>
     /// 로컬 화면의 해상도 적용이 완료된 다음 프레임에 호출됩니다.
     /// 비율별 별도 레이아웃이 필요한 UI만 선택적으로 구독하면 됩니다.
     /// </summary>
@@ -201,7 +233,6 @@ public class SettingManager : MonoBehaviour
     // ──────────────────────────────────────────────
     private void Awake()
     {
-        ClearSettingsPrefs();
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
@@ -279,6 +310,7 @@ public class SettingManager : MonoBehaviour
     {
         InitResolutionDropdown(); // 해상도 목록 먼저 구성 (optimal 인덱스 계산)
         InitMicDropdown();        // 마이크 목록 구성
+        InitMouseSensitivitySlider(); // 마우스 감도 범위 설정
         InitBrightnessSlider();   // 밝기 슬라이더 범위 설정
         InitMicVolumeSlider();    // 마이크 볼륨 슬라이더 범위 설정
 
@@ -468,6 +500,14 @@ public class SettingManager : MonoBehaviour
         if (brightnessSlider == null) return;
         brightnessSlider.minValue = MIN_EXPOSURE;
         brightnessSlider.maxValue = MAX_EXPOSURE;
+    }
+
+    private void InitMouseSensitivitySlider()
+    {
+        if (mouseSensitivitySlider == null) return;
+        mouseSensitivitySlider.minValue = MIN_MOUSE_SENSITIVITY;
+        mouseSensitivitySlider.maxValue = MAX_MOUSE_SENSITIVITY;
+        mouseSensitivitySlider.wholeNumbers = false;
     }
 
     private void InitMicVolumeSlider()
@@ -924,6 +964,7 @@ public class SettingManager : MonoBehaviour
         PlayerPrefs.SetFloat(KEY_BGM, BGM);
         PlayerPrefs.SetFloat(KEY_SFX, SFX);
         PlayerPrefs.SetFloat(KEY_MOUSE_SENSITIVITY, MouseSensitivity);
+        PlayerPrefs.SetInt(KEY_MOUSE_SENSITIVITY_VERSION, MOUSE_SENSITIVITY_VERSION);
         PlayerPrefs.SetFloat(KEY_BRIGHTNESS, Brightness);
         PlayerPrefs.SetFloat(KEY_MIC_VOLUME, MicVolume);
         PlayerPrefs.SetInt(KEY_MIC_INDEX, MicIndex);
@@ -945,7 +986,7 @@ public class SettingManager : MonoBehaviour
     {
         BGM = PlayerPrefs.GetFloat(KEY_BGM, DEFAULT_BGM);
         SFX = PlayerPrefs.GetFloat(KEY_SFX, DEFAULT_SFX);
-        MouseSensitivity = PlayerPrefs.GetFloat(KEY_MOUSE_SENSITIVITY, DEFAULT_MOUSE_SENSITIVITY);
+        MouseSensitivity = LoadMouseSensitivity();
         MicVolume = PlayerPrefs.GetFloat(KEY_MIC_VOLUME, DEFAULT_MIC_VOLUME);
         MicIndex = PlayerPrefs.GetInt(KEY_MIC_INDEX, DEFAULT_MIC_INDEX);
         // InitResolutionDropdown에서 저장된 실제 크기를 16:9 목록의 인덱스로 변환합니다.
@@ -968,6 +1009,30 @@ public class SettingManager : MonoBehaviour
                 colorAdjustments != null ? colorAdjustments.postExposure.value : DEFAULT_BRIGHTNESS);
             Brightness = Mathf.Clamp(saved, MIN_EXPOSURE, MAX_EXPOSURE);
         }
+    }
+
+    private float LoadMouseSensitivity()
+    {
+        if (!PlayerPrefs.HasKey(KEY_MOUSE_SENSITIVITY))
+            return DEFAULT_MOUSE_SENSITIVITY;
+
+        float savedValue = PlayerPrefs.GetFloat(
+            KEY_MOUSE_SENSITIVITY,
+            DEFAULT_MOUSE_SENSITIVITY);
+
+        // 이전 버전의 0~1 감도 저장값을 새 0~10 범위로 한 번 변환합니다.
+        if (PlayerPrefs.GetInt(KEY_MOUSE_SENSITIVITY_VERSION, 1) < MOUSE_SENSITIVITY_VERSION)
+        {
+            savedValue *= MAX_MOUSE_SENSITIVITY;
+            PlayerPrefs.SetFloat(KEY_MOUSE_SENSITIVITY, savedValue);
+            PlayerPrefs.SetInt(KEY_MOUSE_SENSITIVITY_VERSION, MOUSE_SENSITIVITY_VERSION);
+            PlayerPrefs.Save();
+        }
+
+        return Mathf.Clamp(
+            savedValue,
+            MIN_MOUSE_SENSITIVITY,
+            MAX_MOUSE_SENSITIVITY);
     }
 
     // ──────────────────────────────────────────────
@@ -1010,7 +1075,13 @@ public class SettingManager : MonoBehaviour
 
         if (mouseSensitivitySlider != null)
             mouseSensitivitySlider.onValueChanged.AddListener(v =>
-            { MouseSensitivity = v; SaveSettings(); });
+            {
+                MouseSensitivity = Mathf.Clamp(
+                    v,
+                    MIN_MOUSE_SENSITIVITY,
+                    MAX_MOUSE_SENSITIVITY);
+                SaveSettings();
+            });
 
         // BrightnessScript.OnExposureChanged 로직 통합 — 슬라이더 조작 시 부드러운 전환
         if (brightnessSlider != null)
@@ -1221,6 +1292,7 @@ public class SettingManager : MonoBehaviour
         PlayerPrefs.DeleteKey(KEY_BGM);
         PlayerPrefs.DeleteKey(KEY_SFX);
         PlayerPrefs.DeleteKey(KEY_MOUSE_SENSITIVITY);
+        PlayerPrefs.DeleteKey(KEY_MOUSE_SENSITIVITY_VERSION);
         PlayerPrefs.DeleteKey(KEY_BRIGHTNESS);
         PlayerPrefs.DeleteKey(KEY_BRIGHTNESS_FIRST);
         PlayerPrefs.DeleteKey(KEY_MIC_VOLUME);

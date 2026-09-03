@@ -22,6 +22,11 @@ MonoBehaviour:
   heldLocalEulerAngles: {x: 0, y: 0, z: 0}
   heldLocalScale: {x: 1, y: 1, z: 1}
   supportsCloseInspection: 1
+  worldHeldPrefab: {fileID: 0}
+  attachmentBone: 18
+  worldHandLocalPosition: {x: -0.07796095, y: 0.2138447, z: 0.1182085}
+  worldHandLocalEulerAngles: {x: 5.218, y: -95.074, z: 181.33}
+  worldHandLocalScale: {x: 1, y: 1, z: 1}
   impactSound: {fileID: 8300000, guid: b776eb75fda382649afd6cf25744085b, type: 3}
   impactVolume: 1
   impactNoiseRadius: 15
