@@ -2131,6 +2131,9 @@ MonoBehaviour:
   blurRadius:
     m_OverrideState: 1
     m_Value: 0.012
+  fullScreenBlend:
+    m_OverrideState: 1
+    m_Value: 0
 --- !u!114 &5068645084824082595
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -2379,10 +2382,10 @@ MonoBehaviour:
     m_Value: 0
   limitMin:
     m_OverrideState: 1
-    m_Value: -1
+    m_Value: 11.584001
   limitMax:
     m_OverrideState: 1
-    m_Value: 14
+    m_Value: 10.815999
   curveMap:
     m_OverrideState: 1
     m_Value:

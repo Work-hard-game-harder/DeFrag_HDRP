@@ -32,7 +32,10 @@ namespace DeFrag.B1F
         [Tooltip("페이드와 컷씬 전용 UI만 넣는 독립 Canvas입니다. 일반 HUD의 부모 Canvas를 지정하지 마세요.")]
         [SerializeField] private Canvas cutsceneCanvas;
 
+        [SerializeField] private SubtitleTrigger subtitleAfterCutscene;
+
         private Coroutine playback;
+        private bool postCutsceneSubtitlePlayed;
         private bool requested;
         private bool presenting;
         private bool playbackStopped;
@@ -139,8 +142,18 @@ namespace DeFrag.B1F
                 RestoreLocalPresentation();
                 playback = null;
             }
+            FinishCutscene();
         }
+        private void FinishCutscene()
+        {
+            if (postCutsceneSubtitlePlayed)
+                return;
 
+            postCutsceneSubtitlePlayed = true;
+
+            if (subtitleAfterCutscene != null)
+                subtitleAfterCutscene.PlaySubtitleFromInteract();
+        }
         private bool IsLocalPlayerAvailable()
         {
             if (localPlayer == null || !localPlayer.IsSpawned || !localPlayer.IsOwner)
@@ -292,6 +305,18 @@ namespace DeFrag.B1F
             GameplayInputGate.Release(this);
             playerCameras = null;
             cameraEnabledStates = null;
+        }
+
+        public void CompletePlayback()
+        {
+            if (playback != null)
+            {
+                StopCoroutine(playback);
+                playback = null;
+            }
+
+            RestoreLocalPresentation();
+            FinishCutscene();
         }
 
         public void StopPlayback()

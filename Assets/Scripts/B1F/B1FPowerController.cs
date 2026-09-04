@@ -309,7 +309,7 @@ namespace DeFrag.B1F
         [ClientRpc]
         private void StopMonsterSpawnTimelineClientRpc()
         {
-            spawnTimeline?.StopPlayback();
+            spawnTimeline?.CompletePlayback();
         }
     }
 }

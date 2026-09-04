@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &1787442827481936367
+--- !u!1 &9221983827921746579
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,57 +8,57 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1713009666838686329}
-  - component: {fileID: 4228886250780751123}
-  - component: {fileID: 902095292313774120}
-  - component: {fileID: 3552700102374996924}
-  - component: {fileID: 2321117237819708562}
-  - component: {fileID: 2745499021650977908}
-  - component: {fileID: 5659517116616755858}
-  - component: {fileID: 2693716351073891675}
-  - component: {fileID: 8736213195540558673}
-  - component: {fileID: 6887377525440206490}
-  - component: {fileID: 5074947752071850352}
-  - component: {fileID: 7426002312885863487}
-  - component: {fileID: 6971359326888061009}
-  - component: {fileID: 3728587073692017066}
+  - component: {fileID: 4637954064140636383}
+  - component: {fileID: 6555444892742147851}
+  - component: {fileID: 8856882571763038255}
+  - component: {fileID: 7301490125000503859}
+  - component: {fileID: 6543721311832683882}
+  - component: {fileID: 2969449763252820268}
+  - component: {fileID: 601558509148669378}
+  - component: {fileID: 7245579583788849594}
+  - component: {fileID: 7116967895065448600}
+  - component: {fileID: 5836541735679528741}
+  - component: {fileID: 4687433004346784594}
+  - component: {fileID: 5811177121324490075}
+  - component: {fileID: 2491433487970382885}
+  - component: {fileID: 7220552291439051093}
   m_Layer: 0
-  m_Name: Sphere
+  m_Name: Mouse_Monster
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &1713009666838686329
+--- !u!4 &4637954064140636383
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1787442827481936367}
+  m_GameObject: {fileID: 9221983827921746579}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.12115079, y: 0.6966509, z: 0.6966509, w: 0.12115079}
-  m_LocalPosition: {x: 0.008300304, y: 0, z: -0.047734022}
-  m_LocalScale: {x: 100, y: 100, z: 100}
-  m_ConstrainProportionsScale: 0
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 15.1, y: 3.0999982, z: 0.3052793}
+  m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
+  m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 6803157584578710819}
-  m_LocalEulerAnglesHint: {x: -90, y: 0, z: 160.269}
---- !u!33 &4228886250780751123
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &6555444892742147851
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1787442827481936367}
-  m_Mesh: {fileID: 4711208715938537054, guid: 6e1f3279219372d4fa4ae2e618e3edf0, type: 3}
---- !u!23 &902095292313774120
+  m_GameObject: {fileID: 9221983827921746579}
+  m_Mesh: {fileID: 4711208715938537054, guid: bf7b470076d1c4e4082be924fad88bb7, type: 3}
+--- !u!23 &8856882571763038255
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1787442827481936367}
+  m_GameObject: {fileID: 9221983827921746579}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -101,13 +101,13 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!135 &3552700102374996924
+--- !u!135 &7301490125000503859
 SphereCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1787442827481936367}
+  m_GameObject: {fileID: 9221983827921746579}
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -120,134 +120,15 @@ SphereCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Radius: 0.009882008
-  m_Center: {x: 0, y: 0.00024589058, z: 0.00003203284}
---- !u!195 &2321117237819708562
-NavMeshAgent:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1787442827481936367}
-  m_Enabled: 1
-  m_AgentTypeID: 0
-  m_Radius: 0.009914041
-  m_Speed: 3.5
-  m_Acceleration: 8
-  avoidancePriority: 50
-  m_AngularSpeed: 120
-  m_StoppingDistance: 0
-  m_AutoTraverseOffMeshLink: 1
-  m_AutoBraking: 1
-  m_AutoRepath: 1
-  m_Height: 0.019744195
-  m_BaseOffset: 0.0098720975
-  m_WalkableMask: 4294967295
-  m_ObstacleAvoidanceType: 4
---- !u!82 &2745499021650977908
-AudioSource:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1787442827481936367}
-  m_Enabled: 1
-  serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 0}
-  m_PlayOnAwake: 0
-  m_Volume: 1
-  m_Pitch: 1
-  Loop: 0
-  Mute: 0
-  Spatialize: 0
-  SpatializePostEffects: 0
-  Priority: 128
-  DopplerLevel: 1
-  MinDistance: 1
-  MaxDistance: 30
-  Pan2D: 0
-  rolloffMode: 0
-  BypassEffects: 0
-  BypassListenerEffects: 0
-  BypassReverbZones: 0
-  rolloffCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 1
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  panLevelCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  spreadCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  reverbZoneMixCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
---- !u!114 &5659517116616755858
+  m_Radius: 0.5
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &6543721311832683882
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1787442827481936367}
+  m_GameObject: {fileID: 9221983827921746579}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8d7b55c7ecdb49a4a89fa5e6f9022861, type: 3}
@@ -305,13 +186,159 @@ MonoBehaviour:
       Version: 1.7.14
   gizmoViewMode: 2
   showBehaviorDesignerGizmo: 1
---- !u!114 &2693716351073891675
+--- !u!195 &2969449763252820268
+NavMeshAgent:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9221983827921746579}
+  m_Enabled: 1
+  m_AgentTypeID: -334000983
+  m_Radius: 1.5
+  m_Speed: 2
+  m_Acceleration: 8
+  avoidancePriority: 50
+  m_AngularSpeed: 120
+  m_StoppingDistance: 1
+  m_AutoTraverseOffMeshLink: 1
+  m_AutoBraking: 1
+  m_AutoRepath: 1
+  m_Height: 2
+  m_BaseOffset: 1
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 4
+--- !u!82 &601558509148669378
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9221983827921746579}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 0
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 0
+  MinDistance: 10
+  MaxDistance: 30
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1.1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 0.57806396
+      inSlope: -0.2177617
+      outSlope: -0.2177617
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.23193926
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0.7361111
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!114 &7245579583788849594
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1787442827481936367}
+  m_GameObject: {fileID: 9221983827921746579}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f13192137cc4b09b76405c390ec8b97, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Combat.MonsterAttackHitbox
+  damage: 30
+  targetLayers:
+    serializedVersion: 2
+    m_Bits: 128
+  triggerInteraction: 1
+  shape: 0
+  hitboxOrigin: {fileID: 4637954064140636383}
+  localCenter: {x: 0, y: 0, z: 0}
+  sphereRadius: 2.39
+  boxSize: {x: 3, y: 2, z: 3}
+  capsuleRadius: 1
+  capsuleHeight: 2
+  resolveOnContactEnter: 0
+  contactCooldown: 1
+  gizmoColor: {r: 1, g: 0.15, b: 0.1, a: 0.25}
+--- !u!114 &7116967895065448600
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9221983827921746579}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 843ef19a22bf423f90325c42caf03c72, type: 3}
@@ -319,20 +346,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Monsters.B2F.B2FMonsterVoiceMimic
   recordingFolderName: WalkieTalkieRecordings
   folderScanInterval: 1
-  mimicAudioSource: {fileID: 2745499021650977908}
+  mimicAudioSource: {fileID: 601558509148669378}
   playbackVolume: 1
   mimicPlaybackRange: 30
   deleteFileAfterPlayback: 1
   mimicVoiceClipsList: []
   loadedFilePaths: []
   playbackRangeColor: {r: 1, g: 0.55, b: 0, a: 0.18}
---- !u!114 &8736213195540558673
+--- !u!114 &5836541735679528741
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1787442827481936367}
+  m_GameObject: {fileID: 9221983827921746579}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 75e6f445c71d4f11acbcce68fa294e1f, type: 3}
@@ -346,41 +373,41 @@ MonoBehaviour:
   showDetectionGizmos: 1
   maximumRangeColor: {r: 0.15, g: 0.45, b: 1, a: 0.65}
   currentRangeColor: {r: 0.1, g: 1, b: 0.2, a: 0.9}
---- !u!114 &6887377525440206490
+--- !u!114 &4687433004346784594
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1787442827481936367}
+  m_GameObject: {fileID: 9221983827921746579}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 57f0194b022446f098c991753e39448d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Monsters.B2F.B2FMonsterVision
-  viewDistance: 10
+  viewDistance: 12
   fieldOfView: 37
   obstacleMask:
     serializedVersion: 2
     m_Bits: 1281
-  eyeHeight: -1.31
+  eyeHeight: -1.3
   targetHeightOffset: 1
   showVisionGizmo: 1
   visionColor: {r: 1, g: 0.85, b: 0.1, a: 0.8}
   arcSegments: 16
---- !u!114 &5074947752071850352
+--- !u!114 &5811177121324490075
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1787442827481936367}
+  m_GameObject: {fileID: 9221983827921746579}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3946108872
+  GlobalObjectIdHash: 2457254072
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -394,13 +421,13 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
---- !u!114 &7426002312885863487
+--- !u!114 &2491433487970382885
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1787442827481936367}
+  m_GameObject: {fileID: 9221983827921746579}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e96cb6065543e43c4a752faaa1468eb1, type: 3}
@@ -440,77 +467,18 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
---- !u!114 &6971359326888061009
+--- !u!114 &7220552291439051093
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1787442827481936367}
+  m_GameObject: {fileID: 9221983827921746579}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8c9d31e6fd8a4da2a1d1f63c0e5c8f47, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Monsters.Common.NetworkMonsterPlayerTargetResolver
-  behaviorTree: {fileID: 0}
+  behaviorTree: {fileID: 6543721311832683882}
   targetVariableName: PlayerTarget
   refreshInterval: 0.2
---- !u!114 &3728587073692017066
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1787442827481936367}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6f13192137cc4b09b76405c390ec8b97, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Combat.MonsterAttackHitbox
-  damage: 10
-  targetLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  triggerInteraction: 2
-  shape: 0
-  hitboxOrigin: {fileID: 0}
-  localCenter: {x: 0, y: 0, z: 0}
-  sphereRadius: 1.5
-  boxSize: {x: 3, y: 2, z: 3}
-  capsuleRadius: 1
-  capsuleHeight: 2
-  resolveOnContactEnter: 0
-  contactCooldown: 1
-  gizmoColor: {r: 1, g: 0.15, b: 0.1, a: 0.25}
---- !u!1 &6098135149966410794
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 6803157584578710819}
-  m_Layer: 0
-  m_Name: Mouse_Monster
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &6803157584578710819
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6098135149966410794}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 5.508983, y: 3.37, z: 3.76}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1713009666838686329}
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

@@ -42,6 +42,8 @@ public class ItemData : ScriptableObject
     public AudioClip impactSound;
     [Range(0f, 1f)] public float impactVolume = 1f;
     [Min(0f)] public float impactNoiseRadius = 15f;
+    [Tooltip("이 속도보다 약한 접촉은 낙하 충돌 소음으로 처리하지 않습니다.")]
+    [Min(0f)] public float minimumImpactSpeed = 0.5f;
 
     [Header("아이템 설명")]
     [TextArea]

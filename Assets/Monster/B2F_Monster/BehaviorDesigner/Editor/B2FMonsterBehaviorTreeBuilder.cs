@@ -72,6 +72,14 @@ namespace DeFrag.Monsters.B2F.Editor
                     : monster.AddComponent<B2FPlayerVoicePerception>();
             }
 
+            B2FWorldNoisePerception worldNoisePerception = monster.GetComponent<B2FWorldNoisePerception>();
+            if (worldNoisePerception == null)
+            {
+                worldNoisePerception = recordUndo
+                    ? Undo.AddComponent<B2FWorldNoisePerception>(monster)
+                    : monster.AddComponent<B2FWorldNoisePerception>();
+            }
+
             B2FMonsterVision vision = monster.GetComponent<B2FMonsterVision>();
             if (vision == null)
             {
@@ -163,13 +171,13 @@ namespace DeFrag.Monsters.B2F.Editor
 
             // IDs follow the serialized depth-first tree order. Behavior Designer 1.7.14 can
             // lose parent-child links when newly inserted branches use IDs after later siblings.
-            var investigate = Node(new Sequence(), 8, "Investigate Voice", 300f, 260f);
+            var investigate = Node(new Sequence(), 8, "Investigate Sound", 300f, 260f);
             SetAbortType(investigate, AbortType.LowerPriority);
             investigate.AddChild(Node(new CanHearPlayerVoice
             {
                 playerTarget = playerTarget,
                 lastKnownPosition = lastKnownPosition
-            }, 9, "Can Hear Player Voice", 230f, 400f), 0);
+            }, 9, "Can Hear Voice Or World Noise", 230f, 400f), 0);
             investigate.AddChild(Node(new InvestigateHeardVoice
             {
                 playerTarget = playerTarget,
@@ -178,7 +186,7 @@ namespace DeFrag.Monsters.B2F.Editor
                 investigateRadius = investigateRadius,
                 moveSpeed = walkSpeed,
                 voicePositionUpdateInterval = voicePositionUpdateInterval
-            }, 10, "Investigate Heard Voice", 370f, 400f), 1);
+            }, 10, "Investigate Heard Sound", 370f, 400f), 1);
 
             var patrol = Node(new Sequence(), 11, "Patrol", 600f, 260f);
             var parallel = Node(new Parallel(), 12, "Patrol And Voice Mimic", 360f, 400f);

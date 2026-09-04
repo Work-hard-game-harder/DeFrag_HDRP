@@ -4,24 +4,6 @@ using EasyPeasyFirstPersonController;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public static class WorldNoiseSystem
-{
-    public static event Action<Vector3, float> NoiseEmitted;
-    public static event Action<Vector3, float> UrgentNoiseEmitted;
-
-    public static void Emit(Vector3 position, float radius)
-    {
-        if (radius <= 0f) return;
-        NoiseEmitted?.Invoke(position, radius);
-    }
-
-    public static void EmitUrgent(Vector3 position, float radius)
-    {
-        if (radius <= 0f) return;
-        UrgentNoiseEmitted?.Invoke(position, radius);
-    }
-}
-
 public class PlayerItemDropper : MonoBehaviour
 {
     [Header("References")]
@@ -155,9 +137,21 @@ public class PlayerItemDropper : MonoBehaviour
         else
         {
             PlaceOnGround(spawned.transform, spawnedColliders, rb);
+            PlayLocalImpactAndEmitNoise(spawned.transform.position, selectedItem.itemData);
         }
 
         InventoryManager.Instance.RemoveItem(selectedItem);
+    }
+
+    private static void PlayLocalImpactAndEmitNoise(Vector3 position, ItemData itemData)
+    {
+        if (itemData == null)
+            return;
+
+        if (itemData.impactSound != null)
+            AudioSource.PlayClipAtPoint(itemData.impactSound, position, itemData.impactVolume);
+
+        WorldNoiseSystem.Emit(position, itemData.impactNoiseRadius);
     }
 
     private void RequestNetworkDrop(

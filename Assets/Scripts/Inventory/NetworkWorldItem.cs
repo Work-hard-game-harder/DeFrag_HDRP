@@ -38,6 +38,11 @@ public sealed class NetworkWorldItem : NetworkBehaviour
             NetworkVariableReadPermission.Everyone,
             NetworkVariableWritePermission.Server);
 
+    private bool impactNoiseArmed;
+    private float impactNoiseReadyAt;
+
+    private const float ImpactArmDelay = 0.1f;
+
     public ItemData Data => itemData;
     public NetworkItemState State => state.Value;
     public ulong HolderClientId => holderClientId.Value;
@@ -112,6 +117,7 @@ public sealed class NetworkWorldItem : NetworkBehaviour
         if (state.Value != NetworkItemState.World)
             return false;
 
+        impactNoiseArmed = false;
         holderClientId.Value = newHolderClientId;
         state.Value = NetworkItemState.Held;
         return true;
@@ -142,7 +148,43 @@ public sealed class NetworkWorldItem : NetworkBehaviour
             itemRigidbody.angularVelocity = Vector3.zero;
         }
 
+        // Only collisions caused after an explicit player drop/throw produce gameplay noise.
+        // This prevents items initially placed in a scene from alerting monsters on startup.
+        impactNoiseArmed = true;
+        impactNoiseReadyAt = Time.time + ImpactArmDelay;
+
         return true;
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (!IsServer || !impactNoiseArmed || state.Value != NetworkItemState.World ||
+            itemData == null || Time.time < impactNoiseReadyAt || collision.contactCount == 0)
+        {
+            return;
+        }
+
+        if (collision.relativeVelocity.magnitude < Mathf.Max(0f, itemData.minimumImpactSpeed))
+            return;
+
+        impactNoiseArmed = false;
+        Vector3 impactPosition = collision.GetContact(0).point;
+
+        // B2F monster decisions are server-authoritative. Clients only receive the sound effect.
+        WorldNoiseSystem.Emit(impactPosition, itemData.impactNoiseRadius);
+        PlayImpactSoundClientRpc(impactPosition);
+    }
+
+    [ClientRpc]
+    private void PlayImpactSoundClientRpc(Vector3 impactPosition)
+    {
+        if (itemData != null && itemData.impactSound != null)
+        {
+            AudioSource.PlayClipAtPoint(
+                itemData.impactSound,
+                impactPosition,
+                itemData.impactVolume);
+        }
     }
 
     public void SetCameraBatteryRatioServer(float ratio)

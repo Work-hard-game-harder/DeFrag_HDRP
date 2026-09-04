@@ -78,14 +78,14 @@ Material:
     - _DuplicateDetails: 1
     - _EnableBlendModePreserveSpecularLighting: 1
     - _EnableFogOnTransparent: 1
-    - _FadeTransparency: 0.667
+    - _FadeTransparency: 1
     - _FresnelBias: 1
     - _FresnelIntensity: 1.5
     - _FresnelPower: 3
-    - _FresnelTransBias: 0.05
+    - _FresnelTransBias: 0.671
     - _FresnelTransIntensity: 0.45
     - _FresnelTransPower: 3
-    - _Glossiness: 0.4
+    - _Glossiness: 0.447
     - _Invert: 0
     - _MapContribution: 2
     - _MaxValueAmplitude: 1
@@ -95,7 +95,7 @@ Material:
     - _PerPixelSorting: 0
     - _ReceivesSSR: 1
     - _ReceivesSSRTransparent: 0
-    - _Refraction: 1.006
+    - _Refraction: 0.75
     - _RenderQueueType: 5
     - _RequireSplitLighting: 0
     - _RotationAngle: 0

@@ -163,18 +163,22 @@ namespace DeFrag.Monsters.B2F.BehaviorDesignerTasks
     }
 
     [TaskCategory("B2F Monster")]
-    [TaskDescription("플레이어의 실시간 마이크 음량과 거리를 이용해 목소리를 감지하고 마지막 청취 위치를 저장합니다.")]
+    [TaskDescription("플레이어의 실시간 마이크 또는 인게임 충돌 소음을 감지하고 마지막 청취 위치를 저장합니다.")]
     public sealed class CanHearPlayerVoice : Conditional
     {
         public SharedTransform playerTarget;
         public SharedVector3 lastKnownPosition;
 
         private B2FPlayerVoicePerception perception;
+        private B2FWorldNoisePerception worldNoisePerception;
         private NetworkMonsterPlayerTargetResolver targetResolver;
 
         public override void OnAwake()
         {
             perception = GetComponent<B2FPlayerVoicePerception>();
+            worldNoisePerception = GetComponent<B2FWorldNoisePerception>();
+            if (worldNoisePerception == null)
+                worldNoisePerception = gameObject.AddComponent<B2FWorldNoisePerception>();
             targetResolver = GetComponent<NetworkMonsterPlayerTargetResolver>();
         }
 
@@ -182,6 +186,13 @@ namespace DeFrag.Monsters.B2F.BehaviorDesignerTasks
         {
             if (!B2FMonsterTaskUtility.HasSimulationAuthority())
                 return TaskStatus.Failure;
+
+            if (worldNoisePerception != null &&
+                worldNoisePerception.TryConsumeNoise(out Vector3 noisePosition))
+            {
+                lastKnownPosition.Value = noisePosition;
+                return TaskStatus.Success;
+            }
 
             if (perception == null ||
                 !perception.TryHear(
@@ -224,6 +235,7 @@ namespace DeFrag.Monsters.B2F.BehaviorDesignerTasks
         private NavMeshAgent agent;
         private NavMeshPath path;
         private B2FPlayerVoicePerception perception;
+        private B2FWorldNoisePerception worldNoisePerception;
         private B2FMonsterVision vision;
         private NetworkMonsterPlayerTargetResolver targetResolver;
         private float startedAt;
@@ -235,6 +247,7 @@ namespace DeFrag.Monsters.B2F.BehaviorDesignerTasks
         {
             agent = GetComponent<NavMeshAgent>();
             perception = GetComponent<B2FPlayerVoicePerception>();
+            worldNoisePerception = GetComponent<B2FWorldNoisePerception>();
             vision = GetComponent<B2FMonsterVision>();
             targetResolver = GetComponent<NetworkMonsterPlayerTargetResolver>();
             path = new NavMeshPath();
@@ -322,6 +335,14 @@ namespace DeFrag.Monsters.B2F.BehaviorDesignerTasks
 
         private void UpdateHeardPosition()
         {
+            if (worldNoisePerception != null &&
+                worldNoisePerception.TryConsumeNoise(out Vector3 noisePosition))
+            {
+                lastKnownPosition.Value = noisePosition;
+                agent.SetDestination(noisePosition);
+                return;
+            }
+
             if (Time.time < nextVoiceUpdateAt)
                 return;
 
