@@ -45145,7 +45145,7 @@ MonoBehaviour:
     Duration: 24.25 sec'
   videoTextureProperty: _BaseColorMap
   autoFitVideoUvToMaterialSlot: 1
-  videoCropPerSide: {x: 0.1, y: 0.1}
+  videoCropPerSide: {x: 0, y: 0}
   rotateVideoCounterClockwiseForMonitor: 1
   videoRotationShader: {fileID: 4800000, guid: c31d8a7e5f204b69a142cede9087b531, type: 3}
   applyVideoToEmission: 0

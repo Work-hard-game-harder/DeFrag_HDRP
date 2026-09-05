@@ -15,6 +15,11 @@ namespace DeFrag.B1F
         [Tooltip("스폰된 TV 몬스터의 AI와 이동을 서버에서 정지시킵니다.")]
         [SerializeField] private bool freezeTvMonsterInPlace;
 
+        [Header("Local Debug Bypass")]
+        [Tooltip("체크하면 지정된 Quest Barrier의 Collider를 호스트와 각 클라이언트에서 비활성화합니다.")]
+        [SerializeField] private bool disableQuestBarriers;
+        [SerializeField] private QuestBarrier[] questBarriersToDisable;
+
         [Header("Scene References")]
         [SerializeField] private DistributionBoxController distributionBoxA;
         [SerializeField] private B1FPowerController powerController;
@@ -31,6 +36,8 @@ namespace DeFrag.B1F
         private IEnumerator Start()
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+            ApplyLocalQuestBarrierOverride();
+
             bool useStoryCheckpoint = startAfterDistributionBoxA || startAfterConnectServer;
             if (!useStoryCheckpoint && !freezeTvMonsterInPlace)
                 yield break;
@@ -134,6 +141,24 @@ namespace DeFrag.B1F
                 this);
 #else
             yield break;
+#endif
+        }
+
+        private void ApplyLocalQuestBarrierOverride()
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (!disableQuestBarriers)
+                return;
+            if (questBarriersToDisable == null || questBarriersToDisable.Length == 0)
+            {
+                Debug.LogWarning(
+                    "[B1F Story Debug] Disable Quest Barriers is checked, but no barriers are assigned.",
+                    this);
+                return;
+            }
+
+            foreach (QuestBarrier barrier in questBarriersToDisable)
+                barrier?.SetStoryDebugBypassed(true);
 #endif
         }
 

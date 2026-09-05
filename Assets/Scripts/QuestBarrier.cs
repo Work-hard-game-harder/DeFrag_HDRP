@@ -12,6 +12,7 @@ public class QuestBarrier : MonoBehaviour
 
     private Collider barrierCollider;
     private QuestManager subscribedManager;
+    private bool storyDebugBypassed;
 
     private void Awake()
     {
@@ -39,9 +40,30 @@ public class QuestBarrier : MonoBehaviour
             subscribedManager.onQuestStepChanged -= UpdateBarrierState;
     }
 
+    public void SetStoryDebugBypassed(bool bypassed)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        storyDebugBypassed = bypassed;
+        if (barrierCollider == null)
+            barrierCollider = GetComponent<Collider>();
+
+        if (storyDebugBypassed && barrierCollider != null)
+            barrierCollider.enabled = false;
+        else
+            UpdateBarrierState();
+#endif
+    }
+
     private void UpdateBarrierState()
     {
-        if (QuestManager.Instance == null || barrierCollider == null)
+        if (barrierCollider == null)
+            return;
+        if (storyDebugBypassed)
+        {
+            barrierCollider.enabled = false;
+            return;
+        }
+        if (QuestManager.Instance == null)
             return;
 
         // 단순 인덱스 비교가 아니라 실제 활성 상태를 사용합니다.

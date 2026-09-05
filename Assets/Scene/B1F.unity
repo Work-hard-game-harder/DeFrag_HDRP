@@ -1971,7 +1971,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -3550,11 +3550,6 @@ Light:
   m_LightUnit: 0
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
---- !u!1 &254484353 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 2773602034453549469, guid: 049d34e259d2a6346a54dff96388690f, type: 3}
-  m_PrefabInstance: {fileID: 7655156513424016911}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &257726737
 GameObject:
   m_ObjectHideFlags: 0
@@ -14743,8 +14738,8 @@ MonoBehaviour:
         byteData: 
         byteDataArray: 00000000456e747279010000000000000000000000000000000000000001000000423146204d6f6e737465722053746174652053656c6563746f720100000000000000f0420000000000000000000000000000020000004d697373696e6701000000fac30000824300000000000000000000050000000300000041747461636b0100000096c300008243000000000000000000000300000004000000436861736501000000c8c200008243000000000000000000000200000005000000496e76657374696761746501000000c842000082430000000000000000000004000000060000005365617263680100000096430000824300000000000000000000010000000700000049646c6501000000fa43000082430000000000000000000000000000
       Version: 1.7.14
-  gizmoViewMode: 2
-  showBehaviorDesignerGizmo: 1
+  gizmoViewMode: 0
+  showBehaviorDesignerGizmo: 0
 --- !u!114 &877255014
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -35960,9 +35955,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 047718e5d7f64d7194c244796fabd8a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeFrag.B1F.B1FStoryDebugCheckpoint
-  startAfterDistributionBoxA: 1
+  startAfterDistributionBoxA: 0
   startAfterConnectServer: 0
   freezeTvMonsterInPlace: 0
+  disableQuestBarriers: 0
+  questBarriersToDisable:
+  - {fileID: 1120666424}
   distributionBoxA: {fileID: 924678998}
   powerController: {fileID: 2116658093}
   connectServerCoordinator: {fileID: 2116658094}
@@ -36512,7 +36510,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3257792438912666407, guid: 049d34e259d2a6346a54dff96388690f, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.0056891725
+      value: 0.112
       objectReference: {fileID: 0}
     - target: {fileID: 3257792438912666407, guid: 049d34e259d2a6346a54dff96388690f, type: 3}
       propertyPath: m_LocalPosition.z
@@ -36546,18 +36544,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 4391912420480575059, guid: 049d34e259d2a6346a54dff96388690f, type: 3}
-      propertyPath: signalClip
-      value: 
-      objectReference: {fileID: 8300000, guid: 1455cee1a26401446bb0abb690d66fe0, type: 3}
-    - target: {fileID: 4391912420480575059, guid: 049d34e259d2a6346a54dff96388690f, type: 3}
-      propertyPath: signalAudioSource
-      value: 
-      objectReference: {fileID: 7655156513424016914}
-    - target: {fileID: 4391912420480575059, guid: 049d34e259d2a6346a54dff96388690f, type: 3}
-      propertyPath: signalMaxDistance
-      value: 20
-      objectReference: {fileID: 0}
     - target: {fileID: 8087795956896562035, guid: 049d34e259d2a6346a54dff96388690f, type: 3}
       propertyPath: GlobalObjectIdHash
       value: 3906088444
@@ -36565,119 +36551,19 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 2773602034453549469, guid: 049d34e259d2a6346a54dff96388690f, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 7655156513424016914}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 049d34e259d2a6346a54dff96388690f, type: 3}
 --- !u!114 &7655156513424016913 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4391912420480575059, guid: 049d34e259d2a6346a54dff96388690f, type: 3}
   m_PrefabInstance: {fileID: 7655156513424016911}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 254484353}
+  m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6ac59f01725e46f78fab63f9a4c73208, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeFrag.B1F.GeneratorFuelCan
---- !u!82 &7655156513424016914
-AudioSource:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 254484353}
-  m_Enabled: 1
-  serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 0}
-  m_PlayOnAwake: 0
-  m_Volume: 1
-  m_Pitch: 1
-  Loop: 0
-  Mute: 0
-  Spatialize: 0
-  SpatializePostEffects: 0
-  Priority: 128
-  DopplerLevel: 1
-  MinDistance: 1.5
-  MaxDistance: 20
-  Pan2D: 0
-  rolloffMode: 0
-  BypassEffects: 0
-  BypassListenerEffects: 0
-  BypassReverbZones: 0
-  rolloffCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 1
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  panLevelCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  spreadCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  reverbZoneMixCustomCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
 --- !u!1 &7842996862786793212 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7842996862296073308, guid: e9a402d670858f441a3cc1e138d19cce, type: 3}

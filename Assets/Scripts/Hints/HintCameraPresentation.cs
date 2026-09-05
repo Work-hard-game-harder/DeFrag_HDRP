@@ -716,6 +716,19 @@ public sealed class HintCameraPresentation : MonoBehaviour
         End();
     }
 
+    private void LateUpdate()
+    {
+        // Some player/settings components also manage the cursor.  The desktop
+        // owns local input for the whole interactive session, so assert its
+        // cursor state after those components have updated.  This component is
+        // only activated by the interacting local player's Begin call.
+        if (!active || returning || presentationType != PresentationType.InteractiveDesktop)
+            return;
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
     private void DriveDebugVideoClock()
     {
         if (!driveVideoExternalClock || videoPlayer == null || !videoPlayer.isPrepared)
