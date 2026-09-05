@@ -38,6 +38,8 @@ namespace DeFrag.Player
         [Range(0f, 1f)]
         [SerializeField] private float vignetteSmoothness = 0.9f;
         [SerializeField] private Color fogColor = new(0.64f, 0.67f, 0.7f, 1f);
+        [Tooltip("NVCam 야간 모드에서 유령 효과 위로 보존할 청록색 필터입니다.")]
+        [SerializeField] private Color nightVisionColorFilter = new(0.38f, 0.96f, 1f, 1f);
         [Range(-100f, 100f)]
         [SerializeField] private float saturation = -55f;
         [SerializeField] private float postExposure = -0.35f;
@@ -45,6 +47,8 @@ namespace DeFrag.Player
 
         private Volume runtimeVolume;
         private VolumeProfile runtimeProfile;
+        private ColorAdjustments ghostColorAdjustments;
+        private CameraItem localCameraItem;
         private Coroutine effectRoutine;
 
         /// <summary>
@@ -89,7 +93,14 @@ namespace DeFrag.Player
                 StopCoroutine(effectRoutine);
 
             runtimeVolume.weight = 0f;
+            UpdateColorAdjustmentCompatibility();
             effectRoutine = StartCoroutine(PlayEffect());
+        }
+
+        private void Update()
+        {
+            if (effectRoutine != null)
+                UpdateColorAdjustmentCompatibility();
         }
 
         private IEnumerator PlayEffect()
@@ -162,11 +173,32 @@ namespace DeFrag.Player
             vignette.intensity.value = vignetteIntensity;
             vignette.smoothness.value = vignetteSmoothness;
 
-            ColorAdjustments colorAdjustments = runtimeProfile.Add<ColorAdjustments>(true);
-            colorAdjustments.postExposure.overrideState = true;
-            colorAdjustments.saturation.overrideState = true;
-            colorAdjustments.postExposure.value = postExposure;
-            colorAdjustments.saturation.value = saturation;
+            ghostColorAdjustments = runtimeProfile.Add<ColorAdjustments>(true);
+            ghostColorAdjustments.postExposure.overrideState = true;
+            ghostColorAdjustments.saturation.overrideState = true;
+            ghostColorAdjustments.colorFilter.overrideState = false;
+            ghostColorAdjustments.postExposure.value = postExposure;
+            ghostColorAdjustments.saturation.value = saturation;
+        }
+
+        private void UpdateColorAdjustmentCompatibility()
+        {
+            if (ghostColorAdjustments == null)
+                return;
+
+            if (localCameraItem == null)
+                localCameraItem = GetComponentInChildren<CameraItem>(true);
+
+            bool infraredViewActive =
+                localCameraItem != null &&
+                localCameraItem.IsViewActive &&
+                localCameraItem.CurrentMode == CameraItem.CameraMode.Infrared;
+
+            // 유령의 노출/채도 방해는 유지하고, 야간투시 청록색만 높은 우선순위에서 보존한다.
+            ghostColorAdjustments.active = true;
+            ghostColorAdjustments.colorFilter.overrideState = infraredViewActive;
+            if (infraredViewActive)
+                ghostColorAdjustments.colorFilter.value = nightVisionColorFilter;
         }
 
         private void GetValidatedDurations(out float fadeIn, out float hold, out float fadeOut)

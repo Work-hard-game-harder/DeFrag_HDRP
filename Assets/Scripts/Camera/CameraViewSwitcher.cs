@@ -12,6 +12,7 @@ public sealed class CameraViewSwitcher : MonoBehaviour
     [SerializeField] private AudioListener itemAudioListener;
     [SerializeField] private CameraItem cameraItem;
     [SerializeField] private Canvas cameraOverlayCanvas;
+    [SerializeField, Range(1f, 179f)] private float itemCameraFieldOfView = 67f;
 
     private bool localPresentationEnabled = true;
     private bool interactionLocked;
@@ -143,6 +144,6 @@ public sealed class CameraViewSwitcher : MonoBehaviour
         itemCamera.cullingMask = playerCamera.cullingMask;
         itemCamera.nearClipPlane = playerCamera.nearClipPlane;
         itemCamera.farClipPlane = playerCamera.farClipPlane;
-        itemCamera.fieldOfView = playerCamera.fieldOfView;
+        itemCamera.fieldOfView = itemCameraFieldOfView;
     }
 }

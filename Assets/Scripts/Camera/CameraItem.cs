@@ -17,7 +17,9 @@ public sealed class CameraItem : MonoBehaviour
     [SerializeField] private PostProcessProfile normalProfile;
     [SerializeField] private PostProcessProfile infraredProfile;
     [SerializeField] private PostProcessVolume volume;
+    [SerializeField] private UnityEngine.Rendering.Volume cameraLensVolume;
     [SerializeField] private NightVisionController nightVisionController;
+    [SerializeField] private NightVisionIlluminator nightVisionIlluminator;
 
     [Header("Usage")]
     [Tooltip("CameraTest처럼 인벤토리를 거치지 않는 테스트 씬에서만 사용합니다.")]
@@ -45,6 +47,7 @@ public sealed class CameraItem : MonoBehaviour
     {
         battery = GetComponent<CameraBattery>();
         isEquipped = startsEquipped;
+        SetCameraLensActive(false);
         SetMode(CameraMode.Normal);
     }
 
@@ -103,6 +106,12 @@ public sealed class CameraItem : MonoBehaviour
     {
         currentMode = mode;
 
+        bool infraredActive =
+            mode == CameraMode.Infrared &&
+            isViewActive &&
+            battery != null &&
+            !battery.IsEmpty;
+
         if (volume != null)
         {
             volume.profile = mode == CameraMode.Infrared
@@ -111,7 +120,13 @@ public sealed class CameraItem : MonoBehaviour
         }
 
         if (nightVisionController != null)
-            nightVisionController.SetNightVisionActive(mode == CameraMode.Infrared);
+        {
+            nightVisionController.SetNightVisionActive(
+                mode == CameraMode.Infrared);
+        }
+
+        if (nightVisionIlluminator != null)
+            nightVisionIlluminator.SetActive(infraredActive);
 
         ModeChanged?.Invoke(currentMode);
     }
@@ -141,9 +156,23 @@ public sealed class CameraItem : MonoBehaviour
             return;
 
         isViewActive = active;
+        SetCameraLensActive(isViewActive);
         if (!isViewActive)
             SetMode(CameraMode.Normal);
 
         ViewActiveChanged?.Invoke(isViewActive);
+    }
+    private void OnDisable()
+    {
+        SetCameraLensActive(false);
+
+        if (nightVisionIlluminator != null)
+            nightVisionIlluminator.SetActive(false);
+    }
+
+    private void SetCameraLensActive(bool active)
+    {
+        if (cameraLensVolume != null)
+            cameraLensVolume.weight = active ? 1f : 0f;
     }
 }

@@ -609,6 +609,7 @@ MonoBehaviour:
   itemAudioListener: {fileID: 1916114695043516792}
   cameraItem: {fileID: 6767060980139100289}
   cameraOverlayCanvas: {fileID: 8968839979216758565}
+  itemCameraFieldOfView: 67
 --- !u!114 &2683992198885452138
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3492,6 +3493,7 @@ MonoBehaviour:
   vignetteIntensity: 0.65
   vignetteSmoothness: 0.9
   fogColor: {r: 0.64, g: 0.67, b: 0.7, a: 1}
+  nightVisionColorFilter: {r: 0.38, g: 0.96, b: 1, a: 1}
   saturation: -55
   postExposure: -0.35
   volumePriority: 1200
