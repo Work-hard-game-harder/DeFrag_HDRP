@@ -3489,14 +3489,15 @@ MonoBehaviour:
     m_RotationOrder: 4
   maxWeight: 1
   blurIntensity: 1
-  blurRadius: 0.035
-  vignetteIntensity: 0.65
-  vignetteSmoothness: 0.9
-  fogColor: {r: 0.64, g: 0.67, b: 0.7, a: 1}
+  blurRadius: 0.04
+  vignetteIntensity: 0.891
+  vignetteSmoothness: 0.733
+  fogColor: {r: 0.27714488, g: 0.30838376, b: 0.33962262, a: 1}
   nightVisionColorFilter: {r: 0.38, g: 0.96, b: 1, a: 1}
   saturation: -55
   postExposure: -0.35
   volumePriority: 1200
+  movementSpeedReduction: 2
 --- !u!114 &7851964327015289635
 MonoBehaviour:
   m_ObjectHideFlags: 0

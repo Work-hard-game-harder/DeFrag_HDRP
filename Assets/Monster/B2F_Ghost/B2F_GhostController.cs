@@ -51,6 +51,9 @@ public sealed class B2F_GhostController : NetworkBehaviour, IMonsterPlayerTarget
     [Min(0f)]
     [SerializeField] private float animationFadeDuration = 0.1f;
 
+    [Header("State SFX (Optional)")]
+    [SerializeField] private B2F_GhostStateSfx stateSfx;
+
     private readonly NetworkVariable<GhostState> synchronizedState =
         new NetworkVariable<GhostState>(
             GhostState.SpawnIdle,
@@ -95,6 +98,8 @@ public sealed class B2F_GhostController : NetworkBehaviour, IMonsterPlayerTarget
     public override void OnNetworkDespawn()
     {
         synchronizedState.OnValueChanged -= HandleStateChanged;
+        if (stateSfx != null)
+            stateSfx.StopAll();
         targetPlayer = null;
     }
 
@@ -289,6 +294,14 @@ public sealed class B2F_GhostController : NetworkBehaviour, IMonsterPlayerTarget
 
     private void ApplyStatePresentation(GhostState state)
     {
+        if (stateSfx != null)
+        {
+            if (state == GhostState.PerformingMotion)
+                stateSfx.PlaySmoking();
+            else
+                stateSfx.PlayGeneral();
+        }
+
         if (animator == null || animator.runtimeAnimatorController == null)
             return;
 
@@ -356,6 +369,9 @@ public sealed class B2F_GhostController : NetworkBehaviour, IMonsterPlayerTarget
 
         if (animator == null)
             animator = GetComponentInChildren<Animator>(true);
+
+        if (stateSfx == null)
+            stateSfx = GetComponentInChildren<B2F_GhostStateSfx>(true);
     }
 
     private void OnValidate()

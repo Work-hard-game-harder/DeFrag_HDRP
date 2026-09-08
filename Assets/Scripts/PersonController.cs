@@ -147,6 +147,7 @@ namespace StarterAssets
         private bool _pickupPresentationPending;
         private bool _pickupStateEntered;
         private int _itemUpperBodyLayerIndex = -1;
+        private float _temporarySpeedReduction;
 
         private const string ItemUpperBodyLayerName = "Upper Body Item";
         private static readonly int ItemPickupStateHash = Animator.StringToHash("Picking Up");
@@ -171,6 +172,18 @@ namespace StarterAssets
             ? _localIsHiding
             : _networkIsHiding.Value;
         public bool IsSubtitleLocked => GameState.isCutscene;
+
+        /// <summary>
+        /// Applies a local additive movement penalty without overwriting the configured or
+        /// inventory-adjusted base speeds. Passing zero restores the current base speeds.
+        /// </summary>
+        public void SetTemporarySpeedReduction(float amount)
+        {
+            if (IsSpawned && !IsOwner)
+                return;
+
+            _temporarySpeedReduction = Mathf.Max(0f, amount);
+        }
 
         private bool IsCurrentDeviceMouse
         {
@@ -386,7 +399,13 @@ namespace StarterAssets
             bool canSprint = wantsToSprint && (_sprintGate?.CanSprint ?? true);
 
             // 입력에 따른 가속/감속 목표 속도 설정
-            float targetSpeed = _localIsCrouching ? CrouchSpeed : (canSprint ? SprintSpeed : MoveSpeed);
+            float effectiveMoveSpeed = Mathf.Max(0f, MoveSpeed - _temporarySpeedReduction);
+            float effectiveSprintSpeed = Mathf.Max(
+                effectiveMoveSpeed,
+                SprintSpeed - _temporarySpeedReduction);
+            float targetSpeed = _localIsCrouching
+                ? CrouchSpeed
+                : (canSprint ? effectiveSprintSpeed : effectiveMoveSpeed);
 
             if (movementInput == Vector2.zero) targetSpeed = 0.0f;
 

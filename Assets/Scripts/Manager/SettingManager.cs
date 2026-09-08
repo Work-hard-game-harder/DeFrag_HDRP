@@ -77,6 +77,9 @@ public class SettingManager : MonoBehaviour
     [SerializeField] private GameObject settingPanel;
     [SerializeField] private Canvas settingCanvas; // ← Canvas를 직접 연결
 
+    [Header("Key Panel")]
+    [SerializeField] private GameObject keyPanel;
+
     [Header("Sliders")]
     [SerializeField] private Slider bgmSlider;
     [SerializeField] private Slider sfxSlider;
@@ -197,6 +200,7 @@ public class SettingManager : MonoBehaviour
     public StableMicrophoneInput MicrophoneInput => micLowLatency;
     public bool IsPausePanelOpen => PausePanel != null && PausePanel.activeSelf;
     public bool IsSettingPanelOpen => settingPanel != null && settingPanel.activeInHierarchy;
+    public bool IsKeyPanelOpen => keyPanel != null && keyPanel.activeInHierarchy;
     public static bool IsMenuOpen =>
         Instance != null && (Instance.IsPausePanelOpen || Instance.IsSettingPanelOpen);
     public static bool IsGamePaused => Instance != null && Instance.IsPausePanelOpen;
@@ -1339,6 +1343,8 @@ public class SettingManager : MonoBehaviour
             if(PausePanel != null && PausePanel.activeInHierarchy)
                 SetPausePanelState(false);
             settingPanel.SetActive(true);
+            if (keyPanel != null)
+                keyPanel.SetActive(false);
             RefreshMenuBlur();
             RefreshMenuCursorState();
             KeepMenuPanelsAboveAllCanvases();
@@ -1353,6 +1359,8 @@ public class SettingManager : MonoBehaviour
 
         if (settingPanel != null)
         {
+            if (keyPanel != null)
+                keyPanel.SetActive(false);
             settingPanel.SetActive(false);
             //if (PausePanel != null && PausePanel.activeInHierarchy)
                 //SetPausePanelState(true);
@@ -1371,6 +1379,39 @@ public class SettingManager : MonoBehaviour
     {
         AudioManager.Instance?.PlaySFX("Button1");
         ClosePanel();
+    }
+
+    public void OpenKeyPanel()
+    {
+        if (!IsSettingPanelOpen || keyPanel == null)
+            return;
+
+        AudioManager.Instance?.PlaySFX("Button1");
+        StopMicPreview();
+        keyPanel.SetActive(true);
+        keyPanel.transform.SetAsLastSibling();
+        RefreshMenuBlur();
+        RefreshMenuCursorState();
+        KeepMenuPanelsAboveAllCanvases();
+    }
+
+    public void CloseKeyPanel()
+    {
+        if (keyPanel == null)
+            return;
+
+        AudioManager.Instance?.PlaySFX("Button1");
+        keyPanel.SetActive(false);
+
+        if (IsSettingPanelOpen)
+        {
+            settingPanel.transform.SetAsLastSibling();
+            StartMicPreview();
+        }
+
+        RefreshMenuBlur();
+        RefreshMenuCursorState();
+        KeepMenuPanelsAboveAllCanvases();
     }
 
     // ──────────────────────────────────────────────

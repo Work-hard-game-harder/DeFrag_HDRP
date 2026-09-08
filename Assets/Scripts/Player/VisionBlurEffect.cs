@@ -3,6 +3,7 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.HighDefinition;
+using StarterAssets;
 
 namespace DeFrag.Player
 {
@@ -45,10 +46,16 @@ namespace DeFrag.Player
         [SerializeField] private float postExposure = -0.35f;
         [SerializeField] private float volumePriority = 1200f;
 
+        [Header("Movement Slowdown")]
+        [Tooltip("Amount subtracted from this player's walk and sprint speeds while the vision effect is active.")]
+        [Min(0f)]
+        [SerializeField] private float movementSpeedReduction = 1f;
+
         private Volume runtimeVolume;
         private VolumeProfile runtimeProfile;
         private ColorAdjustments ghostColorAdjustments;
         private CameraItem localCameraItem;
+        private PersonController movementController;
         private Coroutine effectRoutine;
 
         /// <summary>
@@ -94,6 +101,7 @@ namespace DeFrag.Player
 
             runtimeVolume.weight = 0f;
             UpdateColorAdjustmentCompatibility();
+            ApplyMovementSlowdown();
             effectRoutine = StartCoroutine(PlayEffect());
         }
 
@@ -114,6 +122,7 @@ namespace DeFrag.Player
 
             yield return FadeWeight(maxWeight, 0f, fadeOut);
             runtimeVolume.weight = 0f;
+            ClearMovementSlowdown();
             effectRoutine = null;
         }
 
@@ -231,6 +240,22 @@ namespace DeFrag.Player
             };
         }
 
+        private void ApplyMovementSlowdown()
+        {
+            if (movementController == null)
+                movementController = GetComponent<PersonController>();
+
+            movementController?.SetTemporarySpeedReduction(movementSpeedReduction);
+        }
+
+        private void ClearMovementSlowdown()
+        {
+            if (movementController == null)
+                movementController = GetComponent<PersonController>();
+
+            movementController?.SetTemporarySpeedReduction(0f);
+        }
+
         private void OnDisable()
         {
             if (effectRoutine != null)
@@ -241,10 +266,14 @@ namespace DeFrag.Player
 
             if (runtimeVolume != null)
                 runtimeVolume.weight = 0f;
+
+            ClearMovementSlowdown();
         }
 
         public override void OnDestroy()
         {
+            ClearMovementSlowdown();
+
             if (runtimeVolume != null)
                 Destroy(runtimeVolume.gameObject);
             if (runtimeProfile != null)
@@ -259,6 +288,7 @@ namespace DeFrag.Player
             fadeInDuration = Mathf.Max(0f, fadeInDuration);
             fadeOutDuration = Mathf.Max(0f, fadeOutDuration);
             maxWeight = Mathf.Clamp01(maxWeight);
+            movementSpeedReduction = Mathf.Max(0f, movementSpeedReduction);
 
             float fadeTotal = fadeInDuration + fadeOutDuration;
             if (fadeTotal > totalDuration && fadeTotal > 0f)
