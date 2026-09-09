@@ -249,11 +249,9 @@ public class QuestManager : MonoBehaviour
             relay.BroadcastSharedQuestSnapshotFromServer(
                 currentStepIndex,
                 pendingStepIndex,
-                CurrentCount);
-            return;
+                CurrentCount,
+                client.ClientId);
         }
-
-        Debug.LogWarning("[QuestManager] 공용 퀘스트 상태를 방송할 플레이어 릴레이가 없습니다.", this);
     }
 
     [Obsolete("Use ReportProgress(signal, sourceId, amount).")]

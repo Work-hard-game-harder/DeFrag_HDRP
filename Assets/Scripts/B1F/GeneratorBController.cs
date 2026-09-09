@@ -49,6 +49,9 @@ namespace DeFrag.B1F
         [SerializeField, Range(0.55f, 0.95f)] private float dangerPressure = 0.8f;
         [SerializeField, Min(0.01f)] private float pressureRisePerSecond = 0.12f;
         [SerializeField, Min(0.01f)] private float ventPerSecond = 0.22f;
+        [Header("Progressive Pressure Difficulty")]
+        [SerializeField, Range(1f, 2f)] private float pressureSpeedMultiplierPerStage = 1.3f;
+        [SerializeField, Range(0f, 0.12f)] private float pressureWindowContractionPerStage = 0.055f;
         [SerializeField, Min(0.5f)] private float overpressureGrace = 2f;
         [SerializeField, Min(0.5f)] private float alarmCooldown = 2f;
         private readonly NetworkVariable<ulong> fuelOperator = new(NoController);
@@ -62,8 +65,9 @@ namespace DeFrag.B1F
         private bool pourRequested, ventRequested;
         private double fuelHeartbeat, panelHeartbeat;
         public float Pressure => pressure.Value;
-        public float MinimumPressure => minimumPressure;
-        public float DangerPressure => dangerPressure;
+        public int PressureStage => Mathf.Clamp(Mathf.FloorToInt(fuelProgress.Value * 3f), 0, 2);
+        public float MinimumPressure => minimumPressure + pressureWindowContractionPerStage * PressureStage;
+        public float DangerPressure => dangerPressure - pressureWindowContractionPerStage * PressureStage;
         public float DangerSecondsLeft => Mathf.Max(0f, overpressureGrace - dangerTime.Value);
         public bool IsPouring => pouring.Value;
         public bool IsVenting => venting.Value;
@@ -163,15 +167,29 @@ namespace DeFrag.B1F
                 spawnWarningShown = true;
                 return;
             }
+
+            // Mark the one-shot operation before spawning. An invalid/inactive network
+            // prefab must never make Update instantiate three more cans every frame.
+            fuelSpawned = true;
             for (int i = 0; i < 3; i++)
             {
                 int selected = UnityEngine.Random.Range(i, points.Count);
                 (points[i], points[selected]) = (points[selected], points[i]);
                 var can = Instantiate(fuelPrefab, points[i].position, points[i].rotation);
-                can.WorldItem.NetworkObject.Spawn(true);
-                spawnedFuelIds.Add(can.WorldItem.NetworkObjectId);
+                if (!can.gameObject.activeSelf)
+                    can.gameObject.SetActive(true);
+
+                NetworkObject fuelNetworkObject = can.WorldItem.NetworkObject;
+                if (fuelNetworkObject == null)
+                {
+                    Debug.LogError("[Generator B] Fuel prefab requires a NetworkObject.", can);
+                    Destroy(can.gameObject);
+                    continue;
+                }
+
+                fuelNetworkObject.Spawn(true);
+                spawnedFuelIds.Add(fuelNetworkObject.NetworkObjectId);
             }
-            fuelSpawned = true;
         }
 
         public override void OnNetworkSpawn()
@@ -200,6 +218,9 @@ namespace DeFrag.B1F
             requiredFuelCans = Mathf.Clamp(requiredFuelCans, 1, 3);
             minimumPressure = Mathf.Clamp(minimumPressure, 0.05f, 0.5f);
             dangerPressure = Mathf.Clamp(dangerPressure, minimumPressure + 0.1f, 0.95f);
+            pressureWindowContractionPerStage = Mathf.Min(
+                pressureWindowContractionPerStage,
+                Mathf.Max(0f, (dangerPressure - minimumPressure - 0.05f) * 0.25f));
             TryAutoAssignInteractionPoints();
         }
 
@@ -435,12 +456,15 @@ namespace DeFrag.B1F
             venting.Value = activeVent;
 
             float delta = Time.deltaTime;
-            float change = activePour ? pressureRisePerSecond : -pressureRisePerSecond * 0.12f;
-            if (activeVent) change -= ventPerSecond;
+            float speedMultiplier = Mathf.Pow(pressureSpeedMultiplierPerStage, PressureStage);
+            float change = activePour
+                ? pressureRisePerSecond * speedMultiplier
+                : -pressureRisePerSecond * 0.12f;
+            if (activeVent) change -= ventPerSecond * speedMultiplier;
             pressure.Value = Mathf.Clamp01(pressure.Value + change * delta);
 
-            bool productive = activePour && pressure.Value >= minimumPressure &&
-                              pressure.Value < dangerPressure;
+            bool productive = activePour && pressure.Value >= MinimumPressure &&
+                              pressure.Value < DangerPressure;
             if (productive)
             {
                 float nextCanThreshold = Mathf.Clamp01(
@@ -450,7 +474,7 @@ namespace DeFrag.B1F
                     fuelProgress.Value + delta / fillDuration);
             }
 
-            if (activePour && pressure.Value >= dangerPressure)
+            if (activePour && pressure.Value >= DangerPressure)
                 dangerTime.Value += delta;
             else
                 dangerTime.Value = Mathf.Max(0f, dangerTime.Value - delta * 1.5f);
@@ -458,7 +482,7 @@ namespace DeFrag.B1F
             if (dangerTime.Value >= overpressureGrace)
             {
                 dangerTime.Value = 0f;
-                pressure.Value = Mathf.Max(minimumPressure, dangerPressure - 0.18f);
+                pressure.Value = Mathf.Max(MinimumPressure, DangerPressure - 0.18f);
                 resumeAt.Value = ServerTime + alarmCooldown;
                 pourRequested = false;
                 pouring.Value = false;

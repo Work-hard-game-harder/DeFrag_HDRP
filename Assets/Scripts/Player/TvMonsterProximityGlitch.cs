@@ -230,36 +230,23 @@ namespace DeFrag.Player
                     return;
 
                 nextScanTime = Time.unscaledTime + 1f;
-                Camera mainCamera = Camera.main;
-                if (mainCamera != null)
-                {
-                    NetworkObject cameraOwner = mainCamera.GetComponentInParent<NetworkObject>();
-                    bool isUsableLocalCamera = cameraOwner == null ||
-                        !cameraOwner.IsSpawned ||
-                        cameraOwner.IsOwner;
-                    if (isUsableLocalCamera &&
-                        mainCamera.GetComponent<TvMonsterProximityGlitch>() == null &&
-                        mainCamera.GetComponentInParent<TvMonsterProximityGlitch>() == null)
-                    {
-                        mainCamera.gameObject.AddComponent<TvMonsterProximityGlitch>();
-                        return;
-                    }
-                }
+                // Presentation cameras (distribution box, generator, Timeline) may
+                // temporarily become Camera.main. Never install the distance sensor on
+                // those fixed cameras: its global Volume would then measure proximity
+                // from the cutscene position instead of from this client's player.
+                NetworkManager manager = NetworkManager.Singleton;
+                NetworkObject localPlayer = manager != null && manager.IsListening
+                    ? manager.LocalClient?.PlayerObject
+                    : null;
+                if (localPlayer == null || !localPlayer.IsSpawned || !localPlayer.IsOwner)
+                    return;
 
-                // Fallback for a local player whose camera is enabled or tagged a little later.
-                PlayerSprintVisuals[] players = FindObjectsByType<PlayerSprintVisuals>(
-                    FindObjectsInactive.Exclude);
-                foreach (PlayerSprintVisuals player in players)
-                {
-                    NetworkObject playerNetworkObject = player.GetComponent<NetworkObject>();
-                    if (playerNetworkObject != null &&
-                        playerNetworkObject.IsSpawned &&
-                        !playerNetworkObject.IsOwner)
-                        continue;
+                TvMonsterProximityGlitch glitch =
+                    localPlayer.GetComponentInChildren<TvMonsterProximityGlitch>(true);
+                if (glitch == null)
+                    glitch = localPlayer.gameObject.AddComponent<TvMonsterProximityGlitch>();
 
-                    if (player.GetComponent<TvMonsterProximityGlitch>() == null)
-                        player.gameObject.AddComponent<TvMonsterProximityGlitch>();
-                }
+                glitch.InitializeForConfirmedLocalOwner();
             }
         }
     }

@@ -1956,6 +1956,8 @@ MonoBehaviour:
     \uC811\uADFC\uD560 \uBC29\uBC95\uC774 \uC788\uC744 \uC9C0\uB3C4 \uBAB0\uB77C\uC694."
   walkietakie: {fileID: 0}
   revealPendingQuestAfterSubtitle: 1
+  requiredQuestId: 
+  completionQuestSignal: 
 --- !u!65 &134077247
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2343,6 +2345,8 @@ MonoBehaviour:
   - "\uC5F4 \uBC29\uBC95\uC744 \uCC3E\uC544\uBCF4\uC790"
   walkietakie: {fileID: 0}
   revealPendingQuestAfterSubtitle: 0
+  requiredQuestId: 
+  completionQuestSignal: 
 --- !u!65 &165681821
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2697,6 +2701,8 @@ MonoBehaviour:
   - "\uD130\uBBF8\uB110\uC744 \uD1B5\uD574 \uC11C\uBC84 \uC5F0\uACB0\uC744 \uBCF5\uAD6C\uD574\uBCF4\uC790"
   walkietakie: {fileID: 0}
   revealPendingQuestAfterSubtitle: 0
+  requiredQuestId: 
+  completionQuestSignal: 
 --- !u!65 &219570074
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3553,6 +3559,37 @@ Light:
   m_LightUnit: 0
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!1 &249105841
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 249105842}
+  m_Layer: 0
+  m_Name: FuelTankPoint1 (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &249105842
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 249105841}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 25.8, y: 0, z: -110}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 854594948}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &257726737
 GameObject:
   m_ObjectHideFlags: 0
@@ -4087,7 +4124,15 @@ MonoBehaviour:
   requiredHackingPad: {fileID: 11400000, guid: 8bc2e24d4126165439a2c6052d23ef6d, type: 2}
   requiredQuestId: b1f_full_power
   fuelPrefab: {fileID: 4391912420480575059, guid: 049d34e259d2a6346a54dff96388690f, type: 3}
-  fuelSpawnPoints: []
+  fuelSpawnPoints:
+  - {fileID: 801142960}
+  - {fileID: 249105842}
+  - {fileID: 1874168490}
+  - {fileID: 1994877921}
+  - {fileID: 1704494090}
+  - {fileID: 1467404138}
+  - {fileID: 1747860642}
+  - {fileID: 651601750}
   controlPanelPoint: {fileID: 379315705}
   fuelInletPoint: {fileID: 1901467716}
   controlInteractionCamera: {fileID: 1909774141}
@@ -4100,6 +4145,8 @@ MonoBehaviour:
   dangerPressure: 0.8
   pressureRisePerSecond: 0.12
   ventPerSecond: 0.22
+  pressureSpeedMultiplierPerStage: 1.3
+  pressureWindowContractionPerStage: 0.055
   overpressureGrace: 2
   alarmCooldown: 2
   failedPourNoiseRadius: 18
@@ -8850,10 +8897,6 @@ PrefabInstance:
       value: terminal_25
       objectReference: {fileID: 0}
     - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
-      propertyPath: downloadDataRequiredQuestId
-      value: b1f_emergency_power
-      objectReference: {fileID: 0}
-    - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
       propertyPath: displayName
       value: TERMINAL 25
       objectReference: {fileID: 0}
@@ -8868,6 +8911,10 @@ PrefabInstance:
     - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
       propertyPath: focusLocalEulerAngles.x
       value: -90
+      objectReference: {fileID: 0}
+    - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: downloadDataRequiredQuestId
+      value: b1f_emergency_power
       objectReference: {fileID: 0}
     - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
       propertyPath: onDownloadDataRequested.m_PersistentCalls.m_Calls.Array.size
@@ -9428,6 +9475,8 @@ MonoBehaviour:
     \uC788\uC744 \uAC70\uC57C"
   walkietakie: {fileID: 0}
   revealPendingQuestAfterSubtitle: 1
+  requiredQuestId: 
+  completionQuestSignal: 
 --- !u!65 &516327319
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -11150,6 +11199,37 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 5720499719793094823, guid: b81b76eda4977b44ebaf18a2d53cb226, type: 3}
+--- !u!1 &651601749
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 651601750}
+  m_Layer: 0
+  m_Name: FuelTankPoint1 (7)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &651601750
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 651601749}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -2.4, y: 0, z: -56.6}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 854594948}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &653897126
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -13509,6 +13589,37 @@ Light:
   m_LightUnit: 0
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!1 &801142959
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 801142960}
+  m_Layer: 0
+  m_Name: FuelTankPoint1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &801142960
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 801142959}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 11, y: 0, z: -60.7}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 854594948}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &808880914
 GameObject:
   m_ObjectHideFlags: 0
@@ -14477,6 +14588,45 @@ Light:
   m_LightUnit: 0
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!1 &854594947
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 854594948}
+  m_Layer: 0
+  m_Name: FuelTankPoints
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &854594948
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 854594947}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 801142960}
+  - {fileID: 249105842}
+  - {fileID: 1874168490}
+  - {fileID: 1994877921}
+  - {fileID: 1704494090}
+  - {fileID: 1467404138}
+  - {fileID: 1747860642}
+  - {fileID: 651601750}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!64 &866296240
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -16280,6 +16430,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   powerController: {fileID: 2116658093}
   isBoxA: 1
+  boxARequiredQuestId: b1f_emergency_power
   maximumUseDistance: 6
   hintRefreshSeconds: 30
   availableText: "\uBC30\uC804\uD568 \uC5F4\uAE30 (E \uD640\uB4DC)"
@@ -16395,8 +16546,11 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  timingRoundsRequired: 3
   timingRoundTripDuration: 1.6
   timingSuccessWidth: 0.2
+  timingDurationMultiplierPerRound: 0.78
+  timingWidthMultiplierPerRound: 0.72
   timingBoundaryTolerance: 0.02
   timingFailureCooldown: 1.1
   timingSuccessPresentationDuration: 0.35
@@ -23172,6 +23326,8 @@ MonoBehaviour:
   - "\uBB34\uC5B8\uAC00 \uB098\uD0C0\uB09C \uAC83 \uAC19\uB2E4.."
   walkietakie: {fileID: 0}
   revealPendingQuestAfterSubtitle: 0
+  requiredQuestId: 
+  completionQuestSignal: 
 --- !u!65 &1272190788
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -25433,12 +25589,12 @@ PrefabInstance:
       value: -90
       objectReference: {fileID: 0}
     - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
-      propertyPath: connectServerRequiredQuestId
-      value: b1f_connect_server
-      objectReference: {fileID: 0}
-    - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
       propertyPath: connectServerQuestSignal
       value: B1F_CONNECT_SERVER_COMPLETED
+      objectReference: {fileID: 0}
+    - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
+      propertyPath: connectServerRequiredQuestId
+      value: b1f_connect_server
       objectReference: {fileID: 0}
     - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
       propertyPath: onUnlockDoorRequested.m_PersistentCalls.m_Calls.Array.size
@@ -26619,6 +26775,37 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7809189173366993273, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
   m_PrefabInstance: {fileID: 1466008438}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1467404137
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1467404138}
+  m_Layer: 0
+  m_Name: FuelTankPoint1 (5)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1467404138
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1467404137}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -57.26, y: 0, z: -64.34}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 854594948}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1468685172 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 9063269326251490021, guid: 32828aeb969c9bb448f2c59ba4d7f166, type: 3}
@@ -30371,6 +30558,37 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 32760
   m_TargetDisplay: 0
+--- !u!1 &1704494089
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1704494090}
+  m_Layer: 0
+  m_Name: FuelTankPoint1 (4)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1704494090
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1704494089}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -52.05, y: 0, z: -84.6}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 854594948}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1715606648
 GameObject:
   m_ObjectHideFlags: 0
@@ -30410,6 +30628,8 @@ MonoBehaviour:
   - "\uC9C0\uB3C4\uAC00 \uC788\uB294\uC9C0 \uD655\uC778\uD574 \uBCF4\uC790"
   walkietakie: {fileID: 0}
   revealPendingQuestAfterSubtitle: 0
+  requiredQuestId: 
+  completionQuestSignal: 
 --- !u!65 &1715606650
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -30657,6 +30877,37 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -1371651646566895963, guid: 0d87fac58fef6914b8e36af194634e9e, type: 3}
+--- !u!1 &1747860641
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1747860642}
+  m_Layer: 0
+  m_Name: FuelTankPoint1 (6)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1747860642
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1747860641}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -45.7, y: 0, z: -39.4}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 854594948}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!64 &1753392476
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -31950,6 +32201,8 @@ MonoBehaviour:
     \uD574\uB458\uAE4C.."
   walkietakie: {fileID: 0}
   revealPendingQuestAfterSubtitle: 0
+  requiredQuestId: 
+  completionQuestSignal: 
 --- !u!65 &1853784550
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -32331,6 +32584,37 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -808397941274684869, guid: f6dc94e7f37111048ae1d538bcce95b3, type: 3}
+--- !u!1 &1874168489
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1874168490}
+  m_Layer: 0
+  m_Name: FuelTankPoint1 (2)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1874168490
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1874168489}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -25.1, y: 0, z: -107.1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 854594948}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1879772917
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -33533,6 +33817,8 @@ MonoBehaviour:
   - "\uC5EC\uAE30\uAC00 \uC9C0\uD558 1\uCE35\uC778 \uAC74\uAC00.."
   walkietakie: {fileID: 0}
   revealPendingQuestAfterSubtitle: 0
+  requiredQuestId: 
+  completionQuestSignal: 
 --- !u!65 &1941103622
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -34164,6 +34450,37 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 6630210501920489371, guid: e35379fad6334164186a552d0738df36, type: 3}
+--- !u!1 &1994877920
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1994877921}
+  m_Layer: 0
+  m_Name: FuelTankPoint1 (3)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1994877921
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1994877920}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.5, y: 0, z: -140.5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 854594948}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1999951965
 GameObject:
   m_ObjectHideFlags: 0
@@ -36150,7 +36467,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeFrag.B1F.B1FStoryDebugCheckpoint
   startAfterDistributionBoxA: 0
-  startAfterConnectServer: 0
+  startAfterConnectServer: 1
   freezeTvMonsterInPlace: 0
   disableQuestBarriers: 0
   questBarriersToDisable:
@@ -36686,82 +37003,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 7183240182367671354, guid: e9a402d670858f441a3cc1e138d19cce, type: 3}
   m_PrefabInstance: {fileID: 591514272}
   m_PrefabAsset: {fileID: 0}
---- !u!1001 &7655156513424016911
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 2773602034453549469, guid: 049d34e259d2a6346a54dff96388690f, type: 3}
-      propertyPath: m_Name
-      value: Fuel Tank
-      objectReference: {fileID: 0}
-    - target: {fileID: 2773602034453549469, guid: 049d34e259d2a6346a54dff96388690f, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3257792438912666407, guid: 049d34e259d2a6346a54dff96388690f, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 9.86
-      objectReference: {fileID: 0}
-    - target: {fileID: 3257792438912666407, guid: 049d34e259d2a6346a54dff96388690f, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0.112
-      objectReference: {fileID: 0}
-    - target: {fileID: 3257792438912666407, guid: 049d34e259d2a6346a54dff96388690f, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -56.68
-      objectReference: {fileID: 0}
-    - target: {fileID: 3257792438912666407, guid: 049d34e259d2a6346a54dff96388690f, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 0.82023597
-      objectReference: {fileID: 0}
-    - target: {fileID: 3257792438912666407, guid: 049d34e259d2a6346a54dff96388690f, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3257792438912666407, guid: 049d34e259d2a6346a54dff96388690f, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0.57202536
-      objectReference: {fileID: 0}
-    - target: {fileID: 3257792438912666407, guid: 049d34e259d2a6346a54dff96388690f, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3257792438912666407, guid: 049d34e259d2a6346a54dff96388690f, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3257792438912666407, guid: 049d34e259d2a6346a54dff96388690f, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: -69.783
-      objectReference: {fileID: 0}
-    - target: {fileID: 3257792438912666407, guid: 049d34e259d2a6346a54dff96388690f, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8087795956896562035, guid: 049d34e259d2a6346a54dff96388690f, type: 3}
-      propertyPath: GlobalObjectIdHash
-      value: 3906088444
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 049d34e259d2a6346a54dff96388690f, type: 3}
---- !u!114 &7655156513424016913 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 4391912420480575059, guid: 049d34e259d2a6346a54dff96388690f, type: 3}
-  m_PrefabInstance: {fileID: 7655156513424016911}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6ac59f01725e46f78fab63f9a4c73208, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.B1F.GeneratorFuelCan
 --- !u!1 &7842996862786793212 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7842996862296073308, guid: e9a402d670858f441a3cc1e138d19cce, type: 3}
@@ -36834,5 +37075,5 @@ SceneRoots:
   - {fileID: 2113112249}
   - {fileID: 1618293262}
   - {fileID: 1626496814}
-  - {fileID: 7655156513424016911}
   - {fileID: 545917198}
+  - {fileID: 854594948}

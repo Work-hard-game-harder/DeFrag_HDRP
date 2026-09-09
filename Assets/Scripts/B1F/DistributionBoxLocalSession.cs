@@ -210,14 +210,18 @@ namespace DeFrag.B1F
             double startServerTime,
             float targetCenter,
             float successWidth,
-            float roundTripDuration)
+            float roundTripDuration,
+            int round,
+            int totalRounds)
         {
             if (!active) return;
             DistributionTimingGaugePresenter.GetOrCreate().ShowAttempt(
                 startServerTime,
                 targetCenter,
                 successWidth,
-                roundTripDuration);
+                roundTripDuration,
+                round,
+                totalRounds);
         }
 
         public void ShowTimingFailure()
@@ -431,7 +435,9 @@ namespace DeFrag.B1F
             double serverStartTime,
             float targetCenter,
             float successWidth,
-            float duration)
+            float duration,
+            int round,
+            int totalRounds)
         {
             if (feedbackRoutine != null)
             {
@@ -446,7 +452,7 @@ namespace DeFrag.B1F
             successImage.color = new Color(0.1f, 0.85f, 0.2f, 0.72f);
             barImage.color = Color.white;
             instruction.color = Color.white;
-            instruction.text = "MAIN KNOB SYNCHRONIZATION  //  PRESS [E] IN THE GREEN ZONE";
+            instruction.text = $"MAIN KNOB SYNC  {round:00}/{totalRounds:00}  //  PRESS [E] IN THE GREEN ZONE";
 
             float halfWidth = successWidth * 0.5f;
             successZone.anchorMin = new Vector2(targetCenter - halfWidth, 0f);

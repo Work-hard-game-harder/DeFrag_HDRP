@@ -1188,20 +1188,32 @@ namespace StarterAssets
         public void BroadcastSharedQuestSnapshotFromServer(
             int currentStepIndex,
             int pendingStepIndex,
-            int currentCount)
+            int currentCount,
+            ulong targetClientId)
         {
             if (IsSpawned && IsServer)
+            {
+                ClientRpcParams target = new()
+                {
+                    Send = new ClientRpcSendParams
+                    {
+                        TargetClientIds = new[] { targetClientId }
+                    }
+                };
                 ApplySharedQuestSnapshotClientRpc(
                     currentStepIndex,
                     pendingStepIndex,
-                    currentCount);
+                    currentCount,
+                    target);
+            }
         }
 
         [ClientRpc]
         private void ApplySharedQuestSnapshotClientRpc(
             int currentStepIndex,
             int pendingStepIndex,
-            int currentCount)
+            int currentCount,
+            ClientRpcParams rpcParams = default)
         {
             if (IsServer)
                 return;

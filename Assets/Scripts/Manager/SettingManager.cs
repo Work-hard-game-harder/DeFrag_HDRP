@@ -279,6 +279,12 @@ public class SettingManager : MonoBehaviour
             return;
         }
 
+        // A modal gameplay interaction owns its own cursor policy. For example,
+        // terminal puzzles need a free cursor while distribution-box camera control
+        // deliberately keeps it locked. Do not overwrite either state here.
+        if (GameplayInputGate.IsBlocked)
+            return;
+
         // LobbyF/B1F/B2F 등의 게임 플레이 씬에서는 다른 UI가 커서를
         // 해제하더라도 Pause/Setting이 닫혀 있는 동안 항상 잠금 상태를 유지한다.
         // MainLobby/LobbyScene/CreateLobby는 SetPlayerInputLock 내부의

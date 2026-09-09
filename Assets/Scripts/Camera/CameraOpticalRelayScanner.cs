@@ -186,8 +186,8 @@ public sealed class CameraOpticalRelayScanner : MonoBehaviour
     {
         if (success)
         {
-            privateWordList = message;
-            PopulateWordGrid(message);
+            privateWordList = string.Empty;
+            SetWordGridVisible(false);
             ShowTransient($"{relayId} // CAPTURE ACCEPTED", true);
             Play(acceptedClip);
         }
@@ -219,10 +219,9 @@ public sealed class CameraOpticalRelayScanner : MonoBehaviour
         {
             scanText.text = transientStatus;
         }
-        else if (!string.IsNullOrEmpty(privateWordList) &&
-                 coordinator.Phase == ConnectServerUplinkPhase.AwaitingVerification)
+        else if (coordinator.Phase == ConnectServerUplinkPhase.AwaitingVerification)
         {
-            scanText.text = "WORD GRID DECODED // REPORT THE REQUESTED NUMBER";
+            scanText.text = "CIRCUIT DATA LINKED // GUARD THE RELAY";
         }
         else if (aimedRelay == null)
         {

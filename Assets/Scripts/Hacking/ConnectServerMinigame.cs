@@ -48,10 +48,12 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
     private bool opticalRelayMode;
     private ConnectServerUplinkPhase displayedPhase;
     private bool hasDisplayedPhase;
+    private ConnectServerCircuitView circuitView;
+    private int displayedCircuitSeed;
 
     public override bool ConsumesTextInput => true;
     public override bool CloseTerminalOnSuccess => true;
-    public override string ControlHint => "[TAB] AUTOCOMPLETE    [ENTER] UPLOAD    [ESC] ABORT";
+    public override string ControlHint => "[MOUSE] DRAG    [Q/E] ROTATE    [ESC] ABORT";
 
     public override void Begin(ConnectionDevice terminal, TerminalCommands command)
     {
@@ -108,6 +110,7 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
     public override void End()
     {
         StopAllCoroutines();
+        RemoveCircuitView();
         hintRelay?.HideForTeammate();
         if (coordinator != null)
         {
@@ -121,10 +124,6 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
     {
         if (coordinator == null || !coordinator.IsSpawned || finished)
             return;
-
-        if (TerminalKeyboardInput.TabPressed &&
-            coordinator.Phase == ConnectServerUplinkPhase.AwaitingVerification)
-            TryAutocompleteUploadCommand();
 
         RefreshOpticalInterface();
     }
@@ -161,6 +160,7 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
                 SetInputEnabled(false, "> INPUT LOCKED // NEGOTIATING RELAY ROUTE");
                 break;
             case ConnectServerUplinkPhase.AwaitingOpticalScan:
+                RemoveCircuitView();
                 challenge.color = Green;
                 challenge.text =
                     $"연결 {coordinator.CompletedRounds + 1:00}/{coordinator.RequiredRounds:00}\n" +
@@ -171,10 +171,9 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
                 break;
             case ConnectServerUplinkPhase.AwaitingVerification:
                 challenge.color = Green;
-                challenge.text =
-                    $"촬영 승인 // 카메라 화면의 [{coordinator.RequestedWordNumber:00}]번째 단어 요청\n" +
-                    "[TAB] UPLOAD 자동완성  →  단어 입력  →  [ENTER]";
-                SetInputEnabled(true, "> TAB을 눌러 UPLOAD를 자동완성하세요");
+                challenge.text = "OPTICAL CAPTURE ACCEPTED // CIRCUIT DATA LOADING";
+                SetInputEnabled(false, "> CIRCUIT INTERFACE ACTIVE");
+                EnsureCircuitView();
                 break;
             case ConnectServerUplinkPhase.Suspended:
                 challenge.color = DimGreen;
@@ -254,10 +253,37 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
         log.text += $"\n> {message}";
         if (!success)
             terminalSfx?.PlayIncorrectAnswer();
+        else
+            terminalSfx?.PlayRoundSuccess();
         input.SetTextWithoutNotify(string.Empty);
         if (!success && coordinator != null &&
             coordinator.Phase == ConnectServerUplinkPhase.AwaitingVerification)
-            SetInputEnabled(true, "> 다시 시도: [TAB] UPLOAD + 단어 + [ENTER]");
+            SetInputEnabled(false, "> 배치가 거부되었습니다 // 도형을 다시 맞추세요");
+    }
+
+    private void EnsureCircuitView()
+    {
+        int seed = coordinator != null ? coordinator.CircuitSeed : 0;
+        if (seed == 0 || displayedCircuitSeed == seed) return;
+        RemoveCircuitView();
+        displayedCircuitSeed = seed;
+        GameObject viewObject = new("Circuit Shape Puzzle", typeof(RectTransform), typeof(ConnectServerCircuitView));
+        viewObject.transform.SetParent(transform, false);
+        circuitView = viewObject.GetComponent<ConnectServerCircuitView>();
+        circuitView.Begin(seed, coordinator.CompletedRounds + 1, SubmitCircuitSolution);
+    }
+
+    private void SubmitCircuitSolution(string placements)
+    {
+        if (coordinator != null && coordinator.Phase == ConnectServerUplinkPhase.AwaitingVerification)
+            coordinator.SubmitCircuitSolution(placements);
+    }
+
+    private void RemoveCircuitView()
+    {
+        if (circuitView != null) Destroy(circuitView.gameObject);
+        circuitView = null;
+        displayedCircuitSeed = 0;
     }
 
     private IEnumerator FailOpticalAfterDelay()
@@ -299,14 +325,6 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
     {
         if (!acceptingInput || finished)
             return;
-
-        if (opticalRelayMode)
-        {
-            acceptingInput = false;
-            input.interactable = false;
-            coordinator.SubmitVerification(submitted);
-            return;
-        }
 
         if (submitted.Trim().ToUpperInvariant() != expectedResponse)
         {

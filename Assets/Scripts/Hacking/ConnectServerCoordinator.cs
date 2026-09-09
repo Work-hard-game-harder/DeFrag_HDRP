@@ -86,6 +86,8 @@ public sealed class ConnectServerCoordinator : NetworkBehaviour
         -1,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server);
+    private readonly NetworkVariable<int> circuitSeed = new(
+        0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     private OpticalRelayNode currentTarget;
     private string expectedAuthorization;
@@ -105,6 +107,7 @@ public sealed class ConnectServerCoordinator : NetworkBehaviour
     public double Deadline => deadline.Value;
     public ulong TerminalOperatorClientId => terminalOperator.Value;
     public int RequestedWordNumber => requestedWordIndex.Value + 1;
+    public int CircuitSeed => circuitSeed.Value;
     public double ServerTime => NetworkManager != null && NetworkManager.IsListening
         ? NetworkManager.ServerTime.Time
         : Time.unscaledTimeAsDouble;
@@ -125,6 +128,7 @@ public sealed class ConnectServerCoordinator : NetworkBehaviour
         targetRelayId.Value = default;
         targetSector.Value = default;
         requestedWordIndex.Value = -1;
+        circuitSeed.Value = 0;
         terminalOperator.Value = NoClient;
         expectedAuthorization = string.Empty;
         phase.Value = ConnectServerUplinkPhase.Completed;
@@ -145,6 +149,7 @@ public sealed class ConnectServerCoordinator : NetworkBehaviour
         deadline.OnValueChanged += OnDoubleChanged;
         terminalOperator.OnValueChanged += OnUlongChanged;
         requestedWordIndex.OnValueChanged += OnIntChanged;
+        circuitSeed.OnValueChanged += OnIntChanged;
 
         LocalInstance = this;
         LocalInstanceAvailable?.Invoke(this);
@@ -161,6 +166,7 @@ public sealed class ConnectServerCoordinator : NetworkBehaviour
         deadline.OnValueChanged -= OnDoubleChanged;
         terminalOperator.OnValueChanged -= OnUlongChanged;
         requestedWordIndex.OnValueChanged -= OnIntChanged;
+        circuitSeed.OnValueChanged -= OnIntChanged;
         if (LocalInstance == this)
             LocalInstance = null;
     }
@@ -213,6 +219,11 @@ public sealed class ConnectServerCoordinator : NetworkBehaviour
             SubmitVerificationServerRpc(value.Trim().ToUpperInvariant());
     }
 
+    public void SubmitCircuitSolution(string placements)
+    {
+        if (IsSpawned) SubmitCircuitSolutionServerRpc(circuitSeed.Value, placements ?? string.Empty);
+    }
+
     public bool TryGetRelay(string relayId, out OpticalRelayNode relay)
     {
         relay = FindRelay(relayId);
@@ -241,6 +252,7 @@ public sealed class ConnectServerCoordinator : NetworkBehaviour
                 trace.Value = 0f;
                 expectedAuthorization = string.Empty;
                 requestedWordIndex.Value = -1;
+                circuitSeed.Value = 0;
                 phase.Value = ConnectServerUplinkPhase.Connecting;
                 deadline.Value = 0d;
                 connectAt = ServerTime + connectionDelay;
@@ -265,6 +277,7 @@ public sealed class ConnectServerCoordinator : NetworkBehaviour
 
         expectedAuthorization = string.Empty;
         requestedWordIndex.Value = -1;
+        circuitSeed.Value = 0;
         deadline.Value = 0d;
         phase.Value = ConnectServerUplinkPhase.Suspended;
     }
@@ -301,13 +314,14 @@ public sealed class ConnectServerCoordinator : NetworkBehaviour
             return;
         }
 
-        expectedAuthorization = currentCameraWords[requestedWordIndex.Value];
+        circuitSeed.Value = UnityEngine.Random.Range(1, int.MaxValue);
+        expectedAuthorization = string.Empty;
         deadline.Value = ServerTime + verificationTimeLimit;
         phase.Value = ConnectServerUplinkPhase.AwaitingVerification;
         PhotoResolvedClientRpc(
             true,
             relayId,
-            FormatCameraWordList(),
+            "CIRCUIT PACKAGE SENT // HOLD POSITION",
             Target(sender));
     }
 
@@ -356,6 +370,39 @@ public sealed class ConnectServerCoordinator : NetworkBehaviour
         }
     }
 
+    [ServerRpc(RequireOwnership = false)]
+    private void SubmitCircuitSolutionServerRpc(
+        int submittedSeed,
+        string placements,
+        ServerRpcParams rpc = default)
+    {
+        ulong sender = rpc.Receive.SenderClientId;
+        if (phase.Value != ConnectServerUplinkPhase.AwaitingVerification ||
+            sender != terminalOperator.Value || submittedSeed != circuitSeed.Value)
+            return;
+
+        ConnectServerCircuitPuzzle puzzle = ConnectServerCircuitPuzzle.Generate(
+            circuitSeed.Value, completedRounds.Value + 1);
+        if (!puzzle.Validate(placements))
+        {
+            AddTrace(wrongRelayTrace);
+            VerificationResolvedClientRpc(false, "CIRCUIT PATTERN REJECTED", Target(sender));
+            return;
+        }
+
+        completedRounds.Value++;
+        VerificationResolvedClientRpc(true, "CIRCUIT VERIFIED", Target(sender));
+        circuitSeed.Value = 0;
+        if (completedRounds.Value >= requiredRounds)
+        {
+            deadline.Value = 0d;
+            phase.Value = ConnectServerUplinkPhase.Completed;
+            if (QuestManager.Instance != null && !string.IsNullOrWhiteSpace(completionQuestSignal))
+                QuestManager.Instance.ReportProgress(completionQuestSignal, completionQuestSourceId);
+        }
+        else SelectNextTarget();
+    }
+
     private bool ValidateCapture(
         ulong sender,
         OpticalRelayNode relay,
@@ -391,6 +438,7 @@ public sealed class ConnectServerCoordinator : NetworkBehaviour
 
     private void SelectNextTarget()
     {
+        circuitSeed.Value = 0;
         List<int> usableIndices = new();
         for (int i = 0; i < relayNodes.Count; i++)
         {

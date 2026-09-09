@@ -91,8 +91,11 @@ namespace DeFrag.B1F
             AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
 
         [Header("Main Knob Timing Game")]
+        [SerializeField, Range(1, 5)] private int timingRoundsRequired = 3;
         [SerializeField, Min(0.4f)] private float timingRoundTripDuration = 1.6f;
         [SerializeField, Range(0.05f, 0.6f)] private float timingSuccessWidth = 0.2f;
+        [SerializeField, Range(0.5f, 1f)] private float timingDurationMultiplierPerRound = 0.78f;
+        [SerializeField, Range(0.5f, 1f)] private float timingWidthMultiplierPerRound = 0.72f;
         [SerializeField, Range(0f, 0.1f)] private float timingBoundaryTolerance = 0.02f;
         [SerializeField, Min(0.1f)] private float timingFailureCooldown = 1.1f;
         [SerializeField, Min(0f)] private float timingSuccessPresentationDuration = 0.35f;
@@ -145,6 +148,7 @@ namespace DeFrag.B1F
         private float timingTargetCenter;
         private bool timingAttemptActive;
         private bool timingInputLocked;
+        private int timingRound;
         private Coroutine timingFailureRoutine;
         private Coroutine timingSuccessRoutine;
 
@@ -361,13 +365,15 @@ namespace DeFrag.B1F
                 observedServerTime = serverNow;
 
             float barPosition = EvaluateTimingBar(observedServerTime);
-            float allowedHalfWidth = timingSuccessWidth * 0.5f + timingBoundaryTolerance;
+            float allowedHalfWidth = GetCurrentTimingWidth() * 0.5f + timingBoundaryTolerance;
             if (Mathf.Abs(barPosition - timingTargetCenter) <= allowedHalfWidth)
             {
                 timingInputLocked = true;
                 timingAttemptActive = false;
-                timingSuccessRoutine = StartCoroutine(
-                    CompletePuzzleAfterPresentation(sender));
+                timingRound++;
+                timingSuccessRoutine = timingRound >= timingRoundsRequired
+                    ? StartCoroutine(CompletePuzzleAfterPresentation(sender))
+                    : StartCoroutine(AdvanceTimingRoundAfterPresentation(sender));
                 return;
             }
 
@@ -476,6 +482,8 @@ namespace DeFrag.B1F
             float targetCenter,
             float successWidth,
             float roundTripDuration,
+            int round,
+            int totalRounds,
             ClientRpcParams rpc = default)
         {
             DistributionBoxLocalSession session = DistributionBoxLocalSession.Active;
@@ -484,7 +492,9 @@ namespace DeFrag.B1F
                     startServerTime,
                     targetCenter,
                     successWidth,
-                    roundTripDuration);
+                    roundTripDuration,
+                    round,
+                    totalRounds);
         }
 
         [ClientRpc]
@@ -541,7 +551,10 @@ namespace DeFrag.B1F
             AdvanceTerminalClientRpc(nextPhase, Target(terminalClient));
             if (nextPhase == DistributionPuzzlePhase.MainKnob &&
                 controllingClient.Value != NoClient)
+            {
+                timingRound = 0;
                 StartTimingAttempt(controllingClient.Value);
+            }
         }
 
         private IEnumerator CompletePuzzleAfterPresentation(ulong controllingPlayer)
@@ -565,7 +578,9 @@ namespace DeFrag.B1F
         private void StartTimingAttempt(ulong controllerClient)
         {
             if (!IsServer || controllerClient == NoClient) return;
-            float halfWidth = timingSuccessWidth * 0.5f;
+            float currentWidth = GetCurrentTimingWidth();
+            float currentDuration = GetCurrentTimingDuration();
+            float halfWidth = currentWidth * 0.5f;
             timingTargetCenter = Random.Range(halfWidth + 0.05f, 0.95f - halfWidth);
             timingAttemptStartTime = NetworkManager.ServerTime.Time + 0.15d;
             timingAttemptActive = true;
@@ -573,10 +588,28 @@ namespace DeFrag.B1F
             StartTimingAttemptClientRpc(
                 timingAttemptStartTime,
                 timingTargetCenter,
-                timingSuccessWidth,
-                timingRoundTripDuration,
+                currentWidth,
+                currentDuration,
+                timingRound + 1,
+                timingRoundsRequired,
                 Target(controllerClient));
         }
+
+        private IEnumerator AdvanceTimingRoundAfterPresentation(ulong controllerClient)
+        {
+            TimingSuccessClientRpc(Target(controllerClient));
+            yield return new WaitForSecondsRealtime(timingSuccessPresentationDuration + 0.18f);
+            timingSuccessRoutine = null;
+            if (phase.Value == DistributionPuzzlePhase.MainKnob &&
+                controllingClient.Value == controllerClient)
+                StartTimingAttempt(controllerClient);
+        }
+
+        private float GetCurrentTimingDuration() =>
+            timingRoundTripDuration * Mathf.Pow(timingDurationMultiplierPerRound, timingRound);
+
+        private float GetCurrentTimingWidth() =>
+            timingSuccessWidth * Mathf.Pow(timingWidthMultiplierPerRound, timingRound);
 
         private IEnumerator RestartTimingAfterFailure(ulong controllerClient)
         {
@@ -591,7 +624,7 @@ namespace DeFrag.B1F
         private float EvaluateTimingBar(double serverTime)
         {
             double elapsed = System.Math.Max(0d, serverTime - timingAttemptStartTime);
-            float halfTripDuration = Mathf.Max(0.2f, timingRoundTripDuration * 0.5f);
+            float halfTripDuration = Mathf.Max(0.2f, GetCurrentTimingDuration() * 0.5f);
             return Mathf.PingPong((float)(elapsed / halfTripDuration), 1f);
         }
 

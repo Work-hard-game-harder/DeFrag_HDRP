@@ -57,6 +57,14 @@ public sealed class HackingSessionController : MonoBehaviour
         IsActive = false;
     }
 
+    private void LateUpdate()
+    {
+        // Unity may recapture the pointer when focus moves between Multiplayer Play
+        // Mode windows. This local modal session owns the cursor until it ends.
+        if (IsActive)
+            SetCursorForUi(true);
+    }
+
     private void OnDestroy()
     {
         if (!IsActive) return;

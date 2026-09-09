@@ -29,6 +29,8 @@ namespace DeFrag.B1F
         private TMP_InputField commandInput;
         private RectTransform fuelFill;
         private RectTransform pressureFill;
+        private RectTransform nominalPressureZone;
+        private RectTransform dangerPressureZone;
         private Image pressureFillImage;
         private GeneratorBSessionMode mode;
         private bool originalPlayerCameraEnabled;
@@ -197,6 +199,13 @@ namespace DeFrag.B1F
 
             if (pressureFill != null)
                 pressureFill.anchorMax = new Vector2(controller.Pressure, 1f);
+            if (nominalPressureZone != null)
+            {
+                nominalPressureZone.anchorMin = new Vector2(controller.MinimumPressure, 0f);
+                nominalPressureZone.anchorMax = new Vector2(controller.DangerPressure, 1f);
+            }
+            if (dangerPressureZone != null)
+                dangerPressureZone.anchorMin = new Vector2(controller.DangerPressure, 0f);
             if (pressureFillImage != null)
                 pressureFillImage.color = controller.Pressure >= controller.DangerPressure
                     ? Red
@@ -230,12 +239,16 @@ namespace DeFrag.B1F
             }
             else if (mode == GeneratorBSessionMode.Fuel)
             {
-                statusText.text = held ? "FUEL FLOW ACTIVE" : "HOLD SPACE TO POUR";
+                statusText.text = held
+                    ? $"FUEL FLOW ACTIVE // PHASE {controller.PressureStage + 1}/3"
+                    : $"HOLD SPACE TO POUR // PHASE {controller.PressureStage + 1}/3";
                 statusText.color = BrightGreen;
             }
             else
             {
-                statusText.text = held ? "RELIEF VALVE OPEN" : "HOLD SPACE TO VENT PRESSURE";
+                statusText.text = held
+                    ? $"RELIEF VALVE OPEN // PHASE {controller.PressureStage + 1}/3"
+                    : $"HOLD SPACE TO VENT PRESSURE // PHASE {controller.PressureStage + 1}/3";
                 statusText.color = BrightGreen;
             }
         }
@@ -364,17 +377,17 @@ namespace DeFrag.B1F
             gauge.GetComponent<Image>().color = new Color(0.015f, 0.08f, 0.1f, 1f);
 
             GameObject safe = CreatePanel("Nominal Pressure", gauge.transform);
-            RectTransform safeRect = (RectTransform)safe.transform;
-            safeRect.anchorMin = new Vector2(controller.MinimumPressure, 0f);
-            safeRect.anchorMax = new Vector2(controller.DangerPressure, 1f);
-            safeRect.offsetMin = safeRect.offsetMax = Vector2.zero;
+            nominalPressureZone = (RectTransform)safe.transform;
+            nominalPressureZone.anchorMin = new Vector2(controller.MinimumPressure, 0f);
+            nominalPressureZone.anchorMax = new Vector2(controller.DangerPressure, 1f);
+            nominalPressureZone.offsetMin = nominalPressureZone.offsetMax = Vector2.zero;
             safe.GetComponent<Image>().color = new Color(0.1f, 0.42f, 0.22f, 0.65f);
 
             GameObject danger = CreatePanel("Danger Pressure", gauge.transform);
-            RectTransform dangerRect = (RectTransform)danger.transform;
-            dangerRect.anchorMin = new Vector2(controller.DangerPressure, 0f);
-            dangerRect.anchorMax = Vector2.one;
-            dangerRect.offsetMin = dangerRect.offsetMax = Vector2.zero;
+            dangerPressureZone = (RectTransform)danger.transform;
+            dangerPressureZone.anchorMin = new Vector2(controller.DangerPressure, 0f);
+            dangerPressureZone.anchorMax = Vector2.one;
+            dangerPressureZone.offsetMin = dangerPressureZone.offsetMax = Vector2.zero;
             danger.GetComponent<Image>().color = new Color(0.55f, 0.04f, 0.025f, 0.75f);
 
             GameObject fill = CreatePanel("Current Pressure", gauge.transform);
