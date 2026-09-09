@@ -317,6 +317,7 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
 
         acceptingInput = false;
         input.interactable = false;
+        terminalSfx?.PlayRoundSuccess();
         hintRelay?.HideForTeammate();
         log.text += $"\n> NODE {currentRound:00} ACCEPTED";
 
@@ -391,6 +392,7 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
             new Vector2(0.04f, 0.06f), new Vector2(0.96f, 0.22f),
             Vector2.zero, Vector2.zero);
         inputObject.GetComponent<Image>().color = new Color(0f, 0.12f, 0.02f, 0.88f);
+        OperationPanelStyle.Input(inputObject);
 
         TMP_Text inputText = CreateText(
             "Text", 25f, TextAlignmentOptions.MidlineLeft, inputObject.transform);

@@ -11,15 +11,28 @@ public class SubtitleTrigger : MonoBehaviour
     [Header("Quest UI Link")]
     [Tooltip("체크하면 이 자막이 모두 끝난 뒤 공개 대기 중인 다음 퀘스트 UI를 표시합니다.")]
     [SerializeField] private bool revealPendingQuestAfterSubtitle;
+    [SerializeField] private string requiredQuestId;
+    [SerializeField] private string completionQuestSignal;
 
     private void OnTriggerEnter(Collider other)
     {
+        TryPlayForPlayer(other);
+    }
+
+    private void OnTriggerStay(Collider other) => TryPlayForPlayer(other);
+
+    private void TryPlayForPlayer(Collider other)
+    {
         if (hasTriggered) return;
-        if (other.CompareTag("Player"))
+        var player = other.GetComponentInParent<StarterAssets.PersonController>();
+        if (player != null && player.IsSpawned && !player.IsOwner) return;
+        if (player != null || other.CompareTag("Player"))
         {
+            if (!string.IsNullOrWhiteSpace(requiredQuestId) &&
+                (QuestManager.Instance == null || !QuestManager.Instance.IsQuestActive(requiredQuestId))) return;
             // 퀘스트 공개용 트리거는 실제로 공개를 기다리는 퀘스트가 있을 때만
             // 실행되게 하여, 플레이어가 순서보다 먼저 진입해 트리거를 소모하지 않게 합니다.
-            if (revealPendingQuestAfterSubtitle &&
+            if (revealPendingQuestAfterSubtitle && string.IsNullOrWhiteSpace(completionQuestSignal) &&
                 (QuestManager.Instance == null || !QuestManager.Instance.IsWaitingForSubtitleReveal))
             {
                 return;
@@ -34,7 +47,34 @@ public class SubtitleTrigger : MonoBehaviour
             hasTriggered = true;
             subtitlesScript.PlaySubtitles(
                 mySubtitles,
-                revealPendingQuestAfterSubtitle ? RevealPendingQuest : null);
+                CompleteQuestLink);
+        }
+    }
+
+    private void CompleteQuestLink()
+    {
+        if (!string.IsNullOrWhiteSpace(completionQuestSignal))
+        {
+            QuestManager.Instance?.ReportProgress(completionQuestSignal, gameObject.name);
+            if (revealPendingQuestAfterSubtitle) StartCoroutine(RevealAfterAcknowledgement());
+            return;
+        }
+        if (revealPendingQuestAfterSubtitle) RevealPendingQuest();
+    }
+
+    private System.Collections.IEnumerator RevealAfterAcknowledgement()
+    {
+        float deadline = Time.realtimeSinceStartup + 10f;
+        while (Time.realtimeSinceStartup < deadline)
+        {
+            var quests = QuestManager.Instance;
+            if (quests != null && quests.IsWaitingForSubtitleReveal &&
+                quests.CurrentStep != null && quests.CurrentStep.requiredSignal == completionQuestSignal)
+            {
+                RevealPendingQuest();
+                yield break;
+            }
+            yield return null;
         }
     }
 
@@ -66,10 +106,7 @@ public class SubtitleTrigger : MonoBehaviour
 
         System.Action combinedCallback = () =>
         {
-            if (revealPendingQuestAfterSubtitle)
-            {
-                RevealPendingQuest();
-            }
+            CompleteQuestLink();
             onComplete?.Invoke();
         };
 

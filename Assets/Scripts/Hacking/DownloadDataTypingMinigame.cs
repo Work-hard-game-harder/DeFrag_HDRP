@@ -156,6 +156,7 @@ public sealed class DownloadDataTypingMinigame : HackingMinigameBase
 
         acceptingInput = false;
         input.interactable = false;
+        terminalSfx?.PlayRoundSuccess();
         hintRelay?.HideForTeammate();
         log.text += $"\n> ACCEPTED: {currentCommand.FullText}";
 

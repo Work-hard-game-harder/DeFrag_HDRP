@@ -250,6 +250,10 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
     {
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
+        // Only the server owns path finding. A client-side NavMeshAgent otherwise writes a
+        // second position while NetworkTransform is applying the authoritative position.
+        if (!HasSimulationAuthority && agent != null)
+            agent.enabled = false;
         lastPosition = transform.position;
         chaseNavigator = new ChaseDetourNavigator(agent, detourSampleCount, detourSampleRadius, detourRecheckInterval);
         randomDestinationPath = new NavMeshPath();
@@ -257,7 +261,8 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
         initialDestinationPending = initialSearchDestination != null;
 
         currentState = MonsterState.Idle;
-        ChangeState(MonsterState.Search);
+        if (HasSimulationAuthority)
+            ChangeState(MonsterState.Search);
         initialized = true;
         if (storyDebugFrozen)
             SetStoryDebugFrozen(true);

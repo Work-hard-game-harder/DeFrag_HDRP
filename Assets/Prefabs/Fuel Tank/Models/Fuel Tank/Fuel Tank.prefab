@@ -209,12 +209,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6ac59f01725e46f78fab63f9a4c73208, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeFrag.B1F.GeneratorFuelCan
-  movementMultiplier: 0.7
+  movementMultiplier: 0.5
   signalAnchor: {fileID: 3257792438912666407}
   signalAudioSource: {fileID: 5754086711982089923}
   signalClip: {fileID: 8300000, guid: 1455cee1a26401446bb0abb690d66fe0, type: 3}
   signalVolume: 1
-  signalMaxDistance: 20
+  signalGainDb: 6
+  signalMaxDistance: 80
+  signalMinDistance: 8
 --- !u!82 &5754086711982089923
 AudioSource:
   m_ObjectHideFlags: 0
@@ -236,10 +238,10 @@ AudioSource:
   SpatializePostEffects: 0
   Priority: 128
   DopplerLevel: 1
-  MinDistance: 1.5
-  MaxDistance: 20
+  MinDistance: 8
+  MaxDistance: 80
   Pan2D: 0
-  rolloffMode: 0
+  rolloffMode: 1
   BypassEffects: 0
   BypassListenerEffects: 0
   BypassReverbZones: 0

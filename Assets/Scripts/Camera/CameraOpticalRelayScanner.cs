@@ -28,6 +28,7 @@ public sealed class CameraOpticalRelayScanner : MonoBehaviour
     [SerializeField] private AudioClip rejectedClip;
 
     private CameraItem cameraItem;
+    private LocalSignalAudio signalAudio;
     private ConnectServerCoordinator coordinator;
     private OpticalRelayNode aimedRelay;
     private OpticalRelayNode lockedRelay;
@@ -48,6 +49,8 @@ public sealed class CameraOpticalRelayScanner : MonoBehaviour
     private void Awake()
     {
         cameraItem = GetComponent<CameraItem>();
+        signalAudio = GetComponent<LocalSignalAudio>();
+        if (signalAudio == null) signalAudio = gameObject.AddComponent<LocalSignalAudio>();
         if (GetComponent<CameraFuelSignalPresenter>() == null)
             gameObject.AddComponent<CameraFuelSignalPresenter>();
         if (scanCamera == null)
@@ -264,6 +267,7 @@ public sealed class CameraOpticalRelayScanner : MonoBehaviour
         panelRect.offsetMin = Vector2.zero;
         panelRect.offsetMax = Vector2.zero;
         panel.GetComponent<Image>().color = new Color(0f, 0.06f, 0.025f, 0.78f);
+        OperationPanelStyle.Frame(panel);
 
         targetText = CreateText("Target", panel.transform, 22f, TextAlignmentOptions.TopLeft);
         Place(targetText.rectTransform, new Vector2(0.04f, 0.46f), new Vector2(0.96f, 0.94f));
@@ -342,6 +346,7 @@ public sealed class CameraOpticalRelayScanner : MonoBehaviour
         RectTransform displayRect = (RectTransform)display.transform;
         Place(displayRect, new Vector2(0.33f, 0.11f), new Vector2(0.67f, 0.19f));
         display.GetComponent<Image>().color = new Color(0f, 0.04f, 0.015f, 0.82f);
+        OperationPanelStyle.Frame(display);
 
         frequencyText = CreateText(
             "Frequency Text",
@@ -414,12 +419,13 @@ public sealed class CameraOpticalRelayScanner : MonoBehaviour
             target.ScanAnchor.position);
         float far = Mathf.Max(frequencyNearDistance + 0.1f, frequencyFarDistance);
         float proximity = 1f - Mathf.InverseLerp(frequencyNearDistance, far, distance);
+        signalAudio.Report(proximity);
         float frequency = Mathf.Lerp(minimumFrequency, maximumFrequency, proximity);
         int activeBars = proximity <= 0.01f
             ? 0
             : Mathf.Clamp(Mathf.CeilToInt(proximity * signalBars.Length), 1, signalBars.Length);
         float wave = Mathf.Sin(Time.unscaledTime * frequency * Mathf.PI * 2f) * 0.5f + 0.5f;
-        frequencyText.text = $"TARGET SIGNAL\n{frequency:00.0} Hz";
+        frequencyText.text = $"RELAY  /  TRACKING\nSIGNAL  {activeBars} / {signalBars.Length}";
         for (int i = 0; i < signalBars.Length; i++)
         {
             if (signalBars[i] == null)

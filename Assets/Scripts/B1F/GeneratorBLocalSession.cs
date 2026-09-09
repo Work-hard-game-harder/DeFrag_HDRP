@@ -28,18 +28,18 @@ namespace DeFrag.B1F
         private TMP_Text statusText;
         private TMP_InputField commandInput;
         private RectTransform fuelFill;
-        private RectTransform movingMarker;
-        private RectTransform successZone;
+        private RectTransform pressureFill;
+        private Image pressureFillImage;
         private GeneratorBSessionMode mode;
         private bool originalPlayerCameraEnabled;
         private bool originalInteractionObjectActive;
         private bool originalInteractionCameraEnabled;
         private bool originalInteractionAudioListenerEnabled;
-        private int lastSubmittedAttempt = -1;
-        private int observedPours;
         private bool active;
         private bool ending;
         private Coroutine delayedExit;
+        private bool lastCooperativeInput;
+        private float nextInputHeartbeat;
 
         public bool IsFor(GeneratorBController target) => active && controller == target;
 
@@ -62,8 +62,6 @@ namespace DeFrag.B1F
             mode = sessionMode;
             movement = localPlayer.GetComponentInParent<StarterAssets.PersonController>(true);
             viewSwitcher = localPlayer.GetComponentInParent<CameraViewSwitcher>(true);
-            observedPours = controller.SuccessfulPours;
-            lastSubmittedAttempt = -1;
             ending = false;
             active = true;
             Active = this;
@@ -122,7 +120,7 @@ namespace DeFrag.B1F
             if (mode == GeneratorBSessionMode.Search)
                 UpdateSearchInput();
             else
-                UpdateFuelTiming();
+                UpdateCooperativeFuel();
         }
 
         public void ResolveSearchCommand(GeneratorBController source, bool accepted)
@@ -144,6 +142,22 @@ namespace DeFrag.B1F
                 commandInput.interactable = false;
             ending = true;
             delayedExit = StartCoroutine(ExitAfterDelay(0.9f));
+        }
+
+        public void ResolveFuelCanConsumed(
+            GeneratorBController source,
+            int consumed,
+            int required)
+        {
+            if (!IsFor(source) || mode != GeneratorBSessionMode.Fuel || statusText == null)
+                return;
+            controller.SetLocalPourPresentation(false);
+            statusText.text = consumed >= required
+                ? "FUEL LOAD COMPLETE"
+                : $"FUEL CAN {consumed}/{required} DEPLETED // BRING NEXT CAN";
+            statusText.color = BrightGreen;
+            ending = true;
+            delayedExit = StartCoroutine(ExitAfterDelay(1.25f));
         }
 
         private void UpdateSearchInput()
@@ -171,42 +185,57 @@ namespace DeFrag.B1F
             }
         }
 
-        private void UpdateFuelTiming()
+        private void UpdateCooperativeFuel()
         {
-            if (movingMarker == null || successZone == null)
-                return;
-
-            float target = controller.TimingTarget;
-            float halfWidth = controller.SuccessZoneWidth * 0.5f;
-            successZone.anchorMin = new Vector2(Mathf.Clamp01(target - halfWidth), 0f);
-            successZone.anchorMax = new Vector2(Mathf.Clamp01(target + halfWidth), 1f);
-            successZone.offsetMin = Vector2.zero;
-            successZone.offsetMax = Vector2.zero;
-
-            float position = controller.EvaluateGauge(controller.ServerTime);
-            movingMarker.anchorMin = new Vector2(position, 0f);
-            movingMarker.anchorMax = new Vector2(position, 1f);
-            movingMarker.anchoredPosition = Vector2.zero;
-
-            int serial = controller.AttemptSerial;
-            if (serial != lastSubmittedAttempt)
+            bool held = SpaceHeld();
+            if (held != lastCooperativeInput || Time.unscaledTime >= nextInputHeartbeat)
             {
-                statusText.text = "PRESS SPACE INSIDE THE BRIGHT ZONE";
+                controller.SetCooperativeInput(mode, held);
+                lastCooperativeInput = held;
+                nextInputHeartbeat = Time.unscaledTime + 0.25f;
+            }
+
+            if (pressureFill != null)
+                pressureFill.anchorMax = new Vector2(controller.Pressure, 1f);
+            if (pressureFillImage != null)
+                pressureFillImage.color = controller.Pressure >= controller.DangerPressure
+                    ? Red
+                    : controller.Pressure < controller.MinimumPressure
+                        ? new Color(0.15f, 0.55f, 1f, 1f)
+                        : BrightGreen;
+            if (mode == GeneratorBSessionMode.Fuel)
+                controller.SetLocalPourPresentation(controller.IsPouring);
+
+            if (!controller.BothOperatorsPresent)
+            {
+                statusText.text = mode == GeneratorBSessionMode.Fuel
+                    ? "WAITING FOR HACKING-PAD OPERATOR AT CONTROL PANEL"
+                    : "WAITING FOR FUEL OPERATOR AT INLET";
                 statusText.color = Green;
             }
-
-            if (SpacePressed() && controller.ServerTime >= controller.TimingStart &&
-                lastSubmittedAttempt != serial)
+            else if (controller.IsCoolingDown)
             {
-                lastSubmittedAttempt = serial;
-                statusText.text = "CHECKING PRESSURE TIMING...";
-                controller.SubmitFuelHit(controller.ServerTime, serial);
+                statusText.text = "PRESSURE FAULT // INTAKE PAUSED";
+                statusText.color = Red;
             }
-
-            if (controller.SuccessfulPours != observedPours)
+            else if (controller.Pressure >= controller.DangerPressure)
             {
-                observedPours = controller.SuccessfulPours;
-                statusText.text = $"FUEL INTAKE ACCEPTED // {controller.FuelPercent}%";
+                statusText.text = $"OVERPRESSURE // ALARM IN {controller.DangerSecondsLeft:0.0}s";
+                statusText.color = Red;
+            }
+            else if (controller.Pressure < controller.MinimumPressure)
+            {
+                statusText.text = "PRESSURE TOO LOW // INTAKE STALLED";
+                statusText.color = new Color(0.15f, 0.65f, 1f, 1f);
+            }
+            else if (mode == GeneratorBSessionMode.Fuel)
+            {
+                statusText.text = held ? "FUEL FLOW ACTIVE" : "HOLD SPACE TO POUR";
+                statusText.color = BrightGreen;
+            }
+            else
+            {
+                statusText.text = held ? "RELIEF VALVE OPEN" : "HOLD SPACE TO VENT PRESSURE";
                 statusText.color = BrightGreen;
             }
         }
@@ -216,10 +245,9 @@ namespace DeFrag.B1F
             if (pressureText != null)
                 pressureText.text = controller.IsComplete
                     ? "FUEL PRESSURE 100% // NOMINAL"
-                    : $"FUEL PRESSURE {controller.FuelPercent}% // " +
-                      (mode == GeneratorBSessionMode.Search
-                          ? "EMERGENCY FUEL REQUIRED"
-                          : "MANUAL INTAKE ACTIVE");
+                    : mode == GeneratorBSessionMode.Search
+                        ? $"FUEL LEVEL {controller.FuelPercent}% // EMERGENCY FUEL REQUIRED"
+                        : $"PRESSURE {controller.Pressure * 100f:0}%  //  FUEL {controller.FuelPercent}%";
             if (fuelFill != null)
                 fuelFill.anchorMax = new Vector2(controller.FuelRatio, 1f);
         }
@@ -244,6 +272,7 @@ namespace DeFrag.B1F
             RectTransform panelRect = (RectTransform)panel.transform;
             Place(panelRect, new Vector2(0.12f, 0.13f), new Vector2(0.88f, 0.87f));
             panel.GetComponent<Image>().color = new Color(0.01f, 0.025f, 0.015f, 0.9f);
+            OperationPanelStyle.Frame(panel);
 
             TMP_Text title = CreateText(
                 "Title", panel.transform, 38f, TextAlignmentOptions.TopLeft);
@@ -272,15 +301,16 @@ namespace DeFrag.B1F
 
             if (mode == GeneratorBSessionMode.Search)
                 BuildSearchUi(panel.transform);
-            else
-                BuildFuelUi(panel.transform);
+            else BuildCooperativeFuelUi(panel.transform);
 
             TMP_Text footer = CreateText(
                 "Footer", panel.transform, 20f, TextAlignmentOptions.BottomLeft);
             Place(footer.rectTransform, new Vector2(0.05f, 0.025f), new Vector2(0.95f, 0.10f));
             footer.text = mode == GeneratorBSessionMode.Search
                 ? "[SE + TAB] AUTOCOMPLETE    [ENTER] EXECUTE    [ESC] EXIT"
-                : "[SPACE] INJECT FUEL    [ESC] EXIT";
+                : mode == GeneratorBSessionMode.Fuel
+                    ? "[HOLD SPACE] POUR FUEL    [ESC] RELEASE STATION"
+                    : "[HOLD SPACE] OPEN RELIEF VALVE    [ESC] RELEASE STATION";
         }
 
         private void BuildSearchUi(Transform parent)
@@ -299,6 +329,7 @@ namespace DeFrag.B1F
             RectTransform inputRect = (RectTransform)inputObject.transform;
             Place(inputRect, new Vector2(0.12f, 0.31f), new Vector2(0.88f, 0.43f));
             inputObject.GetComponent<Image>().color = new Color(0f, 0.15f, 0.035f, 0.95f);
+            OperationPanelStyle.Input(inputObject);
 
             TMP_Text inputText = CreateText(
                 "Text", inputObject.transform, 28f, TextAlignmentOptions.MidlineLeft);
@@ -318,34 +349,58 @@ namespace DeFrag.B1F
             statusText.text = "FUEL INDEX OFFLINE // MANUAL SEARCH REQUIRED";
         }
 
-        private void BuildFuelUi(Transform parent)
+        private void BuildCooperativeFuelUi(Transform parent)
         {
             TMP_Text instruction = CreateText(
-                "Instruction", parent, 25f, TextAlignmentOptions.Center);
-            Place(instruction.rectTransform, new Vector2(0.08f, 0.48f), new Vector2(0.92f, 0.58f));
-            instruction.text = "ALIGN THE PRESSURE MARKER WITH THE INTAKE ZONE";
+                "Role Instruction", parent, 27f, TextAlignmentOptions.Center);
+            Place(instruction.rectTransform, new Vector2(0.08f, 0.49f), new Vector2(0.92f, 0.58f));
+            instruction.text = mode == GeneratorBSessionMode.Fuel
+                ? "FUEL INLET // HOLD SPACE TO POUR · RELEASE TO STOP"
+                : "PRESSURE CONTROL // HOLD SPACE TO OPEN RELIEF VALVE";
 
-            GameObject gauge = CreatePanel("Timing Gauge", parent);
+            GameObject gauge = CreatePanel("Pressure Gauge", parent);
             RectTransform gaugeRect = (RectTransform)gauge.transform;
             Place(gaugeRect, new Vector2(0.12f, 0.34f), new Vector2(0.88f, 0.44f));
-            gauge.GetComponent<Image>().color = new Color(0f, 0.08f, 0.02f, 1f);
+            gauge.GetComponent<Image>().color = new Color(0.015f, 0.08f, 0.1f, 1f);
 
-            GameObject zone = CreatePanel("Success Zone", gauge.transform);
-            successZone = (RectTransform)zone.transform;
-            zone.GetComponent<Image>().color = new Color(0.35f, 1f, 0.45f, 0.72f);
+            GameObject safe = CreatePanel("Nominal Pressure", gauge.transform);
+            RectTransform safeRect = (RectTransform)safe.transform;
+            safeRect.anchorMin = new Vector2(controller.MinimumPressure, 0f);
+            safeRect.anchorMax = new Vector2(controller.DangerPressure, 1f);
+            safeRect.offsetMin = safeRect.offsetMax = Vector2.zero;
+            safe.GetComponent<Image>().color = new Color(0.1f, 0.42f, 0.22f, 0.65f);
 
-            GameObject marker = CreatePanel("Moving Marker", gauge.transform);
-            movingMarker = (RectTransform)marker.transform;
-            movingMarker.sizeDelta = new Vector2(10f, 0f);
-            marker.GetComponent<Image>().color = Color.white;
+            GameObject danger = CreatePanel("Danger Pressure", gauge.transform);
+            RectTransform dangerRect = (RectTransform)danger.transform;
+            dangerRect.anchorMin = new Vector2(controller.DangerPressure, 0f);
+            dangerRect.anchorMax = Vector2.one;
+            dangerRect.offsetMin = dangerRect.offsetMax = Vector2.zero;
+            danger.GetComponent<Image>().color = new Color(0.55f, 0.04f, 0.025f, 0.75f);
 
-            statusText.text = "PRESS SPACE INSIDE THE BRIGHT ZONE";
+            GameObject fill = CreatePanel("Current Pressure", gauge.transform);
+            pressureFill = (RectTransform)fill.transform;
+            pressureFill.anchorMin = Vector2.zero;
+            pressureFill.anchorMax = new Vector2(controller.Pressure, 1f);
+            pressureFill.offsetMin = pressureFill.offsetMax = Vector2.zero;
+            pressureFillImage = fill.GetComponent<Image>();
+            pressureFillImage.color = BrightGreen;
+
+            TMP_Text labels = CreateText("Pressure Labels", parent, 18f, TextAlignmentOptions.Center);
+            Place(labels.rectTransform, new Vector2(0.12f, 0.28f), new Vector2(0.88f, 0.335f));
+            labels.text = "LOW                         NOMINAL                         OVERPRESSURE";
+            statusText.text = "WAITING FOR SECOND OPERATOR";
         }
 
         public void EndSession()
         {
             if (!active)
                 return;
+            if (mode != GeneratorBSessionMode.Search)
+            {
+                controller?.SetCooperativeInput(mode, false);
+                if (mode == GeneratorBSessionMode.Fuel)
+                    controller?.SetLocalPourPresentation(false);
+            }
             active = false;
             if (delayedExit != null)
                 StopCoroutine(delayedExit);
@@ -468,9 +523,9 @@ namespace DeFrag.B1F
             ? Keyboard.current.enterKey.wasPressedThisFrame ||
               Keyboard.current.numpadEnterKey.wasPressedThisFrame
             : Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter);
-        private static bool SpacePressed() => Keyboard.current != null
-            ? Keyboard.current.spaceKey.wasPressedThisFrame
-            : Input.GetKeyDown(KeyCode.Space);
+        private static bool SpaceHeld() => Keyboard.current != null
+            ? Keyboard.current.spaceKey.isPressed
+            : Input.GetKey(KeyCode.Space);
         private static void SetCursor(bool ui)
         {
             Cursor.lockState = ui ? CursorLockMode.None : CursorLockMode.Locked;

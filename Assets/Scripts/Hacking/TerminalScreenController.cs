@@ -11,7 +11,7 @@ using UnityEngine.InputSystem;
 
 public sealed class TerminalScreenController : MonoBehaviour
 {
-    private static readonly Color TerminalGreen = new(0.1f, 1f, 0.2f);
+    private static readonly Color TerminalGreen = new(0.65f, 1f, 0.87f);
     private static readonly Color DeniedRed = new(1f, 0.08f, 0.08f);
 
     private readonly List<Button> buttons = new();
@@ -27,6 +27,7 @@ public sealed class TerminalScreenController : MonoBehaviour
     private Coroutine deniedRoutine;
     private TerminalSfxPlayer terminalSfx;
     private int selection;
+    private bool preserveWorldTransientOnDestroy;
 
     public void Initialize(ConnectionDevice terminal, System.Action onClose)
     {
@@ -36,6 +37,7 @@ public sealed class TerminalScreenController : MonoBehaviour
         BuildFrame();
         ShowMenu();
         terminalSfx?.PlaySessionOpened();
+        device.PublishWorldScreen(TerminalWorldPhase.Menu);
     }
 
     private void Update()
@@ -69,6 +71,7 @@ public sealed class TerminalScreenController : MonoBehaviour
         RectTransform screen = CreateRect("Terminal Screen", root);
         Stretch(screen, new Vector2(105f, 75f), new Vector2(-105f, -75f));
         screen.gameObject.AddComponent<Image>().color = Color.black;
+        OperationPanelStyle.Frame(screen.gameObject);
 
         header = CreateText("Header", screen, 31f, TextAlignmentOptions.TopLeft);
         Place(header.rectTransform, new Vector2(0f, 0.84f), Vector2.one,
@@ -136,6 +139,7 @@ public sealed class TerminalScreenController : MonoBehaviour
         header.text = $"{device.DisplayName} // {TerminalCommandLabel.Get(command)}";
         status.text = activeMinigame.ControlHint;
         activeMinigame.Begin(device, command);
+        device.PublishWorldScreen(TerminalWorldPhase.Running, command);
     }
 
     private void ShowDeniedAccess()
@@ -148,6 +152,9 @@ public sealed class TerminalScreenController : MonoBehaviour
 
     private void CompleteMinigame()
     {
+        terminalSfx?.PlayMinigameSuccess();
+        device.PublishWorldScreen(TerminalWorldPhase.Success, activeCommand);
+        preserveWorldTransientOnDestroy = true;
         bool closeTerminal = activeMinigame.CloseTerminalOnSuccess;
         device.RequestCommandCompletion(activeCommand);
         if (closeTerminal)
@@ -162,6 +169,7 @@ public sealed class TerminalScreenController : MonoBehaviour
 
     private void FailMinigame()
     {
+        device.PublishWorldScreen(TerminalWorldPhase.Failure, activeCommand);
         FinishMinigame("ACCESS DENIED // SESSION RESET");
     }
 
@@ -169,12 +177,20 @@ public sealed class TerminalScreenController : MonoBehaviour
     {
         DestroyMinigame();
         ShowMenu();
+        device.PublishWorldScreen(TerminalWorldPhase.Menu);
     }
 
     private void ExitTerminal()
     {
         terminalSfx?.PlayMenuBack();
+        device.PublishWorldScreen(TerminalWorldPhase.Idle);
         closeRequested();
+    }
+
+    private void OnDestroy()
+    {
+        if (!preserveWorldTransientOnDestroy && device != null)
+            device.PublishWorldScreen(TerminalWorldPhase.Idle);
     }
 
     private void FinishMinigame(string message)

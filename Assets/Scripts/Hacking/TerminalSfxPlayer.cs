@@ -15,6 +15,9 @@ public sealed class TerminalSfxPlayer : MonoBehaviour
     [SerializeField] private AudioClip menuSelectedClip;
     [SerializeField] private AudioClip menuBackClip;
     [SerializeField] private AudioClip incorrectAnswerClip;
+    [SerializeField] private AudioClip roundSuccessClip;
+    [SerializeField] private AudioClip minigameSuccessClip;
+    [SerializeField] private AudioClip missionClearClip;
 
     [Header("Typing Variation")]
     [SerializeField, Min(0f)] private float minimumTypingInterval = 0.025f;
@@ -28,6 +31,10 @@ public sealed class TerminalSfxPlayer : MonoBehaviour
     public void PlayMenuSelected() => PlayOneShot(menuSelectedClip);
     public void PlayMenuBack() => PlayOneShot(menuBackClip);
     public void PlayIncorrectAnswer() => PlayOneShot(incorrectAnswerClip);
+    public void PlayRoundSuccess() => PlayOneShot(roundSuccessClip);
+    public void PlayRoundFailure() => PlayOneShot(incorrectAnswerClip);
+    public void PlayMinigameSuccess() => PlayOneShot(minigameSuccessClip);
+    public void PlayMissionClear() => PlayOneShot(missionClearClip != null ? missionClearClip : minigameSuccessClip);
 
     public void BindTyping(TMP_InputField input)
     {

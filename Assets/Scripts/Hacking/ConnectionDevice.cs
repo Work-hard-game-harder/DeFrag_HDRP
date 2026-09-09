@@ -18,6 +18,7 @@ public sealed class ConnectionDevice : MonoBehaviour, IInteractable
     [SerializeField] private string interactionText = "해킹패드 연결 (E 길게 누르기)";
 
     [Header("Command Minigames")]
+    [SerializeField] private string downloadDataRequiredQuestId;
     [SerializeField] private bool unlockDoorEnabled;
     [Tooltip("Leave empty to show DENIED ACCESS for this command.")]
     [SerializeField] private HackingMinigameBase unlockDoorMinigame;
@@ -25,6 +26,8 @@ public sealed class ConnectionDevice : MonoBehaviour, IInteractable
     [Tooltip("Leave empty to show DENIED ACCESS for this command.")]
     [SerializeField] private HackingMinigameBase downloadDataMinigame;
     [SerializeField] private bool connectServerEnabled;
+    [Tooltip("비워두면 퀘스트와 무관하게 Connect Server를 허용합니다.")]
+    [SerializeField] private string connectServerRequiredQuestId;
     [Tooltip("Leave empty to show DENIED ACCESS for this command.")]
     [SerializeField] private HackingMinigameBase connectServerMinigame;
 
@@ -44,6 +47,7 @@ public sealed class ConnectionDevice : MonoBehaviour, IInteractable
     private int inactiveLayer;
     private TerminalCommands completedCommands;
     private TerminalSfxPlayer terminalSfx;
+    private TerminalWorldScreenPresenter worldScreen;
 
     public string TerminalId => terminalId;
     public string DisplayName => displayName;
@@ -69,6 +73,10 @@ public sealed class ConnectionDevice : MonoBehaviour, IInteractable
 
     public bool IsCommandEnabled(TerminalCommands command)
     {
+        if (command == TerminalCommands.DownloadData && !string.IsNullOrWhiteSpace(downloadDataRequiredQuestId) &&
+            (QuestManager.Instance == null || !QuestManager.Instance.IsQuestActive(downloadDataRequiredQuestId))) return false;
+        if (command == TerminalCommands.ConnectServer && !string.IsNullOrWhiteSpace(connectServerRequiredQuestId) &&
+            (QuestManager.Instance == null || !QuestManager.Instance.IsQuestActive(connectServerRequiredQuestId))) return false;
         return command switch
         {
             TerminalCommands.UnlockDoor => unlockDoorEnabled,
@@ -84,6 +92,9 @@ public sealed class ConnectionDevice : MonoBehaviour, IInteractable
         interactableLayer = LayerMask.NameToLayer("Interactable");
         inactiveLayer = LayerMask.NameToLayer("Default");
         FitColliderToModel();
+        worldScreen = GetComponent<TerminalWorldScreenPresenter>();
+        if (worldScreen == null) worldScreen = gameObject.AddComponent<TerminalWorldScreenPresenter>();
+        worldScreen.Initialize(displayName);
     }
 
     private void OnEnable()
@@ -138,6 +149,27 @@ public sealed class ConnectionDevice : MonoBehaviour, IInteractable
         ApplyCommandCompletion(command);
     }
 
+    public void PublishWorldScreen(TerminalWorldPhase phase, TerminalCommands command = TerminalCommands.None)
+    {
+        Unity.Netcode.NetworkManager manager = Unity.Netcode.NetworkManager.Singleton;
+        CooperativeTerminalHintRelay relay = manager != null && manager.IsClient
+            ? manager.LocalClient?.PlayerObject?.GetComponentInChildren<CooperativeTerminalHintRelay>(true)
+            : null;
+        if (relay != null && relay.IsOwner && relay.IsSpawned)
+            relay.RequestTerminalWorldState(terminalId, phase, command);
+        else
+            ApplyWorldScreenState(terminalId, phase, command);
+    }
+
+    public static void ApplyWorldScreenState(
+        string synchronizedTerminalId,
+        TerminalWorldPhase phase,
+        TerminalCommands command)
+    {
+        if (ActiveDevices.TryGetValue(NormalizeTerminalId(synchronizedTerminalId), out var device))
+            device.worldScreen?.SetState(phase, command);
+    }
+
     public static void ApplySynchronizedCompletion(
         string synchronizedTerminalId,
         TerminalCommands command)
@@ -177,6 +209,8 @@ public sealed class ConnectionDevice : MonoBehaviour, IInteractable
                 break;
             case TerminalCommands.ConnectServer:
                 onConnectServerRequested.Invoke();
+                terminalSfx?.PlayMissionClear();
+                MissionClearPresentation.Show();
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(command), command, null);

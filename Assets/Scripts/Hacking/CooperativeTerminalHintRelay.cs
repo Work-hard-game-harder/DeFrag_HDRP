@@ -13,6 +13,32 @@ public sealed class CooperativeTerminalHintRelay : NetworkBehaviour
     private TMP_Text hintText;
     private Coroutine hideRoutine;
 
+    public void RequestTerminalWorldState(
+        string terminalId,
+        TerminalWorldPhase phase,
+        TerminalCommands command)
+    {
+        if (!IsOwner || !IsSpawned || string.IsNullOrWhiteSpace(terminalId)) return;
+        RequestTerminalWorldStateServerRpc(terminalId, (byte)phase, (int)command);
+    }
+
+    [ServerRpc]
+    private void RequestTerminalWorldStateServerRpc(string terminalId, byte rawPhase, int rawCommand)
+    {
+        if (rawPhase > (byte)TerminalWorldPhase.Failure) return;
+        TerminalCommands command = (TerminalCommands)rawCommand;
+        if (command != TerminalCommands.None && command != TerminalCommands.UnlockDoor &&
+            command != TerminalCommands.DownloadData && command != TerminalCommands.ConnectServer) return;
+        ApplyTerminalWorldStateClientRpc(terminalId, rawPhase, rawCommand);
+    }
+
+    [ClientRpc]
+    private void ApplyTerminalWorldStateClientRpc(string terminalId, byte rawPhase, int rawCommand)
+    {
+        ConnectionDevice.ApplyWorldScreenState(
+            terminalId, (TerminalWorldPhase)rawPhase, (TerminalCommands)rawCommand);
+    }
+
     public void RequestTerminalCommandCompletion(
         string terminalId,
         TerminalCommands command)

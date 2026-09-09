@@ -38,6 +38,7 @@ namespace DeFrag.B1F
         [Header("Game Rules")]
         [SerializeField] private B1FPowerController powerController;
         [SerializeField] private bool isBoxA = true;
+        [SerializeField] private string boxARequiredQuestId = "b1f_emergency_power";
         [SerializeField, Min(1f)] private float maximumUseDistance = 6f;
         [SerializeField, Min(1f)] private float hintRefreshSeconds = 30f;
 
@@ -632,6 +633,8 @@ namespace DeFrag.B1F
 
         private bool CanUseForCurrentPowerState()
         {
+            if (isBoxA && (QuestManager.Instance == null ||
+                !QuestManager.Instance.IsQuestActive(boxARequiredQuestId))) return false;
             if (powerController == null) return false;
             return isBoxA ? powerController.CanUseBoxA : powerController.CanUseBoxB;
         }

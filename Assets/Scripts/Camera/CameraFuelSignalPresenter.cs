@@ -20,11 +20,14 @@ public sealed class CameraFuelSignalPresenter : MonoBehaviour
     private Canvas canvas;
     private TMP_Text label;
     private Image[] bars;
+    private LocalSignalAudio signalAudio;
 
     private void Awake()
     {
         cameraItem = GetComponent<CameraItem>();
         viewCamera = GetComponent<Camera>();
+        signalAudio = GetComponent<LocalSignalAudio>();
+        if (signalAudio == null) signalAudio = gameObject.AddComponent<LocalSignalAudio>();
     }
 
     private void OnEnable()
@@ -70,17 +73,20 @@ public sealed class CameraFuelSignalPresenter : MonoBehaviour
 
     private void RefreshSignal()
     {
-        Vector3 target = generator.FuelCan.SignalAnchor.position;
+        var fuel = generator.GetNearestWorldFuel(viewCamera.transform.position);
+        if (fuel == null) { SetVisible(false); return; }
+        Vector3 target = fuel.SignalAnchor.position;
         float distance = Vector3.Distance(viewCamera.transform.position, target);
         float far = Mathf.Max(nearDistance + 0.1f, farDistance);
         float strength = 1f - Mathf.InverseLerp(nearDistance, far, distance);
+        signalAudio.Report(strength);
         int activeBars = strength <= 0.01f
             ? 0
             : Mathf.Clamp(Mathf.CeilToInt(strength * bars.Length), 1, bars.Length);
         float pulse = Mathf.Sin(Time.unscaledTime * Mathf.Lerp(2f, 10f, strength)) *
                       0.5f + 0.5f;
 
-        label.text = $"FUEL_B SIGNAL  //  {distance:0.0}m";
+        label.text = $"FUEL B  /  TRACKING\nSIGNAL  {activeBars} / {bars.Length}";
         for (int i = 0; i < bars.Length; i++)
         {
             bool active = i < activeBars;
@@ -117,6 +123,7 @@ public sealed class CameraFuelSignalPresenter : MonoBehaviour
         displayRect.offsetMin = Vector2.zero;
         displayRect.offsetMax = Vector2.zero;
         display.GetComponent<Image>().color = new Color(0f, 0.04f, 0.015f, 0.84f);
+        OperationPanelStyle.Frame(display);
 
         GameObject textObject = new(
             "Fuel Signal Label",
