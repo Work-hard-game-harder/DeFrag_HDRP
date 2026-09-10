@@ -44,6 +44,12 @@ public class ButtonClickManager : MonoBehaviour
         SettingManager.Instance?.OpenPanel();
     }
 
+    public void SelectedKeyPanel()
+    {
+        AudioManager.Instance.PlaySFX("Button1");
+        SettingManager.Instance?.OpenPanel();
+    }
+
     public void QuitGame()
     {
         Application.Quit(); // Quit in a player build.

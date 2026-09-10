@@ -218,6 +218,7 @@ public class SettingManager : MonoBehaviour
     private StableMicrophoneInput sharedMicSource;
     private Coroutine micRestartCoroutine;
     private Coroutine resolutionChangedCoroutine;
+    private UIBrightnessController uiBrightnessController;
     private string micDeviceSignature = string.Empty;
     private float nextMicDevicePollTime;
     private readonly float[] micSamples = new float[MIC_SAMPLE_SIZE];
@@ -245,11 +246,13 @@ public class SettingManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
+        EnsureUIBrightnessController();
         ResolvePersistentBlurReference();
         CacheColorAdjustments();
         ConfigureUICameraForGlobalVolume(settingCanvas != null ? settingCanvas.worldCamera : null);
         ConfigurePausePanelCanvas();
         ConfigureSettingPanelCanvas();
+        uiBrightnessController?.RefreshTargets();
         SceneManager.sceneLoaded += OnSceneLoaded;
         AudioSettings.OnAudioConfigurationChanged += OnAudioConfigurationChanged;
         InitFloorUnlock();
@@ -510,6 +513,11 @@ public class SettingManager : MonoBehaviour
         if (brightnessSlider == null) return;
         brightnessSlider.minValue = MIN_EXPOSURE;
         brightnessSlider.maxValue = MAX_EXPOSURE;
+        brightnessSlider.wholeNumbers = false;
+
+        // 저장된 밝기 값이 없는 최초 실행에서는 중립 노출(0)부터 시작한다.
+        if (!PlayerPrefs.HasKey(KEY_BRIGHTNESS))
+            brightnessSlider.SetValueWithoutNotify(DEFAULT_BRIGHTNESS);
     }
 
     private void InitMouseSensitivitySlider()
@@ -1009,14 +1017,14 @@ public class SettingManager : MonoBehaviour
         {
             // 최초 실행 시 기본값 0 적용
             Brightness = DEFAULT_BRIGHTNESS;
-            PlayerPrefs.SetInt(KEY_BRIGHTNESS_FIRST, 0);
+            PlayerPrefs.SetInt(KEY_BRIGHTNESS_FIRST, 1);
             PlayerPrefs.SetFloat(KEY_BRIGHTNESS, Brightness);
             PlayerPrefs.Save();
         }
         else
         {
-            float saved = PlayerPrefs.GetFloat(KEY_BRIGHTNESS,
-                colorAdjustments != null ? colorAdjustments.postExposure.value : DEFAULT_BRIGHTNESS);
+            // 저장 키가 유실된 경우 Volume Profile 값이 아니라 명시적인 기본값 0을 사용한다.
+            float saved = PlayerPrefs.GetFloat(KEY_BRIGHTNESS, DEFAULT_BRIGHTNESS);
             Brightness = Mathf.Clamp(saved, MIN_EXPOSURE, MAX_EXPOSURE);
         }
     }
@@ -1160,20 +1168,24 @@ public class SettingManager : MonoBehaviour
     }
     private void ApplyBrightnessImmediate(float value)
     {
+        EnsureUIBrightnessController();
         if (colorAdjustments == null) CacheColorAdjustments();
-        if (colorAdjustments == null) return;
 
         if (smoothBrightnessCoroutine != null)
         {
             StopCoroutine(smoothBrightnessCoroutine);
             smoothBrightnessCoroutine = null;
         }
-        colorAdjustments.postExposure.value = value;
+
+        if (colorAdjustments != null)
+            colorAdjustments.postExposure.value = value;
+        uiBrightnessController?.SetExposure(value);
     }
     private void ApplyBrightnessSmooth(float target)
     {
+        EnsureUIBrightnessController();
         if (colorAdjustments == null) CacheColorAdjustments();
-        if (colorAdjustments == null) return;
+        if (colorAdjustments == null && uiBrightnessController == null) return;
 
         if (smoothBrightnessCoroutine != null) StopCoroutine(smoothBrightnessCoroutine);
         smoothBrightnessCoroutine = StartCoroutine(SmoothSetExposure(target));
@@ -1181,19 +1193,39 @@ public class SettingManager : MonoBehaviour
 
     private IEnumerator SmoothSetExposure(float target)
     {
-        float start = colorAdjustments.postExposure.value;
+        float worldStart = colorAdjustments != null
+            ? colorAdjustments.postExposure.value
+            : target;
+        float uiStart = uiBrightnessController != null
+            ? uiBrightnessController.CurrentExposure
+            : target;
         float t = 0f;
         float span = Mathf.Max(0.0001f, SMOOTH_TIME);
 
         while (t < 1f)
         {
             t += Time.unscaledDeltaTime / span;
-            colorAdjustments.postExposure.value = Mathf.Lerp(start, target, t);
+            float normalizedTime = Mathf.Clamp01(t);
+            if (colorAdjustments != null)
+                colorAdjustments.postExposure.value = Mathf.Lerp(worldStart, target, normalizedTime);
+            uiBrightnessController?.SetExposure(Mathf.Lerp(uiStart, target, normalizedTime));
             yield return null;
         }
 
-        colorAdjustments.postExposure.value = target;
+        if (colorAdjustments != null)
+            colorAdjustments.postExposure.value = target;
+        uiBrightnessController?.SetExposure(target);
         smoothBrightnessCoroutine = null;
+    }
+
+    private void EnsureUIBrightnessController()
+    {
+        if (uiBrightnessController != null)
+            return;
+
+        uiBrightnessController = GetComponent<UIBrightnessController>();
+        if (uiBrightnessController == null)
+            uiBrightnessController = gameObject.AddComponent<UIBrightnessController>();
     }
 
     // MicVolumeController.OnVolumeChanged 로직 통합
