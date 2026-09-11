@@ -2783,6 +2783,7 @@ GameObject:
   - component: {fileID: 1264422813971240959}
   - component: {fileID: 7851964327015289634}
   - component: {fileID: 7851964327015289635}
+  - component: {fileID: 7349012846091223108}
   m_Layer: 7
   m_Name: PlayerCharacter(H)
   m_TagString: Player
@@ -3354,15 +3355,31 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Player.PlayerLocalFeedback
   playerCamera: {fileID: 7146755445071539165}
   playerStats: {fileID: 7349012846091223101}
-  damageColor: {r: 0.65, g: 0, b: 0, a: 0.38}
-  damageFlashDuration: 0.25
-  damageShakeDuration: 0.3
-  damagePositionAmplitude: 0.045
-  damageRotationAmplitude: 1.5
+  damageColor: {r: 0.65, g: 0, b: 0, a: 0.65}
+  damageFlashDuration: 0.65
+  damageShakeDuration: 0.55
+  damagePositionAmplitude: 0.075
+  damageRotationAmplitude: 2.5
   damageShakeFrequency: 24
   breathingDuration: 3
   breathingCycles: 3
   breathingAmplitude: 0.25
+--- !u!114 &7349012846091223108
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8628133643110585351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 479db814b02a4fe5a87e6e58e5f81762, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Combat.NetworkPartyFailureController
+  playerStats: {fileID: 7349012846091223101}
+  deathScreenPrefab: {fileID: 100000, guid: d97c22a1ea7f4b42a810835869bcec42, type: 3}
+  playerDespawnDelay: 0.15
+  uiFadeDuration: 0.5
 --- !u!114 &-574059606829602058
 MonoBehaviour:
   m_ObjectHideFlags: 0

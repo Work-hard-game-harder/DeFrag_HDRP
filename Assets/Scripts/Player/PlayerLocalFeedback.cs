@@ -16,10 +16,10 @@ namespace DeFrag.Player
 
         [Header("Damage Flash")]
         [SerializeField] private Color damageColor = new Color(0.65f, 0f, 0f, 0.38f);
-        [Min(0.01f)] [SerializeField] private float damageFlashDuration = 0.25f;
+        [Min(0.01f)] [SerializeField] private float damageFlashDuration = 0.65f;
 
         [Header("Damage Shake")]
-        [Min(0f)] [SerializeField] private float damageShakeDuration = 0.3f;
+        [Min(0f)] [SerializeField] private float damageShakeDuration = 0.55f;
         [Min(0f)] [SerializeField] private float damagePositionAmplitude = 0.045f;
         [Min(0f)] [SerializeField] private float damageRotationAmplitude = 1.5f;
         [Min(0f)] [SerializeField] private float damageShakeFrequency = 24f;
@@ -35,6 +35,7 @@ namespace DeFrag.Player
         private Coroutine damageRoutine;
         private Coroutine breathingRoutine;
         private Vector3 cameraBaseLocalPosition;
+        private Quaternion cameraBaseLocalRotation;
         private int observedHealth;
         private bool hasObservedHealth;
 
@@ -48,24 +49,27 @@ namespace DeFrag.Player
             playerCamera = playerCamera != null ? playerCamera : GetComponentInChildren<Camera>(true);
 
             if (playerCamera != null)
+            {
                 cameraBaseLocalPosition = playerCamera.transform.localPosition;
+                cameraBaseLocalRotation = playerCamera.transform.localRotation;
+            }
         }
 
         private void OnEnable()
         {
             if (stamina != null)
                 stamina.Exhausted += PlayExhaustionFeedback;
-        }
-
-        private IEnumerator Start()
-        {
-            yield return null;
 
             if (playerStats != null)
             {
                 observedHealth = playerStats.Health;
                 hasObservedHealth = true;
             }
+        }
+
+        private IEnumerator Start()
+        {
+            yield return null;
 
             if (IsLocalOwner)
                 CreateDamageOverlay();
@@ -76,17 +80,18 @@ namespace DeFrag.Player
             if (!IsLocalOwner || playerStats == null)
                 return;
 
+            int currentHealth = playerStats.Health;
             if (!hasObservedHealth)
             {
-                observedHealth = playerStats.Health;
+                observedHealth = currentHealth;
                 hasObservedHealth = true;
                 return;
             }
 
-            if (playerStats.Health < observedHealth)
+            if (currentHealth < observedHealth)
                 PlayDamageFeedback();
 
-            observedHealth = playerStats.Health;
+            observedHealth = currentHealth;
         }
 
         private void OnDisable()
@@ -94,6 +99,7 @@ namespace DeFrag.Player
             if (stamina != null)
                 stamina.Exhausted -= PlayExhaustionFeedback;
 
+            hasObservedHealth = false;
             ResetCameraOffset();
         }
 
@@ -123,7 +129,7 @@ namespace DeFrag.Player
             float totalDuration = Mathf.Max(damageFlashDuration, damageShakeDuration);
             while (elapsed < totalDuration)
             {
-                elapsed += Time.deltaTime;
+                elapsed += Time.unscaledDeltaTime;
                 float progress = Mathf.Clamp01(elapsed / damageFlashDuration);
                 if (damageOverlay != null)
                     damageOverlay.alpha = Mathf.Sin(progress * Mathf.PI);
@@ -165,7 +171,8 @@ namespace DeFrag.Player
             float noiseX = Mathf.PerlinNoise(elapsed * damageShakeFrequency, 0.17f) * 2f - 1f;
             float noiseY = Mathf.PerlinNoise(0.73f, elapsed * damageShakeFrequency) * 2f - 1f;
             SetCameraPositionOffset(new Vector3(noiseX, noiseY, 0f) * damagePositionAmplitude * fade);
-            playerCamera.transform.localRotation *= Quaternion.Euler(noiseY * damageRotationAmplitude * fade, 0f, noiseX * damageRotationAmplitude * fade);
+            playerCamera.transform.localRotation = cameraBaseLocalRotation *
+                Quaternion.Euler(noiseY * damageRotationAmplitude * fade, 0f, noiseX * damageRotationAmplitude * fade);
         }
 
         private void CreateDamageOverlay()
@@ -216,6 +223,9 @@ namespace DeFrag.Player
         private void ResetCameraOffset()
         {
             SetCameraPositionOffset(Vector3.zero);
+            if (playerCamera != null)
+                playerCamera.transform.localRotation = cameraBaseLocalRotation;
+
             if (damageOverlay != null)
                 damageOverlay.alpha = 0f;
         }

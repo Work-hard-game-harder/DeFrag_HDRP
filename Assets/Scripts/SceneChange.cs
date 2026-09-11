@@ -5,6 +5,8 @@ using Unity.Netcode;
 
 public class SceneChange : MonoBehaviour
 {
+    private static bool openStageSelectionOnNextLoad;
+
     [SerializeField] private string sceneName;
     [SerializeField] private Scene[] scenelist;
     [SerializeField] private GameObject floorCanvas;
@@ -15,8 +17,14 @@ public class SceneChange : MonoBehaviour
     {
         if (floorCanvas != null)
         {
-            floorCanvas.SetActive(false);
+            floorCanvas.SetActive(openStageSelectionOnNextLoad);
+            openStageSelectionOnNextLoad = false;
         }
+    }
+
+    public static void RequestOpenStageSelectionOnNextLoad()
+    {
+        openStageSelectionOnNextLoad = true;
     }
 
     public void SelectScene(string selectedSceneName)

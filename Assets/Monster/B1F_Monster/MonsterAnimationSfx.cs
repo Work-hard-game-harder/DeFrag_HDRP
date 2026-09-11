@@ -259,6 +259,14 @@ public sealed class MonsterAnimationSfx : MonoBehaviour
         float maximumPitch = Mathf.Max(sound.pitchRange.x, sound.pitchRange.y);
         audioSource.pitch = UnityEngine.Random.Range(minimumPitch, maximumPitch);
         audioSource.PlayOneShot(clip, sound.volume);
+
+        // 공격 타격음과 서버 권한 히트 판정을 같은 프레임에 맞춥니다.
+        // 비서버 클라이언트에서 호출되어도 MonsterAttackHitbox가 권한을 검증합니다.
+        if (monsterAI != null &&
+            sound.stateHash == Animator.StringToHash("Attack"))
+        {
+            monsterAI.AnimationEvent_ResolveAttackHit();
+        }
     }
 
     private static AudioClip GetRandomValidClip(List<AudioClip> clips)

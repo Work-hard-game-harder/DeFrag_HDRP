@@ -2624,7 +2624,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerStats
   maxHealth: 100
-  Health: 2
+  Health: 100
   Inventory: []
 --- !u!114 &7349012846091223001
 MonoBehaviour:
@@ -2658,8 +2658,8 @@ MonoBehaviour:
   playerCamera: {fileID: 5720831487311112839}
   playerStats: {fileID: 7349012846091223101, guid: 7efe8505741782948b7e79c6eedc993c, type: 3}
   damageColor: {r: 0.65, g: 0, b: 0, a: 0.38}
-  damageFlashDuration: 0.25
-  damageShakeDuration: 0.3
+  damageFlashDuration: 0.65
+  damageShakeDuration: 0.55
   damagePositionAmplitude: 0.045
   damageRotationAmplitude: 1.5
   damageShakeFrequency: 24
