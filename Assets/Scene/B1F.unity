@@ -30752,6 +30752,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3333333333333333333333333333333, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameplaySpawnPointRegistry
+  hostSpawnPoint: {fileID: 0}
+  clientSpawnPoint: {fileID: 0}
   spawnPoints:
   - {fileID: 355558341}
   - {fileID: 369529313}
