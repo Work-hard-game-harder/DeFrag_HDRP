@@ -23,6 +23,14 @@ public class InventoryUI : MonoBehaviour
         quickSlotsPanel = panel;
     }
 
+    /// <summary>인벤토리 데이터에는 영향을 주지 않고 로컬 표시 UI만 숨깁니다.</summary>
+    public void HidePresentation()
+    {
+        quickSlotsPanel?.SetActive(false);
+        if (inventoryPanel != quickSlotsPanel)
+            inventoryPanel?.SetActive(false);
+    }
+
     private void Start()
     {
         if (quickSlotsPanel != null) quickSlotsPanel.SetActive(true);

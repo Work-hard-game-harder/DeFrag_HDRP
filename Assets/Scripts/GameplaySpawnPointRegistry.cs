@@ -2,6 +2,11 @@ using UnityEngine;
 
 public sealed class GameplaySpawnPointRegistry : MonoBehaviour
 {
+    [Header("Two-player role spawn points")]
+    [SerializeField] private Transform hostSpawnPoint;
+    [SerializeField] private Transform clientSpawnPoint;
+
+    [Header("Legacy/fallback spawn points")]
     [SerializeField] private Transform[] spawnPoints;
 
     public static GameplaySpawnPointRegistry Instance { get; private set; }
@@ -27,5 +32,14 @@ public sealed class GameplaySpawnPointRegistry : MonoBehaviour
         }
 
         return spawnPoints[index % spawnPoints.Length];
+    }
+
+    public Transform GetSpawnPoint(bool isHost)
+    {
+        Transform roleSpawnPoint = isHost ? hostSpawnPoint : clientSpawnPoint;
+        if (roleSpawnPoint != null)
+            return roleSpawnPoint;
+
+        return GetSpawnPoint(isHost ? 0 : 1);
     }
 }

@@ -474,10 +474,10 @@ public sealed class LobbyManager : MonoBehaviour
             return;
         }
 
-        int spawnIndex = 0;
         foreach (ulong clientId in networkManager.ConnectedClientsIds)
         {
-            Transform spawnPoint = spawnPoints.GetSpawnPoint(spawnIndex++);
+            bool isHost = clientId == NetworkManager.ServerClientId;
+            Transform spawnPoint = spawnPoints.GetSpawnPoint(isHost);
             NetworkObject playerObject = networkManager.ConnectedClients[clientId].PlayerObject;
             if (playerObject != null)
             {

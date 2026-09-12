@@ -1107,14 +1107,11 @@ namespace StarterAssets
             // 내가 이 캐릭터의 주인(로컬 플레이어)일 때만 위치 변경 작업 수행
             if (IsOwner)
             {
-                // SpawnPoint 태그 가진 오브젝트들 찾기
-                GameObject[] spawnPoints = GameObject.FindGameObjectsWithTag("SpawnPoint");
-
-                if (spawnPoints.Length > 0)
+                GameplaySpawnPointRegistry registry = GameplaySpawnPointRegistry.Instance;
+                if (registry != null)
                 {
-                    // 내 고유 ClientId 번호에 맞춰 겹치지 않게 스폰포인트 배정
-                    int index = (int)NetworkManager.Singleton.LocalClientId % spawnPoints.Length;
-                    Transform targetPoint = spawnPoints[index].transform;
+                    bool isHost = NetworkManager.Singleton.LocalClientId == NetworkManager.ServerClientId;
+                    Transform targetPoint = registry.GetSpawnPoint(isHost);
 
                     // CharacterController 컴포넌트가 켜져 있으면 위치 변경이 되지 않을 수 있음
                     // 따라서 CharacterController 컴포넌트를 잠시 비활성화
@@ -1130,7 +1127,7 @@ namespace StarterAssets
                 }
                 else
                 {
-                    Debug.LogWarning("씬에 'SpawnPoint' 태그를 가진 오브젝트가 하나도 없습니다! (0,0,0)에 스폰됩니다.");
+                    Debug.LogWarning("씬에 GameplaySpawnPointRegistry가 없어 현재 위치를 유지합니다.");
                 }
             }
         }

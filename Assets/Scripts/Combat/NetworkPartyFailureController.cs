@@ -62,14 +62,16 @@ namespace DeFrag.Combat
                 return;
 
             failureInProgress = true;
-            ShowPartyFailureClientRpc();
+            ShowPartyFailureClientRpc(OwnerClientId);
             StartCoroutine(DespawnPartyPlayers());
         }
 
         [ClientRpc]
-        private void ShowPartyFailureClientRpc()
+        private void ShowPartyFailureClientRpc(ulong deceasedClientId)
         {
-            PartyFailurePresentation.Show(IsHost, deathScreenPrefab, uiFadeDuration);
+            NetworkManager manager = NetworkManager.Singleton;
+            bool isDeceasedLocalPlayer = manager != null && manager.LocalClientId == deceasedClientId;
+            PartyFailurePresentation.Show(IsHost, isDeceasedLocalPlayer, deathScreenPrefab, uiFadeDuration);
         }
 
         private IEnumerator DespawnPartyPlayers()
@@ -110,7 +112,11 @@ namespace DeFrag.Combat
         private Vector3 frozenPosition;
         private Quaternion frozenRotation;
 
-        public static void Show(bool showHostButtons, GameObject deathScreenPrefab, float fadeDuration)
+        public static void Show(
+            bool showHostButtons,
+            bool isDeceasedLocalPlayer,
+            GameObject deathScreenPrefab,
+            float fadeDuration)
         {
             if (FindAnyObjectByType<PartyFailurePresentation>() != null)
                 return;
@@ -118,11 +124,22 @@ namespace DeFrag.Combat
             GameObject root = new GameObject(PresentationName);
             PartyFailurePresentation presentation = root.AddComponent<PartyFailurePresentation>();
             presentation.FreezeLocalCamera(root.transform);
-            presentation.CreateUi(deathScreenPrefab, showHostButtons, fadeDuration);
+            presentation.HideLocalInventoryUi();
+            presentation.CreateUi(
+                deathScreenPrefab,
+                showHostButtons,
+                isDeceasedLocalPlayer,
+                fadeDuration);
 
             GameplayInputGate.TryAcquire(presentation);
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
+        }
+
+        private void HideLocalInventoryUi()
+        {
+            InventoryUI inventoryUi = FindAnyObjectByType<InventoryUI>(FindObjectsInactive.Include);
+            inventoryUi?.HidePresentation();
         }
 
         private void LateUpdate()
@@ -155,7 +172,11 @@ namespace DeFrag.Combat
             frozenCamera = sourceCamera;
         }
 
-        private void CreateUi(GameObject deathScreenPrefab, bool showHostButtons, float fadeDuration)
+        private void CreateUi(
+            GameObject deathScreenPrefab,
+            bool showHostButtons,
+            bool isDeceasedLocalPlayer,
+            float fadeDuration)
         {
             if (deathScreenPrefab == null)
             {
@@ -173,6 +194,7 @@ namespace DeFrag.Combat
 
             view.Initialize(
                 showHostButtons,
+                isDeceasedLocalPlayer,
                 fadeDuration,
                 ReturnPartyToMainLobby,
                 OpenStageSelection);

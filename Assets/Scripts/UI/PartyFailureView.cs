@@ -1,4 +1,5 @@
 using System.Collections;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -12,16 +13,23 @@ namespace DeFrag.UI
     public sealed class PartyFailureView : MonoBehaviour
     {
         [SerializeField] private CanvasGroup canvasGroup;
+        [SerializeField] private TMP_Text deathMessage;
+        [SerializeField, TextArea] private string teammateFailureMessage = "전원 생존 실패\n\nMISSION FAILED";
         [SerializeField] private GameObject hostButtons;
         [SerializeField] private Button returnToLobbyButton;
         [SerializeField] private Button stageSelectionButton;
 
         public void Initialize(
             bool showHostButtons,
+            bool isDeceasedLocalPlayer,
             float fadeDuration,
             UnityAction returnToLobby,
             UnityAction openStageSelection)
         {
+            // 실제 사망자는 프리팹에 작성된 기본 문구를 그대로 사용합니다.
+            if (!isDeceasedLocalPlayer && deathMessage != null)
+                deathMessage.text = teammateFailureMessage;
+
             if (hostButtons != null)
                 hostButtons.SetActive(showHostButtons);
 
