@@ -159,7 +159,10 @@ public class PlayerItemDropper : MonoBehaviour
         ulong networkObjectId,
         bool shouldThrow)
     {
-        if (!TryFindSpawnPosition(out Vector3 spawnPosition))
+        if (!TryFindNetworkSpawnPose(
+                shouldThrow,
+                out Vector3 spawnPosition,
+                out Vector3 releaseDirection))
         {
             Debug.Log("[Drop] 앞 공간이 막혀 있어 아이템을 놓을 수 없습니다.");
             return;
@@ -174,8 +177,13 @@ public class PlayerItemDropper : MonoBehaviour
         }
 
         Vector3 velocity = shouldThrow
-            ? dropOrigin.forward * throwForce + Vector3.up * upwardThrowForce
+            ? releaseDirection * throwForce + Vector3.up * upwardThrowForce
             : Vector3.zero;
+
+        Quaternion yawOnlyRotation = Quaternion.Euler(
+            0f,
+            dropOrigin.eulerAngles.y,
+            0f);
 
         float cameraBatteryRatio = -1f;
         if (selectedItem.itemData is CameraItemData &&
@@ -187,9 +195,61 @@ public class PlayerItemDropper : MonoBehaviour
         networkInventory.RequestDrop(
             networkObjectId,
             spawnPosition,
-            dropOrigin.rotation,
+            yawOnlyRotation,
             velocity,
+            !shouldThrow,
             cameraBatteryRatio);
+    }
+
+    private bool TryFindNetworkSpawnPose(
+        bool shouldThrow,
+        out Vector3 spawnPosition,
+        out Vector3 releaseDirection)
+    {
+        Vector3 viewDirection = dropOrigin.forward.normalized;
+        if (shouldThrow)
+        {
+            // Prevent steep camera pitch from spawning an item inside the floor or above the head.
+            viewDirection.y = Mathf.Clamp(viewDirection.y, -0.35f, 0.65f);
+            releaseDirection = viewDirection.normalized;
+        }
+        else
+        {
+            releaseDirection = Vector3.ProjectOnPlane(viewDirection, Vector3.up).normalized;
+            if (releaseDirection.sqrMagnitude < 0.01f)
+                releaseDirection = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
+        }
+
+        Vector3 origin = shouldThrow
+            ? dropOrigin.position - Vector3.up * 0.2f
+            : dropOrigin.position;
+        float desiredDistance = shouldThrow
+            ? Mathf.Min(preferredDistance, 0.85f)
+            : preferredDistance;
+        float distance = desiredDistance;
+
+        RaycastHit[] hits = Physics.SphereCastAll(
+            origin,
+            clearanceRadius,
+            releaseDirection,
+            desiredDistance,
+            blockingLayers,
+            QueryTriggerInteraction.Ignore);
+
+        foreach (RaycastHit hit in hits)
+        {
+            if (!IsPlayerCollider(hit.collider))
+                distance = Mathf.Min(distance, hit.distance - clearanceRadius);
+        }
+
+        if (distance < minimumDistance)
+        {
+            spawnPosition = default;
+            return false;
+        }
+
+        spawnPosition = origin + releaseDirection * distance;
+        return true;
     }
 
     private void PlaceOnGround(Transform itemTransform, Collider[] itemColliders, Rigidbody rb)

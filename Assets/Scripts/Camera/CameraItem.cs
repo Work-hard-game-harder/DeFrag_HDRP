@@ -1,4 +1,5 @@
 using System;
+using EasyPeasyFirstPersonController;
 using UnityEngine;
 using UnityEngine.Rendering.PostProcessing;
 using UnityEngine.UI;
@@ -51,6 +52,14 @@ public sealed class CameraItem : MonoBehaviour
         SetMode(CameraMode.Normal);
     }
 
+    private void OnEnable()
+    {
+        SubtitlesScript.PlaybackStarted += ForceStopForSubtitle;
+
+        if (GameState.isCutscene)
+            ForceStopForSubtitle();
+    }
+
     public void Bind(CameraBattery sharedBattery)
     {
         battery = sharedBattery;
@@ -58,6 +67,12 @@ public sealed class CameraItem : MonoBehaviour
 
     private void Update()
     {
+        if (GameState.isCutscene)
+        {
+            ForceStopForSubtitle();
+            return;
+        }
+
         if (GameplayInputGate.IsBlocked)
             return;
 
@@ -149,7 +164,7 @@ public sealed class CameraItem : MonoBehaviour
 
     public void SetViewActive(bool active)
     {
-        if (active && !isEquipped)
+        if (active && (!isEquipped || GameState.isCutscene))
             return;
 
         if (isViewActive == active)
@@ -164,10 +179,19 @@ public sealed class CameraItem : MonoBehaviour
     }
     private void OnDisable()
     {
+        SubtitlesScript.PlaybackStarted -= ForceStopForSubtitle;
         SetCameraLensActive(false);
 
         if (nightVisionIlluminator != null)
             nightVisionIlluminator.SetActive(false);
+    }
+
+    private void ForceStopForSubtitle()
+    {
+        if (isViewActive)
+            SetViewActive(false);
+        else
+            SetCameraLensActive(false);
     }
 
     private void SetCameraLensActive(bool active)

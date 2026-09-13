@@ -152,6 +152,9 @@ MonoBehaviour:
   - {fileID: 2487668369777746088}
   worldRenderers:
   - {fileID: 4430746171015180360}
+  groundSearchDistance: 5
+  groundClearance: 0.02
+  throwAngularSpeed: 4
 --- !u!114 &5622650771231509053
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -52,6 +52,7 @@ public sealed class NetworkPlayerInventory : NetworkBehaviour
         Vector3 requestedPosition,
         Quaternion requestedRotation,
         Vector3 requestedVelocity,
+        bool placeOnGround,
         float cameraBatteryRatio = -1f)
     {
         if (!IsOwner || itemNetworkObjectId == 0)
@@ -62,6 +63,7 @@ public sealed class NetworkPlayerInventory : NetworkBehaviour
             requestedPosition,
             requestedRotation,
             requestedVelocity,
+            placeOnGround,
             cameraBatteryRatio);
     }
 
@@ -95,6 +97,7 @@ public sealed class NetworkPlayerInventory : NetworkBehaviour
         Vector3 requestedPosition,
         Quaternion requestedRotation,
         Vector3 requestedVelocity,
+        bool placeOnGround,
         float cameraBatteryRatio)
     {
         int heldIndex = FindHeldItemIndex(itemNetworkObjectId);
@@ -122,7 +125,8 @@ public sealed class NetworkPlayerInventory : NetworkBehaviour
         if (!item.SetWorldServer(
                 requestedPosition,
                 requestedRotation,
-                requestedVelocity))
+                requestedVelocity,
+                placeOnGround))
             return;
 
         heldItemIds.RemoveAt(heldIndex);

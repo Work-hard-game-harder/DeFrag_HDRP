@@ -1,4 +1,5 @@
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 
 public enum NetworkItemState : byte
@@ -20,6 +21,11 @@ public sealed class NetworkWorldItem : NetworkBehaviour
     [SerializeField] private Collider[] worldColliders;
     [SerializeField] private Renderer[] worldRenderers;
 
+    [Header("Drop Placement")]
+    [SerializeField, Min(0.1f)] private float groundSearchDistance = 5f;
+    [SerializeField, Min(0f)] private float groundClearance = 0.02f;
+    [SerializeField, Min(0f)] private float throwAngularSpeed = 4f;
+
     private readonly NetworkVariable<NetworkItemState> state =
         new NetworkVariable<NetworkItemState>(
             NetworkItemState.World,
@@ -40,6 +46,9 @@ public sealed class NetworkWorldItem : NetworkBehaviour
 
     private bool impactNoiseArmed;
     private float impactNoiseReadyAt;
+    private NetworkTransform networkTransform;
+    private Quaternion initialRotationOffset = Quaternion.identity;
+    private float groundBottomOffset;
 
     private const float ImpactArmDelay = 0.1f;
 
@@ -57,6 +66,9 @@ public sealed class NetworkWorldItem : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         EnsureWorldComponentReferences();
+        Quaternion initialYaw = Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
+        initialRotationOffset = Quaternion.Inverse(initialYaw) * transform.rotation;
+        CacheGroundBottomOffset();
         state.OnValueChanged += HandleStateChanged;
         ApplyWorldPresentation(state.Value);
 
@@ -101,7 +113,7 @@ public sealed class NetworkWorldItem : NetworkBehaviour
         if (!Application.isPlaying || !IsSpawned || !IsServer)
             return;
 
-        SetWorldServer(transform.position, transform.rotation, Vector3.zero);
+        SetWorldServer(transform.position, transform.rotation, Vector3.zero, true);
     }
 
     public bool SetHeldServer(ulong newHolderClientId)
@@ -126,7 +138,8 @@ public sealed class NetworkWorldItem : NetworkBehaviour
     public bool SetWorldServer(
         Vector3 position,
         Quaternion rotation,
-        Vector3 initialVelocity)
+        Vector3 initialVelocity,
+        bool placeOnGround)
     {
         if (!IsServer)
         {
@@ -136,16 +149,31 @@ public sealed class NetworkWorldItem : NetworkBehaviour
             return false;
         }
 
-        transform.SetPositionAndRotation(position, rotation);
+        Quaternion stableRotation =
+            Quaternion.Euler(0f, rotation.eulerAngles.y, 0f) * initialRotationOffset;
+
+        transform.SetPositionAndRotation(position, stableRotation);
+        Physics.SyncTransforms();
+
+        if (placeOnGround)
+            position = FindGroundedPosition(position);
+
+        transform.SetPositionAndRotation(position, stableRotation);
+
+        if (networkTransform != null)
+            networkTransform.Teleport(position, stableRotation, transform.localScale);
+
         holderClientId.Value = NoHolder;
         state.Value = NetworkItemState.World;
 
         if (itemRigidbody != null)
         {
-            itemRigidbody.isKinematic = false;
-            itemRigidbody.useGravity = true;
+            itemRigidbody.isKinematic = placeOnGround;
+            itemRigidbody.useGravity = !placeOnGround;
             itemRigidbody.linearVelocity = initialVelocity;
-            itemRigidbody.angularVelocity = Vector3.zero;
+            itemRigidbody.angularVelocity = placeOnGround || initialVelocity.sqrMagnitude < 0.01f
+                ? Vector3.zero
+                : Vector3.Cross(initialVelocity.normalized, Vector3.up) * throwAngularSpeed;
         }
 
         // Only collisions caused after an explicit player drop/throw produce gameplay noise.
@@ -248,6 +276,9 @@ public sealed class NetworkWorldItem : NetworkBehaviour
 
     private void EnsureWorldComponentReferences()
     {
+        if (networkTransform == null)
+            networkTransform = GetComponent<NetworkTransform>();
+
         if (itemRigidbody == null)
             itemRigidbody = GetComponent<Rigidbody>();
 
@@ -256,5 +287,80 @@ public sealed class NetworkWorldItem : NetworkBehaviour
 
         if (worldRenderers == null || worldRenderers.Length == 0)
             worldRenderers = GetComponentsInChildren<Renderer>(true);
+    }
+
+    private Vector3 FindGroundedPosition(Vector3 requestedPosition)
+    {
+        Vector3 rayOrigin = requestedPosition + Vector3.up * 0.5f;
+        RaycastHit[] hits = Physics.RaycastAll(
+            rayOrigin,
+            Vector3.down,
+            groundSearchDistance,
+            Physics.DefaultRaycastLayers,
+            QueryTriggerInteraction.Ignore);
+
+        System.Array.Sort(hits, (left, right) => left.distance.CompareTo(right.distance));
+        foreach (RaycastHit hit in hits)
+        {
+            if (IsWorldItemCollider(hit.collider) || IsHolderCollider(hit.collider))
+                continue;
+
+            requestedPosition.y = hit.point.y + groundBottomOffset + groundClearance;
+            return requestedPosition;
+        }
+
+        return requestedPosition;
+    }
+
+    private void CacheGroundBottomOffset()
+    {
+        bool initialized = false;
+        Bounds bounds = new Bounds(transform.position, Vector3.zero);
+
+        Physics.SyncTransforms();
+
+        foreach (Collider itemCollider in worldColliders)
+        {
+            if (itemCollider == null)
+                continue;
+
+            if (!initialized)
+            {
+                bounds = itemCollider.bounds;
+                initialized = true;
+            }
+            else
+            {
+                bounds.Encapsulate(itemCollider.bounds);
+            }
+        }
+
+        groundBottomOffset = initialized
+            ? Mathf.Max(0f, transform.position.y - bounds.min.y)
+            : 0f;
+    }
+
+    private bool IsWorldItemCollider(Collider candidate)
+    {
+        if (candidate == null)
+            return false;
+
+        foreach (Collider itemCollider in worldColliders)
+        {
+            if (candidate == itemCollider)
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool IsHolderCollider(Collider candidate)
+    {
+        if (candidate == null || holderClientId.Value == NoHolder || NetworkManager == null)
+            return false;
+
+        NetworkObject holder = NetworkManager.SpawnManager.GetPlayerNetworkObject(
+            holderClientId.Value);
+        return holder != null && candidate.transform.IsChildOf(holder.transform);
     }
 }

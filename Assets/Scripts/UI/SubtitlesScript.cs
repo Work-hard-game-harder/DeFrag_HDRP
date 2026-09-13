@@ -5,6 +5,8 @@ using UnityEngine;
 
 public class SubtitlesScript : MonoBehaviour
 {
+    public static event Action PlaybackStarted;
+
     public TextMeshProUGUI subtitlesText;
     public GameObject subtitlesPanel;
     public float subtitlesSpeed;
@@ -66,6 +68,7 @@ public class SubtitlesScript : MonoBehaviour
         subtitlesText.text = string.Empty;
         subtitlesPanel.SetActive(true);
         GameState.isCutscene = true;
+        PlaybackStarted?.Invoke();
 
         StopAllCoroutines();
         StopTypewriterSound();
