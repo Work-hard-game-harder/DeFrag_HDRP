@@ -276,6 +276,9 @@ namespace DeFrag.Monsters.Common
             if (playerObject == null || !playerObject.IsSpawned)
                 return false;
 
+            if (LockerHiding.IsPlayerHidden(playerObject))
+                return false;
+
             PlayerStats playerStats = playerObject.GetComponent<PlayerStats>();
             if (playerStats == null || playerStats.IsDead)
                 return false;
