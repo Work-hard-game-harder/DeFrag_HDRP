@@ -448,6 +448,8 @@ MonoBehaviour:
   itemCamera: {fileID: 6617680185298770590}
   itemAudioListener: {fileID: 8145937637242455840}
   cameraItem: {fileID: 4444323132773095881}
+  cameraOverlayCanvas: {fileID: 0}
+  itemCameraFieldOfView: 67
 --- !u!1 &1285972250527053587
 GameObject:
   m_ObjectHideFlags: 0
@@ -1867,6 +1869,9 @@ MonoBehaviour:
   progressCircle: {fileID: 0}
   hintPanel: {fileID: 0}
   hintImage: {fileID: 0}
+  automaticallyBindSceneUI: 1
+  uiBindingRetryFrames: 120
+  additionalSequenceInputBehaviours: []
 --- !u!1 &6219760413789545072
 GameObject:
   m_ObjectHideFlags: 0
@@ -2203,6 +2208,10 @@ GameObject:
   - component: {fileID: 5779452105091600300}
   - component: {fileID: 2682393831202223136}
   - component: {fileID: -1015359271658868653}
+  - component: {fileID: 5834902452744627204}
+  - component: {fileID: -6885440880113567617}
+  - component: {fileID: 7639083480046206983}
+  - component: {fileID: -2065703009767282988}
   m_Layer: 7
   m_Name: PlayerCharacter_Lobby2
   m_TagString: Player
@@ -2260,7 +2269,7 @@ AudioSource:
   m_GameObject: {fileID: 7592877399013546989}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
+  OutputAudioMixerGroup: {fileID: -4808670016587676743, guid: 2f73f41f978fecb46a4479e077c1712e, type: 2}
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
   m_PlayOnAwake: 1
@@ -2419,6 +2428,7 @@ MonoBehaviour:
   look: {x: 0, y: 0}
   jump: 0
   sprint: 0
+  crouch: 0
   analogMovement: 0
   cursorLocked: 1
   cursorInputForLook: 1
@@ -2512,7 +2522,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7592877399013546989}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4894b5bdfa2b74e408d57c6cc9d73474, type: 3}
   m_Name: 
@@ -2556,6 +2566,106 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1111111111111111111111111111111, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LobbyAvatar
+--- !u!114 &5834902452744627204
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7592877399013546989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29c69481b9941a44d8251158a0965e11, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EasyPeasyFirstPersonController.SoundEmitter
+  soundBaseRange: 15
+  soundRangeMultiplier: 10
+  micSensitivity: 100
+  noiseThreshold: 0.01
+  listenContinuously: 1
+  networkPublishInterval: 0.1
+  networkSilenceTimeout: 0.35
+--- !u!114 &-6885440880113567617
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7592877399013546989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d16958ca23d4d839df5f8c9495a711e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Player.NetworkVoiceActivityIndicator
+  ShowTopMostFoldoutHeaderGroup: 1
+  speakingStartThreshold: 0.05
+  speakingStopThreshold: 0.025
+  releaseDelay: 0.2
+  hideWhileWalkieTalkieTransmitting: 1
+  microphoneSprite: {fileID: 21300000, guid: 238b5058fe4fecb42b5547f5acb0d68f, type: 3}
+  indicatorColor: {r: 1, g: 1, b: 1, a: 1}
+  indicatorWorldSize: 0.32
+  indicatorOffsetFromHead: {x: 0, y: 1.2, z: 0}
+  fallbackRootOffset: {x: 0, y: 2.2, z: 0}
+  showForOwner: 1
+--- !u!164 &7639083480046206983
+AudioReverbFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7592877399013546989}
+  m_Enabled: 1
+  m_DryLevel: 0
+  m_Room: -1000
+  m_RoomHF: -6000
+  m_DecayTime: 0.5
+  m_DecayHFRatio: 0.1
+  m_ReflectionsLevel: -1376
+  m_ReverbLevel: -1104
+  m_ReverbDelay: 0.004
+  m_Diffusion: 100
+  m_Density: 100
+  m_HFReference: 5000
+  m_RoomLF: 0
+  m_LFReference: 250
+  m_ReflectionsDelay: 0
+  m_ReverbPreset: 5
+--- !u!114 &-2065703009767282988
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7592877399013546989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4241f481221541b89ff1abf56b8f9e2d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Player.NetworkWalkieTalkieVoice
+  ShowTopMostFoldoutHeaderGroup: 1
+  microphoneInput: {fileID: 0}
+  walkieTalkieController: {fileID: 7349012846091223105, guid: 7efe8505741782948b7e79c6eedc993c, type: 3}
+  soundEmitter: {fileID: 7349012846091223104, guid: 7efe8505741782948b7e79c6eedc993c, type: 3}
+  proximityPlayback: {fileID: 0}
+  proximityOutputMixerGroup: {fileID: -4808670016587676743, guid: 2f73f41f978fecb46a4479e077c1712e, type: 2}
+  proximityPlaybackVolume: 1
+  proximityMinDistance: 1
+  proximityMaxDistance: 15
+  voiceStartThreshold: 0.02
+  voiceStopThreshold: 0.01
+  voiceReleaseDelay: 0.2
+  walkiePlayback: {fileID: 0}
+  walkieOutputMixerGroup: {fileID: 2985195005353930710, guid: 2f73f41f978fecb46a4479e077c1712e, type: 2}
+  walkiePlaybackVolume: 1
+  networkSampleRate: 16000
+  packetDurationMilliseconds: 20
+  jitterBufferMilliseconds: 80
+  maxBufferedMilliseconds: 500
+  maxPacketsPerFrame: 3
+  logDiagnostics: 0
+  sentPacketCount: 0
+  receivedPacketCount: 0
 --- !u!1 &7668062574812803263
 GameObject:
   m_ObjectHideFlags: 0

@@ -449,6 +449,7 @@ MonoBehaviour:
   itemAudioListener: {fileID: 8145937637242455840}
   cameraItem: {fileID: 4444323132773095881}
   cameraOverlayCanvas: {fileID: 0}
+  itemCameraFieldOfView: 67
 --- !u!1 &1285972250527053587
 GameObject:
   m_ObjectHideFlags: 0
@@ -2263,12 +2264,13 @@ GameObject:
   - component: {fileID: 4089493473910277660}
   - component: {fileID: 6812459037621148290}
   - component: {fileID: 5079052627790923466}
+  - component: {fileID: 4302945229344665463}
+  - component: {fileID: 7349012846091223011}
   - component: {fileID: 7349012846091223003}
   - component: {fileID: 7349012846091223001}
   - component: {fileID: 7349012846091223002}
   - component: {fileID: 7349012846091223004}
   - component: {fileID: 7349012846091223005}
-  - component: {fileID: 4302945229344665463}
   - component: {fileID: 7349012846091223006}
   - component: {fileID: 4302945229344665464}
   - component: {fileID: 3598217460136852094}
@@ -2611,6 +2613,55 @@ MonoBehaviour:
   listenContinuously: 1
   networkPublishInterval: 0.1
   networkSilenceTimeout: 0.35
+--- !u!114 &4302945229344665463
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7592877399013546989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 1248422577
+  InScenePlacedSourceGlobalObjectIdHash: 1248422577
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  <InScenePlaced>k__BackingField: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &7349012846091223011
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7592877399013546989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d16958ca23d4d839df5f8c9495a711e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Player.NetworkVoiceActivityIndicator
+  ShowTopMostFoldoutHeaderGroup: 1
+  speakingStartThreshold: 0.05
+  speakingStopThreshold: 0.025
+  releaseDelay: 0.2
+  hideWhileWalkieTalkieTransmitting: 1
+  microphoneSprite: {fileID: 21300000, guid: 14b743f9db217a44c8c39d6fa39c2cc9, type: 3}
+  indicatorColor: {r: 1, g: 1, b: 1, a: 1}
+  indicatorWorldSize: 0.32
+  indicatorOffsetFromHead: {x: 0, y: 0.35, z: 0}
+  fallbackRootOffset: {x: 0, y: 2.2, z: 0}
+  showForOwner: 0
 --- !u!114 &7349012846091223003
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2698,32 +2749,6 @@ MonoBehaviour:
   toggleKey: 116
   spotLight: {fileID: 3384989117648530326}
   startsOn: 0
---- !u!114 &4302945229344665463
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7592877399013546989}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 1248422577
-  InScenePlacedSourceGlobalObjectIdHash: 1248422577
-  DeferredDespawnTick: 0
-  Ownership: 1
-  AlwaysReplicateAsRoot: 0
-  SynchronizeTransform: 1
-  <InScenePlaced>k__BackingField: 0
-  ActiveSceneSynchronization: 0
-  SceneMigrationSynchronization: 0
-  SpawnWithObservers: 1
-  DontDestroyWithOwner: 0
-  AutoObjectParentSync: 1
-  SyncOwnerTransformWhenParented: 1
-  AllowOwnerToParent: 0
 --- !u!114 &7349012846091223006
 MonoBehaviour:
   m_ObjectHideFlags: 0

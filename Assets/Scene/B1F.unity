@@ -37646,7 +37646,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeFrag.B1F.B1FStoryDebugCheckpoint
   startAfterDistributionBoxA: 0
-  startAfterConnectServer: 1
+  startAfterConnectServer: 0
   freezeTvMonsterInPlace: 0
   disableQuestBarriers: 0
   questBarriersToDisable:
@@ -38287,7 +38287,6 @@ SceneRoots:
   m_Roots:
   - {fileID: 1894161398}
   - {fileID: 282434957}
-  - {fileID: 877255001}
   - {fileID: 591514272}
   - {fileID: 909327726}
   - {fileID: 975668000}

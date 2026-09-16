@@ -1,3 +1,5 @@
+using DeFrag.Player;
+using EasyPeasyFirstPersonController;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -7,10 +9,10 @@ public sealed class LobbyAvatar : MonoBehaviour
     {
         foreach (MonoBehaviour behaviour in GetComponentsInChildren<MonoBehaviour>(true))
         {
-            if (behaviour != this && behaviour is not NetworkObject)
-            {
-                behaviour.enabled = false;
-            }
+            if (ShouldRemainEnabled(behaviour))
+                continue;
+
+            behaviour.enabled = false;
         }
 
         foreach (Camera avatarCamera in GetComponentsInChildren<Camera>(true))
@@ -32,5 +34,13 @@ public sealed class LobbyAvatar : MonoBehaviour
         {
             audioSource.enabled = false;
         }
+    }
+
+    private bool ShouldRemainEnabled(MonoBehaviour behaviour)
+    {
+        return behaviour == this ||
+               behaviour is NetworkObject ||
+               behaviour is SoundEmitter ||
+               behaviour is NetworkVoiceActivityIndicator;
     }
 }

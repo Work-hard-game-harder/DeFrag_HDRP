@@ -1400,8 +1400,7 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 4572925353620625856}
+  m_Children: []
   m_Father: {fileID: 7581676527181479485}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!20 &5720831487311112839
@@ -1621,6 +1620,9 @@ MonoBehaviour:
   progressCircle: {fileID: 0}
   hintPanel: {fileID: 0}
   hintImage: {fileID: 0}
+  automaticallyBindSceneUI: 1
+  uiBindingRetryFrames: 120
+  additionalSequenceInputBehaviours: []
 --- !u!1 &6396032810574658984
 GameObject:
   m_ObjectHideFlags: 0
@@ -2005,6 +2007,7 @@ GameObject:
   - component: {fileID: 7349012846091223005}
   - component: {fileID: 7349012846091223010}
   - component: {fileID: 7349012846091223011}
+  - component: {fileID: 7089202242535334600}
   m_Layer: 7
   m_Name: PlayerCharacter_Lobby
   m_TagString: Player
@@ -2221,6 +2224,7 @@ MonoBehaviour:
   look: {x: 0, y: 0}
   jump: 0
   sprint: 0
+  crouch: 0
   analogMovement: 0
   cursorLocked: 1
   cursorInputForLook: 1
@@ -2284,7 +2288,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 16
   isInWater: 0
-  wakieTakie: {fileID: 8916423859403885125}
+  wakieTakie: {fileID: 0}
   wakieTakieSubscrition: {fileID: 0}
   hasWakieTakie: 0
   walkieTalkieController: {fileID: 0}
@@ -2314,7 +2318,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7592877399013546989}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4894b5bdfa2b74e408d57c6cc9d73474, type: 3}
   m_Name: 
@@ -2347,9 +2351,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c7e2904f5a324d61a844af73db89e102, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WalkieTalkieVoiceRecorder
+  minRecordingSeconds: 2
   maxRecordingSeconds: 5
   silencePeakThreshold: 0.0005
+  silenceRmsThreshold: 0.002
   folderName: WalkieTalkieRecordings
+  maxStoredRecordings: 30
 --- !u!114 &5079052627790923466
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2357,7 +2364,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7592877399013546989}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 29c69481b9941a44d8251158a0965e11, type: 3}
   m_Name: 
@@ -2367,6 +2374,8 @@ MonoBehaviour:
   micSensitivity: 100
   noiseThreshold: 0.01
   listenContinuously: 1
+  networkPublishInterval: 0.1
+  networkSilenceTimeout: 0.35
 --- !u!114 &7349012846091223003
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2492,6 +2501,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1111111111111111111111111111111, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LobbyAvatar
+--- !u!114 &7089202242535334600
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7592877399013546989}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d16958ca23d4d839df5f8c9495a711e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Player.NetworkVoiceActivityIndicator
+  ShowTopMostFoldoutHeaderGroup: 1
+  speakingStartThreshold: 0.05
+  speakingStopThreshold: 0.025
+  releaseDelay: 0.2
+  hideWhileWalkieTalkieTransmitting: 1
+  microphoneSprite: {fileID: 21300000, guid: 238b5058fe4fecb42b5547f5acb0d68f, type: 3}
+  indicatorColor: {r: 1, g: 1, b: 1, a: 1}
+  indicatorWorldSize: 0.32
+  indicatorOffsetFromHead: {x: 0, y: 1.2, z: 0}
+  fallbackRootOffset: {x: 0, y: 5, z: 0}
+  showForOwner: 1
 --- !u!1 &7902942776951587776
 GameObject:
   m_ObjectHideFlags: 0
@@ -2936,74 +2968,3 @@ Transform:
   - {fileID: 5924000341722524154}
   m_Father: {fileID: 3331265258738040271}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1001 &512387660124397939
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 3467596619895947432}
-    m_Modifications:
-    - target: {fileID: 4065086617947044019, guid: 85ab41cf77a70f24dbf949840e32657c, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0.4306669
-      objectReference: {fileID: 0}
-    - target: {fileID: 4065086617947044019, guid: 85ab41cf77a70f24dbf949840e32657c, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: -0.299
-      objectReference: {fileID: 0}
-    - target: {fileID: 4065086617947044019, guid: 85ab41cf77a70f24dbf949840e32657c, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0.5970001
-      objectReference: {fileID: 0}
-    - target: {fileID: 4065086617947044019, guid: 85ab41cf77a70f24dbf949840e32657c, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 0.21857198
-      objectReference: {fileID: 0}
-    - target: {fileID: 4065086617947044019, guid: 85ab41cf77a70f24dbf949840e32657c, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0.28707266
-      objectReference: {fileID: 0}
-    - target: {fileID: 4065086617947044019, guid: 85ab41cf77a70f24dbf949840e32657c, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: -0.7420377
-      objectReference: {fileID: 0}
-    - target: {fileID: 4065086617947044019, guid: 85ab41cf77a70f24dbf949840e32657c, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0.56497407
-      objectReference: {fileID: 0}
-    - target: {fileID: 4065086617947044019, guid: 85ab41cf77a70f24dbf949840e32657c, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 74.57
-      objectReference: {fileID: 0}
-    - target: {fileID: 4065086617947044019, guid: 85ab41cf77a70f24dbf949840e32657c, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: -184.80948
-      objectReference: {fileID: 0}
-    - target: {fileID: 4065086617947044019, guid: 85ab41cf77a70f24dbf949840e32657c, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: -42.3
-      objectReference: {fileID: 0}
-    - target: {fileID: 8980702806714624822, guid: 85ab41cf77a70f24dbf949840e32657c, type: 3}
-      propertyPath: m_Name
-      value: Player walkie-talkie
-      objectReference: {fileID: 0}
-    - target: {fileID: 8980702806714624822, guid: 85ab41cf77a70f24dbf949840e32657c, type: 3}
-      propertyPath: m_Layer
-      value: 7
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 85ab41cf77a70f24dbf949840e32657c, type: 3}
---- !u!4 &4572925353620625856 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 4065086617947044019, guid: 85ab41cf77a70f24dbf949840e32657c, type: 3}
-  m_PrefabInstance: {fileID: 512387660124397939}
-  m_PrefabAsset: {fileID: 0}
---- !u!1 &8916423859403885125 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 8980702806714624822, guid: 85ab41cf77a70f24dbf949840e32657c, type: 3}
-  m_PrefabInstance: {fileID: 512387660124397939}
-  m_PrefabAsset: {fileID: 0}
