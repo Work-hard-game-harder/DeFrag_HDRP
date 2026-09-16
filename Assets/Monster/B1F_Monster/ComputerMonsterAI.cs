@@ -50,6 +50,16 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
     [SerializeField, Min(0.1f)] private float initialDestinationArrivalDistance = 0.75f;
     [SerializeField, Min(0.1f)] private float initialDestinationSampleRadius = 5f;
 
+    [Header("Random Patrol Settings")]
+    [Tooltip("일반 순찰 범위의 고정 중심입니다. 비워두면 몬스터가 스폰된 위치를 사용합니다.")]
+    [SerializeField] private Transform patrolAreaCenter;
+    [Tooltip("일반 순찰에서 현재 위치와 다음 목적지 사이에 확보할 최소 직선거리입니다.")]
+    [SerializeField, Min(0f)] private float minPatrolDistance = 8f;
+    [Tooltip("초기 목적지 주변에서 다시 순찰 목적지를 선택하지 않을 반경입니다. 0이면 제외하지 않습니다.")]
+    [SerializeField, Min(0f)] private float initialDestinationExclusionRadius = 6f;
+    [SerializeField, Min(1)] private int patrolDestinationAttempts = 30;
+    [SerializeField, Min(0.1f)] private float patrolDestinationSampleDistance = 5f;
+
     [Header("Rotation Settings")]
     public float rotationSpeed = 10f;
 
@@ -112,6 +122,7 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
     private int preparedFrame = -1;
     private bool initialized;
     private float attackCycleStartedAt;
+    private Vector3 patrolAreaOrigin;
     private NetworkMonsterPlayerTargetResolver targetResolver;
     private bool initialDestinationPending;
     private bool forcedInvestigationPending;
@@ -259,6 +270,7 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
         randomDestinationPath = new NavMeshPath();
         catchUpNavigator = new CatchUpNavigator(agent, maxChaseDistance, catchUpRadius, catchUpCooldown);   // 이 줄이 있는지 확인
         initialDestinationPending = initialSearchDestination != null;
+        patrolAreaOrigin = patrolAreaCenter != null ? patrolAreaCenter.position : transform.position;
 
         currentState = MonsterState.Idle;
         if (HasSimulationAuthority)
@@ -696,6 +708,36 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
 
     void SetRandomDestination()
     {
+        Vector3 patrolCenter = patrolAreaCenter != null
+            ? patrolAreaCenter.position
+            : patrolAreaOrigin;
+
+        if (TrySetRandomDestinationNear(
+                patrolCenter,
+                searchRadius,
+                minPatrolDistance,
+                excludeInitialDestination: true))
+        {
+            return;
+        }
+
+        // 맵 구조상 제약을 모두 만족하는 지점이 없으면 순찰 정지를 막기 위해
+        // 최소 거리와 초기 지점 제외 조건만 완화하여 한 번 더 탐색합니다.
+        if (TrySetRandomDestinationNear(
+                patrolCenter,
+                searchRadius,
+                minimumTravelDistance: 0f,
+                excludeInitialDestination: false))
+        {
+            Debug.LogWarning(
+                "[Search] 최소 순찰 거리 또는 초기 목적지 제외 조건을 만족하지 못해 완화된 목적지를 사용합니다.",
+                this);
+            return;
+        }
+
+        Debug.LogWarning(
+            "[Search] 고정 순찰 범위에서 목적지를 찾지 못해 현재 위치 주변 탐색으로 전환합니다.",
+            this);
         SetRandomDestinationNear(transform.position, searchRadius);
     }
 
@@ -743,24 +785,65 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
     // 특정 위치 근처에서 랜덤 목적지 설정 (재사용 가능하도록 분리)
     void SetRandomDestinationNear(Vector3 center, float radius)
     {
-        if (randomDestinationPath == null)
-            randomDestinationPath = new NavMeshPath();
-
-        if (MonsterNavMeshUtility.TryFindRandomReachablePosition(
-                agent,
+        if (TrySetRandomDestinationNear(
                 center,
                 radius,
-                30,
-                5f,
-                randomDestinationPath,
-                out Vector3 destination))
+                minimumTravelDistance: 0f,
+                excludeInitialDestination: false))
         {
-            agent.SetDestination(destination);
             return;
         }
 
         Debug.LogWarning("[Search] SamplePosition 30회 실패, 폴백 경로 사용");
         agent.SetDestination(transform.position + transform.forward * 3f);
+    }
+
+    private bool TrySetRandomDestinationNear(
+        Vector3 center,
+        float radius,
+        float minimumTravelDistance,
+        bool excludeInitialDestination)
+    {
+        if (randomDestinationPath == null)
+            randomDestinationPath = new NavMeshPath();
+
+        int attempts = Mathf.Max(1, patrolDestinationAttempts);
+        float minimumDistance = Mathf.Max(0f, minimumTravelDistance);
+        float minimumDistanceSqr = minimumDistance * minimumDistance;
+        float exclusionRadius = Mathf.Max(0f, initialDestinationExclusionRadius);
+        float exclusionRadiusSqr = exclusionRadius * exclusionRadius;
+
+        for (int attempt = 0; attempt < attempts; attempt++)
+        {
+            if (!MonsterNavMeshUtility.TryFindRandomReachablePosition(
+                    agent,
+                    center,
+                    radius,
+                    1,
+                    patrolDestinationSampleDistance,
+                    randomDestinationPath,
+                    out Vector3 destination))
+            {
+                continue;
+            }
+
+            Vector3 travelOffset = destination - transform.position;
+            travelOffset.y = 0f;
+            if (travelOffset.sqrMagnitude < minimumDistanceSqr)
+                continue;
+
+            if (excludeInitialDestination && initialSearchDestination != null && exclusionRadiusSqr > 0f)
+            {
+                Vector3 initialOffset = destination - initialSearchDestination.position;
+                initialOffset.y = 0f;
+                if (initialOffset.sqrMagnitude < exclusionRadiusSqr)
+                    continue;
+            }
+
+            return agent.SetDestination(destination);
+        }
+
+        return false;
     }
 
     void RotateTowardsMoveDirection()

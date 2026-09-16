@@ -571,12 +571,17 @@ MonoBehaviour:
   forcedInvestigationArrivalDistance: 0.8
   forcedInvestigationSampleRadius: 5
   walkSpeed: 2
-  runSpeed: 5
+  runSpeed: 6
   minIdleTime: 2
   maxIdleTime: 5
   initialSearchDestination: {fileID: 0}
   initialDestinationArrivalDistance: 0.75
   initialDestinationSampleRadius: 5
+  patrolAreaCenter: {fileID: 0}
+  minPatrolDistance: 8
+  initialDestinationExclusionRadius: 6
+  patrolDestinationAttempts: 30
+  patrolDestinationSampleDistance: 5
   rotationSpeed: 10
   detourSampleCount: 8
   detourSampleRadius: 6

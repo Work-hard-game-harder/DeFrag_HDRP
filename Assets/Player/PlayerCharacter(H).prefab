@@ -2772,6 +2772,7 @@ GameObject:
   - component: {fileID: 7349012846091223102}
   - component: {fileID: 7349012846091223103}
   - component: {fileID: 7349012846091223104}
+  - component: {fileID: 7349012846091223110}
   - component: {fileID: 7349012846091223105}
   - component: {fileID: 7349012846091223106}
   - component: {fileID: 7349012846091223107}
@@ -2784,6 +2785,7 @@ GameObject:
   - component: {fileID: 7851964327015289634}
   - component: {fileID: 7851964327015289635}
   - component: {fileID: 7349012846091223108}
+  - component: {fileID: 7349012846091223111}
   m_Layer: 7
   m_Name: PlayerCharacter(H)
   m_TagString: Player
@@ -2842,7 +2844,7 @@ AudioSource:
   m_GameObject: {fileID: 8628133643110585351}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
+  OutputAudioMixerGroup: {fileID: -4808670016587676743, guid: 2f73f41f978fecb46a4479e077c1712e, type: 2}
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
   m_PlayOnAwake: 1
@@ -2890,7 +2892,7 @@ AudioSource:
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0
+      value: 1
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -3256,6 +3258,29 @@ MonoBehaviour:
   listenContinuously: 1
   networkPublishInterval: 0.1
   networkSilenceTimeout: 0.35
+--- !u!114 &7349012846091223110
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8628133643110585351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d16958ca23d4d839df5f8c9495a711e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Player.NetworkVoiceActivityIndicator
+  ShowTopMostFoldoutHeaderGroup: 1
+  speakingStartThreshold: 0.05
+  speakingStopThreshold: 0.025
+  releaseDelay: 0.2
+  hideWhileWalkieTalkieTransmitting: 1
+  microphoneSprite: {fileID: 21300000, guid: 238b5058fe4fecb42b5547f5acb0d68f, type: 3}
+  indicatorColor: {r: 1, g: 1, b: 1, a: 1}
+  indicatorWorldSize: 0.32
+  indicatorOffsetFromHead: {x: 0, y: 1, z: 0}
+  fallbackRootOffset: {x: 0, y: 0, z: 0}
+  showForOwner: 1
 --- !u!114 &7349012846091223105
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3364,22 +3389,6 @@ MonoBehaviour:
   breathingDuration: 3
   breathingCycles: 3
   breathingAmplitude: 0.25
---- !u!114 &7349012846091223108
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8628133643110585351}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 479db814b02a4fe5a87e6e58e5f81762, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Combat.NetworkPartyFailureController
-  playerStats: {fileID: 7349012846091223101}
-  deathScreenPrefab: {fileID: 100000, guid: d97c22a1ea7f4b42a810835869bcec42, type: 3}
-  playerDespawnDelay: 0.15
-  uiFadeDuration: 0.5
 --- !u!114 &-574059606829602058
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3532,6 +3541,58 @@ MonoBehaviour:
   maximumPickupDistance: 7
   maximumDropDistance: 2.5
   maximumThrowSpeed: 12
+--- !u!114 &7349012846091223108
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8628133643110585351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 479db814b02a4fe5a87e6e58e5f81762, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Combat.NetworkPartyFailureController
+  ShowTopMostFoldoutHeaderGroup: 1
+  playerStats: {fileID: 7349012846091223101}
+  deathScreenPrefab: {fileID: 100000, guid: d97c22a1ea7f4b42a810835869bcec42, type: 3}
+  playerDespawnDelay: 0.15
+  uiFadeDuration: 0.5
+--- !u!114 &7349012846091223111
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8628133643110585351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4241f481221541b89ff1abf56b8f9e2d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Player.NetworkWalkieTalkieVoice
+  ShowTopMostFoldoutHeaderGroup: 1
+  microphoneInput: {fileID: 0}
+  walkieTalkieController: {fileID: 7349012846091223105}
+  soundEmitter: {fileID: 7349012846091223104}
+  proximityPlayback: {fileID: 0}
+  proximityOutputMixerGroup: {fileID: -4808670016587676743, guid: 2f73f41f978fecb46a4479e077c1712e, type: 2}
+  proximityPlaybackVolume: 1
+  proximityMinDistance: 1
+  proximityMaxDistance: 15
+  voiceStartThreshold: 0.035
+  voiceStopThreshold: 0.018
+  voiceReleaseDelay: 0.2
+  walkiePlayback: {fileID: 0}
+  walkieOutputMixerGroup: {fileID: 2985195005353930710, guid: 2f73f41f978fecb46a4479e077c1712e, type: 2}
+  walkiePlaybackVolume: 1
+  networkSampleRate: 16000
+  packetDurationMilliseconds: 20
+  jitterBufferMilliseconds: 80
+  maxBufferedMilliseconds: 500
+  maxPacketsPerFrame: 3
+  logDiagnostics: 0
+  sentPacketCount: 0
+  receivedPacketCount: 0
 --- !u!1 &8846232740498023747
 GameObject:
   m_ObjectHideFlags: 0
