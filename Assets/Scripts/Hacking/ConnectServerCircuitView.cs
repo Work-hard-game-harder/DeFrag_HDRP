@@ -136,13 +136,46 @@ public sealed class ConnectServerCircuitView : MonoBehaviour
         if (!interactive || !RectTransformUtility.ScreenPointToLocalPointInRectangle(
                 board, screenPoint, null, out Vector2 local)) return false;
         Rect rect = board.rect;
-        int x = Mathf.FloorToInt(Mathf.InverseLerp(rect.xMin, rect.xMax, local.x) * 5f);
-        int y = Mathf.FloorToInt(Mathf.InverseLerp(rect.yMin, rect.yMax, local.y) * 5f);
-        int anchor = y * 5 + x;
-        if (!CanPlace(piece, anchor)) { piece.Flash(Invalid); return false; }
+        Vector2 normalized = new(
+            Mathf.InverseLerp(rect.xMin, rect.xMax, local.x),
+            Mathf.InverseLerp(rect.yMin, rect.yMax, local.y));
+        if (!TryFindClosestValidAnchor(piece, normalized, out int anchor))
+        {
+            piece.Flash(Invalid);
+            return false;
+        }
         piece.PlaceOnBoard(pieceLayer, anchor);
         CheckComplete();
         return true;
+    }
+
+    private bool TryFindClosestValidAnchor(
+        ConnectServerCircuitPieceView piece,
+        Vector2 normalizedPointer,
+        out int bestAnchor)
+    {
+        bestAnchor = -1;
+        float bestDistance = float.PositiveInfinity;
+        for (int anchor = 0; anchor < 25; anchor++)
+        {
+            if (!CanPlace(piece, anchor)) continue;
+            List<int> cells = ConnectServerCircuitPuzzle.GetCells(
+                piece.ShapeIndex, piece.Rotation, anchor);
+            if (cells == null || cells.Count == 0) continue;
+
+            Vector2 center = Vector2.zero;
+            foreach (int cell in cells)
+                center += new Vector2((cell % 5 + 0.5f) / 5f, (cell / 5 + 0.5f) / 5f);
+            center /= cells.Count;
+            float distance = (center - normalizedPointer).sqrMagnitude;
+            if (distance >= bestDistance) continue;
+            bestDistance = distance;
+            bestAnchor = anchor;
+        }
+
+        // Prevent snapping a module across the board while still making edges and
+        // grabbing any part of a multi-cell module forgiving.
+        return bestAnchor >= 0 && bestDistance <= 0.09f;
     }
 
     private void RotateSelected(int direction)

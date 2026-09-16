@@ -15,6 +15,10 @@ public sealed class TerminalScreenController : MonoBehaviour
     private static readonly Color DeniedRed = new(1f, 0.08f, 0.08f);
 
     private readonly List<Button> buttons = new();
+    private readonly List<Image> buttonBackgrounds = new();
+    private readonly List<TMP_Text> buttonLabels = new();
+    private static readonly Color MenuNormal = new(0f, 0.12f, 0.02f, 0.92f);
+    private static readonly Color MenuSelected = new(0.08f, 0.58f, 0.13f, 1f);
     private ConnectionDevice device;
     private RectTransform content;
     private VerticalLayoutGroup menuLayout;
@@ -239,11 +243,16 @@ public sealed class TerminalScreenController : MonoBehaviour
         Stretch((RectTransform)background.transform, Vector2.zero, Vector2.zero);
 
         Button button = background.GetComponent<Button>();
+        Image backgroundImage = background.GetComponent<Image>();
+        backgroundImage.color = MenuNormal;
+        button.targetGraphic = backgroundImage;
+        button.transition = Selectable.Transition.ColorTint;
         ColorBlock colors = button.colors;
-        colors.normalColor = new Color(0f, 0.12f, 0.02f, 0.75f);
+        colors.normalColor = MenuNormal;
         colors.highlightedColor = new Color(0.02f, 0.35f, 0.06f, 0.9f);
-        colors.selectedColor = colors.highlightedColor;
-        colors.pressedColor = new Color(0.08f, 0.6f, 0.13f, 1f);
+        colors.selectedColor = MenuSelected;
+        colors.pressedColor = MenuSelected;
+        colors.colorMultiplier = 1f;
         button.colors = colors;
         button.onClick.AddListener(() => action());
 
@@ -253,12 +262,22 @@ public sealed class TerminalScreenController : MonoBehaviour
         text.outlineColor = Color.black;
         text.outlineWidth = 0.18f;
         buttons.Add(button);
+        buttonBackgrounds.Add(backgroundImage);
+        buttonLabels.Add(text);
     }
 
     private void Select(int index, bool playSound = true)
     {
         selection = (index + buttons.Count) % buttons.Count;
-        EventSystem.current.SetSelectedGameObject(buttons[selection].gameObject);
+        if (EventSystem.current != null)
+            EventSystem.current.SetSelectedGameObject(buttons[selection].gameObject);
+        for (int i = 0; i < buttonBackgrounds.Count; i++)
+        {
+            if (buttonBackgrounds[i] != null)
+                buttonBackgrounds[i].color = i == selection ? MenuSelected : MenuNormal;
+            if (buttonLabels[i] != null)
+                buttonLabels[i].color = i == selection ? Color.black : TerminalGreen;
+        }
         if (playSound)
             terminalSfx?.PlayMenuSelected();
     }
@@ -268,6 +287,8 @@ public sealed class TerminalScreenController : MonoBehaviour
         foreach (Transform child in content)
             Destroy(child.gameObject);
         buttons.Clear();
+        buttonBackgrounds.Clear();
+        buttonLabels.Clear();
         selection = 0;
     }
 

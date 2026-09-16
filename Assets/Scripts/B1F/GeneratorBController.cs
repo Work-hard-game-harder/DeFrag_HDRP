@@ -107,6 +107,7 @@ namespace DeFrag.B1F
         private double nextSignalAt;
         private Coroutine pourRoutine;
         private Coroutine generatorAudioRoutine;
+        private Coroutine fullPowerRoutine;
         private Quaternion pourRestRotation;
         private bool pourVisualInitialized;
         private bool localPourVisualState;
@@ -230,6 +231,11 @@ namespace DeFrag.B1F
             {
                 StopCoroutine(generatorAudioRoutine);
                 generatorAudioRoutine = null;
+            }
+            if (fullPowerRoutine != null)
+            {
+                StopCoroutine(fullPowerRoutine);
+                fullPowerRoutine = null;
             }
             if (IsServer && NetworkManager != null)
                 NetworkManager.OnClientDisconnectCallback -= OnClientDisconnected;
@@ -363,6 +369,7 @@ namespace DeFrag.B1F
         private bool ConsumeCurrentFuelCanServer()
         {
             ulong operatorId = fuelOperator.Value;
+            ulong panelOperatorId = controllingClient.Value;
             var can = GetHeldFuel(operatorId);
             if (can == null || !TryGetPlayer(operatorId, out var player) ||
                 !player.TryGetComponent<NetworkPlayerInventory>(out var inventory) ||
@@ -373,11 +380,17 @@ namespace DeFrag.B1F
             pourRequested = ventRequested = false;
             pouring.Value = venting.Value = false;
             fuelOperator.Value = NoController;
+            controllingClient.Value = NoController;
             PlayPourResultClientRpc(true);
             FuelCanConsumedClientRpc(
                 consumedFuelCans.Value,
                 requiredFuelCans,
                 TargetClient(operatorId));
+            if (panelOperatorId != NoController)
+                FuelStageCompleteClientRpc(
+                    consumedFuelCans.Value,
+                    requiredFuelCans,
+                    TargetClient(panelOperatorId));
             return true;
         }
 
@@ -387,10 +400,6 @@ namespace DeFrag.B1F
             searchActive.Value = false;
             completed.Value = true;
             controllingClient.Value = NoController;
-            if (QuestManager.Instance != null && !string.IsNullOrWhiteSpace(completionQuestSignal))
-                QuestManager.Instance.ReportProgress(
-                    completionQuestSignal,
-                    completionQuestSourceId);
             StopFuelSignalClientRpc();
             PlayGeneratorStartedClientRpc();
             Vector3 investigationPosition = fuelInletPoint != null
@@ -403,7 +412,43 @@ namespace DeFrag.B1F
                     "[GeneratorB] TV Monster could not begin forced generator investigation.",
                     this);
             }
-            powerController?.SetFullPowerServer();
+            BeginFullPowerTransitionServer();
+            if (QuestManager.Instance != null && !string.IsNullOrWhiteSpace(completionQuestSignal))
+                QuestManager.Instance.ReportProgress(
+                    completionQuestSignal,
+                    completionQuestSourceId);
+        }
+
+        private void BeginFullPowerTransitionServer()
+        {
+            if (!IsServer || powerController == null)
+            {
+                Debug.LogError("[GeneratorB] Full power controller is not assigned on the server.", this);
+                return;
+            }
+
+            if (fullPowerRoutine != null)
+                StopCoroutine(fullPowerRoutine);
+            fullPowerRoutine = StartCoroutine(SetFullPowerWhenReady());
+        }
+
+        private IEnumerator SetFullPowerWhenReady()
+        {
+            const float timeout = 8f;
+            float elapsed = 0f;
+            while (elapsed < timeout && powerController.CurrentState != B1FPowerState.FullPower)
+            {
+                if (powerController.CanUseBoxB)
+                    powerController.SetFullPowerServer();
+                elapsed += Time.unscaledDeltaTime;
+                yield return null;
+            }
+
+            if (powerController.CurrentState != B1FPowerState.FullPower)
+                Debug.LogError(
+                    $"[GeneratorB] Failed to enter FullPower from {powerController.CurrentState}.",
+                    this);
+            fullPowerRoutine = null;
         }
 
         [ServerRpc(RequireOwnership = false)]
@@ -620,6 +665,15 @@ namespace DeFrag.B1F
             ClientRpcParams clientRpc = default)
         {
             GeneratorBLocalSession.Active?.ResolveFuelCanConsumed(this, consumed, required);
+        }
+
+        [ClientRpc]
+        private void FuelStageCompleteClientRpc(
+            int consumed,
+            int required,
+            ClientRpcParams clientRpc = default)
+        {
+            GeneratorBLocalSession.Active?.ResolveFuelStageComplete(this, consumed, required);
         }
 
         [ClientRpc]

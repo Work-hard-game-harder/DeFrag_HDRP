@@ -1,6 +1,7 @@
 using System.Collections;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace DeFrag.B1F
 {
@@ -23,6 +24,7 @@ namespace DeFrag.B1F
         [Header("Emergency Spawn")]
         [SerializeField] private NetworkObject tvMonsterPrefab;
         [SerializeField] private Transform tvMonsterSpawnPoint;
+        [SerializeField, Min(0.1f)] private float tvMonsterSpawnNavMeshSampleRadius = 4f;
         [Tooltip("스폰된 몬스터가 최초 한 번 먼저 이동할 배전함 쪽 목적지입니다.")]
         [SerializeField] private Transform tvMonsterInitialDestination;
 
@@ -275,9 +277,26 @@ namespace DeFrag.B1F
                 tvMonsterPrefab == null || tvMonsterSpawnPoint == null)
                 return;
 
+            Vector3 spawnPosition = tvMonsterSpawnPoint.position;
+            if (NavMesh.SamplePosition(
+                    spawnPosition,
+                    out NavMeshHit spawnHit,
+                    tvMonsterSpawnNavMeshSampleRadius,
+                    NavMesh.AllAreas))
+            {
+                spawnPosition = spawnHit.position;
+            }
+            else
+            {
+                Debug.LogWarning(
+                    "[B1FPowerController] TV Monster spawn point 주변에서 NavMesh를 찾지 못했습니다. " +
+                    "Spawn Point를 파란 NavMesh 위로 옮겨 주세요.",
+                    tvMonsterSpawnPoint);
+            }
+
             NetworkObject monster = Instantiate(
                 tvMonsterPrefab,
-                tvMonsterSpawnPoint.position,
+                spawnPosition,
                 tvMonsterSpawnPoint.rotation);
 
             MonsterAI monsterAI = monster.GetComponentInChildren<MonsterAI>(true);

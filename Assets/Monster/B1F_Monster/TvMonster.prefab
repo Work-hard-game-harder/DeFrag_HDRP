@@ -586,6 +586,7 @@ MonoBehaviour:
   catchUpCooldown: 8
   stuckCheckInterval: 1
   stuckThreshold: 0.1
+  missingPathRetryInterval: 0.75
   soundDetectionRange: 35
   animator: {fileID: 6274968967036992575}
   attackHitbox: {fileID: 6955514322569177049}

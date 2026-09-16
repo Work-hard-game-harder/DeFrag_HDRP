@@ -42,6 +42,8 @@ namespace DeFrag.B1F
         private Coroutine delayedExit;
         private bool lastCooperativeInput;
         private float nextInputHeartbeat;
+        private float inputPulseUntil;
+        private float nextPulseAllowedAt;
 
         public bool IsFor(GeneratorBController target) => active && controller == target;
 
@@ -162,6 +164,21 @@ namespace DeFrag.B1F
             delayedExit = StartCoroutine(ExitAfterDelay(1.25f));
         }
 
+        public void ResolveFuelStageComplete(
+            GeneratorBController source,
+            int consumed,
+            int required)
+        {
+            if (!IsFor(source) || mode != GeneratorBSessionMode.Pressure || statusText == null)
+                return;
+            statusText.text = consumed >= required
+                ? "PRESSURE STABLE // GENERATOR ONLINE"
+                : $"FUEL STAGE {consumed}/{required} COMPLETE // VALVE RESET";
+            statusText.color = BrightGreen;
+            ending = true;
+            delayedExit = StartCoroutine(ExitAfterDelay(1.25f));
+        }
+
         private void UpdateSearchInput()
         {
             if (commandInput == null || !commandInput.interactable)
@@ -189,7 +206,12 @@ namespace DeFrag.B1F
 
         private void UpdateCooperativeFuel()
         {
-            bool held = SpaceHeld();
+            if (SpacePressed() && Time.unscaledTime >= nextPulseAllowedAt)
+            {
+                inputPulseUntil = Time.unscaledTime + 0.3f;
+                nextPulseAllowedAt = Time.unscaledTime + 0.14f;
+            }
+            bool held = Time.unscaledTime < inputPulseUntil;
             if (held != lastCooperativeInput || Time.unscaledTime >= nextInputHeartbeat)
             {
                 controller.SetCooperativeInput(mode, held);
@@ -240,15 +262,15 @@ namespace DeFrag.B1F
             else if (mode == GeneratorBSessionMode.Fuel)
             {
                 statusText.text = held
-                    ? $"FUEL FLOW ACTIVE // PHASE {controller.PressureStage + 1}/3"
-                    : $"HOLD SPACE TO POUR // PHASE {controller.PressureStage + 1}/3";
+                    ? $"PUMP STROKE // PHASE {controller.PressureStage + 1}/3"
+                    : $"TAP SPACE TO PUMP // PHASE {controller.PressureStage + 1}/3";
                 statusText.color = BrightGreen;
             }
             else
             {
                 statusText.text = held
-                    ? $"RELIEF VALVE OPEN // PHASE {controller.PressureStage + 1}/3"
-                    : $"HOLD SPACE TO VENT PRESSURE // PHASE {controller.PressureStage + 1}/3";
+                    ? $"RELIEF PULSE // PHASE {controller.PressureStage + 1}/3"
+                    : $"TAP SPACE TO PULSE VALVE // PHASE {controller.PressureStage + 1}/3";
                 statusText.color = BrightGreen;
             }
         }
@@ -322,8 +344,8 @@ namespace DeFrag.B1F
             footer.text = mode == GeneratorBSessionMode.Search
                 ? "[SE + TAB] AUTOCOMPLETE    [ENTER] EXECUTE    [ESC] EXIT"
                 : mode == GeneratorBSessionMode.Fuel
-                    ? "[HOLD SPACE] POUR FUEL    [ESC] RELEASE STATION"
-                    : "[HOLD SPACE] OPEN RELIEF VALVE    [ESC] RELEASE STATION";
+                    ? "[TAP SPACE] PUMP FUEL    [ESC] RELEASE STATION"
+                    : "[TAP SPACE] PULSE RELIEF VALVE    [ESC] RELEASE STATION";
         }
 
         private void BuildSearchUi(Transform parent)
@@ -368,8 +390,8 @@ namespace DeFrag.B1F
                 "Role Instruction", parent, 27f, TextAlignmentOptions.Center);
             Place(instruction.rectTransform, new Vector2(0.08f, 0.49f), new Vector2(0.92f, 0.58f));
             instruction.text = mode == GeneratorBSessionMode.Fuel
-                ? "FUEL INLET // HOLD SPACE TO POUR · RELEASE TO STOP"
-                : "PRESSURE CONTROL // HOLD SPACE TO OPEN RELIEF VALVE";
+                ? "FUEL INLET // TAP SPACE IN A STEADY RHYTHM"
+                : "PRESSURE CONTROL // PULSE SPACE TO HOLD THE GREEN BAND";
 
             GameObject gauge = CreatePanel("Pressure Gauge", parent);
             RectTransform gaugeRect = (RectTransform)gauge.transform;
@@ -539,6 +561,9 @@ namespace DeFrag.B1F
         private static bool SpaceHeld() => Keyboard.current != null
             ? Keyboard.current.spaceKey.isPressed
             : Input.GetKey(KeyCode.Space);
+        private static bool SpacePressed() => Keyboard.current != null
+            ? Keyboard.current.spaceKey.wasPressedThisFrame
+            : Input.GetKeyDown(KeyCode.Space);
         private static void SetCursor(bool ui)
         {
             Cursor.lockState = ui ? CursorLockMode.None : CursorLockMode.Locked;

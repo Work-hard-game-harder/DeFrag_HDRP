@@ -66,6 +66,7 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
     [Header("Stuck Settings")]
     public float stuckCheckInterval = 1f;
     public float stuckThreshold = 0.1f;
+    [SerializeField, Min(0.1f)] private float missingPathRetryInterval = 0.75f;
 
     [Header("World Noise Detection Settings")]
     [Min(0f)] public float soundDetectionRange = 60f;
@@ -95,6 +96,7 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
     private static readonly int MissingState = Animator.StringToHash("Base Layer.Missing");
 
     private NavMeshAgent agent;
+    private float missingPathRetryTimer;
     private ChaseDetourNavigator chaseNavigator;
     private NavMeshPath randomDestinationPath;
     private CatchUpNavigator catchUpNavigator;
@@ -554,6 +556,22 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
     {
         RotateTowardsMoveDirection();
         CheckIfStuck();
+
+        // A failed SetDestination leaves Search's walking animation enabled but
+        // produces no path. Previously this state never requested another target,
+        // so the monster walked in place forever at its spawn point.
+        if (!agent.pathPending && !agent.hasPath)
+        {
+            missingPathRetryTimer += Time.deltaTime;
+            if (missingPathRetryTimer >= missingPathRetryInterval)
+            {
+                missingPathRetryTimer = 0f;
+                SetSearchDestination();
+            }
+            return;
+        }
+
+        missingPathRetryTimer = 0f;
         float arrivalDistance = initialDestinationPending
             ? Mathf.Max(agent.stoppingDistance, initialDestinationArrivalDistance)
             : 0.5f;
@@ -837,6 +855,7 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
             case MonsterState.Search:
                 agent.speed = walkSpeed;
                 animator.SetBool(IsWalking, true);
+                missingPathRetryTimer = missingPathRetryInterval;
                 SetSearchDestination();
                 break;
 
