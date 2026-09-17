@@ -21,6 +21,7 @@ public class SubtitlesScript : MonoBehaviour
     private string[] subtitles;
     private int index;
     private bool ignoreClick;
+    private bool ownsCutsceneLock;
 
     private void Start()
     {
@@ -62,12 +63,18 @@ public class SubtitlesScript : MonoBehaviour
 
     public void PlaySubtitles(string[] newSubtitles, Action callback = null)
     {
+        if (newSubtitles == null || newSubtitles.Length == 0)
+        {
+            callback?.Invoke();
+            return;
+        }
+
         subtitles = newSubtitles;
         index = 0;
         onFinished = callback;
         subtitlesText.text = string.Empty;
         subtitlesPanel.SetActive(true);
-        GameState.isCutscene = true;
+        AcquireCutsceneLock();
         PlaybackStarted?.Invoke();
 
         StopAllCoroutines();
@@ -130,7 +137,12 @@ public class SubtitlesScript : MonoBehaviour
 
     private void OnDisable()
     {
+        StopAllCoroutines();
         StopTypewriterSound();
+        ReleaseCutsceneLock();
+        subtitles = null;
+        onFinished = null;
+        ignoreClick = false;
     }
 
     private void NextSubtitle()
@@ -143,13 +155,31 @@ public class SubtitlesScript : MonoBehaviour
             return;
         }
 
-        GameState.isCutscene = false;
-        StopTypewriterSound();
-        subtitlesPanel.SetActive(false);
-        subtitles = null;
-
         Action finishedCallback = onFinished;
         onFinished = null;
+        subtitles = null;
+
+        ReleaseCutsceneLock();
+        StopTypewriterSound();
+        // subtitlesPanel과 이 컴포넌트가 같은 GameObject에 있을 수 있다.
+        // SetActive(false)가 OnDisable을 즉시 호출하기 전에 콜백을 보관해야 한다.
+        subtitlesPanel.SetActive(false);
+
         finishedCallback?.Invoke();
+    }
+
+    private void AcquireCutsceneLock()
+    {
+        ownsCutsceneLock = true;
+        GameState.isCutscene = true;
+    }
+
+    private void ReleaseCutsceneLock()
+    {
+        if (!ownsCutsceneLock)
+            return;
+
+        ownsCutsceneLock = false;
+        GameState.isCutscene = false;
     }
 }

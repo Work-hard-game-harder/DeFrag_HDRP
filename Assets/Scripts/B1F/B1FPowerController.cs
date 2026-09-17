@@ -25,6 +25,8 @@ namespace DeFrag.B1F
         [SerializeField] private Transform tvMonsterSpawnPoint;
         [Tooltip("스폰된 몬스터가 최초 한 번 먼저 이동할 배전함 쪽 목적지입니다.")]
         [SerializeField] private Transform tvMonsterInitialDestination;
+        [Tooltip("자식 Transform들을 랜덤 순찰 지점으로 사용하는 루트 오브젝트입니다.")]
+        [SerializeField] private Transform tvMonsterPatrolPointsRoot;
 
         [Header("Monster Spawn Presentation")]
         [SerializeField] private B1FMonsterSpawnTimeline spawnTimeline;
@@ -287,7 +289,10 @@ namespace DeFrag.B1F
                 if (storyDebugFreezeTvMonster)
                     monsterAI.SetStoryDebugFrozen(true);
                 else
+                {
                     monsterAI.SetInitialSearchDestination(tvMonsterInitialDestination);
+                    monsterAI.SetPatrolPointsRoot(tvMonsterPatrolPointsRoot);
+                }
             }
             else
                 Debug.LogWarning(

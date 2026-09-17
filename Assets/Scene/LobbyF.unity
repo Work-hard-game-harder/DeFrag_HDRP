@@ -17332,6 +17332,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3333333333333333333333333333333, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameplaySpawnPointRegistry
+  hostSpawnPoint: {fileID: 0}
+  clientSpawnPoint: {fileID: 0}
   spawnPoints:
   - {fileID: 1864463054}
   - {fileID: 1675688592}
@@ -23036,6 +23038,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3333333333333333333333333333333, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameplaySpawnPointRegistry
+  hostSpawnPoint: {fileID: 0}
+  clientSpawnPoint: {fileID: 0}
   spawnPoints:
   - {fileID: 1479092216}
   - {fileID: 1653142925}
@@ -33421,7 +33425,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 40, y: 40}
+  m_SizeDelta: {x: 30, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!64 &4085296085383950532
 MeshCollider:

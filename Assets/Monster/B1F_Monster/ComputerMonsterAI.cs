@@ -2,6 +2,7 @@
 using DeFrag.Monsters.Common;
 using DeFrag.Combat;
 using DeFrag.Doors;
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
@@ -59,6 +60,8 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
     [SerializeField, Min(0f)] private float initialDestinationExclusionRadius = 6f;
     [SerializeField, Min(1)] private int patrolDestinationAttempts = 30;
     [SerializeField, Min(0.1f)] private float patrolDestinationSampleDistance = 5f;
+    [Tooltip("지정된 순찰 지점들입니다. 비어 있을 때만 기존 범위 기반 순찰을 폴백으로 사용합니다.")]
+    [SerializeField] private Transform[] patrolPoints = new Transform[0];
 
     [Header("Rotation Settings")]
     public float rotationSpeed = 10f;
@@ -123,6 +126,7 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
     private bool initialized;
     private float attackCycleStartedAt;
     private Vector3 patrolAreaOrigin;
+    private int lastPatrolPointIndex = -1;
     private NetworkMonsterPlayerTargetResolver targetResolver;
     private bool initialDestinationPending;
     private bool forcedInvestigationPending;
@@ -156,6 +160,27 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
 
         if (initialized && currentState == MonsterState.Search)
             SetSearchDestination();
+    }
+
+    public void SetPatrolPointsRoot(Transform pointsRoot)
+    {
+        if (pointsRoot == null)
+        {
+            patrolPoints = new Transform[0];
+            lastPatrolPointIndex = -1;
+            return;
+        }
+
+        var configuredPoints = new List<Transform>(pointsRoot.childCount);
+        for (int i = 0; i < pointsRoot.childCount; i++)
+        {
+            Transform point = pointsRoot.GetChild(i);
+            if (point != null && point.gameObject.activeInHierarchy)
+                configuredPoints.Add(point);
+        }
+
+        patrolPoints = configuredPoints.ToArray();
+        lastPatrolPointIndex = -1;
     }
 
     public void SetStoryDebugFrozen(bool frozen)
@@ -708,12 +733,16 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
 
     void SetRandomDestination()
     {
-        Vector3 patrolCenter = patrolAreaCenter != null
-            ? patrolAreaCenter.position
-            : patrolAreaOrigin;
+        if (TrySetRandomPatrolPoint(requireMinimumTravelDistance: true) ||
+            TrySetRandomPatrolPoint(requireMinimumTravelDistance: false))
+        {
+            return;
+        }
 
+        // 지정 지점이 없거나 어느 지점에도 완전한 경로가 없을 때만
+        // 기존 범위 기반 탐색을 안전한 폴백으로 사용합니다.
         if (TrySetRandomDestinationNear(
-                patrolCenter,
+                patrolAreaOrigin,
                 searchRadius,
                 minPatrolDistance,
                 excludeInitialDestination: true))
@@ -724,7 +753,7 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
         // 맵 구조상 제약을 모두 만족하는 지점이 없으면 순찰 정지를 막기 위해
         // 최소 거리와 초기 지점 제외 조건만 완화하여 한 번 더 탐색합니다.
         if (TrySetRandomDestinationNear(
-                patrolCenter,
+                patrolAreaOrigin,
                 searchRadius,
                 minimumTravelDistance: 0f,
                 excludeInitialDestination: false))
@@ -739,6 +768,61 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
             "[Search] 고정 순찰 범위에서 목적지를 찾지 못해 현재 위치 주변 탐색으로 전환합니다.",
             this);
         SetRandomDestinationNear(transform.position, searchRadius);
+    }
+
+    private bool TrySetRandomPatrolPoint(bool requireMinimumTravelDistance)
+    {
+        if (patrolPoints == null || patrolPoints.Length == 0 ||
+            agent == null || !agent.isOnNavMesh)
+        {
+            return false;
+        }
+
+        if (randomDestinationPath == null)
+            randomDestinationPath = new NavMeshPath();
+
+        int pointCount = patrolPoints.Length;
+        int randomStartIndex = Random.Range(0, pointCount);
+        float minimumDistanceSqr = minPatrolDistance * minPatrolDistance;
+
+        for (int offset = 0; offset < pointCount; offset++)
+        {
+            int pointIndex = (randomStartIndex + offset) % pointCount;
+            if (pointCount > 1 && pointIndex == lastPatrolPointIndex)
+                continue;
+
+            Transform point = patrolPoints[pointIndex];
+            if (point == null || !point.gameObject.activeInHierarchy)
+                continue;
+
+            if (!NavMesh.SamplePosition(
+                    point.position,
+                    out NavMeshHit hit,
+                    patrolDestinationSampleDistance,
+                    agent.areaMask))
+            {
+                continue;
+            }
+
+            Vector3 travelOffset = hit.position - transform.position;
+            travelOffset.y = 0f;
+            if (requireMinimumTravelDistance && travelOffset.sqrMagnitude < minimumDistanceSqr)
+                continue;
+
+            if (!agent.CalculatePath(hit.position, randomDestinationPath) ||
+                randomDestinationPath.status != NavMeshPathStatus.PathComplete)
+            {
+                continue;
+            }
+
+            if (!agent.SetDestination(hit.position))
+                continue;
+
+            lastPatrolPointIndex = pointIndex;
+            return true;
+        }
+
+        return false;
     }
 
     private void SetSearchDestination()
