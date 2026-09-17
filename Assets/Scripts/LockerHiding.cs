@@ -19,11 +19,20 @@ public sealed class LockerHiding : NetworkBehaviour, IInteractable
     [SerializeField] private Transform doorPivot;
     [SerializeField] private float doorOpenZ = -140f;
     [SerializeField] private float doorClosedZ = 0f;
-    private Vector3 doorRestEuler;
+    [SerializeField, Min(0.05f)] private float doorOpenDuration = 0.25f;
+    [SerializeField, Min(0.05f)] private float doorCloseDuration = 0.3f;
+    [SerializeField, Range(0f, 0.15f)] private float hiddenDoorAjar = 0.035f;
+    [SerializeField, Range(0f, 0.75f)] private float movementDoorLead = 0.25f;
+    private Quaternion doorClosedRotation;
+    private Quaternion doorOpenRotation;
+    private float doorBlend;
     [Header("Timing")]
     [SerializeField, Min(0.1f)] private float enterDuration = 1.2f;
     [SerializeField, Min(0.1f)] private float exitDuration = 1.1f;
     [SerializeField, Min(0.5f)] private float useDistance = 3f;
+    [Header("Interaction validation")]
+    [Tooltip("Distance is measured from this collider's surface instead of the imported model pivot.")]
+    [SerializeField] private Collider interactionCollider;
     [Header("Remote player Animator full state paths")]
     [SerializeField] private string enterState = "Base Layer.LockerEnter";
     [SerializeField] private string hiddenState = "Base Layer.LockerHidden";
@@ -47,6 +56,7 @@ public sealed class LockerHiding : NetworkBehaviour, IInteractable
     public Transform Exit => exitAnchor;
     public float Bob => cameraBob;
     public float Roll => cameraRoll;
+    public float MovementDoorLead => movementDoorLead;
 
     public static bool IsPlayerHidden(NetworkObject player)
     {
@@ -64,34 +74,56 @@ public sealed class LockerHiding : NetworkBehaviour, IInteractable
     }
     private void Awake()
     {
-        if (doorPivot != null) doorRestEuler = doorPivot.localEulerAngles;
+        if (doorPivot != null)
+        {
+            Vector3 restEuler = doorPivot.localEulerAngles;
+            doorClosedRotation = Quaternion.Euler(restEuler.x, restEuler.y, doorClosedZ);
+            doorOpenRotation = Quaternion.Euler(restEuler.x, restEuler.y, doorOpenZ);
+        }
+        if (interactionCollider == null)
+            interactionCollider = GetComponentInChildren<Collider>(true);
     }
     public override void OnNetworkSpawn()
     {
         lockers.Add(this);
-        ApplyDoor(Phase == LockerPhase.Entering || Phase == LockerPhase.Exiting);
+        SetDoorImmediate(GetDoorTargetBlend());
     }
     public override void OnNetworkDespawn()
     {
         lockers.Remove(this);
         session?.Finish();
         session = null;
-        ApplyDoor(false);
+        SetDoorImmediate(0f);
         PlayState(returnState);
     }
     [ServerRpc(RequireOwnership = false)]
     private void EnterServerRpc(ServerRpcParams rpc = default)
     {
-        if (Phase != LockerPhase.Empty || insideAnchor == null || viewAnchor == null || exitAnchor == null) return;
+        if (Phase != LockerPhase.Empty || insideAnchor == null || viewAnchor == null) return;
         if (!NetworkManager.ConnectedClients.TryGetValue(rpc.Receive.SenderClientId, out var client)) return;
         NetworkObject player = client.PlayerObject;
-        if (player == null || !player.IsSpawned || Vector3.Distance(player.transform.position, transform.position) > useDistance) return;
+        if (player == null || !player.IsSpawned || !IsPlayerWithinUseDistance(player.transform.position)) return;
         if (player.TryGetComponent<PlayerStats>(out var stats) && stats.IsDead) return;
         foreach (var locker in lockers)
             if (locker != null && locker.occupant.Value == player.NetworkObjectId) return;
         occupant.Value = player.NetworkObjectId;
         phaseEnd.Value = NetworkManager.ServerTime.Time + enterDuration;
         phase.Value = LockerPhase.Entering;
+    }
+
+    private bool IsPlayerWithinUseDistance(Vector3 playerPosition)
+    {
+        // Imported Blender/FBX locker roots can have a large scale and a pivot far
+        // away from the visible door. Validate against the surface the player
+        // actually aimed at so entry does not depend on standing at one exact spot.
+        if (interactionCollider != null && interactionCollider.enabled &&
+            interactionCollider.gameObject.activeInHierarchy)
+        {
+            Vector3 closestPoint = interactionCollider.ClosestPoint(playerPosition);
+            return Vector3.Distance(playerPosition, closestPoint) <= useDistance;
+        }
+
+        return Vector3.Distance(playerPosition, transform.position) <= useDistance;
     }
     public void RequestExit() { if (IsSpawned) ExitServerRpc(); }
     [ServerRpc(RequireOwnership = false)]
@@ -127,14 +159,14 @@ public sealed class LockerHiding : NetworkBehaviour, IInteractable
         if (Phase == LockerPhase.Empty)
         {
             session?.Finish(); session = null;
-            ApplyDoor(false);
+            UpdateDoorAnimation();
             if (hasDisplayed && displayedPhase != LockerPhase.Empty) PlayState(returnState);
             displayedPhase = LockerPhase.Empty; hasDisplayed = true;
             return;
         }
         // Apply on every peer before starting character/camera presentation.
         // Hidden closes after entry; Empty closes after the local exit is restored.
-        ApplyDoor(Phase == LockerPhase.Entering || Phase == LockerPhase.Exiting);
+        UpdateDoorAnimation();
         if (player == null) return;
         if (player.IsOwner && session == null)
         {
@@ -145,19 +177,41 @@ public sealed class LockerHiding : NetworkBehaviour, IInteractable
         if (!hasDisplayed || displayedPhase != Phase)
         {
             displayedPhase = Phase; hasDisplayed = true;
-            PlayState(Phase == LockerPhase.Entering ? enterState : Phase == LockerPhase.Hidden ? hiddenState : exitState);
+            string requestedState = Phase == LockerPhase.Entering
+                ? enterState
+                : Phase == LockerPhase.Hidden ? hiddenState : exitState;
+            if (!PlayState(requestedState) && Phase == LockerPhase.Hidden)
+                PlayState(returnState);
         }
     }
-    private void ApplyDoor(bool open)
+    private float GetDoorTargetBlend()
+    {
+        if (Phase == LockerPhase.Entering || Phase == LockerPhase.Exiting)
+            return 1f;
+        return Phase == LockerPhase.Hidden ? hiddenDoorAjar : 0f;
+    }
+
+    private void UpdateDoorAnimation()
     {
         if (doorPivot == null) return;
-        doorPivot.localRotation = Quaternion.Euler(
-            doorRestEuler.x, doorRestEuler.y, open ? doorOpenZ : doorClosedZ);
+        float target = GetDoorTargetBlend();
+        float duration = target > doorBlend ? doorOpenDuration : doorCloseDuration;
+        doorBlend = Mathf.MoveTowards(doorBlend, target, Time.deltaTime / Mathf.Max(0.01f, duration));
+        doorPivot.localRotation = Quaternion.Slerp(doorClosedRotation, doorOpenRotation, doorBlend);
     }
-    private void PlayState(string state)
+
+    private void SetDoorImmediate(float blend)
     {
-        if (remoteAnimator == null || string.IsNullOrWhiteSpace(state)) return;
+        doorBlend = Mathf.Clamp01(blend);
+        if (doorPivot != null)
+            doorPivot.localRotation = Quaternion.Slerp(doorClosedRotation, doorOpenRotation, doorBlend);
+    }
+    private bool PlayState(string state)
+    {
+        if (remoteAnimator == null || string.IsNullOrWhiteSpace(state)) return false;
         int hash = Animator.StringToHash(state);
-        if (remoteAnimator.HasState(0, hash)) remoteAnimator.CrossFadeInFixedTime(hash, 0.1f);
+        if (!remoteAnimator.HasState(0, hash)) return false;
+        remoteAnimator.CrossFadeInFixedTime(hash, 0.1f);
+        return true;
     }
 }

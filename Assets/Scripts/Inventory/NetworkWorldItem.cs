@@ -44,6 +44,16 @@ public sealed class NetworkWorldItem : NetworkBehaviour
             NetworkVariableReadPermission.Everyone,
             NetworkVariableWritePermission.Server);
 
+    // World items are hidden while held, so relying on the spawn transform alone
+    // makes a dropped item reappear at its original spawn point on clients that do
+    // not have a NetworkTransform. Keep the authoritative world pose explicitly.
+    private readonly NetworkVariable<Vector3> worldPosition = new(
+        default, NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
+    private readonly NetworkVariable<Quaternion> worldRotation = new(
+        Quaternion.identity, NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server);
+
     private bool impactNoiseArmed;
     private float impactNoiseReadyAt;
     private NetworkTransform networkTransform;
@@ -66,10 +76,18 @@ public sealed class NetworkWorldItem : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         EnsureWorldComponentReferences();
+        if (IsServer)
+        {
+            worldPosition.Value = transform.position;
+            worldRotation.Value = transform.rotation;
+        }
         Quaternion initialYaw = Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
         initialRotationOffset = Quaternion.Inverse(initialYaw) * transform.rotation;
         CacheGroundBottomOffset();
         state.OnValueChanged += HandleStateChanged;
+        worldPosition.OnValueChanged += HandleWorldPositionChanged;
+        worldRotation.OnValueChanged += HandleWorldRotationChanged;
+        ApplySynchronizedWorldPose();
         ApplyWorldPresentation(state.Value);
 
         Debug.Log(
@@ -81,6 +99,8 @@ public sealed class NetworkWorldItem : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         state.OnValueChanged -= HandleStateChanged;
+        worldPosition.OnValueChanged -= HandleWorldPositionChanged;
+        worldRotation.OnValueChanged -= HandleWorldRotationChanged;
     }
 
     [ContextMenu("Server Test: Set Held")]
@@ -160,6 +180,9 @@ public sealed class NetworkWorldItem : NetworkBehaviour
 
         transform.SetPositionAndRotation(position, stableRotation);
 
+        worldPosition.Value = position;
+        worldRotation.Value = stableRotation;
+
         if (networkTransform != null)
             networkTransform.Teleport(position, stableRotation, transform.localScale);
 
@@ -233,7 +256,30 @@ public sealed class NetworkWorldItem : NetworkBehaviour
         NetworkItemState previousValue,
         NetworkItemState newValue)
     {
+        if (newValue == NetworkItemState.World)
+            ApplySynchronizedWorldPose();
         ApplyWorldPresentation(newValue);
+    }
+
+    private void HandleWorldPositionChanged(Vector3 previous, Vector3 current)
+    {
+        if (!IsServer && state.Value == NetworkItemState.World)
+            ApplySynchronizedWorldPose();
+    }
+
+    private void HandleWorldRotationChanged(Quaternion previous, Quaternion current)
+    {
+        if (!IsServer && state.Value == NetworkItemState.World)
+            ApplySynchronizedWorldPose();
+    }
+
+    private void ApplySynchronizedWorldPose()
+    {
+        if (IsServer || state.Value != NetworkItemState.World)
+            return;
+
+        transform.SetPositionAndRotation(worldPosition.Value, worldRotation.Value);
+        Physics.SyncTransforms();
     }
 
     private void ApplyWorldPresentation(NetworkItemState currentState)

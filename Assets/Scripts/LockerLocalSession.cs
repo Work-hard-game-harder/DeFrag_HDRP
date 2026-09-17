@@ -16,6 +16,7 @@ public sealed class LockerLocalSession : MonoBehaviour
     private Vector3 entryPosition, cameraLocalPosition, cameraStartPosition;
     private Vector3 eyeOffset;
     private Quaternion entryRotation, cameraLocalRotation, cameraStartRotation;
+    private Quaternion hiddenBodyRotation, hiddenViewRotation;
     private bool cursorVisible;
     private CursorLockMode cursorLock;
 
@@ -30,6 +31,10 @@ public sealed class LockerLocalSession : MonoBehaviour
         cameraView = switcher != null ? switcher.ActiveCamera : interaction != null ? interaction.GetComponent<Camera>() : null;
         if (cameraView == null) { switcher?.SetInteractionLocked(false); GameplayInputGate.Release(this); return false; }
         entryPosition = transform.position; entryRotation = transform.rotation;
+        // The player approaches while looking into the locker. Once hidden, both
+        // the replicated body and the owning camera face back toward the door.
+        hiddenBodyRotation = entryRotation * Quaternion.Euler(0f, 180f, 0f);
+        hiddenViewRotation = hiddenBodyRotation * cameraView.transform.localRotation;
         cameraLocalPosition = cameraView.transform.localPosition; cameraLocalRotation = cameraView.transform.localRotation;
         cameraStartPosition = cameraView.transform.position; cameraStartRotation = cameraView.transform.rotation;
         eyeOffset = transform.InverseTransformPoint(cameraStartPosition);
@@ -55,21 +60,26 @@ public sealed class LockerLocalSession : MonoBehaviour
             locker.RequestExit();
         bool leaving = locker.Phase == LockerPhase.Exiting;
         float t = locker.Phase == LockerPhase.Hidden ? 1f : Mathf.SmoothStep(0f, 1f, locker.Progress);
+        float movementT = Mathf.InverseLerp(locker.MovementDoorLead, 1f, t);
+        movementT = Mathf.SmoothStep(0f, 1f, movementT);
         transform.SetPositionAndRotation(
-            Vector3.Lerp(leaving ? locker.Inside.position : entryPosition, leaving ? locker.Exit.position : locker.Inside.position, t),
-            Quaternion.Slerp(leaving ? locker.Inside.rotation : entryRotation, leaving ? locker.Exit.rotation : locker.Inside.rotation, t));
-        Vector3 outsideEye = locker.Exit.position + locker.Exit.rotation * eyeOffset;
+            Vector3.Lerp(leaving ? locker.Inside.position : entryPosition, leaving ? entryPosition : locker.Inside.position, movementT),
+            Quaternion.Slerp(leaving ? hiddenBodyRotation : entryRotation, leaving ? entryRotation : hiddenBodyRotation, movementT));
+        Vector3 outsideEye = entryPosition + entryRotation * eyeOffset;
         cameraView.transform.SetPositionAndRotation(
-            Vector3.Lerp(leaving ? locker.View.position : cameraStartPosition, leaving ? outsideEye : locker.View.position, t) +
-                Vector3.up * (Mathf.Sin(t * Mathf.PI * 2f) * locker.Bob),
-            Quaternion.Slerp(leaving ? locker.View.rotation : cameraStartRotation, leaving ? locker.Exit.rotation * cameraLocalRotation : locker.View.rotation, t) *
-                Quaternion.Euler(0f, 0f, Mathf.Sin(t * Mathf.PI * 2f) * locker.Roll));
+            Vector3.Lerp(leaving ? locker.View.position : cameraStartPosition, leaving ? outsideEye : locker.View.position, movementT) +
+                Vector3.up * (Mathf.Sin(movementT * Mathf.PI * 2f) * locker.Bob),
+            Quaternion.Slerp(leaving ? hiddenViewRotation : cameraStartRotation, leaving ? entryRotation * cameraLocalRotation : hiddenViewRotation, movementT) *
+                Quaternion.Euler(0f, 0f, Mathf.Sin(movementT * Mathf.PI * 2f) * locker.Roll));
     }
     public void Finish()
     {
         if (!active) return;
         active = false;
-        if (locker != null && locker.Exit != null) transform.SetPositionAndRotation(locker.Exit.position, locker.Exit.rotation);
+        // Return to the pose from which this local player entered. Imported locker
+        // hierarchies may carry axis conversion and large scale values, so using a
+        // child Exit Anchor directly can launch the character far above the map.
+        transform.SetPositionAndRotation(entryPosition, entryRotation);
         if (cameraView != null) cameraView.transform.SetLocalPositionAndRotation(cameraLocalPosition, cameraLocalRotation);
         if (body != null) body.enabled = bodyEnabled;
         bool alive = !TryGetComponent<PlayerStats>(out var stats) || !stats.IsDead;

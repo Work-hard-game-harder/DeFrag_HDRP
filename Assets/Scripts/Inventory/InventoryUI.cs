@@ -17,6 +17,7 @@ public class InventoryUI : MonoBehaviour
     private bool inventoryUiHiddenByCamera;
     private bool quickSlotsWereActive;
     private bool inventoryPanelWasActive;
+    private int forcedFuelSlot = -1;
 
     public void SetQuickSlotsPanel(GameObject panel)
     {
@@ -59,6 +60,7 @@ public class InventoryUI : MonoBehaviour
 
     private void Update()
     {
+        RefreshFuelSelectionLock();
         if (GameplayInputGate.IsBlocked)
             return;
 
@@ -92,7 +94,10 @@ public class InventoryUI : MonoBehaviour
             return;
         }
 
-        SelectedIndex = Mathf.Clamp(index, 0, quickSlots.Length - 1);
+        RefreshFuelSelectionLock();
+        SelectedIndex = forcedFuelSlot >= 0
+            ? forcedFuelSlot
+            : Mathf.Clamp(index, 0, quickSlots.Length - 1);
         for (int i = 0; i < quickSlots.Length; i++)
             quickSlots[i]?.SetSelected(i == SelectedIndex);
 
@@ -134,7 +139,41 @@ public class InventoryUI : MonoBehaviour
         for (int i = 0; i < InventoryManager.Instance.items.Count && i < quickSlots.Length; i++)
             quickSlots[i]?.SetItem(InventoryManager.Instance.items[i]);
 
-        SelectSlot(SelectedIndex);
+        RefreshFuelSelectionLock();
+        SelectSlot(forcedFuelSlot >= 0 ? forcedFuelSlot : SelectedIndex);
+    }
+
+    private void RefreshFuelSelectionLock()
+    {
+        forcedFuelSlot = FindHeldFuelSlot();
+        if (forcedFuelSlot >= 0 && SelectedIndex != forcedFuelSlot &&
+            quickSlots != null && quickSlots.Length > 0)
+        {
+            SelectedIndex = forcedFuelSlot;
+            for (int i = 0; i < quickSlots.Length; i++)
+                quickSlots[i]?.SetSelected(i == SelectedIndex);
+            equipmentController?.RefreshSelectedItem();
+        }
+    }
+
+    private int FindHeldFuelSlot()
+    {
+        InventoryManager inventory = InventoryManager.Instance;
+        NetworkManager manager = NetworkManager.Singleton;
+        if (inventory == null || manager == null || !manager.IsListening)
+            return -1;
+
+        int count = Mathf.Min(inventory.items.Count, quickSlots?.Length ?? 0);
+        for (int i = 0; i < count; i++)
+        {
+            InventoryInfo info = inventory.items[i];
+            if (!inventory.TryGetNetworkObjectId(info, out ulong id) ||
+                !manager.SpawnManager.SpawnedObjects.TryGetValue(id, out NetworkObject obj))
+                continue;
+            if (obj.GetComponent<DeFrag.B1F.GeneratorFuelCan>() != null)
+                return i;
+        }
+        return -1;
     }
 
     public InventoryInfo GetSelectedItem()
