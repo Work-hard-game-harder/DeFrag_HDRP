@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using DeFrag.UI;
 using TMPro;
 using Unity.Netcode;
 using Unity.Netcode.Components;
@@ -32,7 +33,13 @@ public sealed class LobbyManager : MonoBehaviour
     [Header("Scene Flow")]
     [SerializeField] private string lobbySceneName = "LobbyScene";
     [SerializeField] private string transportFailureSceneName = "MainLobby";
-    [SerializeField] private GameObject warningText;    
+    [SerializeField] private GameObject warningText;
+
+    [Header("Disconnect Notice")]
+    [SerializeField] private Sprite disconnectNoticeWindowSprite;
+    [SerializeField] private TMP_FontAsset disconnectNoticeFont;
+    [Min(0.1f)] [SerializeField] private float disconnectNoticeDuration = 3f;
+    [Min(0.01f)] [SerializeField] private float disconnectNoticeFadeDuration = 0.2f;
 
     [Header("Network Prefabs")]
     [SerializeField] private GameObject lobbyAvatarPrefab;
@@ -320,6 +327,12 @@ public sealed class LobbyManager : MonoBehaviour
 
     private void HandleTransportFailure()
     {
+        if (networkManager != null && !networkManager.IsServer)
+        {
+            ReturnClientAfterHostDisconnected();
+            return;
+        }
+
         Debug.LogError("Relay 전송 연결이 끊어졌습니다. 기존 할당을 폐기하고 메인 로비로 돌아갑니다.");
         StartCoroutine(ResetSessionAfterTransportFailure());
     }
@@ -398,8 +411,21 @@ public sealed class LobbyManager : MonoBehaviour
             clientId == networkManager.LocalClientId)
         {
             Debug.Log("호스트와의 연결이 종료되어 메인 로비로 돌아갑니다.");
-            ReturnToMainLobby();
+            ReturnClientAfterHostDisconnected();
             return;
+        }
+
+        if (networkManager != null &&
+            networkManager.IsServer &&
+            clientId != NetworkManager.ServerClientId &&
+            !isReturningToMainLobby)
+        {
+            DisconnectNotificationPresenter.ShowNow(
+                "클라이언트의 연결이 끊겼습니다.",
+                disconnectNoticeWindowSprite,
+                disconnectNoticeFont,
+                disconnectNoticeDuration,
+                disconnectNoticeFadeDuration);
         }
 
         if (!lobbyAvatars.Remove(clientId, out NetworkObject avatar) || avatar == null)
@@ -488,6 +514,22 @@ public sealed class LobbyManager : MonoBehaviour
             GameObject instance = Instantiate(gameplayPlayerPrefab, spawnPoint.position, spawnPoint.rotation);
             instance.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId, true);
         }
+    }
+
+    private void ReturnClientAfterHostDisconnected()
+    {
+        if (isReturningToMainLobby)
+            return;
+
+        isReturningToMainLobby = true;
+        DisconnectNotificationPresenter.ShowAfterSceneLoad(
+            transportFailureSceneName,
+            "호스트의 연결이 끊겼습니다.",
+            disconnectNoticeWindowSprite,
+            disconnectNoticeFont,
+            disconnectNoticeDuration,
+            disconnectNoticeFadeDuration);
+        StartCoroutine(ReturnToMainLobbyRoutine());
     }
 
     private static void MovePlayerToSpawnPoint(NetworkObject playerObject, Transform spawnPoint)
