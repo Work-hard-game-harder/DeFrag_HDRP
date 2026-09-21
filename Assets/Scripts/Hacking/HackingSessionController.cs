@@ -1,5 +1,7 @@
 using EasyPeasyFirstPersonController;
+using DeFrag.Player;
 using DeFrag.UI;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -18,6 +20,13 @@ public sealed class HackingSessionController : MonoBehaviour
     private bool[] rendererStates;
     private Canvas sessionCanvas;
     private TerminalScreenController terminalScreen;
+    private NetworkWalkieTalkieVoice networkVoice;
+    private TMP_Text microphoneStatus;
+    private TMP_FontAsset activeMicrophoneStatusFont;
+
+    private static readonly Color MicrophoneReadyColor = new(0.55f, 0.62f, 0.58f);
+    private static readonly Color MicrophoneTransmittingColor = new(0.2f, 1f, 0.45f);
+    private static readonly Color MicrophoneUnavailableColor = new(1f, 0.25f, 0.2f);
 
     public bool IsActive { get; private set; }
 
@@ -37,18 +46,23 @@ public sealed class HackingSessionController : MonoBehaviour
         SetGameplayEnabled(false);
         SetCursorForUi(true);
         IsActive = true;
+        activeMicrophoneStatusFont = device.MicrophoneStatusFont;
 
         EnsureSessionCanvas();
         GameObject screen = new GameObject("Terminal Interface", typeof(RectTransform));
         screen.transform.SetParent(sessionCanvas.transform, false);
         terminalScreen = screen.AddComponent<TerminalScreenController>();
         terminalScreen.Initialize(device, End);
+        EnsureMicrophoneStatus();
+        microphoneStatus.transform.SetAsLastSibling();
+        BeginTerminalVoice();
     }
 
     public void End()
     {
         if (!IsActive) return;
 
+        EndTerminalVoice();
         DestroyTerminalScreen();
         RestoreLocalHeldVisual();
         SetGameplayEnabled(true);
@@ -68,6 +82,7 @@ public sealed class HackingSessionController : MonoBehaviour
     private void OnDestroy()
     {
         if (!IsActive) return;
+        EndTerminalVoice();
         RestoreLocalHeldVisual();
         SetGameplayEnabled(true);
         SetCursorForUi(false);
@@ -89,6 +104,7 @@ public sealed class HackingSessionController : MonoBehaviour
         interaction = playerRoot.GetComponentInChildren<PlayerInteraction>(true);
         inventoryUI = FindAnyObjectByType<InventoryUI>();
         itemDropper = GetComponent<PlayerItemDropper>();
+        networkVoice = playerRoot.GetComponentInChildren<NetworkWalkieTalkieVoice>(true);
     }
 
     private void HideLocalHeldVisual(GameObject localHeldPad)
@@ -135,6 +151,78 @@ public sealed class HackingSessionController : MonoBehaviour
         CanvasScaler scaler = canvasObject.AddComponent<CanvasScaler>();
         ResponsiveCanvasUtility.Configure(scaler);
         canvasObject.AddComponent<GraphicRaycaster>();
+    }
+
+    private void EnsureMicrophoneStatus()
+    {
+        if (microphoneStatus == null)
+        {
+            GameObject statusObject = new GameObject(
+                "Terminal Microphone Status",
+                typeof(RectTransform),
+                typeof(TextMeshProUGUI));
+            statusObject.transform.SetParent(sessionCanvas.transform, false);
+
+            RectTransform rect = (RectTransform)statusObject.transform;
+            rect.anchorMin = new Vector2(0.35f, 0.91f);
+            rect.anchorMax = new Vector2(0.60f, 0.98f);
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+
+            microphoneStatus = statusObject.GetComponent<TMP_Text>();
+            if (activeMicrophoneStatusFont != null)
+                microphoneStatus.font = activeMicrophoneStatusFont;
+            microphoneStatus.alignment = TextAlignmentOptions.TopRight;
+            microphoneStatus.fontSize = 24f;
+            microphoneStatus.fontStyle = FontStyles.Bold;
+            microphoneStatus.raycastTarget = false;
+        }
+
+        if (activeMicrophoneStatusFont != null && microphoneStatus.font != activeMicrophoneStatusFont)
+            microphoneStatus.font = activeMicrophoneStatusFont;
+
+        microphoneStatus.gameObject.SetActive(true);
+        SetMicrophoneStatus(false);
+    }
+
+    private void BeginTerminalVoice()
+    {
+        if (networkVoice == null)
+        {
+            microphoneStatus.text = "● 마이크 연결 안 됨";
+            microphoneStatus.color = MicrophoneUnavailableColor;
+            return;
+        }
+
+        networkVoice.TerminalTransmissionChanged -= SetMicrophoneStatus;
+        networkVoice.TerminalTransmissionChanged += SetMicrophoneStatus;
+        networkVoice.SetTerminalSessionActive(true);
+        SetMicrophoneStatus(networkVoice.IsTerminalTransmitting);
+    }
+
+    private void EndTerminalVoice()
+    {
+        if (networkVoice != null)
+        {
+            networkVoice.TerminalTransmissionChanged -= SetMicrophoneStatus;
+            networkVoice.SetTerminalSessionActive(false);
+        }
+
+        if (microphoneStatus != null)
+            microphoneStatus.gameObject.SetActive(false);
+    }
+
+    private void SetMicrophoneStatus(bool transmitting)
+    {
+        if (microphoneStatus == null)
+            return;
+
+        microphoneStatus.text = transmitting
+            ? "● 마이크 송신 중"
+            : "● 마이크 대기 중";
+        microphoneStatus.color = transmitting
+            ? MicrophoneTransmittingColor
+            : MicrophoneReadyColor;
     }
 
     private void DestroyTerminalScreen()

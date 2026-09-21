@@ -91,13 +91,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ConnectionDevice
   terminalId: terminal_01
   displayName: TERMINAL 01
+  microphoneStatusFont: {fileID: 11400000, guid: a8c21344dfa174a4084566297b9226d0, type: 2}
   requiredHackingPad: {fileID: 11400000, guid: 8bc2e24d4126165439a2c6052d23ef6d, type: 2}
   interactionText: "\uD574\uD0B9\uD328\uB4DC \uC5F0\uACB0 (E \uAE38\uAC8C \uB204\uB974\uAE30)"
+  downloadDataRequiredQuestId: 
   unlockDoorEnabled: 1
   unlockDoorMinigame: {fileID: 200002, guid: b2222222222222222222222222222222, type: 3}
   downloadDataEnabled: 1
   downloadDataMinigame: {fileID: 100002, guid: a5555555555555555555555555555555, type: 3}
   connectServerEnabled: 0
+  connectServerRequiredQuestId: 
   connectServerMinigame: {fileID: 300002, guid: c2222222222222222222222222222222, type: 3}
   onUnlockDoorRequested:
     m_PersistentCalls:
@@ -108,6 +111,9 @@ MonoBehaviour:
   onConnectServerRequested:
     m_PersistentCalls:
       m_Calls: []
+  unlockDoorQuestSignal: 
+  downloadDataQuestSignal: 
+  connectServerQuestSignal: 
 --- !u!65 &618710890111500002
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -176,7 +182,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f138cd78bb354aa0a1c48c4d5457ad76, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TerminalWorldScreenPresenter
   screenRenderer: {fileID: 0}
   materialElement: 3

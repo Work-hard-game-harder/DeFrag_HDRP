@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -12,6 +13,10 @@ public sealed class ConnectionDevice : MonoBehaviour, IInteractable
     [Header("Terminal Identity")]
     [SerializeField] private string terminalId = "terminal_01";
     [SerializeField] private string displayName = "TERMINAL 01";
+
+    [Header("Terminal Microphone UI")]
+    [Tooltip("터미널 이용 중 우측 상단 마이크 상태 표시에 사용할 TMP Font Asset입니다.")]
+    [SerializeField] private TMP_FontAsset microphoneStatusFont;
 
     [Header("Access")]
     [SerializeField] private ItemData requiredHackingPad;
@@ -51,6 +56,7 @@ public sealed class ConnectionDevice : MonoBehaviour, IInteractable
 
     public string TerminalId => terminalId;
     public string DisplayName => displayName;
+    public TMP_FontAsset MicrophoneStatusFont => microphoneStatusFont;
     public int ArchiveNumber => TerminalArchiveNumberRegistry.GetNumber(this);
     public TerminalSfxPlayer TerminalSfx => terminalSfx;
     public event Action<ConnectionDevice, TerminalCommands> CommandCompletionRequested;

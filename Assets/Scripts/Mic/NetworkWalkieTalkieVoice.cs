@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using EasyPeasyFirstPersonController;
 using Unity.Netcode;
@@ -7,8 +8,8 @@ using UnityEngine.Audio;
 namespace DeFrag.Player
 {
     /// <summary>
-    /// 하나의 소유자 마이크 스트림을 일반 근거리 음성과 무전기 음성으로 구분해 중계합니다.
-    /// 일반 음성은 음성 감지 중에만 3D로, 무전기는 Push-To-Talk 중에만 2D로 재생합니다.
+    /// 하나의 소유자 마이크 스트림을 일반 근거리 음성, 무전기 음성,
+    /// 터미널 자동 송신으로 구분해 중계합니다.
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(NetworkObject))]
@@ -18,7 +19,8 @@ namespace DeFrag.Player
         {
             None = 0,
             Proximity = 1,
-            WalkieTalkie = 2
+            WalkieTalkie = 2,
+            TerminalWalkieTalkie = 3
         }
 
         [Header("References")]
@@ -71,6 +73,15 @@ namespace DeFrag.Player
         private uint lastRemoteSequence;
         private bool hasRemoteSequence;
         private bool playbackInitialized;
+        private bool terminalSessionActive;
+        private bool serverTerminalSessionActive;
+        private bool walkieWasEquippedBeforeTerminal;
+        private bool terminalTransmissionActive;
+
+        public event Action<bool> TerminalTransmissionChanged;
+
+        public bool IsTerminalSessionActive => terminalSessionActive;
+        public bool IsTerminalTransmitting => terminalTransmissionActive;
 
         private void Awake()
         {
@@ -106,6 +117,13 @@ namespace DeFrag.Player
 
         private VoiceMode DetermineLocalVoiceMode()
         {
+            if (terminalSessionActive)
+            {
+                return EvaluateProximityVoiceGate()
+                    ? VoiceMode.TerminalWalkieTalkie
+                    : VoiceMode.None;
+            }
+
             if (walkieTalkieController != null && walkieTalkieController.IsTransmitting)
             {
                 proximityVoiceActive = false;
@@ -162,6 +180,7 @@ namespace DeFrag.Player
             packetSequence = 0;
             captureReady = false;
             PrepareCapture();
+            SetTerminalTransmissionActive(false);
 
             if (logDiagnostics)
                 Debug.Log($"[NetworkVoice] {localMode} 송신 시작 (Owner {OwnerClientId}).", this);
@@ -171,6 +190,7 @@ namespace DeFrag.Player
         {
             VoiceMode endedMode = localMode;
             captureReady = false;
+            SetTerminalTransmissionActive(false);
 
             if (IsSpawned)
             {
@@ -209,13 +229,17 @@ namespace DeFrag.Player
             {
                 PrepareCapture();
                 if (!captureReady)
+                {
+                    SetTerminalTransmissionActive(false);
                     return;
+                }
             }
 
             float[] sourceBuffer = microphoneInput.CircularBuffer;
             if (sourceBuffer == null || sourceBuffer.Length == 0 || !microphoneInput.IsRecording)
             {
                 captureReady = false;
+                SetTerminalTransmissionActive(false);
                 return;
             }
 
@@ -229,6 +253,9 @@ namespace DeFrag.Player
                 sentPacketCount++;
                 packetsSent++;
             }
+
+            if (packetsSent > 0 && localMode == VoiceMode.TerminalWalkieTalkie)
+                SetTerminalTransmissionActive(true);
         }
 
         private void EncodePacket(float[] sourceBuffer)
@@ -281,10 +308,11 @@ namespace DeFrag.Player
             uint sequence,
             VoiceMode mode)
         {
-            if (!IsServer || !IsValidPacket(packet) || !IsPlayableMode(mode))
+            if (!IsServer || !IsValidPacket(packet) || !IsPlayableMode(mode) ||
+                (mode == VoiceMode.TerminalWalkieTalkie && !serverTerminalSessionActive))
                 return;
 
-            ClientRpcParams targets = BuildRelayTargets();
+            ClientRpcParams targets = BuildRelayTargets(mode);
             if (relayTargets.Count == 0)
                 return;
 
@@ -354,7 +382,7 @@ namespace DeFrag.Player
             if (!IsServer)
                 return;
 
-            ClientRpcParams targets = BuildRelayTargets();
+            ClientRpcParams targets = BuildRelayTargets(mode);
             if (relayTargets.Count > 0)
                 EndTransmissionClientRpc(currentTransmissionId, (byte)mode, targets);
         }
@@ -379,12 +407,13 @@ namespace DeFrag.Player
             }
         }
 
-        private ClientRpcParams BuildRelayTargets()
+        private ClientRpcParams BuildRelayTargets(VoiceMode mode)
         {
             relayTargets.Clear();
             if (NetworkManager != null)
                 foreach (ulong clientId in NetworkManager.ConnectedClientsIds)
-                    if (clientId != OwnerClientId)
+                    if (clientId != OwnerClientId &&
+                        (mode != VoiceMode.Proximity || !IsTerminalOperator(clientId)))
                         relayTargets.Add(clientId);
 
             return new ClientRpcParams
@@ -403,7 +432,99 @@ namespace DeFrag.Player
 
         private static bool IsPlayableMode(VoiceMode mode)
         {
-            return mode == VoiceMode.Proximity || mode == VoiceMode.WalkieTalkie;
+            return mode == VoiceMode.Proximity ||
+                   mode == VoiceMode.WalkieTalkie ||
+                   mode == VoiceMode.TerminalWalkieTalkie;
+        }
+
+        /// <summary>
+        /// 터미널 조작 중인 로컬 소유자에게만 자동 음성 송신을 허용합니다.
+        /// 일반 게임 입력 잠금은 건드리지 않으며, 종료 시 기존 무전기 장착 상태를 복구합니다.
+        /// </summary>
+        public void SetTerminalSessionActive(bool active)
+        {
+            if (IsSpawned && !IsOwner)
+                return;
+            if (terminalSessionActive == active)
+                return;
+
+            ResolveReferences();
+
+            if (active)
+            {
+                walkieWasEquippedBeforeTerminal =
+                    walkieTalkieController != null && walkieTalkieController.IsEquipped;
+                terminalSessionActive = true;
+
+                if (walkieTalkieController != null && walkieTalkieController.HasWalkieTalkie)
+                {
+                    walkieTalkieController.EndTransmission();
+                    walkieTalkieController.SetEquipped(true);
+                }
+
+                PublishTerminalSessionState(true);
+                return;
+            }
+
+            terminalSessionActive = false;
+            if (localMode == VoiceMode.TerminalWalkieTalkie)
+            {
+                EndLocalTransmission();
+                localMode = VoiceMode.None;
+            }
+            else
+            {
+                SetTerminalTransmissionActive(false);
+            }
+
+            PublishTerminalSessionState(false);
+            if (walkieTalkieController != null && walkieTalkieController.HasWalkieTalkie)
+                walkieTalkieController.SetEquipped(walkieWasEquippedBeforeTerminal);
+        }
+
+        private void PublishTerminalSessionState(bool active)
+        {
+            if (!IsSpawned)
+                return;
+
+            if (IsServer)
+                serverTerminalSessionActive = active;
+            else
+                SetTerminalSessionStateServerRpc(active);
+        }
+
+        [ServerRpc]
+        private void SetTerminalSessionStateServerRpc(
+            bool active,
+            ServerRpcParams rpcParams = default)
+        {
+            if (rpcParams.Receive.SenderClientId != OwnerClientId)
+                return;
+
+            serverTerminalSessionActive = active;
+        }
+
+        private bool IsTerminalOperator(ulong clientId)
+        {
+            if (!IsServer || NetworkManager == null ||
+                !NetworkManager.ConnectedClients.TryGetValue(clientId, out NetworkClient client) ||
+                client.PlayerObject == null)
+            {
+                return false;
+            }
+
+            NetworkWalkieTalkieVoice voice =
+                client.PlayerObject.GetComponentInChildren<NetworkWalkieTalkieVoice>(true);
+            return voice != null && voice.serverTerminalSessionActive;
+        }
+
+        private void SetTerminalTransmissionActive(bool active)
+        {
+            if (terminalTransmissionActive == active)
+                return;
+
+            terminalTransmissionActive = active;
+            TerminalTransmissionChanged?.Invoke(active);
         }
 
         private void ResolveReferences()
@@ -481,7 +602,7 @@ namespace DeFrag.Player
         {
             return mode == VoiceMode.Proximity
                 ? proximityPlayback
-                : mode == VoiceMode.WalkieTalkie
+                : mode == VoiceMode.WalkieTalkie || mode == VoiceMode.TerminalWalkieTalkie
                     ? walkiePlayback
                     : null;
         }
@@ -501,9 +622,12 @@ namespace DeFrag.Player
         public override void OnNetworkDespawn()
         {
             ClearRemotePlayback();
+            SetTerminalTransmissionActive(false);
             localMode = VoiceMode.None;
             proximityVoiceActive = false;
             captureReady = false;
+            terminalSessionActive = false;
+            serverTerminalSessionActive = false;
             base.OnNetworkDespawn();
         }
 

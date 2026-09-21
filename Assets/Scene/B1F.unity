@@ -15368,6 +15368,12 @@ MonoBehaviour:
   initialSearchDestination: {fileID: 0}
   initialDestinationArrivalDistance: 0.75
   initialDestinationSampleRadius: 5
+  patrolAreaCenter: {fileID: 0}
+  minPatrolDistance: 8
+  initialDestinationExclusionRadius: 6
+  patrolDestinationAttempts: 30
+  patrolDestinationSampleDistance: 5
+  patrolPoints: []
   rotationSpeed: 5
   detourSampleCount: 8
   detourSampleRadius: 6
@@ -37580,6 +37586,7 @@ MonoBehaviour:
   fullPower: {fileID: 0}
   tvMonsterPrefab: {fileID: 5218587496794401591, guid: 7baa42bdde80b714884c2078a413d4ca, type: 3}
   tvMonsterSpawnPoint: {fileID: 1620183490}
+  tvMonsterSpawnNavMeshSampleRadius: 4
   tvMonsterInitialDestination: {fileID: 1114978042}
   tvMonsterPatrolPointsRoot: {fileID: 1691163200}
   spawnTimeline: {fileID: 1620183492}
@@ -38532,6 +38539,23 @@ SceneRoots:
   - {fileID: 1618293262}
   - {fileID: 1626496814}
   - {fileID: 1114978042}
-  - {fileID: 545917198}
   - {fileID: 854594948}
   - {fileID: 1691163200}
+  - {fileID: 1507642358}
+  - {fileID: 898506900}
+  - {fileID: 1563218620}
+  - {fileID: 1338480639}
+  - {fileID: 1384665388}
+  - {fileID: 4935209979286606617}
+  - {fileID: 299291781}
+  - {fileID: 1366365931}
+  - {fileID: 53661507}
+  - {fileID: 718777459}
+  - {fileID: 1143714402}
+  - {fileID: 1761467064}
+  - {fileID: 250121300}
+  - {fileID: 752965685}
+  - {fileID: 342794458}
+  - {fileID: 24983190}
+  - {fileID: 877255001}
+  - {fileID: 923024685}
