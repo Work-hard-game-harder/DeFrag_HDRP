@@ -63,6 +63,28 @@ namespace DeFrag.B1F
         private Coroutine monsterSpawnRoutine;
 
         public B1FPowerState CurrentState => currentState.Value;
+        private readonly NetworkVariable<bool> storyOutage = new(false);
+        public bool CanRestoreGenerator => !powerTransitioning.Value &&
+            (CurrentState == B1FPowerState.EmergencyPower || storyOutage.Value);
+
+        public void SetStoryBlackoutServer()
+        {
+            if (!IsServer) return;
+            if (serverTransitionRoutine != null) StopCoroutine(serverTransitionRoutine);
+            serverTransitionRoutine = null;
+            powerTransitioning.Value = false;
+            storyOutage.Value = true;
+            currentState.Value = B1FPowerState.PowerOff;
+            StopPowerPresentationClientRpc();
+        }
+
+        [ClientRpc]
+        private void StopPowerPresentationClientRpc()
+        {
+            if (localTransitionRoutine != null) StopCoroutine(localTransitionRoutine);
+            localTransitionRoutine = null;
+            ApplyState(B1FPowerState.PowerOff);
+        }
 
         private void Awake() => ApplyState(currentState.Value);
 
@@ -98,8 +120,7 @@ namespace DeFrag.B1F
 
         public void SetFullPowerServer()
         {
-            if (!IsServer || powerTransitioning.Value ||
-                currentState.Value != B1FPowerState.EmergencyPower)
+            if (!IsServer || !CanRestoreGenerator)
                 return;
 
             BeginPowerTransition(B1FPowerState.FullPower);
@@ -150,6 +171,7 @@ namespace DeFrag.B1F
             yield return new WaitForSecondsRealtime(duration);
 
             currentState.Value = targetState;
+            if (targetState == B1FPowerState.FullPower) storyOutage.Value = false;
             powerTransitioning.Value = false;
             serverTransitionRoutine = null;
 
