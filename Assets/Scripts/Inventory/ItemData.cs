@@ -9,6 +9,12 @@ public enum ItemType
     Props,
 }
 
+public enum ItemThrowPolicy
+{
+    Allowed,
+    TooHeavy,
+}
+
 [CreateAssetMenu(fileName = "New ItemData", menuName = "Inventory/ItemData")]
 public class ItemData : ScriptableObject
 {
@@ -17,6 +23,12 @@ public class ItemData : ScriptableObject
     public string itemID;
     public Sprite icon;
     public ItemType type;
+
+    [Header("Throwing")]
+    [Tooltip("서버와 로컬 플레이어가 함께 사용하는 투척 가능 여부입니다.")]
+    public ItemThrowPolicy throwPolicy = ItemThrowPolicy.Allowed;
+    [Tooltip("투척할 수 없는 아이템에서 Q를 눌렀을 때 로컬 플레이어에게 표시할 문구입니다.")]
+    public string throwBlockedMessage = "무거워서 던질 수 없다";
 
     [Header("이 아이템을 버리거나 던질 때 필드에 새로 스폰할 프리펩 에셋을 연결해주세요")]
     public GameObject itemPrefab;

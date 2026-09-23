@@ -137,7 +137,7 @@ MonoBehaviour:
   teammateFailureMessage: "\uC804\uC6D0 \uC0DD\uC874 \uC2E4\uD328\n\nMISSION FAILED"
   hostButtons: {fileID: 130000}
   returnToLobbyButton: {fileID: 140004}
-  stageSelectionButton: {fileID: 150004}
+  returnToMainButton: {fileID: 150004}
 --- !u!1 &110000
 GameObject:
   m_ObjectHideFlags: 0
@@ -683,7 +683,7 @@ GameObject:
   - component: {fileID: 150004}
   - component: {fileID: 150005}
   m_Layer: 5
-  m_Name: Stage Selection Button
+  m_Name: Return To Main Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -878,7 +878,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\uC2A4\uD14C\uC774\uC9C0 \uC120\uD0DD"
+  m_text: "\uBA54\uC778\uC73C\uB85C \uC774\uB3D9"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: a8c21344dfa174a4084566297b9226d0, type: 2}
   m_sharedMaterial: {fileID: 9140966737015268892, guid: a8c21344dfa174a4084566297b9226d0, type: 2}

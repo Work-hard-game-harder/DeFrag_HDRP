@@ -112,6 +112,11 @@ public sealed class NetworkPlayerInventory : NetworkBehaviour
         if (item == null || item.HolderClientId != OwnerClientId)
             return;
 
+        // Throw restrictions are authoritative. A modified client cannot throw a heavy item.
+        if (requestedVelocity.sqrMagnitude > 0.0001f &&
+            item.Data != null && item.Data.throwPolicy != ItemThrowPolicy.Allowed)
+            return;
+
         Vector3 playerPosition = transform.position;
         if (Vector3.Distance(playerPosition, requestedPosition) > maximumDropDistance)
             requestedPosition = playerPosition + transform.forward * 1.25f + Vector3.up * 0.5f;
