@@ -114,6 +114,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Door_frame
       objectReference: {fileID: 0}
+    - target: {fileID: -870819955592765413, guid: 2eb6435d45852ec4c82224ec7c423071, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 3541989324581600141, guid: 955c7c6ae81f8314180ad29d944b2307, type: 3}
     - target: {fileID: 658163926290242719, guid: 2eb6435d45852ec4c82224ec7c423071, type: 3}
       propertyPath: m_Name
       value: Door_wall
