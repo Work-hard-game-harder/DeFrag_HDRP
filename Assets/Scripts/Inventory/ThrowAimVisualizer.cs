@@ -4,11 +4,11 @@ using UnityEngine;
 /// <summary>Local-only predicted ballistic path and landing marker.</summary>
 public sealed class ThrowAimVisualizer : MonoBehaviour
 {
-    [SerializeField, Min(8)] private int pointCount = 28;
+    [SerializeField, Min(8)] private int pointCount = 60;
     [SerializeField, Min(0.01f)] private float simulationStep = 0.075f;
-    [SerializeField, Min(0.005f)] private float pointSize = 0.035f;
+    [SerializeField, Min(0.005f)] private float pointSize = 0.02f;
     [SerializeField, Min(0f)] private float pointMotionSpeed = 5f;
-    [SerializeField, Min(0.02f)] private float landingMarkerRadius = 0.22f;
+    [SerializeField, Min(0.02f)] private float landingMarkerRadius = 0.4f;
     [SerializeField] private Color trajectoryColor = new(0.25f, 0.9f, 1f, 0.9f);
     [SerializeField] private Color blockedColor = new(1f, 0.3f, 0.2f, 0.95f);
 
@@ -136,7 +136,7 @@ public sealed class ThrowAimVisualizer : MonoBehaviour
 
         while (points.Count < pointCount)
         {
-            GameObject point = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            GameObject point = GameObject.CreatePrimitive(PrimitiveType.Cube);
             point.name = $"Throw Trajectory Point {points.Count + 1}";
             point.transform.SetParent(transform, true);
             point.transform.localScale = Vector3.one * pointSize;

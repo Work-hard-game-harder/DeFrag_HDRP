@@ -11,7 +11,7 @@ public sealed class NetworkPlayerInventory : NetworkBehaviour
     [SerializeField, Min(1)] private int maximumSlots = 4;
     [SerializeField, Min(0.1f)] private float maximumPickupDistance = 7f;
     [SerializeField, Min(0.1f)] private float maximumDropDistance = 2.5f;
-    [SerializeField, Min(0.1f)] private float maximumThrowSpeed = 12f;
+    [SerializeField, Min(0.1f)] private float maximumThrowSpeed = 16f;
 
     private NetworkList<ulong> heldItemIds;
 

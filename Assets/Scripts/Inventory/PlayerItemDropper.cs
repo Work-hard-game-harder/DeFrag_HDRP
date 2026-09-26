@@ -15,7 +15,7 @@ public class PlayerItemDropper : MonoBehaviour
     [SerializeField] private float preferredDistance = 1.25f;
     [SerializeField] private float minimumDistance = 0.45f;
     [SerializeField] private float clearanceRadius = 0.2f;
-    [SerializeField] private float throwForce = 8f;
+    [SerializeField] private float throwForce = 15f;
     [SerializeField] private float upwardThrowForce = 1f;
     [SerializeField, Min(0.1f)] private float minimumThrowForce = 3.5f;
     [SerializeField, Min(0.1f)] private float chargeDuration = 1.25f;

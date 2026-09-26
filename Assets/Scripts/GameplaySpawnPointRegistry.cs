@@ -1,4 +1,5 @@
 using UnityEngine;
+using DeFrag.B1F;
 
 public sealed class GameplaySpawnPointRegistry : MonoBehaviour
 {
@@ -8,6 +9,14 @@ public sealed class GameplaySpawnPointRegistry : MonoBehaviour
 
     [Header("Legacy/fallback spawn points")]
     [SerializeField] private Transform[] spawnPoints;
+
+    [Header("B1F checkpoint role spawn points")]
+    [SerializeField] private Transform distributionBoxAHostSpawnPoint;
+    [SerializeField] private Transform distributionBoxAClientSpawnPoint;
+    [SerializeField] private Transform controlRoomHostSpawnPoint;
+    [SerializeField] private Transform controlRoomClientSpawnPoint;
+    [SerializeField] private Transform generatorHostSpawnPoint;
+    [SerializeField] private Transform generatorClientSpawnPoint;
 
     public static GameplaySpawnPointRegistry Instance { get; private set; }
 
@@ -36,10 +45,32 @@ public sealed class GameplaySpawnPointRegistry : MonoBehaviour
 
     public Transform GetSpawnPoint(bool isHost)
     {
+        Transform checkpointSpawnPoint = GetCheckpointSpawnPoint(isHost);
+        if (checkpointSpawnPoint != null)
+            return checkpointSpawnPoint;
+
         Transform roleSpawnPoint = isHost ? hostSpawnPoint : clientSpawnPoint;
         if (roleSpawnPoint != null)
             return roleSpawnPoint;
 
         return GetSpawnPoint(isHost ? 0 : 1);
+    }
+
+    private Transform GetCheckpointSpawnPoint(bool isHost)
+    {
+        B1FCheckpointTracker tracker = B1FCheckpointTracker.Instance;
+        if (tracker == null)
+            return null;
+
+        return tracker.Current switch
+        {
+            B1FCheckpoint.DistributionBoxACompleted => isHost
+                ? distributionBoxAHostSpawnPoint : distributionBoxAClientSpawnPoint,
+            B1FCheckpoint.ConnectServerBreachCompleted => isHost
+                ? controlRoomHostSpawnPoint : controlRoomClientSpawnPoint,
+            B1FCheckpoint.GeneratorCompleted => isHost
+                ? generatorHostSpawnPoint : generatorClientSpawnPoint,
+            _ => null
+        };
     }
 }

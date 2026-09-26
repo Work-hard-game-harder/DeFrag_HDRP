@@ -503,7 +503,7 @@ public sealed class LobbyManager : MonoBehaviour
             bool isHost = clientId == NetworkManager.ServerClientId;
             Transform spawnPoint = spawnPoints.GetSpawnPoint(isHost);
             NetworkObject playerObject = networkManager.ConnectedClients[clientId].PlayerObject;
-            if (playerObject != null)
+            if (playerObject != null && playerObject.IsSpawned)
             {
                 MovePlayerToSpawnPoint(playerObject, spawnPoint);
                 continue;
@@ -512,6 +512,25 @@ public sealed class LobbyManager : MonoBehaviour
             GameObject instance = Instantiate(gameplayPlayerPrefab, spawnPoint.position, spawnPoint.rotation);
             instance.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId, true);
         }
+    }
+
+    /// <summary>
+    /// Keeps the authoritative world/story state and recreates only the party players
+    /// at the spawn points selected by the current checkpoint.
+    /// </summary>
+    public bool RespawnGameplayPartyAtCheckpoint()
+    {
+        if (networkManager == null || !networkManager.IsListening || !networkManager.IsServer)
+            return false;
+
+        if (GameplaySpawnPointRegistry.Instance == null)
+        {
+            Debug.LogError("체크포인트 리스폰에 필요한 GameplaySpawnPointRegistry가 없습니다.");
+            return false;
+        }
+
+        SpawnGameplayPlayers();
+        return true;
     }
 
     private void ReturnClientAfterHostDisconnected()

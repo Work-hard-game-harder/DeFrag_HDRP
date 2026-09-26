@@ -38535,6 +38535,12 @@ MonoBehaviour:
   spawnPoints:
   - {fileID: 355558341}
   - {fileID: 369529313}
+  distributionBoxAHostSpawnPoint: {fileID: 8524021200002}
+  distributionBoxAClientSpawnPoint: {fileID: 8524021200004}
+  controlRoomHostSpawnPoint: {fileID: 8524021200006}
+  controlRoomClientSpawnPoint: {fileID: 8524021200008}
+  generatorHostSpawnPoint: {fileID: 8524021200010}
+  generatorClientSpawnPoint: {fileID: 8524021200012}
 --- !u!4 &1715665261
 Transform:
   m_ObjectHideFlags: 0
@@ -48056,6 +48062,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8524021100002}
   - component: {fileID: 8524021100003}
+  - component: {fileID: 8524021100004}
   m_Layer: 0
   m_Name: B1F Story Debug Checkpoint
   m_TagString: Untagged
@@ -48103,11 +48110,182 @@ MonoBehaviour:
   connectServerQuestId: b1f_connect_server
   connectServerTerminalId: terminal_31
   networkReadyTimeout: 20
+--- !u!114 &8524021100004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8524021100001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1fc0ecba11a4d9ab8270ecba11a0001, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.B1F.B1FCheckpointTracker
+  distributionBoxA: {fileID: 924678998}
+  powerController: {fileID: 2116658093}
+  escapeSequence: {fileID: 452490623}
 --- !u!1 &160954446083970915 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 160954446566333891, guid: e9a402d670858f441a3cc1e138d19cce, type: 3}
   m_PrefabInstance: {fileID: 591514272}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &8524021200001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8524021200002}
+  m_Layer: 0
+  m_Name: Checkpoint 1 Host - Distribution Box A Room
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &8524021200002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8524021200001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
+  m_LocalPosition: {x: 23.5, y: 0.2, z: -87.3}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+--- !u!1 &8524021200003
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8524021200004}
+  m_Layer: 0
+  m_Name: Checkpoint 1 Client - Distribution Box A Room
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &8524021200004
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8524021200003}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
+  m_LocalPosition: {x: 25.5, y: 0.2, z: -87.3}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+--- !u!1 &8524021200005
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8524021200006}
+  m_Layer: 0
+  m_Name: Checkpoint 2 Host - Control Room
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &8524021200006
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8524021200005}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -43.8, y: 0.2, z: -56.9}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+--- !u!1 &8524021200007
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8524021200008}
+  m_Layer: 0
+  m_Name: Checkpoint 2 Client - Control Room
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &8524021200008
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8524021200007}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -41.8, y: 0.2, z: -56.9}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+--- !u!1 &8524021200009
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8524021200010}
+  m_Layer: 0
+  m_Name: Checkpoint 3 Host - Generator Room
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &8524021200010
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8524021200009}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -46.5, y: 0.35, z: -137.5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+--- !u!1 &8524021200011
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8524021200012}
+  m_Layer: 0
+  m_Name: Checkpoint 3 Client - Generator Room
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &8524021200012
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8524021200011}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -44.5, y: 0.35, z: -137.5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
 --- !u!1 &279914496355382111 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 279914496879720959, guid: e9a402d670858f441a3cc1e138d19cce, type: 3}

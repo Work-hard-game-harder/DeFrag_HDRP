@@ -38,6 +38,11 @@ namespace DeFrag.Combat
             failureInProgress = false;
         }
 
+        public static void ClearFailureForCheckpointRespawn()
+        {
+            failureInProgress = false;
+        }
+
         private void Awake()
         {
             if (playerStats == null)
@@ -111,6 +116,7 @@ namespace DeFrag.Combat
         private Camera frozenCamera;
         private Vector3 frozenPosition;
         private Quaternion frozenRotation;
+        private bool localPlayerWasDespawned;
 
         public static void Show(
             bool showHostButtons,
@@ -144,6 +150,16 @@ namespace DeFrag.Combat
 
         private void LateUpdate()
         {
+            NetworkManager manager = NetworkManager.Singleton;
+            NetworkObject localPlayer = manager != null ? manager.LocalClient?.PlayerObject : null;
+            if (localPlayer == null || !localPlayer.IsSpawned)
+                localPlayerWasDespawned = true;
+            else if (localPlayerWasDespawned)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
             if (frozenCamera == null)
                 return;
 
@@ -221,10 +237,11 @@ namespace DeFrag.Combat
         private static void ReturnPartyToLobby()
         {
             NetworkManager manager = NetworkManager.Singleton;
-            if (manager == null || !manager.IsServer || manager.SceneManager == null)
+            if (manager == null || !manager.IsServer || LobbyManager.Instance == null)
                 return;
 
-            manager.SceneManager.LoadScene("LobbyScene", LoadSceneMode.Single);
+            if (LobbyManager.Instance.RespawnGameplayPartyAtCheckpoint())
+                NetworkPartyFailureController.ClearFailureForCheckpointRespawn();
         }
 
     }
