@@ -38,7 +38,6 @@ public sealed class LobbyManager : MonoBehaviour
     [Header("Disconnect Notice")]
     [SerializeField] private Sprite disconnectNoticeWindowSprite;
     [SerializeField] private TMP_FontAsset disconnectNoticeFont;
-    [Min(0.1f)] [SerializeField] private float disconnectNoticeDuration = 3f;
     [Min(0.01f)] [SerializeField] private float disconnectNoticeFadeDuration = 0.2f;
 
     [Header("Network Prefabs")]
@@ -424,7 +423,6 @@ public sealed class LobbyManager : MonoBehaviour
                 "클라이언트의 연결이 끊겼습니다.",
                 disconnectNoticeWindowSprite,
                 disconnectNoticeFont,
-                disconnectNoticeDuration,
                 disconnectNoticeFadeDuration);
         }
 
@@ -527,7 +525,6 @@ public sealed class LobbyManager : MonoBehaviour
             "호스트의 연결이 끊겼습니다.",
             disconnectNoticeWindowSprite,
             disconnectNoticeFont,
-            disconnectNoticeDuration,
             disconnectNoticeFadeDuration);
         StartCoroutine(ReturnToMainLobbyRoutine());
     }

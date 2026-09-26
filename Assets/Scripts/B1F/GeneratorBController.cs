@@ -438,7 +438,7 @@ namespace DeFrag.B1F
             float elapsed = 0f;
             while (elapsed < timeout && powerController.CurrentState != B1FPowerState.FullPower)
             {
-                if (powerController.CanUseBoxB)
+                if (powerController.CanRestoreGenerator)
                     powerController.SetFullPowerServer();
                 elapsed += Time.unscaledDeltaTime;
                 yield return null;
@@ -607,7 +607,8 @@ namespace DeFrag.B1F
         private bool IsPowerStateValid() =>
             QuestManager.Instance != null && QuestManager.Instance.IsQuestActive(requiredQuestId) &&
             powerController != null &&
-            powerController.CurrentState == B1FPowerState.EmergencyPower;
+            (powerController.CurrentState == B1FPowerState.EmergencyPower ||
+             powerController.CanRestoreGenerator);
 
         private bool TryGetPlayer(ulong clientId, out NetworkObject playerObject)
         {

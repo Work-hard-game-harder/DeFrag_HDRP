@@ -196,8 +196,8 @@ namespace DeFrag.Combat
                 showHostButtons,
                 isDeceasedLocalPlayer,
                 fadeDuration,
-                ReturnPartyToMainLobby,
-                OpenStageSelection);
+                ReturnPartyToLobby,
+                ReturnPartyToMainLobby);
 
             EnsureEventSystem();
         }
@@ -218,14 +218,14 @@ namespace DeFrag.Combat
                 LobbyManager.Instance.ReturnToMainLobby();
         }
 
-        private static void OpenStageSelection()
+        private static void ReturnPartyToLobby()
         {
             NetworkManager manager = NetworkManager.Singleton;
             if (manager == null || !manager.IsServer || manager.SceneManager == null)
                 return;
 
-            SceneChange.RequestOpenStageSelectionOnNextLoad();
             manager.SceneManager.LoadScene("LobbyScene", LoadSceneMode.Single);
         }
+
     }
 }

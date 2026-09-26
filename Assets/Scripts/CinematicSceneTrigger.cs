@@ -10,6 +10,7 @@ public sealed class CinematicSceneTrigger : NetworkBehaviour
 {
     [SerializeField] private string destinationScene = "B2F";
     [SerializeField] private VideoClip cinematic;
+    [SerializeField] private DeFrag.B1F.B1FEscapeSequence escapeSequence;
     private bool started;
 
     private void Reset() => GetComponent<BoxCollider>().isTrigger = true;
@@ -18,6 +19,7 @@ public sealed class CinematicSceneTrigger : NetworkBehaviour
     {
         if (started || !IsServer || other.GetComponentInParent<StarterAssets.PersonController>() == null)
             return;
+        if (escapeSequence != null && !escapeSequence.EscapeReady) return;
         if (cinematic == null || !Application.CanStreamedLevelBeLoaded(destinationScene))
         {
             Debug.LogError("[CinematicSceneTrigger] Assign a cinematic and enable the destination in Build Settings.", this);

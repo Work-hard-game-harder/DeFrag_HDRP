@@ -17,6 +17,8 @@ public class PlayerItemDropper : MonoBehaviour
     [SerializeField] private float clearanceRadius = 0.2f;
     [SerializeField] private float throwForce = 8f;
     [SerializeField] private float upwardThrowForce = 1f;
+    [SerializeField, Min(0.1f)] private float minimumThrowForce = 3.5f;
+    [SerializeField, Min(0.1f)] private float chargeDuration = 1.25f;
     [SerializeField] private LayerMask blockingLayers = ~0;
     [SerializeField] private float groundSearchDistance = 5f;
     [SerializeField] private float groundClearance = 0.02f;
@@ -26,6 +28,11 @@ public class PlayerItemDropper : MonoBehaviour
 
     private Collider[] playerColliders;
     private WalkieTalkieController walkieTalkieController;
+    private ThrowAimVisualizer throwAimVisualizer;
+    private ThrowFeedbackPresenter throwFeedbackPresenter;
+    private bool isAimingThrow;
+    private float throwChargeStartedAt;
+    private ItemData aimedItemData;
 
     private void Awake()
     {
@@ -33,6 +40,7 @@ public class PlayerItemDropper : MonoBehaviour
         if (inventoryUI == null) inventoryUI = FindAnyObjectByType<InventoryUI>();
         playerColliders = transform.root.GetComponentsInChildren<Collider>(true);
         walkieTalkieController = transform.root.GetComponentInChildren<WalkieTalkieController>(true);
+        EnsureThrowPresentation();
     }
 
     public void Configure(InventoryUI ui, Transform origin)
@@ -41,19 +49,107 @@ public class PlayerItemDropper : MonoBehaviour
         if (origin != null) dropOrigin = origin;
         playerColliders = transform.root.GetComponentsInChildren<Collider>(true);
         walkieTalkieController = transform.root.GetComponentInChildren<WalkieTalkieController>(true);
+        EnsureThrowPresentation();
     }
 
     private void Update()
     {
         if (GameplayInputGate.IsBlocked)
+        {
+            CancelThrowAim();
             return;
+        }
 
         if (Keyboard.current == null || inventoryUI == null) return;
 
         if (Keyboard.current.gKey.wasPressedThisFrame)
+        {
+            CancelThrowAim();
             SpawnSelectedItem(false);
+        }
 
-        if (Keyboard.current.qKey.wasPressedThisFrame) SpawnSelectedItem(true);
+        if (Keyboard.current.qKey.wasPressedThisFrame) BeginThrowAim();
+
+        if (isAimingThrow && Keyboard.current.qKey.isPressed)
+            throwAimVisualizer?.Show(GetThrowOrigin(), GetAimedVelocity());
+
+        if (isAimingThrow && Keyboard.current.qKey.wasReleasedThisFrame)
+            ReleaseThrow();
+    }
+
+    private void OnDisable() => CancelThrowAim();
+
+    private void EnsureThrowPresentation()
+    {
+        if (throwAimVisualizer == null)
+        {
+            throwAimVisualizer = GetComponent<ThrowAimVisualizer>();
+            if (throwAimVisualizer == null)
+                throwAimVisualizer = gameObject.AddComponent<ThrowAimVisualizer>();
+            throwAimVisualizer.Configure(playerColliders, blockingLayers);
+        }
+
+        if (throwFeedbackPresenter == null)
+        {
+            throwFeedbackPresenter = GetComponent<ThrowFeedbackPresenter>();
+            if (throwFeedbackPresenter == null)
+                throwFeedbackPresenter = gameObject.AddComponent<ThrowFeedbackPresenter>();
+        }
+    }
+
+    private void BeginThrowAim()
+    {
+        InventoryInfo selectedItem = inventoryUI.GetSelectedItem();
+        ItemData data = selectedItem?.itemData;
+        if (data == null) return;
+
+        if (data.throwPolicy != ItemThrowPolicy.Allowed)
+        {
+            throwFeedbackPresenter?.Show(string.IsNullOrWhiteSpace(data.throwBlockedMessage)
+                ? "무거워서 던질 수 없다"
+                : data.throwBlockedMessage);
+            return;
+        }
+
+        isAimingThrow = true;
+        aimedItemData = data;
+        throwChargeStartedAt = Time.time;
+        throwAimVisualizer?.Show(GetThrowOrigin(), GetAimedVelocity());
+    }
+
+    private void ReleaseThrow()
+    {
+        InventoryInfo selectedItem = inventoryUI.GetSelectedItem();
+        if (selectedItem?.itemData != aimedItemData ||
+            aimedItemData.throwPolicy != ItemThrowPolicy.Allowed)
+        {
+            CancelThrowAim();
+            return;
+        }
+
+        Vector3 velocity = GetAimedVelocity();
+        CancelThrowAim();
+        SpawnSelectedItem(true, velocity);
+    }
+
+    private void CancelThrowAim()
+    {
+        isAimingThrow = false;
+        aimedItemData = null;
+        throwAimVisualizer?.Hide();
+    }
+
+    private Vector3 GetThrowOrigin() => dropOrigin.position - Vector3.up * 0.2f;
+
+    private Vector3 GetAimedVelocity()
+    {
+        Vector3 direction = dropOrigin.forward.normalized;
+        direction.y = Mathf.Clamp(direction.y, -0.35f, 0.65f);
+        direction.Normalize();
+
+        float charge = Mathf.Clamp01((Time.time - throwChargeStartedAt) / chargeDuration);
+        float forwardSpeed = Mathf.Lerp(minimumThrowForce, throwForce, charge);
+        return direction * forwardSpeed + Vector3.up * upwardThrowForce;
     }
 
     private bool HasWalkieTalkie()
@@ -64,7 +160,7 @@ public class PlayerItemDropper : MonoBehaviour
         return walkieTalkieController != null && walkieTalkieController.HasWalkieTalkie;
     }
 
-    private void SpawnSelectedItem(bool shouldThrow)
+    private void SpawnSelectedItem(bool shouldThrow, Vector3 throwVelocity = default)
     {
         InventoryInfo selectedItem = inventoryUI.GetSelectedItem();
         if (selectedItem?.itemData == null) return;
@@ -73,7 +169,7 @@ public class PlayerItemDropper : MonoBehaviour
             InventoryManager.Instance.TryGetNetworkObjectId(
                 selectedItem, out ulong networkObjectId))
         {
-            RequestNetworkDrop(selectedItem, networkObjectId, shouldThrow);
+            RequestNetworkDrop(selectedItem, networkObjectId, shouldThrow, throwVelocity);
             return;
         }
 
@@ -122,8 +218,7 @@ public class PlayerItemDropper : MonoBehaviour
 
         if (shouldThrow)
         {
-            Vector3 force = dropOrigin.forward * throwForce + Vector3.up * upwardThrowForce;
-            rb.AddForce(force, ForceMode.Impulse);
+            rb.AddForce(throwVelocity, ForceMode.VelocityChange);
 
             ThrownItemSettler settler = spawned.GetComponent<ThrownItemSettler>();
             if (settler == null) settler = spawned.AddComponent<ThrownItemSettler>();
@@ -157,7 +252,8 @@ public class PlayerItemDropper : MonoBehaviour
     private void RequestNetworkDrop(
         InventoryInfo selectedItem,
         ulong networkObjectId,
-        bool shouldThrow)
+        bool shouldThrow,
+        Vector3 throwVelocity)
     {
         if (!TryFindNetworkSpawnPose(
                 shouldThrow,
@@ -176,9 +272,7 @@ public class PlayerItemDropper : MonoBehaviour
             return;
         }
 
-        Vector3 velocity = shouldThrow
-            ? releaseDirection * throwForce + Vector3.up * upwardThrowForce
-            : Vector3.zero;
+        Vector3 velocity = shouldThrow ? throwVelocity : Vector3.zero;
 
         Quaternion yawOnlyRotation = Quaternion.Euler(
             0f,

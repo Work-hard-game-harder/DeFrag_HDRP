@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace DeFrag.UI
@@ -18,14 +19,15 @@ namespace DeFrag.UI
         [SerializeField, TextArea] private string teammateFailureMessage = "전원 생존 실패\n\nMISSION FAILED";
         [SerializeField] private GameObject hostButtons;
         [SerializeField] private Button returnToLobbyButton;
-        [SerializeField] private Button stageSelectionButton;
+        [FormerlySerializedAs("stageSelectionButton")]
+        [SerializeField] private Button returnToMainButton;
 
         public void Initialize(
             bool showHostButtons,
             bool isDeceasedLocalPlayer,
             float fadeDuration,
             UnityAction returnToLobby,
-            UnityAction openStageSelection)
+            UnityAction returnToMain)
         {
             // 실제 사망자는 프리팹에 작성된 기본 문구를 그대로 사용합니다.
             if (!isDeceasedLocalPlayer && deathMessage != null)
@@ -40,10 +42,10 @@ namespace DeFrag.UI
                 returnToLobbyButton.onClick.AddListener(returnToLobby);
             }
 
-            if (stageSelectionButton != null)
+            if (returnToMainButton != null)
             {
-                stageSelectionButton.onClick.RemoveAllListeners();
-                stageSelectionButton.onClick.AddListener(openStageSelection);
+                returnToMainButton.onClick.RemoveAllListeners();
+                returnToMainButton.onClick.AddListener(returnToMain);
             }
 
             StartCoroutine(FadeIn(fadeDuration));
@@ -79,18 +81,16 @@ namespace DeFrag.UI
         private string message;
         private Sprite windowSprite;
         private TMP_FontAsset fontAsset;
-        private float visibleDuration;
         private float fadeDuration;
 
         public static void ShowNow(
             string message,
             Sprite windowSprite,
             TMP_FontAsset fontAsset,
-            float visibleDuration,
             float fadeDuration)
         {
             DisconnectNotificationPresenter presenter = Create(
-                message, windowSprite, fontAsset, visibleDuration, fadeDuration);
+                message, windowSprite, fontAsset, fadeDuration);
             presenter.BuildAndShow();
         }
 
@@ -99,11 +99,10 @@ namespace DeFrag.UI
             string message,
             Sprite windowSprite,
             TMP_FontAsset fontAsset,
-            float visibleDuration,
             float fadeDuration)
         {
             DisconnectNotificationPresenter presenter = Create(
-                message, windowSprite, fontAsset, visibleDuration, fadeDuration);
+                message, windowSprite, fontAsset, fadeDuration);
             presenter.targetSceneName = targetSceneName;
             DontDestroyOnLoad(presenter.gameObject);
             SceneManager.sceneLoaded += presenter.HandleSceneLoaded;
@@ -113,7 +112,6 @@ namespace DeFrag.UI
             string message,
             Sprite windowSprite,
             TMP_FontAsset fontAsset,
-            float visibleDuration,
             float fadeDuration)
         {
             DisconnectNotificationPresenter existing =
@@ -127,7 +125,6 @@ namespace DeFrag.UI
             presenter.message = message;
             presenter.windowSprite = windowSprite;
             presenter.fontAsset = fontAsset;
-            presenter.visibleDuration = Mathf.Max(0.1f, visibleDuration);
             presenter.fadeDuration = Mathf.Max(0.01f, fadeDuration);
             return presenter;
         }
@@ -220,9 +217,22 @@ namespace DeFrag.UI
         private IEnumerator ShowRoutine(CanvasGroup canvasGroup)
         {
             yield return Fade(canvasGroup, 0f, 1f);
-            yield return new WaitForSecondsRealtime(visibleDuration);
+
+            // 알림을 띄운 원래 입력이 닫기 입력으로 이어지지 않도록 한 프레임 기다린다.
+            yield return null;
+            while (!HasDismissInput())
+                yield return null;
+
             yield return Fade(canvasGroup, 1f, 0f);
             Destroy(gameObject);
+        }
+
+        private static bool HasDismissInput()
+        {
+            return Input.anyKeyDown ||
+                   Input.GetMouseButtonDown(0) ||
+                   Input.GetMouseButtonDown(1) ||
+                   Input.GetMouseButtonDown(2);
         }
 
         private IEnumerator Fade(CanvasGroup canvasGroup, float from, float to)

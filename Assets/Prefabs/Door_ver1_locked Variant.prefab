@@ -1,0 +1,259 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &3445335310738850289
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1097120165624115348, guid: ce78f2cfe9fdff246b75d704e1092982, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 84498e45730ae52438a03588192472b2, type: 2}
+    - target: {fileID: 1517815456718097835, guid: ce78f2cfe9fdff246b75d704e1092982, type: 3}
+      propertyPath: 'm_Materials.Array.data[1]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 84498e45730ae52438a03588192472b2, type: 2}
+    - target: {fileID: 3858282211638029766, guid: ce78f2cfe9fdff246b75d704e1092982, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7464798560867489375, guid: ce78f2cfe9fdff246b75d704e1092982, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 6.1000004
+      objectReference: {fileID: 0}
+    - target: {fileID: 7464798560867489375, guid: ce78f2cfe9fdff246b75d704e1092982, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7464798560867489375, guid: ce78f2cfe9fdff246b75d704e1092982, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -14.099998
+      objectReference: {fileID: 0}
+    - target: {fileID: 7464798560867489375, guid: ce78f2cfe9fdff246b75d704e1092982, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 7464798560867489375, guid: ce78f2cfe9fdff246b75d704e1092982, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7464798560867489375, guid: ce78f2cfe9fdff246b75d704e1092982, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.7071068
+      objectReference: {fileID: 0}
+    - target: {fileID: 7464798560867489375, guid: ce78f2cfe9fdff246b75d704e1092982, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7464798560867489375, guid: ce78f2cfe9fdff246b75d704e1092982, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7464798560867489375, guid: ce78f2cfe9fdff246b75d704e1092982, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 90
+      objectReference: {fileID: 0}
+    - target: {fileID: 7464798560867489375, guid: ce78f2cfe9fdff246b75d704e1092982, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7841780774908644581, guid: ce78f2cfe9fdff246b75d704e1092982, type: 3}
+      propertyPath: m_Name
+      value: Door_ver1_locked Variant
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5191217730058365334, guid: ce78f2cfe9fdff246b75d704e1092982, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7382072798531776772}
+    - targetCorrespondingSourceObject: {fileID: 5191217730058365334, guid: ce78f2cfe9fdff246b75d704e1092982, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5219063855783162062}
+    - targetCorrespondingSourceObject: {fileID: 5191217730058365334, guid: ce78f2cfe9fdff246b75d704e1092982, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2679312452817819274}
+    - targetCorrespondingSourceObject: {fileID: 7349412000075867007, guid: ce78f2cfe9fdff246b75d704e1092982, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1322700808256394209}
+    - targetCorrespondingSourceObject: {fileID: 7349412000075867007, guid: ce78f2cfe9fdff246b75d704e1092982, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 557992415902826319}
+    - targetCorrespondingSourceObject: {fileID: 7349412000075867007, guid: ce78f2cfe9fdff246b75d704e1092982, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1352462137168871687}
+    - targetCorrespondingSourceObject: {fileID: 7738131728872788321, guid: ce78f2cfe9fdff246b75d704e1092982, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5781039046505887922}
+  m_SourcePrefab: {fileID: 100100000, guid: ce78f2cfe9fdff246b75d704e1092982, type: 3}
+--- !u!114 &4534150923152447629 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1242078754418841980, guid: ce78f2cfe9fdff246b75d704e1092982, type: 3}
+  m_PrefabInstance: {fileID: 3445335310738850289}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4950326774095892624}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14d91fb2a04141ccb1e9a0be7676ba03, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Doors.VerticalDoorMotor
+--- !u!1 &4950326774095892624 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7738131728872788321, guid: ce78f2cfe9fdff246b75d704e1092982, type: 3}
+  m_PrefabInstance: {fileID: 3445335310738850289}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5781039046505887922
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4950326774095892624}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b48495f54b04f5c88afc3731ac3bcc9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Doors.TerminalDoorLock
+  lockedNavigationBlocker: {fileID: 0}
+--- !u!1 &5345228982418727566 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7349412000075867007, guid: ce78f2cfe9fdff246b75d704e1092982, type: 3}
+  m_PrefabInstance: {fileID: 3445335310738850289}
+  m_PrefabAsset: {fileID: 0}
+--- !u!65 &1322700808256394209
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5345228982418727566}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 3.9999993, y: 1.8116063, z: 4.000001}
+  m_Center: {x: -0.000001938071, y: -0.9058029, z: -0.000030517578}
+--- !u!114 &557992415902826319
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5345228982418727566}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 2479468746
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  <InScenePlaced>k__BackingField: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!114 &1352462137168871687
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5345228982418727566}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c50f4a9d3fa4e6b9961e9d583d50a62, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Doors.TimedDoorLockSwitch
+  ShowTopMostFoldoutHeaderGroup: 1
+  interactionText: "\uBB38 \uC7A0\uADF8\uAE30 (E)"
+  lockedText: "\uBB38\uC774 \uC7A0\uACA8 \uC788\uC2B5\uB2C8\uB2E4"
+  targetDoor: {fileID: 4534150923152447629}
+  lockDuration: 3
+--- !u!1 &7483473172137093223 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5191217730058365334, guid: ce78f2cfe9fdff246b75d704e1092982, type: 3}
+  m_PrefabInstance: {fileID: 3445335310738850289}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7382072798531776772
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7483473172137093223}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 1496490806
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  <InScenePlaced>k__BackingField: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
+--- !u!65 &5219063855783162062
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7483473172137093223}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 3.9999993, y: 1.8116058, z: 4.000001}
+  m_Center: {x: -0.0000009536743, y: -0.9058029, z: 0.000030517578}
+--- !u!114 &2679312452817819274
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7483473172137093223}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c50f4a9d3fa4e6b9961e9d583d50a62, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Doors.TimedDoorLockSwitch
+  ShowTopMostFoldoutHeaderGroup: 1
+  interactionText: "\uBB38 \uC7A0\uADF8\uAE30 (E)"
+  lockedText: "\uBB38\uC774 \uC7A0\uACA8 \uC788\uC2B5\uB2C8\uB2E4"
+  targetDoor: {fileID: 4534150923152447629}
+  lockDuration: 3
