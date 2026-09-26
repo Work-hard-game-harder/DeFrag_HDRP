@@ -7,6 +7,13 @@ using UnityEngine.Audio;
 
 namespace DeFrag.Player
 {
+    public enum TerminalVoiceStatus : byte
+    {
+        Unavailable = 0,
+        Ready = 1,
+        Transmitting = 2
+    }
+
     /// <summary>
     /// 하나의 소유자 마이크 스트림을 일반 근거리 음성, 무전기 음성,
     /// 터미널 자동 송신으로 구분해 중계합니다.
@@ -77,11 +84,13 @@ namespace DeFrag.Player
         private bool serverTerminalSessionActive;
         private bool walkieWasEquippedBeforeTerminal;
         private bool terminalTransmissionActive;
+        private TerminalVoiceStatus terminalVoiceStatus = TerminalVoiceStatus.Unavailable;
 
-        public event Action<bool> TerminalTransmissionChanged;
+        public event Action<TerminalVoiceStatus> TerminalVoiceStatusChanged;
 
         public bool IsTerminalSessionActive => terminalSessionActive;
         public bool IsTerminalTransmitting => terminalTransmissionActive;
+        public TerminalVoiceStatus CurrentTerminalVoiceStatus => terminalVoiceStatus;
 
         private void Awake()
         {
@@ -113,6 +122,9 @@ namespace DeFrag.Player
 
             if (localMode != VoiceMode.None)
                 SendAvailablePackets();
+
+            if (terminalSessionActive)
+                RefreshTerminalVoiceStatus();
         }
 
         private VoiceMode DetermineLocalVoiceMode()
@@ -463,6 +475,7 @@ namespace DeFrag.Player
                 }
 
                 PublishTerminalSessionState(true);
+                RefreshTerminalVoiceStatus();
                 return;
             }
 
@@ -478,6 +491,7 @@ namespace DeFrag.Player
             }
 
             PublishTerminalSessionState(false);
+            SetTerminalVoiceStatus(TerminalVoiceStatus.Unavailable);
             if (walkieTalkieController != null && walkieTalkieController.HasWalkieTalkie)
                 walkieTalkieController.SetEquipped(walkieWasEquippedBeforeTerminal);
         }
@@ -524,7 +538,38 @@ namespace DeFrag.Player
                 return;
 
             terminalTransmissionActive = active;
-            TerminalTransmissionChanged?.Invoke(active);
+            RefreshTerminalVoiceStatus();
+        }
+
+        private void RefreshTerminalVoiceStatus()
+        {
+            TerminalVoiceStatus nextStatus;
+            if (!terminalSessionActive || !IsMicrophoneCaptureAvailable())
+                nextStatus = TerminalVoiceStatus.Unavailable;
+            else if (terminalTransmissionActive)
+                nextStatus = TerminalVoiceStatus.Transmitting;
+            else
+                nextStatus = TerminalVoiceStatus.Ready;
+
+            SetTerminalVoiceStatus(nextStatus);
+        }
+
+        private bool IsMicrophoneCaptureAvailable()
+        {
+            ResolveMicrophoneInput();
+            return microphoneInput != null &&
+                   microphoneInput.CircularBuffer != null &&
+                   microphoneInput.BufferLength > 0 &&
+                   microphoneInput.IsRecording;
+        }
+
+        private void SetTerminalVoiceStatus(TerminalVoiceStatus status)
+        {
+            if (terminalVoiceStatus == status)
+                return;
+
+            terminalVoiceStatus = status;
+            TerminalVoiceStatusChanged?.Invoke(status);
         }
 
         private void ResolveReferences()
@@ -628,6 +673,7 @@ namespace DeFrag.Player
             captureReady = false;
             terminalSessionActive = false;
             serverTerminalSessionActive = false;
+            SetTerminalVoiceStatus(TerminalVoiceStatus.Unavailable);
             base.OnNetworkDespawn();
         }
 

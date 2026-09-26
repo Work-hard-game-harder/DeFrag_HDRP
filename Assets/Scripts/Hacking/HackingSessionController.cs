@@ -182,29 +182,28 @@ public sealed class HackingSessionController : MonoBehaviour
             microphoneStatus.font = activeMicrophoneStatusFont;
 
         microphoneStatus.gameObject.SetActive(true);
-        SetMicrophoneStatus(false);
+        SetMicrophoneStatus(TerminalVoiceStatus.Unavailable);
     }
 
     private void BeginTerminalVoice()
     {
         if (networkVoice == null)
         {
-            microphoneStatus.text = "● 마이크 연결 안 됨";
-            microphoneStatus.color = MicrophoneUnavailableColor;
+            SetMicrophoneStatus(TerminalVoiceStatus.Unavailable);
             return;
         }
 
-        networkVoice.TerminalTransmissionChanged -= SetMicrophoneStatus;
-        networkVoice.TerminalTransmissionChanged += SetMicrophoneStatus;
+        networkVoice.TerminalVoiceStatusChanged -= SetMicrophoneStatus;
+        networkVoice.TerminalVoiceStatusChanged += SetMicrophoneStatus;
         networkVoice.SetTerminalSessionActive(true);
-        SetMicrophoneStatus(networkVoice.IsTerminalTransmitting);
+        SetMicrophoneStatus(networkVoice.CurrentTerminalVoiceStatus);
     }
 
     private void EndTerminalVoice()
     {
         if (networkVoice != null)
         {
-            networkVoice.TerminalTransmissionChanged -= SetMicrophoneStatus;
+            networkVoice.TerminalVoiceStatusChanged -= SetMicrophoneStatus;
             networkVoice.SetTerminalSessionActive(false);
         }
 
@@ -212,17 +211,26 @@ public sealed class HackingSessionController : MonoBehaviour
             microphoneStatus.gameObject.SetActive(false);
     }
 
-    private void SetMicrophoneStatus(bool transmitting)
+    private void SetMicrophoneStatus(TerminalVoiceStatus status)
     {
         if (microphoneStatus == null)
             return;
 
-        microphoneStatus.text = transmitting
-            ? "● 마이크 송신 중"
-            : "● 마이크 대기 중";
-        microphoneStatus.color = transmitting
-            ? MicrophoneTransmittingColor
-            : MicrophoneReadyColor;
+        switch (status)
+        {
+            case TerminalVoiceStatus.Transmitting:
+                microphoneStatus.text = "● 마이크 송신 중";
+                microphoneStatus.color = MicrophoneTransmittingColor;
+                break;
+            case TerminalVoiceStatus.Ready:
+                microphoneStatus.text = "● 마이크 대기 중";
+                microphoneStatus.color = MicrophoneReadyColor;
+                break;
+            default:
+                microphoneStatus.text = "● 마이크 송신 불가";
+                microphoneStatus.color = MicrophoneUnavailableColor;
+                break;
+        }
     }
 
     private void DestroyTerminalScreen()

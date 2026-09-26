@@ -2201,6 +2201,20 @@ MonoBehaviour:
   revealPendingQuestAfterSubtitle: 1
   requiredQuestId: 
   completionQuestSignal: 
+  colorOverrides:
+  - subtitleIndex: 0
+    color: {r: 0.5235849, g: 1, b: 0.7915684, a: 1}
+  - subtitleIndex: 1
+    color: {r: 0.5254902, g: 1, b: 0.7921569, a: 1}
+  - subtitleIndex: 2
+    color: {r: 0.5254902, g: 1, b: 0.7921569, a: 1}
+  audioOverrides:
+  - subtitleIndex: 0
+    audioClip: {fileID: 8300000, guid: 0a049abeeb3dff7479ab693d67ac1d46, type: 3}
+  - subtitleIndex: 1
+    audioClip: {fileID: 8300000, guid: 0a049abeeb3dff7479ab693d67ac1d46, type: 3}
+  - subtitleIndex: 2
+    audioClip: {fileID: 8300000, guid: 0a049abeeb3dff7479ab693d67ac1d46, type: 3}
 --- !u!65 &134077247
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2652,6 +2666,8 @@ MonoBehaviour:
   revealPendingQuestAfterSubtitle: 0
   requiredQuestId: 
   completionQuestSignal: 
+  colorOverrides: []
+  audioOverrides: []
 --- !u!65 &165681821
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3119,6 +3135,8 @@ MonoBehaviour:
   revealPendingQuestAfterSubtitle: 0
   requiredQuestId: 
   completionQuestSignal: 
+  colorOverrides: []
+  audioOverrides: []
 --- !u!65 &219570074
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -12232,6 +12250,8 @@ MonoBehaviour:
   revealPendingQuestAfterSubtitle: 1
   requiredQuestId: 
   completionQuestSignal: 
+  colorOverrides: []
+  audioOverrides: []
 --- !u!65 &516327319
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -29244,6 +29264,8 @@ MonoBehaviour:
   revealPendingQuestAfterSubtitle: 0
   requiredQuestId: 
   completionQuestSignal: 
+  colorOverrides: []
+  audioOverrides: []
 --- !u!65 &1272190788
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -35067,6 +35089,8 @@ MonoBehaviour:
   revealPendingQuestAfterSubtitle: 1
   requiredQuestId: b1f_control_room
   completionQuestSignal: B1F_CONTROL_ROOM_REACHED
+  colorOverrides: []
+  audioOverrides: []
 --- !u!65 &1549077944
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -38382,6 +38406,8 @@ MonoBehaviour:
   revealPendingQuestAfterSubtitle: 0
   requiredQuestId: 
   completionQuestSignal: 
+  colorOverrides: []
+  audioOverrides: []
 --- !u!65 &1715606650
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -41983,6 +42009,8 @@ MonoBehaviour:
   revealPendingQuestAfterSubtitle: 0
   requiredQuestId: 
   completionQuestSignal: 
+  colorOverrides: []
+  audioOverrides: []
 --- !u!65 &1853784550
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -44452,6 +44480,8 @@ MonoBehaviour:
   revealPendingQuestAfterSubtitle: 0
   requiredQuestId: 
   completionQuestSignal: 
+  colorOverrides: []
+  audioOverrides: []
 --- !u!65 &1941103622
 BoxCollider:
   m_ObjectHideFlags: 0
