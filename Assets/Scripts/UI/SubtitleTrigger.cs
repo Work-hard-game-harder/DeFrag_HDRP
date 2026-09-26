@@ -1,6 +1,20 @@
 using EasyPeasyFirstPersonController;
 using UnityEngine;
 
+[System.Serializable]
+public class SubtitleColorOverride
+{
+    [Min(0)] public int subtitleIndex;
+    public Color color = Color.white;
+}
+
+[System.Serializable]
+public sealed class SubtitleAudioOverride
+{
+    [Min(0)] public int subtitleIndex;
+    public AudioClip audioClip;
+}
+
 public class SubtitleTrigger : MonoBehaviour
 {
     public SubtitlesScript subtitlesScript; // 씬에 배치된 SubtitleBox 연결
@@ -13,6 +27,12 @@ public class SubtitleTrigger : MonoBehaviour
     [SerializeField] private bool revealPendingQuestAfterSubtitle;
     [SerializeField] private string requiredQuestId;
     [SerializeField] private string completionQuestSignal;
+
+    [Header("Subtitle Color Overrides")]
+    [SerializeField]
+    private SubtitleColorOverride[] colorOverrides;
+    [SerializeField]
+    private SubtitleAudioOverride[] audioOverrides;
 
     private void OnTriggerEnter(Collider other)
     {
@@ -47,6 +67,8 @@ public class SubtitleTrigger : MonoBehaviour
             hasTriggered = true;
             subtitlesScript.PlaySubtitles(
                 mySubtitles,
+                colorOverrides,
+                audioOverrides,
                 CompleteQuestLink);
         }
     }
@@ -110,9 +132,16 @@ public class SubtitleTrigger : MonoBehaviour
             onComplete?.Invoke();
         };
 
-        subtitlesScript.PlaySubtitles(mySubtitles, combinedCallback);
+        subtitlesScript.PlaySubtitles(
+            mySubtitles,
+            colorOverrides,
+            audioOverrides,
+            combinedCallback);
     }
+
     /*
+    // 이전 FirstPersonController 기반 워키토키 획득 방식입니다.
+    // 현재 네트워크 플레이어에서는 사용하지 않습니다.
     private void OnMouseDown()
     {
         if (hasTriggered) return;
@@ -122,9 +151,12 @@ public class SubtitleTrigger : MonoBehaviour
             FirstPersonController player = FindAnyObjectByType<FirstPersonController>();
             if (player != null) player.PickUpWakieTakie();
             gameObject.SetActive(false);
-            subtitlesScript.PlaySubtitles(mySubtitles);
+            subtitlesScript.PlaySubtitles(
+                mySubtitles,
+                colorOverrides,
+                audioOverrides,
+                CompleteQuestLink);
         }
     }
-
     */
 }

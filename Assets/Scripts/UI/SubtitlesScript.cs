@@ -22,10 +22,14 @@ public class SubtitlesScript : MonoBehaviour
     private int index;
     private bool ignoreClick;
     private bool ownsCutsceneLock;
+    private SubtitleColorOverride[] activeColorOverrides;
+    private SubtitleAudioOverride[] activeAudioOverrides;
+    private Color defaultSubtitleColor;
 
     private void Start()
     {
         EnsureTypewriterSource();
+        defaultSubtitleColor = subtitlesText.color;
         subtitlesText.text = string.Empty;
         subtitlesPanel.SetActive(false);
     }
@@ -61,7 +65,17 @@ public class SubtitlesScript : MonoBehaviour
         }
     }
 
+    // 색상/사운드 Override를 사용하지 않는 기존 호출부와의 호환성을 유지합니다.
     public void PlaySubtitles(string[] newSubtitles, Action callback = null)
+    {
+        PlaySubtitles(newSubtitles, null, null, callback);
+    }
+
+    public void PlaySubtitles(
+        string[] newSubtitles,
+        SubtitleColorOverride[] colorOverrides,
+        SubtitleAudioOverride[] audioOverrides,
+        Action callback = null)
     {
         if (newSubtitles == null || newSubtitles.Length == 0)
         {
@@ -70,10 +84,17 @@ public class SubtitlesScript : MonoBehaviour
         }
 
         subtitles = newSubtitles;
+        activeColorOverrides = colorOverrides;
+        activeAudioOverrides = audioOverrides;
+
         index = 0;
         onFinished = callback;
+
         subtitlesText.text = string.Empty;
         subtitlesPanel.SetActive(true);
+
+        ApplyCurrentSubtitleColor();
+
         AcquireCutsceneLock();
         PlaybackStarted?.Invoke();
 
@@ -101,17 +122,61 @@ public class SubtitlesScript : MonoBehaviour
         StopTypewriterSound();
     }
 
+    private void ApplyCurrentSubtitleColor()
+    {
+        subtitlesText.color = defaultSubtitleColor;
+
+        if (activeColorOverrides == null)
+            return;
+
+        foreach (SubtitleColorOverride colorOverride in activeColorOverrides)
+        {
+            if (colorOverride != null &&
+                colorOverride.subtitleIndex == index)
+            {
+                subtitlesText.color = colorOverride.color;
+                return;
+            }
+        }
+    }
+    private AudioClip GetCurrentSubtitleAudioOverride()
+    {
+        if (activeAudioOverrides == null)
+            return null;
+
+        foreach (SubtitleAudioOverride audioOverride in activeAudioOverrides)
+        {
+            if (audioOverride != null &&
+                audioOverride.subtitleIndex == index)
+            {
+                return audioOverride.audioClip;
+            }
+        }
+
+        return null;
+    }
+
     private void StartTypewriterSound()
     {
-        if (typewriterSource == null || typewriterClips.Length == 0)
+        if (typewriterSource == null)
             return;
+
+        AudioClip clip = GetCurrentSubtitleAudioOverride();
+
+        if (clip == null)
+        {
+            if (typewriterClips == null || typewriterClips.Length == 0)
+                return;
+
+            clip = typewriterClips[
+                UnityEngine.Random.Range(0, typewriterClips.Length)];
+        }
 
         typewriterSource.Stop();
         typewriterSource.pitch = UnityEngine.Random.Range(
             typewriterPitchRange.x,
             typewriterPitchRange.y);
-        typewriterSource.clip = typewriterClips[
-            UnityEngine.Random.Range(0, typewriterClips.Length)];
+        typewriterSource.clip = clip;
         typewriterSource.volume = typewriterVolume;
         typewriterSource.loop = true;
         typewriterSource.Play();
@@ -143,6 +208,9 @@ public class SubtitlesScript : MonoBehaviour
         subtitles = null;
         onFinished = null;
         ignoreClick = false;
+        subtitlesText.color = defaultSubtitleColor;
+        activeColorOverrides = null;
+        activeAudioOverrides = null;
     }
 
     private void NextSubtitle()
@@ -151,6 +219,9 @@ public class SubtitlesScript : MonoBehaviour
         {
             index++;
             subtitlesText.text = string.Empty;
+
+            ApplyCurrentSubtitleColor();
+
             StartCoroutine(TypeLine());
             return;
         }
@@ -166,6 +237,9 @@ public class SubtitlesScript : MonoBehaviour
         subtitlesPanel.SetActive(false);
 
         finishedCallback?.Invoke();
+        subtitlesText.color = defaultSubtitleColor;
+        activeColorOverrides = null;
+        activeAudioOverrides = null;
     }
 
     private void AcquireCutsceneLock()
