@@ -16,6 +16,7 @@ namespace DeFrag.B1F
         private RawImage display;
         private VideoPlayer video;
         private RenderTexture texture;
+        private B1FStoryCutscene cutscene;
         private StarterAssets.PersonController movement;
         private bool previousMovement;
         private PlayerInteraction interaction;
@@ -76,9 +77,12 @@ namespace DeFrag.B1F
             {
                 shown = sequence.Stage;
                 StopVideo();
-                videoRoot.SetActive(sequence.IsVideo);
-                label.gameObject.SetActive(shown != B1FEscapeStage.Waiting && shown != B1FEscapeStage.EscapeReady);
-                if (sequence.IsVideo) StartVideo();
+                StopCutscene();
+                bool realtime = sequence.IsVideo && sequence.CurrentCutscene != null;
+                videoRoot.SetActive(sequence.IsVideo && !realtime);
+                label.gameObject.SetActive(!realtime && shown != B1FEscapeStage.Waiting && shown != B1FEscapeStage.EscapeReady);
+                if (realtime) StartCutscene(sequence.CurrentCutscene);
+                else if (sequence.IsVideo) StartVideo();
                 else Unlock();
             }
             if (sequence.IsVideo)
@@ -111,6 +115,31 @@ namespace DeFrag.B1F
             video.clip = clip;
             video.targetTexture = texture;
             video.Prepare();
+        }
+        private void StartCutscene(B1FStoryCutscene target)
+        {
+            sent = false;
+            began = Time.unscaledTime;
+            timeout = target.Duration + 15;
+            label.text = "";
+            cutscene = target;
+            target.Play(CutsceneFinished);
+        }
+        private void CutsceneFinished()
+        {
+            cutscene = null;
+            // Hold on black while the partner finishes, so the next stage starts cleanly.
+            videoRoot.SetActive(true);
+            display.gameObject.SetActive(false);
+            label.gameObject.SetActive(true);
+            Complete();
+        }
+        private void StopCutscene()
+        {
+            if (cutscene == null) return;
+            var playing = cutscene;
+            cutscene = null;
+            playing.Stop();
         }
         private void Prepared(VideoPlayer source) { label.text = ""; source.Play(); }
         private void Finished(VideoPlayer source) => Complete();
@@ -161,7 +190,7 @@ namespace DeFrag.B1F
         }
         public void Unbind()
         {
-            StopVideo(); Unlock(); sequence = null; shown = (B1FEscapeStage)255;
+            StopVideo(); StopCutscene(); Unlock(); sequence = null; shown = (B1FEscapeStage)255;
             if (video != null)
             {
                 video.prepareCompleted -= Prepared; video.loopPointReached -= Finished; video.errorReceived -= Failed;

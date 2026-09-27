@@ -62,6 +62,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Door_switch.001
       objectReference: {fileID: 0}
+    - target: {fileID: -8796470675890761013, guid: 2eb6435d45852ec4c82224ec7c423071, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: -8796470675890761013, guid: 2eb6435d45852ec4c82224ec7c423071, type: 3}
+      propertyPath: m_TagString
+      value: Interactable
+      objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 2eb6435d45852ec4c82224ec7c423071, type: 3}
       propertyPath: m_LocalPosition.x
       value: 28.199999
@@ -106,13 +114,29 @@ PrefabInstance:
       propertyPath: m_Name
       value: Door
       objectReference: {fileID: 0}
+    - target: {fileID: -8398740447160983339, guid: 2eb6435d45852ec4c82224ec7c423071, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: -6334283439311595486, guid: 2eb6435d45852ec4c82224ec7c423071, type: 3}
       propertyPath: m_Name
       value: Door_switch
       objectReference: {fileID: 0}
+    - target: {fileID: -6334283439311595486, guid: 2eb6435d45852ec4c82224ec7c423071, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: -6334283439311595486, guid: 2eb6435d45852ec4c82224ec7c423071, type: 3}
+      propertyPath: m_TagString
+      value: Interactable
+      objectReference: {fileID: 0}
     - target: {fileID: -3593547148645287533, guid: 2eb6435d45852ec4c82224ec7c423071, type: 3}
       propertyPath: m_Name
       value: Door_frame
+      objectReference: {fileID: 0}
+    - target: {fileID: -3593547148645287533, guid: 2eb6435d45852ec4c82224ec7c423071, type: 3}
+      propertyPath: m_Layer
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: -870819955592765413, guid: 2eb6435d45852ec4c82224ec7c423071, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
@@ -122,9 +146,17 @@ PrefabInstance:
       propertyPath: m_Name
       value: Door_wall
       objectReference: {fileID: 0}
+    - target: {fileID: 658163926290242719, guid: 2eb6435d45852ec4c82224ec7c423071, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 2eb6435d45852ec4c82224ec7c423071, type: 3}
       propertyPath: m_Name
       value: Door_ver1
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 2eb6435d45852ec4c82224ec7c423071, type: 3}
+      propertyPath: m_Layer
+      value: 10
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

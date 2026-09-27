@@ -26,6 +26,12 @@ namespace DeFrag.B1F
         [SerializeField] private VideoClip impactVideo;
         [SerializeField] private VideoClip breachVideo;
         [SerializeField] private VideoClip exitVideo;
+        [Header("Realtime cutscenes (optional, played instead of that stage's video)")]
+        [SerializeField] private B1FStoryCutscene warningCutscene;
+        [SerializeField] private B1FStoryCutscene approachCutscene;
+        [SerializeField] private B1FStoryCutscene impactCutscene;
+        [SerializeField] private B1FStoryCutscene breachCutscene;
+        [SerializeField] private B1FStoryCutscene exitCutscene;
         [SerializeField, Min(1)] private float placeholderSeconds = 4;
         [SerializeField, Min(5)] private float videoTimeoutMargin = 20;
         [Header("Download")]
@@ -36,6 +42,8 @@ namespace DeFrag.B1F
         [SerializeField] private string interruptionSignal = "B1F_DOWNLOAD_INTERRUPTED";
         [SerializeField] private string downloadCompleteSignal = "B1F_DOWNLOAD_COMPLETED";
         [Header("Persistent world state (no NetworkObjects under visual roots)")]
+        [Tooltip("살아 있는 문을 NetworkObject 비활성화 없이 파손 상태로 바꿉니다. 지정하면 intact/broken 토글 대신 사용합니다.")]
+        [SerializeField] private BreachableDoor breachableDoor;
         [SerializeField] private GameObject intactDoor;
         [SerializeField] private GameObject brokenDoor;
         [SerializeField] private ParticleSystem breachDust;
@@ -62,6 +70,18 @@ namespace DeFrag.B1F
             B1FEscapeStage.ExitVideo => exitVideo,
             _ => null
         };
+        public B1FStoryCutscene CurrentCutscene => Stage switch
+        {
+            B1FEscapeStage.WarningVideo => warningCutscene,
+            B1FEscapeStage.ApproachVideo => approachCutscene,
+            B1FEscapeStage.ImpactVideo => impactCutscene,
+            B1FEscapeStage.BreachVideo => breachCutscene,
+            B1FEscapeStage.ExitVideo => exitCutscene,
+            _ => null
+        };
+        private double CurrentMediaSeconds =>
+            CurrentCutscene != null ? CurrentCutscene.Duration :
+            CurrentClip != null ? CurrentClip.length : placeholderSeconds;
         public bool IsVideo => Stage == B1FEscapeStage.WarningVideo ||
             Stage == B1FEscapeStage.ApproachVideo || Stage == B1FEscapeStage.ImpactVideo ||
             Stage == B1FEscapeStage.BreachVideo || Stage == B1FEscapeStage.ExitVideo;
@@ -82,6 +102,7 @@ namespace DeFrag.B1F
         private void ApplyWorldState(bool effects)
         {
             bool breached = Stage >= B1FEscapeStage.Interrupted;
+            if (breachableDoor != null) breachableDoor.SetBreached(breached);
             if (intactDoor != null) intactDoor.SetActive(!breached);
             if (brokenDoor != null) brokenDoor.SetActive(breached);
             if (effects && IsClient)
@@ -95,7 +116,7 @@ namespace DeFrag.B1F
             finishedViewers.Clear();
             stageStarted = NetworkManager.ServerTime.Time;
             stage.Value = next;
-            deadline = stageStarted + (CurrentClip != null ? CurrentClip.length : placeholderSeconds) + videoTimeoutMargin;
+            deadline = stageStarted + CurrentMediaSeconds + videoTimeoutMargin;
         }
         private void Update()
         {
