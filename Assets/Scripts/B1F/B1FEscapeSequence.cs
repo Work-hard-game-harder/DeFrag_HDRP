@@ -167,6 +167,21 @@ namespace DeFrag.B1F
                     break;
             }
         }
+        /// <summary>
+        /// Editor/Development Build shortcut: the door is breached and the download waits at the
+        /// interruption point for Generator B, as if the breach stages had already played.
+        /// </summary>
+        public bool TrySkipToGeneratorRestorationForStoryDebugServer()
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (!IsSpawned || !IsServer || Stage > B1FEscapeStage.RestoringGenerator) return false;
+            progress.Value = interruptAt;
+            Enter(B1FEscapeStage.RestoringGenerator);
+            return true;
+#else
+            return false;
+#endif
+        }
         public void FinishLocalVideo() { if (IsSpawned && IsClient) VideoFinishedServerRpc(Stage); }
         [ServerRpc(RequireOwnership = false)]
         private void VideoFinishedServerRpc(B1FEscapeStage expected, ServerRpcParams rpc = default)

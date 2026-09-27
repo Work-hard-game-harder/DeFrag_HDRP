@@ -63,6 +63,8 @@ namespace DeFrag.B1F
         private Coroutine monsterSpawnRoutine;
 
         public B1FPowerState CurrentState => currentState.Value;
+        /// <summary>Server-side only. True once the Emergency Power TV monster has been spawned.</summary>
+        public bool IsTvMonsterSpawned => tvMonsterSpawned;
         private readonly NetworkVariable<bool> storyOutage = new(false);
         public bool CanRestoreGenerator => !powerTransitioning.Value &&
             (CurrentState == B1FPowerState.EmergencyPower || storyOutage.Value);

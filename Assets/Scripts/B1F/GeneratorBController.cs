@@ -502,6 +502,28 @@ namespace DeFrag.B1F
                 crankAngle.Value = CrankModel.Angle;
         }
 
+        /// <summary>
+        /// Editor/Development Build shortcut that fuels and ignites the generator, then enters
+        /// the same authoritative completion path as a successful cold start.
+        /// </summary>
+        public bool TryCompleteForStoryDebugServer()
+        {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            if (!IsSpawned || !IsServer)
+                return false;
+            if (completed.Value)
+                return true;
+
+            fuelSpawned = true;
+            consumedFuelCans.Value = (byte)requiredFuelCans;
+            ignitedCylinders.Value = (byte)RequiredCylinders;
+            CompleteServer();
+            return true;
+#else
+            return false;
+#endif
+        }
+
         private void CompleteServer()
         {
             completed.Value = true;

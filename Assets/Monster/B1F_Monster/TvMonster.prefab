@@ -397,6 +397,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
       insertIndex: -1
       addedObject: {fileID: 778811229955001122}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5617680538503707}
   m_SourcePrefab: {fileID: 100100000, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}
 --- !u!4 &141027566246635077 stripped
 Transform:
@@ -788,6 +791,66 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
+--- !u!114 &5617680538503707
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 774293129084501247}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48cca2185e067cc4182a2e08e36b6e44, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterLockerHunter
+  ShowTopMostFoldoutHeaderGroup: 1
+  monster: {fileID: 6005493029692324318}
+  witnessRange: 12
+  sniffRadius: 4.5
+  gaspHearRadius: 15
+  lockerCooldown: 20
+  globalCooldown: 5
+  slowDownDistance: 4
+  creepSpeedMultiplier: 0.65
+  arrivalDistance: 0.5
+  approachTimeout: 15
+  witnessedLurkSeconds: {x: 9, y: 12}
+  sniffLurkSeconds: {x: 5, y: 7}
+  cueInterval: {x: 2.2, y: 3.8}
+  knockSuspicion: 45
+  knockChance: 0.35
+  witnessedStartSuspicion: 55
+  sniffStartSuspicion: 15
+  gaspStartSuspicion: 45
+  breathingPerSecond: 14
+  holdingDecayPerSecond: 5
+  gaspSuspicion: 60
+  breathHearDistance: 3
+  forceOpenWindup: 0.6
+  forceOpenHold: 0.45
+  distractionSightRange: 7
+  distractionNoiseRange: 30
+  sniffClips:
+  - {fileID: 8300000, guid: 8f679ed2e40edf74a82718eb4b614001, type: 3}
+  growlClips:
+  - {fileID: 8300000, guid: 006ddeb881d42a6419ef0a70a2384518, type: 3}
+  - {fileID: 8300000, guid: d7cfb4daae9918541b4c372d82ee8a2a, type: 3}
+  breathClips:
+  - {fileID: 8300000, guid: ebe43ce9632f7b14a997b9cfcac4de90, type: 3}
+  whisperThereClip: {fileID: 8300000, guid: 499ce56a31381784f98889f7bfaae653, type: 3}
+  whisperBreathClip: {fileID: 8300000, guid: 8f89674e321dce5409a2206a50b87302, type: 3}
+  whisperComeOutClip: {fileID: 8300000, guid: d56a4322d341bf04593984f2237f65dd, type: 3}
+  leaveClips:
+  - {fileID: 8300000, guid: d7cfb4daae9918541b4c372d82ee8a2a, type: 3}
+  - {fileID: 8300000, guid: ebe43ce9632f7b14a997b9cfcac4de90, type: 3}
+  shriekClip: {fileID: 8300000, guid: 5d102c5e62304b541991930b59730ad8, type: 3}
+  foundWhisperClip: {fileID: 8300000, guid: ec3e595c3b0a1a7408d425aa93142596, type: 3}
+  staticClips:
+  - {fileID: 8300000, guid: 15228758d8d7b4d4d9398ce7ef1db520, type: 3}
+  - {fileID: 8300000, guid: f8e9035873883cf4b9827954da5a8dc0, type: 3}
+  voiceVolume: 1
+  staticVolume: 0.55
+  audioMaxDistance: 22
 --- !u!95 &6274968967036992575 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 5866666021909216657, guid: ef594c026f9c8e64086a514ee920a45c, type: 3}

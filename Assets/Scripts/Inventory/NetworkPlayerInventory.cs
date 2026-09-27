@@ -241,6 +241,24 @@ public sealed class NetworkPlayerInventory : NetworkBehaviour
         return item.HolderClientId == OwnerClientId;
     }
 
+    /// <summary>
+    /// Editor/Development Build shortcut for story debug checkpoints. Uses the same server
+    /// validation as a pickup, without the distance check.
+    /// </summary>
+    public bool TryGiveWorldItemForStoryDebugServer(NetworkWorldItem item)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (!IsServer || item == null || !item.IsSpawned || !item.IsAvailable ||
+            !CanAddServer(item.Data) || !item.SetHeldServer(OwnerClientId))
+            return false;
+
+        heldItemIds.Add(item.NetworkObjectId);
+        return true;
+#else
+        return false;
+#endif
+    }
+
     public bool TryConsumeHeldItemServer(ulong itemNetworkObjectId)
     {
         if (!IsServer)

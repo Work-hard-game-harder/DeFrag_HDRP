@@ -138,6 +138,89 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
     public MonsterState CurrentState => currentState;
     public bool UsesBehaviorDesigner => useBehaviorDesigner;
 
+    // ── Scripted control (server only) ─────────────────────────────────────────
+    // A presentation/behaviour component (e.g. MonsterLockerHunter) may take the
+    // monster over for a short scripted beat. While active, the regular state
+    // machine is paused and the controller drives the NavMeshAgent directly.
+    public enum ScriptedPose { Idle, Walk, Run, Attack }
+
+    private Object scriptedController;
+    public bool IsScriptedControlActive => scriptedController != null;
+    public bool IsStoryDebugFrozen => storyDebugFrozen;
+    public Transform CurrentTarget => player;
+    public NavMeshAgent Agent => agent;
+    public bool IsReadyForScriptedControl =>
+        initialized && HasSimulationAuthority && !storyDebugFrozen && agent != null && agent.isOnNavMesh;
+
+    public bool TryBeginScriptedControl(Object controller)
+    {
+        if (controller == null || (scriptedController != null && scriptedController != controller) ||
+            !IsReadyForScriptedControl)
+            return false;
+
+        scriptedController = controller;
+        forcedInvestigationPending = false;
+        attackHitbox?.EndAttackCycle();
+        agent.isStopped = false;
+        agent.ResetPath();
+        // Calm state so state-driven loops (MonsterAnimationSfx) drop the chase layer.
+        currentState = MonsterState.Idle;
+        SetAllAnimationsFalse();
+        animator?.SetBool(IsIdle, true);
+        return true;
+    }
+
+    public void SetScriptedPose(Object controller, ScriptedPose pose, float speed)
+    {
+        if (controller != scriptedController || animator == null)
+            return;
+
+        SetAllAnimationsFalse();
+        animator.SetBool(pose switch
+        {
+            ScriptedPose.Walk => IsWalking,
+            ScriptedPose.Run => IsRunning,
+            ScriptedPose.Attack => IsAttack,
+            _ => IsIdle
+        }, true);
+        if (agent != null)
+            agent.speed = speed;
+    }
+
+    public void FaceScripted(Object controller, Vector3 worldPosition)
+    {
+        if (controller == scriptedController)
+            RotateTowardsTarget(worldPosition);
+    }
+
+    /// <summary>
+    /// Returns the monster to its own state machine. With a target it resumes the chase,
+    /// otherwise it wanders off in Search.
+    /// </summary>
+    public void EndScriptedControl(Object controller, Transform engageTarget)
+    {
+        if (controller != scriptedController)
+            return;
+
+        scriptedController = null;
+        if (!IsReadyForScriptedControl)
+            return;
+
+        agent.ResetPath();
+        currentState = MonsterState.Idle; // force ChangeState to re-apply animation and speed
+        if (engageTarget != null)
+        {
+            SetPlayerTarget(engageTarget);
+            lastKnownPlayerPos = engageTarget.position;
+            lostPlayerTimer = 0f;
+            ChangeState(MonsterState.Chase);
+        }
+        else
+        {
+            ChangeState(MonsterState.Search);
+        }
+    }
+
     public void SetBehaviorDesignerEnabled(bool enabled)
     {
         useBehaviorDesigner = enabled;
@@ -312,7 +395,7 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
         if (useBehaviorDesigner)
             return;
 
-        if (storyDebugFrozen || !initialized || !HasSimulationAuthority ||
+        if (storyDebugFrozen || IsScriptedControlActive || !initialized || !HasSimulationAuthority ||
             agent == null || !agent.isOnNavMesh)
             return;
 
@@ -330,7 +413,7 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
     /// </summary>
     public bool TickBehaviorState(MonsterState state)
     {
-        if (storyDebugFrozen)
+        if (storyDebugFrozen || IsScriptedControlActive)
             return true;
 
         if (!initialized || !HasSimulationAuthority || agent == null || !agent.isOnNavMesh)
@@ -494,6 +577,12 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
         return playerController != null && playerController.IsHiding;
     }
 
+    bool IsPlayerInLocker()
+    {
+        NetworkObject playerObject = player != null ? player.GetComponentInParent<NetworkObject>() : null;
+        return playerObject != null && LockerHiding.IsPlayerConcealed(playerObject);
+    }
+
     bool IsPlayerCrouching()
     {
         StarterAssets.PersonController playerController =
@@ -503,7 +592,9 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
 
     bool ShouldIgnoreVisiblePlayer(float distToPlayer)
     {
-        if (IsPlayerHiding())
+        // A player inside a locker is never a visual target. Whether the monster
+        // saw them get in is handled by MonsterLockerHunter.
+        if (IsPlayerHiding() || IsPlayerInLocker())
             return true;
 
         bool isCrouching = IsPlayerCrouching();
@@ -538,7 +629,7 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
     }
     private void OnWorldNoiseHeard(Vector3 noisePosition, float noiseRadius)
     {
-        if (storyDebugFrozen || !HasSimulationAuthority || agent == null || !agent.isOnNavMesh) return;
+        if (storyDebugFrozen || IsScriptedControlActive || !HasSimulationAuthority || agent == null || !agent.isOnNavMesh) return;
         if (forcedInvestigationPending) return;
 
         float audibleRange = Mathf.Min(noiseRadius, soundDetectionRange);
@@ -560,7 +651,7 @@ public class MonsterAI : MonoBehaviour, IMonsterPlayerTargetReceiver
 
     private void OnUrgentWorldNoiseHeard(Vector3 noisePosition, float noiseRadius)
     {
-        if (storyDebugFrozen || !HasSimulationAuthority || agent == null || !agent.isOnNavMesh)
+        if (storyDebugFrozen || IsScriptedControlActive || !HasSimulationAuthority || agent == null || !agent.isOnNavMesh)
             return;
         if (forcedInvestigationPending)
             return;

@@ -157,6 +157,10 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 9
       objectReference: {fileID: 0}
+    - target: {fileID: -1566679524614556421, guid: 357fe45b3ee11584f8c403db44dc5e3c, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 4300000, guid: 0b916f28573949b4e9815b9c15a5204a, type: 2}
     - target: {fileID: 919132149155446097, guid: 357fe45b3ee11584f8c403db44dc5e3c, type: 3}
       propertyPath: m_Name
       value: Locker
@@ -260,7 +264,7 @@ MonoBehaviour:
   doorClosedZ: 0
   doorOpenDuration: 0.25
   doorCloseDuration: 0.3
-  hiddenDoorAjar: 0.035
+  hiddenDoorAjar: 0.01
   movementDoorLead: 0.25
   enterDuration: 1.2
   exitDuration: 1.1
@@ -272,6 +276,26 @@ MonoBehaviour:
   returnState: Base Layer.Idle Walk Run Blend
   cameraBob: 0.04
   cameraRoll: 3
+  forcedDoorOpenDuration: 0.08
+  forcedOpenDuration: 0.45
+  monsterStandPoint: {fileID: 0}
+  monsterStandDistance: 1.2
+  gaspNoiseRadius: 9
+  creakOpenClips:
+  - {fileID: 8300000, guid: 32e52dc732f069a48b7f4373e04ece0e, type: 3}
+  - {fileID: 8300000, guid: 2269a3a96e867544ab5d3ef9b6555487, type: 3}
+  creakCloseClips:
+  - {fileID: 8300000, guid: 8238155aa3a9df445962a6bb625ac825, type: 3}
+  - {fileID: 8300000, guid: 082e3be5c86d4f74fa5394cd8c8b6ea4, type: 3}
+  forcedOpenClip: {fileID: 8300000, guid: a5709194f1fd13b43ae4f8478551bd65, type: 3}
+  knockClip: {fileID: 8300000, guid: f2158c842c7b75f4f81f5385f1760cb1, type: 3}
+  gaspClip: {fileID: 8300000, guid: 2fe3cdecb06bc6b45933d07dbcd1b6e0, type: 3}
+  doorVolume: 0.85
+  doorAudioMaxDistance: 18
+  knockRattleDegrees: 3.5
+  heartbeatClip: {fileID: 8300000, guid: 393d5cbbca267b6478e5e0269bc510b1, type: 3}
+  breathingLoopClip: {fileID: 8300000, guid: 6beae1302b529354189f403ceabe1243, type: 3}
+  lurkTensionClip: {fileID: 8300000, guid: 4f69291093f0f6a4db59caa2d37e935c, type: 3}
 --- !u!65 &3195659727287020782
 BoxCollider:
   m_ObjectHideFlags: 0

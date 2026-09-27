@@ -59,10 +59,12 @@ public sealed class GameplaySpawnPointRegistry : MonoBehaviour
     private Transform GetCheckpointSpawnPoint(bool isHost)
     {
         B1FCheckpointTracker tracker = B1FCheckpointTracker.Instance;
-        if (tracker == null)
-            return null;
+        return tracker != null ? GetCheckpointSpawnPoint(tracker.Current, isHost) : null;
+    }
 
-        return tracker.Current switch
+    public Transform GetCheckpointSpawnPoint(B1FCheckpoint checkpoint, bool isHost)
+    {
+        return checkpoint switch
         {
             B1FCheckpoint.DistributionBoxACompleted => isHost
                 ? distributionBoxAHostSpawnPoint : distributionBoxAClientSpawnPoint,

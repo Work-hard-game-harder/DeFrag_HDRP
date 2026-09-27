@@ -28267,11 +28267,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
       propertyPath: terminalId
-      value: terminal_31
+      value: terminal_22
       objectReference: {fileID: 0}
     - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
       propertyPath: displayName
-      value: TERMINAL 31
+      value: TERMINAL 22
       objectReference: {fileID: 0}
     - target: {fileID: 618710890111500001, guid: 30e079c5885865e43a4cdbf02d0374d9, type: 3}
       propertyPath: availableCommands
@@ -44425,10 +44425,10 @@ MonoBehaviour:
     questTitle: "\uC11C\uBC84 \uB370\uC774\uD130\uB97C \uB2E4\uC6B4\uB85C\uB4DC\uD558\uB77C"
     requiredSignal: B1F_DOWNLOAD_INTERRUPTED
     progressScope: 0
-    revealMode: 0
-    targetCount: 0
+    revealMode: 1
+    targetCount: 1
     rejectDuplicateSources: 1
-    persistUntilSceneChange: 1
+    persistUntilSceneChange: 0
     currentCount: 0
   - questId: b1f_full_power
     questTitle: "\uBC1C\uC804\uAE30\uB97C \uCC3E\uC544 \uC2DC\uC124 \uC804\uB825\uC744
@@ -44445,10 +44445,10 @@ MonoBehaviour:
       \uAE30\uB2E4\uB824\uB77C"
     requiredSignal: B1F_DOWNLOAD_COMPLETED
     progressScope: 0
-    revealMode: 0
-    targetCount: 0
+    revealMode: 1
+    targetCount: 1
     rejectDuplicateSources: 1
-    persistUntilSceneChange: 1
+    persistUntilSceneChange: 0
     currentCount: 0
   - questId: b1f_escape
     questTitle: "\uAD34\uBB3C\uC744 \uD53C\uD574 \uC9C0\uD558\uB85C \uD0C8\uCD9C\uD558\uB77C"
@@ -53076,19 +53076,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 047718e5d7f64d7194c244796fabd8a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeFrag.B1F.B1FStoryDebugCheckpoint
-  startAfterDistributionBoxA: 0
-  startAfterConnectServer: 0
+  startCheckpoint: 2
   freezeTvMonsterInPlace: 0
+  giveRoleItems: 1
+  hackingPadItem: {fileID: 4609237498574060728}
+  cameraItem: {fileID: 698339785}
   disableQuestBarriers: 0
   questBarriersToDisable:
   - {fileID: 1120666424}
   distributionBoxA: {fileID: 924678998}
   powerController: {fileID: 2116658093}
   connectServerCoordinator: {fileID: 2116658094}
+  escapeSequence: {fileID: 452490623}
+  generatorB: {fileID: 266757279}
+  spawnPointRegistry: {fileID: 1715665260}
   distributionBoxAQuestId: b1f_emergency_power
   connectServerQuestId: b1f_connect_server
+  downloadInterruptedQuestId: b1f_download_initial
   connectServerTerminalId: terminal_31
   networkReadyTimeout: 20
+  storyStateTimeout: 90
 --- !u!114 &8524021100004
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -53128,8 +53135,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8524021200001}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
-  m_LocalPosition: {x: 23.5, y: 0.2, z: -87.3}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 26.2, y: 0.1, z: -89.3}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -53159,8 +53166,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8524021200003}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
-  m_LocalPosition: {x: 25.5, y: 0.2, z: -87.3}
+  m_LocalRotation: {x: 0, y: -0.3007058, z: 0, w: 0.95371693}
+  m_LocalPosition: {x: 27.8, y: 0.1, z: -89.3}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -53190,8 +53197,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8524021200005}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -43.8, y: 0.2, z: -56.9}
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: -0.00000004371139}
+  m_LocalPosition: {x: -17.5, y: 0.1, z: -83.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -53221,8 +53228,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8524021200007}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -41.8, y: 0.2, z: -56.9}
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: -0.00000004371139}
+  m_LocalPosition: {x: -13.5, y: 0.1, z: -83.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -53253,7 +53260,7 @@ Transform:
   m_GameObject: {fileID: 8524021200009}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -46.5, y: 0.35, z: -137.5}
+  m_LocalPosition: {x: -45.3, y: 0.1, z: -131}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -53284,7 +53291,7 @@ Transform:
   m_GameObject: {fileID: 8524021200011}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -44.5, y: 0.35, z: -137.5}
+  m_LocalPosition: {x: -42.7, y: 0.1, z: -131}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
