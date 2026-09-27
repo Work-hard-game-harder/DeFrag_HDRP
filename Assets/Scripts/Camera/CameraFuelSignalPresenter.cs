@@ -7,7 +7,7 @@ using UnityEngine.UI;
 [RequireComponent(typeof(CameraItem))]
 public sealed class CameraFuelSignalPresenter : MonoBehaviour
 {
-    private static readonly Color SignalGreen = new(0.15f, 1f, 0.38f, 1f);
+    private static Color SignalGreen => RuntimeUi.Theme.info;
 
     [Header("Fuel Signal Range")]
     [SerializeField, Min(0.1f)] private float nearDistance = 2f;
@@ -86,7 +86,7 @@ public sealed class CameraFuelSignalPresenter : MonoBehaviour
         float pulse = Mathf.Sin(Time.unscaledTime * Mathf.Lerp(2f, 10f, strength)) *
                       0.5f + 0.5f;
 
-        label.text = $"FUEL B  /  TRACKING\nSIGNAL  {activeBars} / {bars.Length}";
+        label.text = $"연료통 신호\n강도  {activeBars} / {bars.Length}";
         for (int i = 0; i < bars.Length; i++)
         {
             bool active = i < activeBars;
@@ -115,27 +115,12 @@ public sealed class CameraFuelSignalPresenter : MonoBehaviour
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1920f, 1080f);
 
-        GameObject display = new("Fuel Frequency", typeof(RectTransform), typeof(Image));
-        display.transform.SetParent(canvasObject.transform, false);
-        RectTransform displayRect = (RectTransform)display.transform;
-        displayRect.anchorMin = new Vector2(0.34f, 0.11f);
-        displayRect.anchorMax = new Vector2(0.66f, 0.19f);
-        displayRect.offsetMin = Vector2.zero;
-        displayRect.offsetMax = Vector2.zero;
-        display.GetComponent<Image>().color = new Color(0f, 0.04f, 0.015f, 0.84f);
-        OperationPanelStyle.Frame(display);
+        Image displayImage = RuntimeUi.FramedPanel("Fuel Frequency", canvasObject.transform,
+            new Color(RuntimeUi.Theme.panel.r, RuntimeUi.Theme.panel.g, RuntimeUi.Theme.panel.b, 0.84f), 14f);
+        RuntimeUi.Place(displayImage.rectTransform, new Vector2(0.34f, 0.11f), new Vector2(0.66f, 0.19f));
+        GameObject display = displayImage.gameObject;
 
-        GameObject textObject = new(
-            "Fuel Signal Label",
-            typeof(RectTransform),
-            typeof(TextMeshProUGUI));
-        textObject.transform.SetParent(display.transform, false);
-        label = textObject.GetComponent<TMP_Text>();
-        label.fontSize = 23f;
-        label.fontStyle = FontStyles.Bold;
-        label.color = SignalGreen;
-        label.alignment = TextAlignmentOptions.MidlineLeft;
-        label.raycastTarget = false;
+        label = RuntimeUi.Text("Fuel Signal Label", display.transform, 23f, TextAlignmentOptions.MidlineLeft, null, SignalGreen);
         RectTransform textRect = label.rectTransform;
         textRect.anchorMin = Vector2.zero;
         textRect.anchorMax = new Vector2(0.66f, 1f);

@@ -15,6 +15,50 @@ namespace DeFrag.B1F
         private const float CrankShakeMeters = 0.012f;
         private const float BackfireShakeMeters = 0.06f;
 
+        private static readonly TutorialCard RadarCard = new()
+        {
+            Id = "generatorB.radar",
+            Role = "해커 • 발전기 제어 패널",
+            Title = "시설 레이더로 길잡이",
+            Goal = "동료가 연료통 2개를 찾아 발전기에 붓도록 안내하세요.",
+            Steps = new[]
+            {
+                ("", "초록 화살표 = 동료, 주황 원 = 연료 신호 구역, 빨간 점 = 괴물(3초마다 탐지)"),
+                ("무전", "\"왼쪽 복도로 쭉!\"처럼 길을 안내하고, 괴물이 가까우면 경고하세요."),
+                ("클릭", "지도를 클릭하면 그곳에서 소음 미끼가 터져 괴물을 유인해요. (40초마다)"),
+                ("", "연료 2개가 들어가면 점화 단계가 시작돼요.")
+            }
+        };
+
+        private static readonly TutorialCard IgnitionCard = new()
+        {
+            Id = "generatorB.ignition",
+            Role = "해커 • 점화 제어",
+            Title = "점화 타이밍",
+            Goal = "동료의 크랭크 속도를 맞춰주고, 알맞은 순간에 점화하세요.",
+            Steps = new[]
+            {
+                ("", "오른쪽 막대의 초록 구간이 필요한 회전수예요. 화면에 '더 빨리/천천히'가 떠요."),
+                ("무전", "그 문구를 그대로 외쳐서 동료의 연타 속도를 맞추세요."),
+                ("SPACE", "회전수가 맞을 때 바늘이 초록 창에 오면 SPACE! 3번 성공하면 시동."),
+                ("", "빗나가면 역화 폭음에 괴물이 옵니다. 대신 점화창이 조금씩 넓어져요.")
+            }
+        };
+
+        private static readonly TutorialCard CrankCard = new()
+        {
+            Id = "generatorB.crank",
+            Role = "카메라맨 • 시동 크랭크",
+            Title = "크랭크를 돌려라",
+            Goal = "해커의 신호에 맞춰 A와 D를 번갈아 연타합니다.",
+            Steps = new[]
+            {
+                ("A  D", "번갈아 누를수록 빨리 돌아요. 같은 키만 누르면 거의 안 돌아요."),
+                ("무전", "해커가 \"더 빨리!\" \"천천히!\"라고 외치면 속도를 맞추세요."),
+                ("", "해커가 점화에 성공할 때마다 불이 하나씩 켜져요. 3개면 시동!")
+            }
+        };
+
         public static GeneratorBLocalSession Active { get; private set; }
 
         private GeneratorBController controller;
@@ -39,6 +83,7 @@ namespace DeFrag.B1F
         private float startedAt;
         private float nextHeartbeat;
         private float backfireShakeUntil;
+        private bool tutorialOpen;
         private Coroutine delayedExit;
 
         public bool IsFor(GeneratorBController target) => active && controller == target;
@@ -100,6 +145,16 @@ namespace DeFrag.B1F
             SetCursor(mode == GeneratorBSessionMode.Panel);
             controller.SendHeartbeat();
             nextHeartbeat = Time.unscaledTime + HeartbeatInterval;
+            tutorialOpen = false;
+            ShowCard(mode == GeneratorBSessionMode.Crank ? CrankCard : controller.IsPrimed ? IgnitionCard : RadarCard);
+        }
+
+        private void ShowCard(TutorialCard card)
+        {
+            if (MinigameTutorial.HasSeen(card.Id) || canvas == null)
+                return;
+            tutorialOpen = true;
+            MinigameTutorial.ShowBlocking(card, (RectTransform)canvas.transform, () => tutorialOpen = false);
         }
 
         private void Update()
@@ -141,6 +196,11 @@ namespace DeFrag.B1F
                 controller.SendHeartbeat();
                 nextHeartbeat = Time.unscaledTime + HeartbeatInterval;
             }
+
+            if (!tutorialOpen && mode == GeneratorBSessionMode.Panel && controller.IsPrimed)
+                ShowCard(IgnitionCard);
+            if (tutorialOpen)
+                return;
 
             if (mode == GeneratorBSessionMode.Panel)
             {

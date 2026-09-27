@@ -185,7 +185,7 @@ public sealed class FacilityRadarView : MonoBehaviour, IPointerClickHandler
     {
         if (Time.unscaledTime >= nextMonsterRefresh)
         {
-            monsters = FindObjectsByType<MonsterAI>(FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+            monsters = FindObjectsByType<MonsterAI>(FindObjectsInactive.Exclude);
             nextMonsterRefresh = Time.unscaledTime + MonsterRefreshSeconds;
         }
 
@@ -261,6 +261,7 @@ public sealed class FacilityRadarView : MonoBehaviour, IPointerClickHandler
         {
             TMP_Text label = NextLabel(marker.Label, marker.Color);
             Place(label.rectTransform, marker.Position);
+            label.rectTransform.anchoredPosition = new Vector2(0f, 22f);
         }
     }
 

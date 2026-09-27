@@ -41,6 +41,10 @@ namespace DeFrag.B1F
         [SerializeField] private string boxARequiredQuestId = "b1f_emergency_power";
         [SerializeField, Min(1f)] private float maximumUseDistance = 6f;
         [SerializeField, Min(1f)] private float hintRefreshSeconds = 30f;
+        [Tooltip("켜면 hintRefreshSeconds마다 정답 패턴이 바뀝니다. 처음 하는 플레이어에게는 끄는 것을 권장합니다.")]
+        [SerializeField] private bool rotateHints;
+        [Tooltip("끄면 메인 노브의 성공 구간이 배전함 조작자에게 보이지 않고, 원격 모니터(해커)에게만 전달됩니다.")]
+        [SerializeField] private bool revealKnobZoneToOperator;
 
         [Header("Interaction")]
         [SerializeField] private string availableText = "배전함 열기 (E 홀드)";
@@ -134,9 +138,14 @@ namespace DeFrag.B1F
             NetworkVariableReadPermission.Everyone,
             NetworkVariableWritePermission.Server);
 
+        public static event System.Action<ushort, int> LocalHintReceived;
+        public static event System.Action<float, float, int, int> LocalKnobZoneReceived;
+        public static event System.Action<bool> LocalKnobResolved;
+
         private ushort answerMask;
         private bool hintSessionActive;
         private ulong hintOwnerClient = NoClient;
+        private ulong monitorClient = NoClient;
         private double nextHintRefreshTime;
         private Coroutine doorRoutine;
         private Coroutine mainKnobRoutine;
@@ -156,6 +165,13 @@ namespace DeFrag.B1F
         public bool IsHintSessionActive => hintSessionActive;
         public bool IsBoxA => isBoxA;
         public DistributionPuzzlePhase Phase => phase.Value;
+        public ushort CurrentSwitchMask => currentSwitchMask.Value;
+        public bool HasOperator => controllingClient.Value != NoClient;
+        public bool CanUseNow => CanUseForCurrentPowerState();
+        public int ActiveBankIndex => GetActiveBankIndex();
+        public static int SwitchesInBank => SwitchesPerBank;
+        public DistributionSwitch GetSwitch(int index) =>
+            switches != null && index >= 0 && index < switches.Length ? switches[index] : null;
 
         /// <summary>
         /// Editor/Development Build shortcut that enters the same authoritative
@@ -222,7 +238,7 @@ namespace DeFrag.B1F
 
         private void Update()
         {
-            if (!IsServer || !hintSessionActive || NetworkManager == null)
+            if (!IsServer || !hintSessionActive || !rotateHints || NetworkManager == null)
                 return;
 
             if (NetworkManager.ServerTime.Time >= nextHintRefreshTime)
@@ -370,6 +386,7 @@ namespace DeFrag.B1F
             {
                 timingInputLocked = true;
                 timingAttemptActive = false;
+                if (HasSeparateMonitor) KnobResolvedClientRpc(true, Target(monitorClient));
                 timingRound++;
                 timingSuccessRoutine = timingRound >= timingRoundsRequired
                     ? StartCoroutine(CompletePuzzleAfterPresentation(sender))
@@ -380,6 +397,7 @@ namespace DeFrag.B1F
             timingInputLocked = true;
             PlayFailureClientRpc();
             TimingFailureClientRpc(Target(sender));
+            if (HasSeparateMonitor) KnobResolvedClientRpc(false, Target(monitorClient));
             if (timingFailureRoutine != null) StopCoroutine(timingFailureRoutine);
             timingFailureRoutine = StartCoroutine(RestartTimingAfterFailure(sender));
         }
@@ -394,10 +412,27 @@ namespace DeFrag.B1F
         [ServerRpc(RequireOwnership = false)]
         private void StartHintSessionServerRpc(ServerRpcParams rpc = default)
         {
+            ulong sender = rpc.Receive.SenderClientId;
             if (completed.Value || !CanUseForCurrentPowerState()) return;
-            if (controllingClient.Value == rpc.Receive.SenderClientId) return;
+            if (controllingClient.Value == sender) return;
+            monitorClient = sender;
+
+            // A reopened monitor re-syncs the live bank or knob instead of generating a new answer.
+            if (hintSessionActive)
+            {
+                hintOwnerClient = sender;
+                ShowHintClientRpc(answerMask, GetActiveBankIndex(), hintRefreshSeconds, Target(sender));
+                return;
+            }
+            if (phase.Value == DistributionPuzzlePhase.MainKnob)
+            {
+                if (timingAttemptActive)
+                    SendKnobZoneToMonitor();
+                return;
+            }
+
             if (!IsWaitingForBankData(phase.Value)) return;
-            hintOwnerClient = rpc.Receive.SenderClientId;
+            hintOwnerClient = sender;
             hintSessionActive = true;
             phase.Value = phase.Value switch
             {
@@ -428,7 +463,29 @@ namespace DeFrag.B1F
             float duration,
             ClientRpcParams rpc = default)
         {
-            DistributionHintPresenter.GetOrCreate().Show(mask, bankIndex, duration);
+            if (LocalHintReceived != null)
+                LocalHintReceived.Invoke(mask, bankIndex);
+            else
+                DistributionHintPresenter.GetOrCreate().Show(mask, bankIndex, duration);
+        }
+
+        [ClientRpc]
+        private void ShowKnobZoneClientRpc(float targetCenter, float successWidth, int round, int totalRounds,
+            ClientRpcParams rpc = default) =>
+            LocalKnobZoneReceived?.Invoke(targetCenter, successWidth, round, totalRounds);
+
+        [ClientRpc]
+        private void KnobResolvedClientRpc(bool success, ClientRpcParams rpc = default) =>
+            LocalKnobResolved?.Invoke(success);
+
+        private bool HasSeparateMonitor =>
+            monitorClient != NoClient && monitorClient != controllingClient.Value &&
+            NetworkManager.ConnectedClients.ContainsKey(monitorClient);
+
+        private void SendKnobZoneToMonitor()
+        {
+            if (HasSeparateMonitor)
+                ShowKnobZoneClientRpc(timingTargetCenter, GetCurrentTimingWidth(), timingRound + 1, timingRoundsRequired, Target(monitorClient));
         }
 
         [ClientRpc]
@@ -484,6 +541,7 @@ namespace DeFrag.B1F
             float roundTripDuration,
             int round,
             int totalRounds,
+            bool zoneHidden,
             ClientRpcParams rpc = default)
         {
             DistributionBoxLocalSession session = DistributionBoxLocalSession.Active;
@@ -494,7 +552,8 @@ namespace DeFrag.B1F
                     successWidth,
                     roundTripDuration,
                     round,
-                    totalRounds);
+                    totalRounds,
+                    zoneHidden);
         }
 
         [ClientRpc]
@@ -585,6 +644,7 @@ namespace DeFrag.B1F
             timingAttemptStartTime = NetworkManager.ServerTime.Time + 0.15d;
             timingAttemptActive = true;
             timingInputLocked = false;
+            bool zoneHidden = !revealKnobZoneToOperator && HasSeparateMonitor;
             StartTimingAttemptClientRpc(
                 timingAttemptStartTime,
                 timingTargetCenter,
@@ -592,7 +652,9 @@ namespace DeFrag.B1F
                 currentDuration,
                 timingRound + 1,
                 timingRoundsRequired,
+                zoneHidden,
                 Target(controllerClient));
+            SendKnobZoneToMonitor();
         }
 
         private IEnumerator AdvanceTimingRoundAfterPresentation(ulong controllerClient)
@@ -700,6 +762,7 @@ namespace DeFrag.B1F
                 hintOwnerClient = NoClient;
                 answerMask = 0;
             }
+            if (monitorClient == clientId) monitorClient = NoClient;
         }
 
         private void OnValidate()

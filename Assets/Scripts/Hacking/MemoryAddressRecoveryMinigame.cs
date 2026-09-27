@@ -5,47 +5,52 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
+// Unlock-door module: match each lost address pattern (first + last digit) to a candidate card, in order.
 public sealed class MemoryAddressRecoveryMinigame : HackingMinigameBase
 {
-    private static readonly Color Green = new(0.1f, 1f, 0.2f);
-    private static readonly Color DimGreen = new(0.02f, 0.45f, 0.08f);
-    private static readonly Color ErrorRed = new(1f, 0.1f, 0.08f);
-    private static readonly Color AcceptedWhite = new(0.8f, 1f, 0.82f);
-    private static readonly Color BrightSelection = new(0.12f, 1f, 0.22f, 1f);
-    private static readonly Color NormalButton = new(0f, 0.1f, 0.02f, 0.95f);
-    private static readonly Color CompletedButton = new(0.02f, 0.24f, 0.07f, 0.9f);
-
     [Header("Memory Sequence")]
-    [SerializeField, Min(1)] private int addressCount = 4;
-    [SerializeField, Min(0.25f)] private float revealDuration = 2.4f;
-    [SerializeField, Min(0f)] private float shufflePause = 0.35f;
+    [SerializeField, Min(1)] private int addressCount = 3;
+    [SerializeField, Min(0f)] private float dumpDuration = 1.2f;
 
     [Header("Presentation")]
     [SerializeField] private TMP_FontAsset terminalFont;
 
     private readonly List<string> originalSequence = new();
-    private readonly List<string> displayedAddresses = new();
-    private readonly List<Button> addressButtons = new();
-    private readonly List<TMP_Text> addressLabels = new();
+    private readonly List<string> candidates = new();
+    private readonly List<Image> slotPanels = new();
+    private readonly List<TMP_Text> slotLabels = new();
+    private readonly List<Image> cardPanels = new();
+    private readonly List<TMP_Text> cardLabels = new();
+    private readonly List<bool> cardUsed = new();
 
-    private TMP_Text dumpText;
     private TMP_Text instructionText;
-    private TMP_Text restoredText;
+    private TMP_Text dumpText;
     private int selection;
     private int nextAddress;
     private bool acceptingInput;
     private bool finished;
-    private TerminalSfxPlayer terminalSfx;
 
-    public override string ControlHint =>
-        "[A/D] SELECT    [E/ENTER] CONFIRM    [BACKSPACE] RETURN";
+    public override string ControlHint => TerminalScreenController.KeyHints(
+        ("A/D", "선택"), ("E", "확정"), ("클릭", "바로 선택"), ("BACKSPACE", "메뉴로"));
 
     public override void Begin(ConnectionDevice device, TerminalCommands command)
     {
-        terminalSfx = device.TerminalSfx;
-        BuildInterface();
         GenerateUniqueAddresses();
-        StartCoroutine(RevealAndShuffle());
+        BuildInterface();
+        MinigameTutorial.ShowBlocking(new TutorialCard
+        {
+            Id = "terminal.address",
+            Role = "해커 • 문 잠금 해제",
+            Title = "주소 복구",
+            Goal = "위쪽 '복구 순서'대로 맞는 주소 카드를 골라 문 잠금을 풉니다.",
+            Steps = new[]
+            {
+                ("", "위쪽 슬롯에 첫 글자와 마지막 글자만 남은 주소가 있어요. 예: 0x8??6"),
+                ("", "아래 카드 중 첫 글자와 마지막 글자가 같은 주소를 찾으세요. (주황색으로 강조)"),
+                ("A / D  +  E", "키보드로 고르거나, 마우스로 카드를 바로 클릭하세요."),
+                ("", "틀려도 벌점은 없어요. 슬롯 1부터 순서대로!")
+            }
+        }, (RectTransform)transform, () => StartCoroutine(DumpAndStart()));
     }
 
     public override void End()
@@ -55,6 +60,7 @@ public sealed class MemoryAddressRecoveryMinigame : HackingMinigameBase
 
     private void Update()
     {
+        AnimateCards();
         if (!acceptingInput || finished)
             return;
 
@@ -63,190 +69,179 @@ public sealed class MemoryAddressRecoveryMinigame : HackingMinigameBase
         else if (TerminalKeyboardInput.RightPressed)
             MoveSelection(1);
         else if (TerminalKeyboardInput.ConfirmPressed)
-            addressButtons[selection].onClick.Invoke();
+            Submit(selection);
     }
 
-    private IEnumerator RevealAndShuffle()
+    private IEnumerator DumpAndStart()
     {
-        acceptingInput = false;
-        dumpText.text = BuildDump(originalSequence);
-        instructionText.text =
-            "휘발성 메모리 덤프 감지\n" +
-            "현재 실행 순서를 확인하십시오";
-        nextAddress = 0;
-        UpdateRestoredSequence();
-
-        yield return new WaitForSecondsRealtime(Mathf.Max(4.5f, revealDuration));
-
-        dumpText.text = "> MEMORY SIGNAL LOST\n> RECONSTRUCTING ADDRESS TABLE...";
-        yield return new WaitForSecondsRealtime(shufflePause);
-
-        List<string> shuffled = new(originalSequence);
-        Shuffle(shuffled);
-        if (MatchesOriginal(shuffled))
-            SwapFirstTwo(shuffled);
-
-        displayedAddresses.Clear();
-        for (int i = 0; i < addressButtons.Count; i++)
+        UiSfx.Play(UiCue.MemoryShuffle);
+        for (float t = 0f; t < dumpDuration; t += 0.08f)
         {
-            string address = shuffled[i];
-            int buttonIndex = i;
-            displayedAddresses.Add(address);
-            addressLabels[i].text = address;
-            addressLabels[i].color = Green;
-            addressButtons[i].onClick.RemoveAllListeners();
-            addressButtons[i].onClick.AddListener(() => Submit(buttonIndex, address));
-            addressButtons[i].interactable = true;
+            dumpText.text = $"> 메모리 덤프 재구성 중... {Mathf.RoundToInt(t / dumpDuration * 100f):00}%\n> {Random.Range(0x1000, 0xFFFF):X4} {Random.Range(0x1000, 0xFFFF):X4} {Random.Range(0x1000, 0xFFFF):X4}";
+            yield return new WaitForSecondsRealtime(0.08f);
         }
-
-        UpdateRecoveryGuide();
+        dumpText.text = "> 주소 테이블 복구 준비 완료";
         acceptingInput = true;
-        Select(0);
+        RefreshSlots();
+        Select(0, false);
     }
 
-    private void Submit(int buttonIndex, string address)
+    private void Submit(int index)
     {
-        if (!acceptingInput || finished)
+        if (!acceptingInput || finished || cardUsed[index])
             return;
 
-        if (address != originalSequence[nextAddress])
+        if (candidates[index] != originalSequence[nextAddress])
         {
-            terminalSfx?.PlayIncorrectAnswer();
-            acceptingInput = false;
-            instructionText.color = ErrorRed;
-            instructionText.text =
-                "주소 불일치 // 밝은 초록색 선택을 확인하세요\n" +
-                $"현재 단서: {BuildSignature(originalSequence[nextAddress])}";
-            StartCoroutine(ResumeAfterWrongSelection());
+            UiSfx.Play(UiCue.CardWrong);
+            StartCoroutine(Shake(cardPanels[index].rectTransform));
+            SetInstruction($"다른 주소예요! 첫 글자 <color=#{Amber}>{originalSequence[nextAddress][2]}</color>, 마지막 글자 <color=#{Amber}>{originalSequence[nextAddress][5]}</color>를 찾으세요", true);
             return;
         }
 
+        UiSfx.Play(UiCue.CardCorrect, 1f, 1f + nextAddress * 0.12f);
+        cardUsed[index] = true;
         nextAddress++;
-        UpdateRestoredSequence();
-        DisableButton(buttonIndex);
+        RefreshSlots();
 
         if (nextAddress < originalSequence.Count)
         {
-            UpdateRecoveryGuide();
-            SelectNextInteractable();
+            SelectNextAvailable();
             return;
         }
 
         finished = true;
         acceptingInput = false;
-        instructionText.color = AcceptedWhite;
-        instructionText.text = "메모리 복구 완료 // 접근 승인";
+        SetInstruction("메모리 복구 완료 — 잠금 해제!", false);
         StartCoroutine(ReportSuccessAfterDelay());
-    }
-
-    private IEnumerator ResumeAfterWrongSelection()
-    {
-        yield return new WaitForSecondsRealtime(0.65f);
-        instructionText.color = Green;
-        UpdateRecoveryGuide();
-        acceptingInput = true;
     }
 
     private IEnumerator ReportSuccessAfterDelay()
     {
-        yield return new WaitForSecondsRealtime(0.75f);
+        yield return new WaitForSecondsRealtime(0.8f);
         ReportSuccess();
     }
 
     private void GenerateUniqueAddresses()
     {
         originalSequence.Clear();
-        HashSet<int> generated = new();
         HashSet<string> signatures = new();
-
         while (originalSequence.Count < addressCount)
         {
-            int value = Random.Range(0x1000, 0x10000);
-            string address = $"0x{value:X4}";
-            if (generated.Add(value) && signatures.Add(BuildSignature(address)))
+            string address = $"0x{Random.Range(0x1000, 0x10000):X4}";
+            if (signatures.Add(Signature(address)))
                 originalSequence.Add(address);
         }
+
+        candidates.Clear();
+        candidates.AddRange(originalSequence);
+        for (int i = candidates.Count - 1; i > 0; i--)
+        {
+            int swap = Random.Range(0, i + 1);
+            (candidates[i], candidates[swap]) = (candidates[swap], candidates[i]);
+        }
+        if (candidates.Count > 1 && candidates[0] == originalSequence[0])
+            (candidates[0], candidates[1]) = (candidates[1], candidates[0]);
     }
+
+    private static string Amber => DefragUiTheme.Hex(RuntimeUi.Theme.info);
+
+    private static string Signature(string address) => $"{address[2]}{address[5]}";
+
+    private static string Emphasize(string address, bool hideMiddle) =>
+        $"0x<color=#{Amber}>{address[2]}</color>{(hideMiddle ? $"<color=#{DefragUiTheme.Hex(RuntimeUi.Theme.dim)}>??</color>" : address.Substring(3, 2))}<color=#{Amber}>{address[5]}</color>";
 
     private void BuildInterface()
     {
-        dumpText = CreateText("Memory Dump", 23f, TextAlignmentOptions.TopLeft);
-        Place(dumpText.rectTransform, new Vector2(0f, 0.58f), Vector2.one,
-            new Vector2(12f, 0f), new Vector2(-12f, 0f));
-        dumpText.color = DimGreen;
+        DefragUiTheme theme = RuntimeUi.Theme;
 
-        instructionText = CreateText("Instruction", 26f, TextAlignmentOptions.Center);
-        Place(instructionText.rectTransform, new Vector2(0f, 0.42f), new Vector2(1f, 0.58f),
-            new Vector2(8f, 0f), new Vector2(-8f, 0f));
+        TMP_Text slotTitle = CreateText("Slot Title", 22f, TextAlignmentOptions.MidlineLeft, transform);
+        RuntimeUi.Place(slotTitle.rectTransform, new Vector2(0.02f, 0.9f), new Vector2(0.98f, 1f));
+        slotTitle.color = theme.dim;
+        slotTitle.text = "복구 순서  //  RESTORE ORDER";
 
-        RectTransform buttonRow = CreateRect("Address Row", transform);
-        Place(buttonRow, new Vector2(0.03f, 0.19f), new Vector2(0.97f, 0.4f),
-            Vector2.zero, Vector2.zero);
-        HorizontalLayoutGroup layout = buttonRow.gameObject.AddComponent<HorizontalLayoutGroup>();
-        layout.spacing = 12f;
-        layout.childControlHeight = true;
-        layout.childControlWidth = true;
-        layout.childForceExpandHeight = true;
-        layout.childForceExpandWidth = true;
-
-        for (int i = 0; i < addressCount; i++)
-            CreateAddressButton(buttonRow);
-
-        restoredText = CreateText("Restored Sequence", 22f, TextAlignmentOptions.Center);
-        Place(restoredText.rectTransform, new Vector2(0f, 0.02f), new Vector2(1f, 0.17f),
-            new Vector2(8f, 0f), new Vector2(-8f, 0f));
-    }
-
-    private void CreateAddressButton(Transform parent)
-    {
-        GameObject buttonObject = new(
-            "Memory Address",
-            typeof(RectTransform),
-            typeof(Image),
-            typeof(Button));
-        buttonObject.transform.SetParent(parent, false);
-        buttonObject.GetComponent<Image>().color = new Color(0f, 0.12f, 0.02f, 0.9f);
-
-        Button button = buttonObject.GetComponent<Button>();
-        button.transition = Selectable.Transition.None;
-        button.interactable = false;
-
-        TMP_Text label = CreateText(
-            "Address",
-            25f,
-            TextAlignmentOptions.Center,
-            buttonObject.transform);
-        Stretch(label.rectTransform, new Vector2(6f, 4f), new Vector2(-6f, -4f));
-        label.text = "0x----";
-        addressButtons.Add(button);
-        addressLabels.Add(label);
-    }
-
-    private void UpdateRestoredSequence()
-    {
-        string[] slots = new string[originalSequence.Count];
-        for (int i = 0; i < slots.Length; i++)
-            slots[i] = i < nextAddress ? originalSequence[i] : "--";
-        restoredText.text =
-            $"RESTORED {nextAddress:00}/{originalSequence.Count:00}: " +
-            $"[ {string.Join(" ] [ ", slots)} ]";
-    }
-
-    private void DisableButton(int index)
-    {
-        addressButtons[index].interactable = false;
-        addressLabels[index].color = AcceptedWhite;
-        RefreshSelectionVisual();
-    }
-
-    private void SelectNextInteractable()
-    {
-        for (int offset = 1; offset <= addressButtons.Count; offset++)
+        RectTransform slotRow = CreateRect("Slots", transform);
+        RuntimeUi.Place(slotRow, new Vector2(0.02f, 0.62f), new Vector2(0.98f, 0.9f));
+        for (int i = 0; i < originalSequence.Count; i++)
         {
-            int index = (selection + offset) % addressButtons.Count;
-            if (addressButtons[index].interactable)
+            Image slot = RuntimeUi.FramedPanel($"Slot {i + 1}", slotRow, theme.panel, 14f);
+            float width = 1f / originalSequence.Count;
+            RuntimeUi.Place(slot.rectTransform, new Vector2(i * width + 0.01f, 0f), new Vector2((i + 1) * width - 0.01f, 1f));
+            TMP_Text label = CreateText("Label", 40f, TextAlignmentOptions.Center, slot.transform);
+            RuntimeUi.Stretch(label.rectTransform, 8f);
+            slotPanels.Add(slot);
+            slotLabels.Add(label);
+        }
+
+        instructionText = CreateText("Instruction", 28f, TextAlignmentOptions.Center, transform);
+        RuntimeUi.Place(instructionText.rectTransform, new Vector2(0.02f, 0.47f), new Vector2(0.98f, 0.61f));
+        instructionText.enableAutoSizing = true;
+        instructionText.fontSizeMin = 16f;
+        instructionText.fontSizeMax = 28f;
+
+        RectTransform cardRow = CreateRect("Candidates", transform);
+        RuntimeUi.Place(cardRow, new Vector2(0.06f, 0.14f), new Vector2(0.94f, 0.45f));
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            int index = i;
+            GameObject cardObject = new($"Card {i + 1}", typeof(RectTransform), typeof(Image), typeof(Button));
+            cardObject.transform.SetParent(cardRow, false);
+            float width = 1f / candidates.Count;
+            RuntimeUi.Place((RectTransform)cardObject.transform, new Vector2(i * width + 0.015f, 0f), new Vector2((i + 1) * width - 0.015f, 1f));
+            Image panel = cardObject.GetComponent<Image>();
+            panel.color = theme.panelRaised;
+            RuntimeUi.AddCornerBrackets(panel.rectTransform, 16f, 3f, theme.edge);
+            Button button = cardObject.GetComponent<Button>();
+            button.transition = Selectable.Transition.None;
+            button.onClick.AddListener(() => { Select(index); Submit(index); });
+            cardObject.AddComponent<MenuHoverSelect>().Hovered = () => { if (acceptingInput && selection != index) Select(index); };
+
+            TMP_Text label = CreateText("Address", 50f, TextAlignmentOptions.Center, cardObject.transform);
+            RuntimeUi.Stretch(label.rectTransform, 6f);
+            label.text = Emphasize(candidates[i], false);
+            cardPanels.Add(panel);
+            cardLabels.Add(label);
+            cardUsed.Add(false);
+        }
+
+        dumpText = CreateText("Dump", 19f, TextAlignmentOptions.BottomLeft, transform);
+        RuntimeUi.Place(dumpText.rectTransform, new Vector2(0.02f, 0f), new Vector2(0.98f, 0.12f));
+        dumpText.color = theme.dim;
+        RefreshSlots();
+    }
+
+    private void RefreshSlots()
+    {
+        DefragUiTheme theme = RuntimeUi.Theme;
+        for (int i = 0; i < slotLabels.Count; i++)
+        {
+            bool done = i < nextAddress;
+            bool current = i == nextAddress;
+            slotLabels[i].text = done
+                ? $"<size=55%><color=#{DefragUiTheme.Hex(theme.accent)}>슬롯 {i + 1}  완료</color></size>\n{originalSequence[i]}"
+                : $"<size=55%>{(current ? "→ " : "")}슬롯 {i + 1}</size>\n{Emphasize(originalSequence[i], true)}";
+            slotLabels[i].color = done ? theme.accent : current ? theme.highlight : theme.dim;
+            slotPanels[i].color = current ? new Color(theme.accent.r, theme.accent.g, theme.accent.b, 0.12f) : theme.panel;
+        }
+
+        if (nextAddress < originalSequence.Count)
+            SetInstruction($"슬롯 {nextAddress + 1}: 첫 글자 <color=#{Amber}>{originalSequence[nextAddress][2]}</color>, 마지막 글자 <color=#{Amber}>{originalSequence[nextAddress][5]}</color>인 카드를 고르세요", false);
+    }
+
+    private void SetInstruction(string text, bool error)
+    {
+        instructionText.text = text;
+        instructionText.color = error ? RuntimeUi.Theme.danger : RuntimeUi.Theme.text;
+    }
+
+    private void SelectNextAvailable()
+    {
+        for (int offset = 1; offset <= cardPanels.Count; offset++)
+        {
+            int index = (selection + offset) % cardPanels.Count;
+            if (!cardUsed[index])
             {
-                Select(index);
+                Select(index, false);
                 return;
             }
         }
@@ -254,154 +249,59 @@ public sealed class MemoryAddressRecoveryMinigame : HackingMinigameBase
 
     private void MoveSelection(int direction)
     {
-        for (int offset = 1; offset <= addressButtons.Count; offset++)
+        for (int offset = 1; offset <= cardPanels.Count; offset++)
         {
-            int index =
-                (selection + direction * offset + addressButtons.Count * 2) %
-                addressButtons.Count;
-            if (!addressButtons[index].interactable)
+            int index = (selection + direction * offset + cardPanels.Count * 2) % cardPanels.Count;
+            if (cardUsed[index])
                 continue;
-
             Select(index);
             return;
         }
     }
 
-    private void Select(int index)
+    private void Select(int index, bool playSound = true)
     {
-        selection = (index + addressButtons.Count) % addressButtons.Count;
+        selection = (index + cardPanels.Count) % cardPanels.Count;
         if (EventSystem.current != null)
-            EventSystem.current.SetSelectedGameObject(addressButtons[selection].gameObject);
-        RefreshSelectionVisual();
+            EventSystem.current.SetSelectedGameObject(cardPanels[selection].gameObject);
+        if (playSound)
+            UiSfx.Play(UiCue.CardMove);
     }
 
-    private static string BuildDump(IReadOnlyList<string> addresses)
+    private void AnimateCards()
     {
-        string result = "> READ MAGLOCK_EXECUTION_TABLE\n";
-        for (int i = 0; i < addresses.Count; i++)
-            result += $"  [{i + 1:00}]  {addresses[i]}\n";
-        return result;
-    }
-
-    private void UpdateRecoveryGuide()
-    {
-        dumpText.text = BuildRecoveryGuide(originalSequence, nextAddress);
-        instructionText.text =
-            $"현재 목표: 슬롯 {nextAddress + 1:00}  " +
-            $"{BuildSignature(originalSequence[nextAddress])}\n" +
-            "밝은 초록색 주소 중 보이는 숫자가 같은 것을 선택하세요";
-    }
-
-    private static string BuildRecoveryGuide(IReadOnlyList<string> addresses, int currentSlot)
-    {
-        string result =
-            "> 주소 복구 방법\n" +
-            "> '?'는 손실된 숫자입니다. 보이는 숫자만 비교하세요.\n" +
-            "> 예시: 0x8??6  ->  0x8066\n" +
-            "> 슬롯 01부터 순서대로 복구하세요.\n";
-
-        for (int i = 0; i < addresses.Count; i++)
+        DefragUiTheme theme = RuntimeUi.Theme;
+        for (int i = 0; i < cardPanels.Count; i++)
         {
-            string marker = i == currentSlot ? ">>" : "  ";
-            string state = i < currentSlot ? "완료" : BuildSignature(addresses[i]);
-            result += $"{marker} 슬롯 {i + 1:00}  {state}\n";
-        }
-
-        return result;
-    }
-
-    private static string BuildSignature(string address)
-    {
-        return $"0x{address[2]}??{address[5]}";
-    }
-
-    private void RefreshSelectionVisual()
-    {
-        if (displayedAddresses.Count != addressLabels.Count)
-            return;
-
-        for (int i = 0; i < addressLabels.Count; i++)
-        {
-            string address = displayedAddresses[i];
-            bool enabled = addressButtons[i].interactable;
-            bool selected = i == selection && enabled;
-            addressButtons[i].image.color = !enabled
-                ? CompletedButton
-                : selected ? BrightSelection : NormalButton;
-            addressLabels[i].color = selected
-                ? Color.black
-                : enabled ? Green : AcceptedWhite;
-            addressLabels[i].text = selected ? $"> {address} <" : address;
+            bool used = cardUsed[i];
+            bool selected = acceptingInput && i == selection && !used;
+            cardPanels[i].color = used
+                ? new Color(0f, 0f, 0f, 0.35f)
+                : selected ? new Color(theme.accent.r, theme.accent.g, theme.accent.b, 0.3f) : theme.panelRaised;
+            cardLabels[i].alpha = used ? 0.25f : 1f;
+            float scale = selected ? 1.05f + 0.01f * Mathf.Sin(Time.unscaledTime * 6f) : 1f;
+            cardPanels[i].rectTransform.localScale = Vector3.one * scale;
         }
     }
 
-    private static void Shuffle<T>(IList<T> values)
+    private static IEnumerator Shake(RectTransform target)
     {
-        for (int i = values.Count - 1; i > 0; i--)
+        Vector2 origin = target.anchoredPosition;
+        for (float t = 0f; t < 0.3f; t += Time.unscaledDeltaTime)
         {
-            int swapIndex = Random.Range(0, i + 1);
-            (values[i], values[swapIndex]) = (values[swapIndex], values[i]);
+            target.anchoredPosition = origin + Vector2.right * Mathf.Sin(t * 90f) * 14f * (1f - t / 0.3f);
+            yield return null;
         }
+        target.anchoredPosition = origin;
     }
 
-    private bool MatchesOriginal(IReadOnlyList<string> shuffled)
-    {
-        for (int i = 0; i < shuffled.Count; i++)
-            if (shuffled[i] != originalSequence[i])
-                return false;
-        return true;
-    }
-
-    private static void SwapFirstTwo(IList<string> addresses)
-    {
-        if (addresses.Count > 1)
-            (addresses[0], addresses[1]) = (addresses[1], addresses[0]);
-    }
-
-    private TMP_Text CreateText(
-        string name,
-        float size,
-        TextAlignmentOptions alignment,
-        Transform parent = null)
-    {
-        GameObject child = new(name, typeof(RectTransform), typeof(TextMeshProUGUI));
-        child.transform.SetParent(parent == null ? transform : parent, false);
-        TMP_Text text = child.GetComponent<TMP_Text>();
-        if (terminalFont != null)
-            text.font = terminalFont;
-        text.fontSize = size;
-        text.color = Green;
-        text.alignment = alignment;
-        text.fontStyle = FontStyles.Bold;
-        text.raycastTarget = false;
-        return text;
-    }
+    private TMP_Text CreateText(string name, float size, TextAlignmentOptions alignment, Transform parent) =>
+        RuntimeUi.Text(name, parent, size, alignment, terminalFont, RuntimeUi.Theme.text);
 
     private static RectTransform CreateRect(string name, Transform parent)
     {
         GameObject child = new(name, typeof(RectTransform));
         child.transform.SetParent(parent, false);
         return (RectTransform)child.transform;
-    }
-
-    private static void Stretch(RectTransform rect, Vector2 min, Vector2 max)
-    {
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = Vector2.one;
-        rect.offsetMin = min;
-        rect.offsetMax = max;
-    }
-
-    private static void Place(
-        RectTransform rect,
-        Vector2 anchorMin,
-        Vector2 anchorMax,
-        Vector2 min,
-        Vector2 max)
-    {
-        rect.anchorMin = anchorMin;
-        rect.anchorMax = anchorMax;
-        rect.offsetMin = min;
-        rect.offsetMax = max;
     }
 }

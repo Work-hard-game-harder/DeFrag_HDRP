@@ -75,6 +75,14 @@ namespace DeFrag.B1F
         [SerializeField] private Vector3 flywheelLocalAxis = Vector3.right;
         [SerializeField, Range(0f, 1f)] private float crankEngineVolume = 0.8f;
 
+        [Header("Facility PA Announcements")]
+        [SerializeField] private AudioClip paPrimedClip;
+        [SerializeField] private AudioClip paBackfireClip;
+        [SerializeField] private AudioClip paOnlineClip;
+        [SerializeField, Range(0f, 1f)] private float paVolume = 0.85f;
+        [Tooltip("연속 역화 때 방송이 겹치지 않도록 두는 최소 간격(초).")]
+        [SerializeField, Min(0f)] private float paBackfireCooldown = 8f;
+
         [Header("Generator Audio")]
         [SerializeField] private AudioSource generatorAudioSource;
         [SerializeField] private AudioClip pourSuccessClip;
@@ -116,6 +124,8 @@ namespace DeFrag.B1F
 
         private AudioSource engineTurnSource;
         private AudioSource musicSource;
+        private AudioSource paSource;
+        private float nextBackfirePaAt;
         private Coroutine generatorAudioRoutine;
         private Coroutine fullPowerRoutine;
         private Coroutine pourRoutine;
@@ -688,10 +698,27 @@ namespace DeFrag.B1F
         {
             if (NetworkManager.Singleton == null || NetworkManager.Singleton.LocalClientId == radarOperator)
                 return;
-            GeneratorBToast.Show(
-                "해커가 시설 레이더를 켰습니다!\n카메라(C) → IR 모드(우클릭)로 연료 신호를 추적하세요.\n무전으로 해커의 길 안내를 들으세요.",
-                GeneratorBToast.Info, 7f, uiFont);
+            if (!MinigameTutorial.HasSeen(ScoutCard.Id))
+            {
+                MinigameTutorial.ShowFloating(ScoutCard);
+                return;
+            }
+            GeneratorBToast.Show("해커가 시설 레이더를 켰습니다 — 연료통 2개를 찾으세요!", GeneratorBToast.Info, 5f, uiFont);
         }
+
+        private static readonly TutorialCard ScoutCard = new()
+        {
+            Id = "generatorB.scout",
+            Role = "카메라맨 • 연료 수색",
+            Title = "연료통을 찾아라",
+            Goal = "연료통 2개를 찾아 발전기 주유구에 부으세요.",
+            Steps = new[]
+            {
+                ("C  →  우클릭", "카메라를 들고(C) IR 모드(우클릭)로 연료 신호 막대를 확인하세요."),
+                ("무전", "해커가 레이더로 길과 괴물 위치를 알려줘요."),
+                ("E", "연료통을 들고 발전기 주유구에서 E — 2개가 필요해요!")
+            }
+        };
 
         [ClientRpc]
         private void PlayPourClientRpc()
@@ -713,6 +740,11 @@ namespace DeFrag.B1F
                 AudioSource.PlayClipAtPoint(ProceduralSfx.Backfire, GeneratorPosition, 1f);
                 if (generatorAudioSource != null && pourFailureClip != null)
                     generatorAudioSource.PlayOneShot(pourFailureClip);
+                if (Time.unscaledTime >= nextBackfirePaAt)
+                {
+                    nextBackfirePaAt = Time.unscaledTime + paBackfireCooldown;
+                    PlayAnnouncement(paBackfireClip);
+                }
             }
             else if (result == GeneratorBIgnitionResult.Hit)
             {
@@ -752,9 +784,10 @@ namespace DeFrag.B1F
             if (next >= requiredFuelCans)
             {
                 GeneratorBToast.Show(
-                    "연료 주입 완료! 이제 시동을 겁니다.\n한 명은 주유구 크랭크(A·D 연타), 한 명은 제어 패널 점화(SPACE)!",
+                    "연료 주입 완료! 이제 시동을 겁니다.\n한 명은 주유구 크랭크(A, D 번갈아 연타), 한 명은 제어 패널 점화(SPACE)!",
                     GeneratorBToast.Info, 7f, uiFont);
                 SetColdStartMusic(true);
+                PlayAnnouncement(paPrimedClip);
             }
             else
             {
@@ -769,6 +802,7 @@ namespace DeFrag.B1F
             SetColdStartMusic(false);
             if (engineTurnSource != null)
                 engineTurnSource.Stop();
+            PlayAnnouncement(paOnlineClip);
             GeneratorBToast.Show("발전기 가동!\n괴물이 소리를 듣고 달려옵니다 — 도망치세요!", GeneratorBToast.Warning, 5f, uiFont);
         }
 
@@ -808,6 +842,21 @@ namespace DeFrag.B1F
             engineTurnSource.rolloffMode = AudioRolloffMode.Linear;
             engineTurnSource.minDistance = 3f;
             engineTurnSource.maxDistance = 35f;
+        }
+
+        private void PlayAnnouncement(AudioClip clip)
+        {
+            if (clip == null) return;
+            if (paSource == null)
+            {
+                paSource = gameObject.AddComponent<AudioSource>();
+                paSource.playOnAwake = false;
+                paSource.spatialBlend = 0f;
+            }
+            paSource.Stop();
+            paSource.clip = clip;
+            paSource.volume = paVolume;
+            paSource.Play();
         }
 
         private void SetColdStartMusic(bool playing)

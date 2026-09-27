@@ -97,6 +97,11 @@ public sealed class ConnectServerCircuitPuzzle
 
     public static IReadOnlyList<Vector2Int> GetShape(int shapeIndex) => Shapes[shapeIndex];
 
+    // Spoken coordinates shared by both players' grids: columns A-E left to right, rows 1-5 top to bottom.
+    public static string ColumnName(int x) => ((char)('A' + x)).ToString();
+    public static string RowName(int y) => (BoardSize - y).ToString();
+    public static string CellName(int cell) => ColumnName(cell % BoardSize) + RowName(cell / BoardSize);
+
     private static Vector2Int Rotate(Vector2Int point, int rotation) => rotation switch
     {
         1 => new Vector2Int(point.y, -point.x),

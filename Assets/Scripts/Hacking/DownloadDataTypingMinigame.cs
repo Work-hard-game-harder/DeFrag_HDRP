@@ -6,9 +6,8 @@ using UnityEngine.UI;
 
 public sealed class DownloadDataTypingMinigame : HackingMinigameBase
 {
-    private static readonly Color Green = new(0.1f, 1f, 0.2f);
-    private static readonly Color MutedGreen = new(0.02f, 0.48f, 0.09f);
-    private static readonly Color ErrorRed = new(1f, 0.12f, 0.08f);
+    private static Color Green => RuntimeUi.Theme.text;
+    private static Color MutedGreen => RuntimeUi.Theme.dim;
 
     [Header("Command Generation")]
     [SerializeField] private DownloadCommandWordLibrary wordLibrary;
@@ -31,7 +30,8 @@ public sealed class DownloadDataTypingMinigame : HackingMinigameBase
     private bool ownsRuntimeWordLibrary;
 
     public override bool ConsumesTextInput => true;
-    public override string ControlHint => "[ENTER] TRANSMIT    [ESC] ABORT";
+    public override string ControlHint => TerminalScreenController.KeyHints(
+        ("TAB", "자동완성"), ("ENTER", "전송"), ("ESC", "메뉴로"));
 
     public override void Begin(ConnectionDevice terminal, TerminalCommands command)
     {
@@ -46,8 +46,22 @@ public sealed class DownloadDataTypingMinigame : HackingMinigameBase
         log.text =
             $"> EXEC DOWNLOAD_DATA_ARCHIVE_{device.ArchiveNumber:00}\n" +
             "> ESTABLISHING REMOTE AUTHENTICATION...\n" +
-            "> THREE UNCORRUPTED COMMANDS REQUIRED";
-        StartRound();
+            $"> 손상되지 않은 명령어 {authenticationRounds}개가 필요합니다";
+        input.interactable = false;
+        MinigameTutorial.ShowBlocking(new TutorialCard
+        {
+            Id = "terminal.typing",
+            Role = "해커 • 데이터 다운로드",
+            Title = "명령어 복원 (타이핑)",
+            Goal = $"가려진 단어를 채워 명령어 {authenticationRounds}개를 전송합니다.",
+            Steps = new[]
+            {
+                ("", "화면의 명령어 중 한 단어가 ████ 로 가려져 있어요."),
+                ("", "가려진 단어는 동료 화면에 표시됩니다. 무전으로 물어보세요!"),
+                ("TAB", "보이는 단어는 앞 두 글자만 치고 TAB을 누르면 자동완성돼요."),
+                ("ENTER", "명령어 전체(단어 사이는 _ )를 입력하고 ENTER로 전송.")
+            }
+        }, (RectTransform)transform, StartRound);
     }
 
     public override void End()
@@ -147,8 +161,8 @@ public sealed class DownloadDataTypingMinigame : HackingMinigameBase
         string normalized = submitted.Trim().ToUpperInvariant();
         if (normalized != currentCommand.FullText)
         {
-            terminalSfx?.PlayIncorrectAnswer();
-            log.text += $"\n> ERROR: CHECKSUM MISMATCH [{currentRound:00}]";
+            UiSfx.Play(UiCue.CardWrong);
+            log.text += $"\n> <color=#{DefragUiTheme.Hex(RuntimeUi.Theme.danger)}>틀렸어요 — 가려진 단어를 동료에게 다시 확인하세요</color>";
             input.text = string.Empty;
             input.ActivateInputField();
             return;
@@ -156,7 +170,7 @@ public sealed class DownloadDataTypingMinigame : HackingMinigameBase
 
         acceptingInput = false;
         input.interactable = false;
-        terminalSfx?.PlayRoundSuccess();
+        UiSfx.Play(UiCue.RoundClear);
         hintRelay?.HideForTeammate();
         log.text += $"\n> ACCEPTED: {currentCommand.FullText}";
 
@@ -231,7 +245,8 @@ public sealed class DownloadDataTypingMinigame : HackingMinigameBase
         RectTransform inputRect = (RectTransform)inputObject.transform;
         Place(inputRect, new Vector2(0.04f, 0.06f), new Vector2(0.96f, 0.22f),
             Vector2.zero, Vector2.zero);
-        inputObject.GetComponent<Image>().color = new Color(0f, 0.12f, 0.02f, 0.88f);
+        inputObject.GetComponent<Image>().color = RuntimeUi.Theme.panelRaised;
+        RuntimeUi.AddCornerBrackets(inputRect, 16f, 3f, RuntimeUi.Theme.edge);
 
         TMP_Text inputText = CreateText(
             "Text",
@@ -278,15 +293,7 @@ public sealed class DownloadDataTypingMinigame : HackingMinigameBase
         TextAlignmentOptions alignment,
         Transform parent = null)
     {
-        GameObject child = new(name, typeof(RectTransform), typeof(TextMeshProUGUI));
-        child.transform.SetParent(parent == null ? transform : parent, false);
-        TMP_Text text = child.GetComponent<TMP_Text>();
-        text.fontSize = size;
-        text.color = Green;
-        text.alignment = alignment;
-        text.fontStyle = FontStyles.Bold;
-        text.raycastTarget = false;
-        return text;
+        return RuntimeUi.Text(name, parent == null ? transform : parent, size, alignment, null, Green);
     }
 
     private static void Stretch(RectTransform rect, Vector2 min, Vector2 max)

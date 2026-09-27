@@ -42,6 +42,8 @@ public sealed class ConnectServerCoordinator : NetworkBehaviour
 
     [Header("Trace")]
     [SerializeField, Range(1f, 100f)] private float wrongRelayTrace = 28f;
+    [Tooltip("회로 배치를 틀렸을 때의 추적도. 말로 도형을 설명하는 협동이라 가볍게 둡니다.")]
+    [SerializeField, Range(0f, 100f)] private float wrongCircuitTrace = 8f;
     [SerializeField, Range(1f, 100f)] private float timeoutTrace = 20f;
     [SerializeField, Range(1f, 100f)] private float traceLimit = 100f;
 
@@ -108,6 +110,7 @@ public sealed class ConnectServerCoordinator : NetworkBehaviour
     public ulong TerminalOperatorClientId => terminalOperator.Value;
     public int RequestedWordNumber => requestedWordIndex.Value + 1;
     public int CircuitSeed => circuitSeed.Value;
+    public IReadOnlyList<OpticalRelayNode> RelayNodes => relayNodes;
     public double ServerTime => NetworkManager != null && NetworkManager.IsListening
         ? NetworkManager.ServerTime.Time
         : Time.unscaledTimeAsDouble;
@@ -385,7 +388,7 @@ public sealed class ConnectServerCoordinator : NetworkBehaviour
             circuitSeed.Value, completedRounds.Value + 1);
         if (!puzzle.Validate(placements))
         {
-            AddTrace(wrongRelayTrace);
+            AddTrace(wrongCircuitTrace);
             VerificationResolvedClientRpc(false, "CIRCUIT PATTERN REJECTED", Target(sender));
             return;
         }

@@ -7,11 +7,11 @@ namespace DeFrag.B1F
     // Control-panel HUD for the hacking-pad player: facility radar, decoy, and the ignition dial.
     public sealed class GeneratorBPanelView : MonoBehaviour
     {
-        private static readonly Color Green = new(0.2f, 1f, 0.35f, 1f);
-        private static readonly Color Dim = new(0.1f, 0.45f, 0.2f, 1f);
-        private static readonly Color Amber = new(1f, 0.62f, 0.12f, 1f);
-        private static readonly Color Red = new(1f, 0.18f, 0.12f, 1f);
-        private static readonly Color Background = new(0.005f, 0.02f, 0.012f, 0.93f);
+        private static Color Green => RuntimeUi.Theme.accent;
+        private static Color Dim => RuntimeUi.Theme.dim;
+        private static Color Amber => RuntimeUi.Theme.info;
+        private static Color Red => RuntimeUi.Theme.danger;
+        private static Color Background => RuntimeUi.Theme.backdrop;
 
         private GeneratorBController controller;
         private TMP_FontAsset font;

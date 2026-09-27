@@ -7,8 +7,8 @@ using UnityEngine.UI;
 [RequireComponent(typeof(CameraItem))]
 public sealed class CameraOpticalRelayScanner : MonoBehaviour
 {
-    private static readonly Color IrGreen = new(0.15f, 1f, 0.38f);
-    private static readonly Color Warning = new(1f, 0.25f, 0.12f);
+    private static Color IrGreen => RuntimeUi.Theme.accent;
+    private const float LockTickInterval = 0.14f;
 
     [Header("Optical Lock")]
     [SerializeField] private Camera scanCamera;
@@ -45,6 +45,7 @@ public sealed class CameraOpticalRelayScanner : MonoBehaviour
     private string privateWordList;
     private string transientStatus;
     private float transientUntil;
+    private float nextLockTick;
 
     private void Awake()
     {
@@ -53,6 +54,8 @@ public sealed class CameraOpticalRelayScanner : MonoBehaviour
         if (signalAudio == null) signalAudio = gameObject.AddComponent<LocalSignalAudio>();
         if (GetComponent<CameraFuelSignalPresenter>() == null)
             gameObject.AddComponent<CameraFuelSignalPresenter>();
+        if (GetComponent<ConnectServerPartnerHud>() == null)
+            gameObject.AddComponent<ConnectServerPartnerHud>();
         if (scanCamera == null)
             scanCamera = GetComponent<Camera>();
         if (audioSource == null)
@@ -144,9 +147,15 @@ public sealed class CameraOpticalRelayScanner : MonoBehaviour
         }
 
         lockProgress = Mathf.Min(1f, lockProgress + Time.unscaledDeltaTime / lockDuration);
+        if (lockProgress < 1f && Time.unscaledTime >= nextLockTick)
+        {
+            nextLockTick = Time.unscaledTime + LockTickInterval;
+            UiSfx.Play(UiCue.LockTick, 0.8f, 0.8f + lockProgress * 0.6f);
+        }
         if (lockProgress >= 1f && !lockSoundPlayed)
         {
             lockSoundPlayed = true;
+            UiSfx.Play(UiCue.LockAcquired);
             Play(lockAcquiredClip);
         }
     }
@@ -158,7 +167,8 @@ public sealed class CameraOpticalRelayScanner : MonoBehaviour
 
         if (lockedRelay == null || lockProgress < 1f)
         {
-            ShowTransient("NO OPTICAL LOCK", false);
+            ShowTransient("아직 조준이 안 됐어요 — 가운데에 맞추고 잠시 기다리세요", false);
+            UiSfx.Play(UiCue.MenuBack);
             return;
         }
 
@@ -166,7 +176,7 @@ public sealed class CameraOpticalRelayScanner : MonoBehaviour
             lockedRelay,
             scanCamera.transform.position,
             scanCamera.transform.forward);
-        ShowTransient("VALIDATING CAPTURE...", true);
+        ShowTransient("사진 전송 중...", true);
     }
 
     private void BindCoordinator(ConnectServerCoordinator value)
@@ -184,18 +194,21 @@ public sealed class CameraOpticalRelayScanner : MonoBehaviour
 
     private void OnPhotoResolved(bool success, string relayId, string message)
     {
+        privateWordList = string.Empty;
+        SetWordGridVisible(false);
+        string shortId = ConnectServerRadarContent.ShortId(relayId);
         if (success)
         {
-            privateWordList = string.Empty;
-            SetWordGridVisible(false);
-            ShowTransient($"{relayId} // CAPTURE ACCEPTED", true);
+            ShowTransient($"{shortId} 촬영 성공! 회로 데이터를 받으세요", true);
+            UiSfx.Play(UiCue.CaptureAccepted);
             Play(acceptedClip);
         }
         else
         {
-            privateWordList = string.Empty;
-            SetWordGridVisible(false);
-            ShowTransient($"{relayId} // {message}", false);
+            ShowTransient(message.Contains("WRONG")
+                ? $"{shortId}는 목표가 아니에요! 경보가 울렸어요"
+                : "촬영 실패 — 더 가까이, 정면에서 찍어보세요", false);
+            UiSfx.Play(UiCue.CaptureRejected);
             Play(rejectedClip);
         }
     }
@@ -203,11 +216,11 @@ public sealed class CameraOpticalRelayScanner : MonoBehaviour
     private void RefreshHud()
     {
         float timeLeft = Mathf.Max(0f, (float)(coordinator.Deadline - coordinator.ServerTime));
+        string dim = DefragUiTheme.Hex(RuntimeUi.Theme.dim);
         targetText.text =
-            $"UPLINK OPTICAL CHANNEL\n" +
-            "REMOTE TARGET ASSIGNED // AWAIT OPERATOR CALLSIGN\n" +
-            $"ROUND {coordinator.CompletedRounds + 1:00}/{coordinator.RequiredRounds:00}    " +
-            $"TRACE {coordinator.Trace:00}%    {timeLeft:00.0}s";
+            $"IR 광학 스캐너  <color=#{dim}>// 해커가 불러주는 릴레이를 찾으세요</color>\n" +
+            $"업링크 {coordinator.CompletedRounds + 1}/{coordinator.RequiredRounds}    " +
+            $"추적도 {coordinator.Trace:0}%    남은 시간 {timeLeft:0}초";
 
         bool showFrequency = coordinator.Phase == ConnectServerUplinkPhase.AwaitingOpticalScan;
         RefreshTargetFrequency(showFrequency);
@@ -221,20 +234,22 @@ public sealed class CameraOpticalRelayScanner : MonoBehaviour
         }
         else if (coordinator.Phase == ConnectServerUplinkPhase.AwaitingVerification)
         {
-            scanText.text = "CIRCUIT DATA LINKED // GUARD THE RELAY";
+            scanText.text = "회로 데이터 연결됨 — 해커에게 칸 좌표를 불러주세요";
         }
         else if (aimedRelay == null)
         {
-            scanText.text = "SIGNAL SEARCHING...";
+            scanText.text = "릴레이 탐색 중... 아래 신호 막대를 따라가세요";
         }
         else if (lockedRelay == aimedRelay && lockProgress >= 1f)
         {
-            scanText.text = $"{aimedRelay.RelayId}  //  OPTICAL LOCK\n[LMB] CAPTURE";
+            scanText.text = $"<size=130%>{ConnectServerRadarContent.ShortId(aimedRelay.RelayId)}</size>  조준 완료\n<color=#{DefragUiTheme.Hex(RuntimeUi.Theme.highlight)}>[좌클릭] 촬영</color>";
         }
         else
         {
             float distance = Vector3.Distance(scanCamera.transform.position, aimedRelay.ScanAnchor.position);
-            scanText.text = $"{aimedRelay.RelayId}  //  {distance:0.0}m\nHOLD CENTER TO LOCK";
+            bool tooFar = distance > aimedRelay.CaptureDistance;
+            scanText.text = $"<size=130%>{ConnectServerRadarContent.ShortId(aimedRelay.RelayId)}</size>  {distance:0.0}m\n" +
+                            (tooFar ? $"더 가까이 ({aimedRelay.CaptureDistance:0}m 이내)" : "가운데에 맞추고 잠시 유지");
         }
 
         lockFill.fillAmount = lockProgress;
@@ -258,15 +273,10 @@ public sealed class CameraOpticalRelayScanner : MonoBehaviour
         scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
         scaler.referenceResolution = new Vector2(1920f, 1080f);
 
-        GameObject panel = new("Scanner Panel", typeof(RectTransform), typeof(Image));
-        panel.transform.SetParent(canvasObject.transform, false);
-        RectTransform panelRect = (RectTransform)panel.transform;
-        panelRect.anchorMin = new Vector2(0.29f, 0.73f);
-        panelRect.anchorMax = new Vector2(0.71f, 0.96f);
-        panelRect.offsetMin = Vector2.zero;
-        panelRect.offsetMax = Vector2.zero;
-        panel.GetComponent<Image>().color = new Color(0f, 0.06f, 0.025f, 0.78f);
-        OperationPanelStyle.Frame(panel);
+        Image panelImage = RuntimeUi.FramedPanel("Scanner Panel", canvasObject.transform,
+            new Color(RuntimeUi.Theme.panel.r, RuntimeUi.Theme.panel.g, RuntimeUi.Theme.panel.b, 0.8f), 18f);
+        RuntimeUi.Place(panelImage.rectTransform, new Vector2(0.29f, 0.73f), new Vector2(0.71f, 0.96f));
+        GameObject panel = panelImage.gameObject;
 
         targetText = CreateText("Target", panel.transform, 22f, TextAlignmentOptions.TopLeft);
         Place(targetText.rectTransform, new Vector2(0.04f, 0.46f), new Vector2(0.96f, 0.94f));
@@ -337,15 +347,10 @@ public sealed class CameraOpticalRelayScanner : MonoBehaviour
 
     private void CreateFrequencyDisplay(Transform parent)
     {
-        GameObject display = new(
-            "Target Frequency",
-            typeof(RectTransform),
-            typeof(Image));
-        display.transform.SetParent(parent, false);
-        RectTransform displayRect = (RectTransform)display.transform;
-        Place(displayRect, new Vector2(0.33f, 0.11f), new Vector2(0.67f, 0.19f));
-        display.GetComponent<Image>().color = new Color(0f, 0.04f, 0.015f, 0.82f);
-        OperationPanelStyle.Frame(display);
+        Image displayImage = RuntimeUi.FramedPanel("Target Frequency", parent,
+            new Color(RuntimeUi.Theme.panel.r, RuntimeUi.Theme.panel.g, RuntimeUi.Theme.panel.b, 0.82f), 14f);
+        Place(displayImage.rectTransform, new Vector2(0.33f, 0.11f), new Vector2(0.67f, 0.19f));
+        GameObject display = displayImage.gameObject;
 
         frequencyText = CreateText(
             "Frequency Text",
@@ -409,7 +414,7 @@ public sealed class CameraOpticalRelayScanner : MonoBehaviour
 
         if (!coordinator.TryGetRelay(coordinator.TargetRelayId, out OpticalRelayNode target))
         {
-            frequencyText.text = "TARGET FREQUENCY // SIGNAL LOST";
+            frequencyText.text = "목표 신호 없음";
             return;
         }
 
@@ -424,7 +429,7 @@ public sealed class CameraOpticalRelayScanner : MonoBehaviour
             ? 0
             : Mathf.Clamp(Mathf.CeilToInt(proximity * signalBars.Length), 1, signalBars.Length);
         float wave = Mathf.Sin(Time.unscaledTime * frequency * Mathf.PI * 2f) * 0.5f + 0.5f;
-        frequencyText.text = $"RELAY  /  TRACKING\nSIGNAL  {activeBars} / {signalBars.Length}";
+        frequencyText.text = $"목표 릴레이 신호\n강도  {activeBars} / {signalBars.Length}";
         for (int i = 0; i < signalBars.Length; i++)
         {
             if (signalBars[i] == null)
@@ -451,15 +456,7 @@ public sealed class CameraOpticalRelayScanner : MonoBehaviour
         float size,
         TextAlignmentOptions alignment)
     {
-        GameObject child = new(name, typeof(RectTransform), typeof(TextMeshProUGUI));
-        child.transform.SetParent(parent, false);
-        TMP_Text text = child.GetComponent<TMP_Text>();
-        text.fontSize = size;
-        text.fontStyle = FontStyles.Bold;
-        text.color = IrGreen;
-        text.alignment = alignment;
-        text.raycastTarget = false;
-        return text;
+        return RuntimeUi.Text(name, parent, size, alignment, null, IrGreen);
     }
 
     private static void Place(RectTransform rect, Vector2 min, Vector2 max)
@@ -472,7 +469,7 @@ public sealed class CameraOpticalRelayScanner : MonoBehaviour
 
     private void ShowTransient(string message, bool positive)
     {
-        transientStatus = positive ? message : $"<color=#FF3A20>{message}</color>";
+        transientStatus = positive ? message : $"<color=#{DefragUiTheme.Hex(RuntimeUi.Theme.danger)}>{message}</color>";
         transientUntil = Time.unscaledTime + 1.5f;
     }
 

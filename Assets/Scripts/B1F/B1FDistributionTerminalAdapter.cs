@@ -10,6 +10,8 @@ namespace DeFrag.B1F
         [SerializeField] private DistributionBoxController distributionBoxA;
         public static event Action<DistributionPuzzlePhase> LocalBankAdvanced;
 
+        public DistributionBoxController Box => distributionBoxA;
+
         public void BeginDistributionHintSession()
         {
             distributionBoxA?.RequestHintSessionFromLocalPlayer();

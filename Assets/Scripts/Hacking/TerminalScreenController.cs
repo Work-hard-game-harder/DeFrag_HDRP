@@ -11,18 +11,17 @@ using UnityEngine.InputSystem;
 
 public sealed class TerminalScreenController : MonoBehaviour
 {
-    private static readonly Color TerminalGreen = new(0.65f, 1f, 0.87f);
-    private static readonly Color DeniedRed = new(1f, 0.08f, 0.08f);
-
     private readonly List<Button> buttons = new();
     private readonly List<Image> buttonBackgrounds = new();
+    private readonly List<Image> buttonAccents = new();
     private readonly List<TMP_Text> buttonLabels = new();
-    private static readonly Color MenuNormal = new(0f, 0.12f, 0.02f, 0.92f);
-    private static readonly Color MenuSelected = new(0.08f, 0.58f, 0.13f, 1f);
+    private readonly List<TMP_Text> buttonDetails = new();
     private ConnectionDevice device;
     private RectTransform content;
     private VerticalLayoutGroup menuLayout;
     private TMP_Text header;
+    private TMP_Text subHeader;
+    private TMP_Text clock;
     private TMP_Text status;
     private TMP_Text deniedMessage;
     private HackingMinigameBase activeMinigame;
@@ -40,17 +39,21 @@ public sealed class TerminalScreenController : MonoBehaviour
         closeRequested = onClose;
         BuildFrame();
         ShowMenu();
+        UiSfx.Play(UiCue.TerminalBoot);
         terminalSfx?.PlaySessionOpened();
         device.PublishWorldScreen(TerminalWorldPhase.Menu);
     }
 
     private void Update()
     {
+        if (clock != null)
+            clock.text = $"SYS {System.DateTime.Now:HH:mm:ss}\n<size=70%>LINK STABLE</size>";
+
         if (activeMinigame != null &&
             ((activeMinigame.ConsumesTextInput && TerminalKeyboardInput.EscapePressed) ||
              (!activeMinigame.ConsumesTextInput && TerminalKeyboardInput.BackPressed)))
         {
-            terminalSfx?.PlayMenuBack();
+            UiSfx.Play(UiCue.MenuBack);
             CancelMinigame();
             return;
         }
@@ -68,37 +71,61 @@ public sealed class TerminalScreenController : MonoBehaviour
 
     private void BuildFrame()
     {
+        DefragUiTheme theme = RuntimeUi.Theme;
         RectTransform root = GetComponent<RectTransform>();
         Stretch(root, Vector2.zero, Vector2.zero);
-        gameObject.AddComponent<Image>().color = new Color(0.035f, 0.04f, 0.035f, 0.98f);
+        gameObject.AddComponent<Image>().color = theme.backdrop;
 
-        RectTransform screen = CreateRect("Terminal Screen", root);
-        Stretch(screen, new Vector2(105f, 75f), new Vector2(-105f, -75f));
-        screen.gameObject.AddComponent<Image>().color = Color.black;
-        OperationPanelStyle.Frame(screen.gameObject);
+        Image screenPanel = RuntimeUi.FramedPanel("Terminal Screen", root, new Color(0.004f, 0.022f, 0.022f, 0.99f), 34f);
+        RectTransform screen = screenPanel.rectTransform;
+        Stretch(screen, new Vector2(90f, 60f), new Vector2(-90f, -60f));
 
-        header = CreateText("Header", screen, 31f, TextAlignmentOptions.TopLeft);
-        Place(header.rectTransform, new Vector2(0f, 0.84f), Vector2.one,
-            new Vector2(35f, 10f), new Vector2(-35f, -20f));
+        Image headerBand = RuntimeUi.Panel("Header Band", screen, new Color(theme.accent.r, theme.accent.g, theme.accent.b, 0.08f));
+        RuntimeUi.Place(headerBand.rectTransform, new Vector2(0f, 0.855f), Vector2.one);
+        Image headerRule = RuntimeUi.Panel("Header Rule", screen, theme.edge);
+        RuntimeUi.Place(headerRule.rectTransform, new Vector2(0.02f, 0.853f), new Vector2(0.98f, 0.856f));
+
+        subHeader = CreateText("Sub Header", screen, 20f, TextAlignmentOptions.TopLeft);
+        Place(subHeader.rectTransform, new Vector2(0f, 0.935f), new Vector2(0.7f, 1f),
+            new Vector2(38f, 0f), new Vector2(0f, -14f));
+        subHeader.color = theme.dim;
+        subHeader.text = "DEFRAG // SECURE HACKING LINK";
+
+        header = CreateText("Header", screen, 36f, TextAlignmentOptions.MidlineLeft);
+        Place(header.rectTransform, new Vector2(0f, 0.86f), new Vector2(0.75f, 0.94f),
+            new Vector2(38f, 0f), Vector2.zero);
+        header.enableAutoSizing = true;
+        header.fontSizeMin = 20f;
+        header.fontSizeMax = 36f;
+
+        clock = CreateText("Clock", screen, 24f, TextAlignmentOptions.MidlineRight);
+        Place(clock.rectTransform, new Vector2(0.7f, 0.86f), new Vector2(1f, 0.99f),
+            Vector2.zero, new Vector2(-38f, 0f));
+        clock.color = theme.accent;
 
         content = CreateRect("Content", screen);
-        Place(content, new Vector2(0f, 0.12f), new Vector2(1f, 0.84f),
-            new Vector2(65f, 15f), new Vector2(-65f, -15f));
+        Place(content, new Vector2(0f, 0.1f), new Vector2(1f, 0.84f),
+            new Vector2(50f, 12f), new Vector2(-50f, -12f));
         menuLayout = content.gameObject.AddComponent<VerticalLayoutGroup>();
-        menuLayout.spacing = 14f;
+        menuLayout.spacing = 12f;
         menuLayout.childControlHeight = false;
         menuLayout.childControlWidth = true;
         menuLayout.childForceExpandHeight = false;
 
-        status = CreateText("Status", screen, 23f, TextAlignmentOptions.BottomLeft);
-        Place(status.rectTransform, Vector2.zero, new Vector2(1f, 0.12f),
-            new Vector2(35f, 20f), new Vector2(-35f, -10f));
+        Image footerRule = RuntimeUi.Panel("Footer Rule", screen, new Color(theme.edge.r, theme.edge.g, theme.edge.b, 0.3f));
+        RuntimeUi.Place(footerRule.rectTransform, new Vector2(0.02f, 0.098f), new Vector2(0.98f, 0.1f));
+        status = CreateText("Status", screen, 22f, TextAlignmentOptions.MidlineLeft);
+        Place(status.rectTransform, Vector2.zero, new Vector2(1f, 0.095f),
+            new Vector2(38f, 6f), new Vector2(-38f, -6f));
+        status.color = theme.text;
 
-        deniedMessage = CreateText("Denied Access", screen, 52f, TextAlignmentOptions.Center);
+        RuntimeUi.Scanlines(screen, 0.06f);
+
+        deniedMessage = CreateText("Denied Access", screen, 56f, TextAlignmentOptions.Center);
         Place(deniedMessage.rectTransform, new Vector2(0.18f, 0.38f), new Vector2(0.82f, 0.62f),
             Vector2.zero, Vector2.zero);
-        deniedMessage.color = DeniedRed;
-        deniedMessage.text = "DENIED ACCESS";
+        deniedMessage.color = theme.danger;
+        deniedMessage.text = "접근 거부\n<size=45%>ACCESS DENIED // 지금은 사용할 수 없는 명령입니다</size>";
         deniedMessage.gameObject.SetActive(false);
     }
 
@@ -106,26 +133,44 @@ public sealed class TerminalScreenController : MonoBehaviour
     {
         ClearContent();
         menuLayout.enabled = true;
-        header.text = $"DEFRAG SECURE LINK // {device.DisplayName}\nACCESS LEVEL: ROOT";
-        status.text = "[W/S] SELECT    [E] EXECUTE";
+        header.text = $"{device.DisplayName}  <size=60%><color=#{DefragUiTheme.Hex(RuntimeUi.Theme.dim)}>// ROOT ACCESS</color></size>";
+        status.text = KeyHints(("W/S", "선택"), ("E", "실행"));
 
         AddCommand(TerminalCommands.UnlockDoor);
         AddCommand(TerminalCommands.DownloadData);
         AddCommand(TerminalCommands.ConnectServer);
-        AddButton("> EXIT TERMINAL", ExitTerminal);
+        AddButton("터미널 종료", "EXIT TERMINAL", ExitTerminal);
         Select(0, false);
     }
+
+    public static string KeyHints(params (string key, string label)[] hints)
+    {
+        string accent = DefragUiTheme.Hex(RuntimeUi.Theme.highlight);
+        string dim = DefragUiTheme.Hex(RuntimeUi.Theme.dim);
+        var parts = new List<string>(hints.Length);
+        foreach ((string key, string label) in hints)
+            parts.Add($"<color=#{accent}>[{key}]</color> <color=#{dim}>{label}</color>");
+        return string.Join("     ", parts);
+    }
+
+    private static string KoreanLabel(TerminalCommands command) => command switch
+    {
+        TerminalCommands.UnlockDoor => "문 잠금 해제",
+        TerminalCommands.DownloadData => "데이터 다운로드",
+        TerminalCommands.ConnectServer => "서버 연결",
+        _ => command.ToString()
+    };
 
     private void AddCommand(TerminalCommands command)
     {
         HackingMinigameBase minigame = device.GetMinigame(command);
-        string minigameName = minigame == null ? "NO MODULE" : minigame.DisplayName;
-        AddButton($"> {TerminalCommandLabel.Get(command)}  //  {minigameName}", () => Execute(command));
+        bool available = minigame != null && device.IsCommandEnabled(command);
+        string state = device.IsCompleted(command) ? "완료" : available ? minigame.DisplayName : "잠김";
+        AddButton(KoreanLabel(command), $"{TerminalCommandLabel.Get(command)}  //  {state}", () => Execute(command));
     }
 
     private void Execute(TerminalCommands command)
     {
-        terminalSfx?.PlayMenuSelected();
         HackingMinigameBase prefab = device.GetMinigame(command);
         if (!device.IsCommandEnabled(command) || prefab == null || device.IsCompleted(command))
         {
@@ -133,6 +178,7 @@ public sealed class TerminalScreenController : MonoBehaviour
             return;
         }
 
+        UiSfx.Play(UiCue.MenuConfirm);
         ClearContent();
         menuLayout.enabled = false;
         activeCommand = command;
@@ -140,7 +186,7 @@ public sealed class TerminalScreenController : MonoBehaviour
         activeMinigame.Succeeded += CompleteMinigame;
         activeMinigame.Failed += FailMinigame;
         activeMinigame.Cancelled += CancelMinigame;
-        header.text = $"{device.DisplayName} // {TerminalCommandLabel.Get(command)}";
+        header.text = $"{KoreanLabel(command)}  <size=60%><color=#{DefragUiTheme.Hex(RuntimeUi.Theme.dim)}>// {device.DisplayName}</color></size>";
         status.text = activeMinigame.ControlHint;
         activeMinigame.Begin(device, command);
         device.PublishWorldScreen(TerminalWorldPhase.Running, command);
@@ -148,7 +194,7 @@ public sealed class TerminalScreenController : MonoBehaviour
 
     private void ShowDeniedAccess()
     {
-        terminalSfx?.PlayIncorrectAnswer();
+        UiSfx.Play(UiCue.AccessDenied);
         if (deniedRoutine != null)
             StopCoroutine(deniedRoutine);
         deniedRoutine = StartCoroutine(BlinkDeniedAccess());
@@ -156,6 +202,7 @@ public sealed class TerminalScreenController : MonoBehaviour
 
     private void CompleteMinigame()
     {
+        UiSfx.Play(UiCue.TaskSuccess);
         terminalSfx?.PlayMinigameSuccess();
         device.PublishWorldScreen(TerminalWorldPhase.Success, activeCommand);
         preserveWorldTransientOnDestroy = true;
@@ -168,13 +215,14 @@ public sealed class TerminalScreenController : MonoBehaviour
             return;
         }
 
-        FinishMinigame($"{TerminalCommandLabel.Get(activeCommand)} // COMPLETE");
+        FinishMinigame($"<color=#{DefragUiTheme.Hex(RuntimeUi.Theme.accent)}>{KoreanLabel(activeCommand)} 완료</color>");
     }
 
     private void FailMinigame()
     {
+        UiSfx.Play(UiCue.TaskFail);
         device.PublishWorldScreen(TerminalWorldPhase.Failure, activeCommand);
-        FinishMinigame("ACCESS DENIED // SESSION RESET");
+        FinishMinigame($"<color=#{DefragUiTheme.Hex(RuntimeUi.Theme.danger)}>실패 // 메뉴에서 다시 시도하세요</color>");
     }
 
     private void CancelMinigame()
@@ -186,7 +234,7 @@ public sealed class TerminalScreenController : MonoBehaviour
 
     private void ExitTerminal()
     {
-        terminalSfx?.PlayMenuBack();
+        UiSfx.Play(UiCue.TerminalClose);
         device.PublishWorldScreen(TerminalWorldPhase.Idle);
         closeRequested();
     }
@@ -232,11 +280,12 @@ public sealed class TerminalScreenController : MonoBehaviour
         deniedRoutine = null;
     }
 
-    private void AddButton(string label, System.Action action)
+    private void AddButton(string label, string detail, System.Action action)
     {
+        DefragUiTheme theme = RuntimeUi.Theme;
         GameObject row = new(label, typeof(RectTransform), typeof(LayoutElement));
         row.transform.SetParent(content, false);
-        row.GetComponent<LayoutElement>().preferredHeight = 48f;
+        row.GetComponent<LayoutElement>().preferredHeight = 74f;
 
         GameObject background = new("Selection", typeof(RectTransform), typeof(Image), typeof(Button));
         background.transform.SetParent(row.transform, false);
@@ -244,42 +293,55 @@ public sealed class TerminalScreenController : MonoBehaviour
 
         Button button = background.GetComponent<Button>();
         Image backgroundImage = background.GetComponent<Image>();
-        backgroundImage.color = MenuNormal;
+        backgroundImage.color = theme.panel;
         button.targetGraphic = backgroundImage;
-        button.transition = Selectable.Transition.ColorTint;
-        ColorBlock colors = button.colors;
-        colors.normalColor = MenuNormal;
-        colors.highlightedColor = new Color(0.02f, 0.35f, 0.06f, 0.9f);
-        colors.selectedColor = MenuSelected;
-        colors.pressedColor = MenuSelected;
-        colors.colorMultiplier = 1f;
-        button.colors = colors;
+        button.transition = Selectable.Transition.None;
+        int index = buttons.Count;
         button.onClick.AddListener(() => action());
+        MenuHoverSelect hover = background.AddComponent<MenuHoverSelect>();
+        hover.Hovered = () => { if (selection != index) Select(index); };
 
-        TMP_Text text = CreateText("Label", row.transform, 25f, TextAlignmentOptions.MidlineLeft);
+        Image accent = RuntimeUi.Panel("Accent", background.transform, theme.accent);
+        accent.rectTransform.anchorMin = Vector2.zero;
+        accent.rectTransform.anchorMax = new Vector2(0f, 1f);
+        accent.rectTransform.sizeDelta = new Vector2(6f, 0f);
+        accent.rectTransform.anchoredPosition = new Vector2(3f, 0f);
+
+        TMP_Text text = CreateText("Label", background.transform, 29f, TextAlignmentOptions.MidlineLeft);
         text.text = label;
-        Stretch(text.rectTransform, new Vector2(18f, 0f), new Vector2(-10f, 0f));
-        text.outlineColor = Color.black;
-        text.outlineWidth = 0.18f;
+        Place(text.rectTransform, Vector2.zero, new Vector2(0.45f, 1f), new Vector2(28f, 0f), Vector2.zero);
+
+        TMP_Text detailText = CreateText("Detail", background.transform, 21f, TextAlignmentOptions.MidlineRight);
+        detailText.text = detail;
+        Place(detailText.rectTransform, new Vector2(0.45f, 0f), Vector2.one, Vector2.zero, new Vector2(-24f, 0f));
+
         buttons.Add(button);
         buttonBackgrounds.Add(backgroundImage);
+        buttonAccents.Add(accent);
         buttonLabels.Add(text);
+        buttonDetails.Add(detailText);
     }
 
     private void Select(int index, bool playSound = true)
     {
+        DefragUiTheme theme = RuntimeUi.Theme;
         selection = (index + buttons.Count) % buttons.Count;
         if (EventSystem.current != null)
             EventSystem.current.SetSelectedGameObject(buttons[selection].gameObject);
         for (int i = 0; i < buttonBackgrounds.Count; i++)
         {
+            bool selected = i == selection;
             if (buttonBackgrounds[i] != null)
-                buttonBackgrounds[i].color = i == selection ? MenuSelected : MenuNormal;
+                buttonBackgrounds[i].color = selected ? new Color(theme.accent.r, theme.accent.g, theme.accent.b, 0.22f) : theme.panel;
+            if (buttonAccents[i] != null)
+                buttonAccents[i].enabled = selected;
             if (buttonLabels[i] != null)
-                buttonLabels[i].color = i == selection ? Color.black : TerminalGreen;
+                buttonLabels[i].color = selected ? theme.highlight : theme.text;
+            if (buttonDetails[i] != null)
+                buttonDetails[i].color = selected ? theme.accent : theme.dim;
         }
         if (playSound)
-            terminalSfx?.PlayMenuSelected();
+            UiSfx.Play(UiCue.MenuMove);
     }
 
     private void ClearContent()
@@ -288,7 +350,9 @@ public sealed class TerminalScreenController : MonoBehaviour
             Destroy(child.gameObject);
         buttons.Clear();
         buttonBackgrounds.Clear();
+        buttonAccents.Clear();
         buttonLabels.Clear();
+        buttonDetails.Clear();
         selection = 0;
     }
 
@@ -307,8 +371,10 @@ public sealed class TerminalScreenController : MonoBehaviour
     {
         RectTransform rect = CreateRect(name, parent);
         TMP_Text text = rect.gameObject.AddComponent<TextMeshProUGUI>();
+        if (RuntimeUi.Theme.font != null)
+            text.font = RuntimeUi.Theme.font;
         text.fontSize = size;
-        text.color = TerminalGreen;
+        text.color = RuntimeUi.Theme.text;
         text.alignment = alignment;
         text.fontStyle = FontStyles.Bold;
         text.raycastTarget = false;
@@ -335,6 +401,13 @@ public sealed class TerminalScreenController : MonoBehaviour
         rect.offsetMin = minOffset;
         rect.offsetMax = maxOffset;
     }
+}
+
+public sealed class MenuHoverSelect : MonoBehaviour, IPointerEnterHandler
+{
+    public System.Action Hovered;
+
+    public void OnPointerEnter(PointerEventData eventData) => Hovered?.Invoke();
 }
 
 /// <summary>

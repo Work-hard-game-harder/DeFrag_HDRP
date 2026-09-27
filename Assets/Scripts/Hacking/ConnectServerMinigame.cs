@@ -8,9 +8,9 @@ using UnityEngine.UI;
 
 public sealed class ConnectServerMinigame : HackingMinigameBase
 {
-    private static readonly Color Green = new(0.1f, 1f, 0.2f);
-    private static readonly Color DimGreen = new(0.02f, 0.48f, 0.09f);
-    private static readonly Color ErrorRed = new(1f, 0.1f, 0.08f);
+    private static Color Green => RuntimeUi.Theme.text;
+    private static Color DimGreen => RuntimeUi.Theme.dim;
+    private static Color ErrorRed => RuntimeUi.Theme.danger;
 
     [Header("Authentication")]
     [SerializeField, Min(1)] private int authenticationRounds = 3;
@@ -26,6 +26,10 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
     [SerializeField, Range(0f, 1f)] private float glitchIntensity = 1f;
     [SerializeField, Min(0f)] private float glitchDuration = 1.2f;
 
+    [Header("Optical Uplink")]
+    [Tooltip("회로 단계에서 해커 화면에 목표 윤곽이 보조로 나타나기까지의 시간(초).")]
+    [SerializeField, Min(0f)] private float circuitAssistDelay = 25f;
+
     [Header("Presentation")]
     [Tooltip("Explicit font for runtime-created terminal labels and input text.")]
     [SerializeField] private TMP_FontAsset terminalFont;
@@ -38,63 +42,90 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
     private TMP_Text timer;
     private TMP_InputField input;
     private TMP_Text inputPlaceholder;
-    private TerminalSfxPlayer terminalSfx;
     private string expectedResponse;
     private int currentRound;
     private float remainingTime;
     private bool acceptingInput;
     private bool finished;
+
     private ConnectServerCoordinator coordinator;
     private bool opticalRelayMode;
     private ConnectServerUplinkPhase displayedPhase;
     private bool hasDisplayedPhase;
     private ConnectServerCircuitView circuitView;
     private int displayedCircuitSeed;
+    private RectTransform leftArea;
+    private FacilityRadarView radar;
+    private TMP_Text roundText;
+    private TMP_Text targetText;
+    private TMP_Text instructionText;
+    private RectTransform timerFill;
+    private TMP_Text timerLabel;
+    private RectTransform traceFill;
+    private TMP_Text traceLabel;
+    private readonly List<string> logLines = new();
+    private float timeLimitCache = -1f;
+    private ConnectServerUplinkPhase timeLimitPhase;
 
     public override bool ConsumesTextInput => true;
     public override bool CloseTerminalOnSuccess => true;
-    public override string ControlHint => "[MOUSE] DRAG    [Q/E] ROTATE    [ESC] ABORT";
+    public override string ControlHint => opticalRelayMode
+        ? TerminalScreenController.KeyHints(("마우스", "모듈 드래그"), ("Q/E", "회전"), ("ENTER", "전송"), ("ESC", "메뉴로"))
+        : TerminalScreenController.KeyHints(("ENTER", "전송"), ("ESC", "메뉴로"));
 
     public override void Begin(ConnectionDevice terminal, TerminalCommands command)
     {
         device = terminal;
-        terminalSfx = terminal.TerminalSfx;
         if (Camera.main != null)
         {
             hintRelay = Camera.main.GetComponentInParent<CooperativeTerminalHintRelay>();
             localGlitch = Camera.main.GetComponentInParent<TvMonsterProximityGlitch>();
         }
-        BuildInterface();
 
         ConnectServerTerminalLink link = terminal.GetComponent<ConnectServerTerminalLink>();
         coordinator = link != null ? link.Coordinator : null;
         opticalRelayMode = coordinator != null && coordinator.IsSpawned;
-        if (opticalRelayMode)
+        if (!opticalRelayMode)
         {
-            coordinator.LocalVerificationResolved += OnVerificationResolved;
+            BuildInterface();
             log.text =
                 "> EXEC CONNECT_SERVER\n" +
-                "> OPTICAL RELAY HANDSHAKE REQUIRED\n" +
-                "> SECOND OPERATOR: IR CAMERA REQUIRED";
-            acceptingInput = false;
-            input.interactable = false;
-            coordinator.RequestStartOrResume();
-            RefreshOpticalInterface();
+                "> REMOTE OPERATOR AUTHENTICATION REQUIRED\n" +
+                "> FAILURE WILL EXPOSE TERMINAL LOCATION";
+            StartRound();
             return;
         }
 
-        log.text =
-            "> EXEC CONNECT_SERVER\n" +
-            "> REMOTE OPERATOR AUTHENTICATION REQUIRED\n" +
-            "> FAILURE WILL EXPOSE TERMINAL LOCATION";
-        StartRound();
+        BuildOpticalInterface();
+        coordinator.LocalVerificationResolved += OnVerificationResolved;
+        AppendLog("CONNECT_SERVER 실행 // 광학 릴레이 핸드셰이크 필요");
+        MinigameTutorial.ShowBlocking(new TutorialCard
+        {
+            Id = "connect.hacker",
+            Role = "해커 • 서버 연결",
+            Title = "원격 광학 연결",
+            Goal = $"동료와 함께 릴레이 {coordinator.RequiredRounds}곳을 연결합니다.",
+            Steps = new[]
+            {
+                ("", "왼쪽 지도에서 <color=#FFB347>주황 원</color>이 목표 릴레이예요. 초록 화살표는 동료입니다."),
+                ("무전", "동료를 목표 릴레이까지 길 안내하세요. 빨간 점(괴물)도 알려주세요!"),
+                ("", "동료가 IR 카메라로 릴레이를 찍으면, 회로 조각이 이 화면에 도착합니다."),
+                ("", "시간이 끝나거나 엉뚱한 릴레이를 찍으면 추적도(빨간 게이지)가 올라가요.")
+            }
+        }, (RectTransform)transform, () =>
+        {
+            if (coordinator != null && !finished)
+                coordinator.RequestStartOrResume();
+        });
+        RefreshOpticalInterface();
     }
 
     private void Update()
     {
         if (opticalRelayMode)
         {
-            UpdateOpticalMode();
+            if (coordinator != null && coordinator.IsSpawned && !finished)
+                RefreshOpticalInterface();
             return;
         }
 
@@ -120,157 +151,180 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
         }
     }
 
-    private void UpdateOpticalMode()
+    private void BuildOpticalInterface()
     {
-        if (coordinator == null || !coordinator.IsSpawned || finished)
-            return;
+        DefragUiTheme theme = RuntimeUi.Theme;
+        leftArea = RuntimeUi.Panel("Left Area", transform, Color.clear).rectTransform;
+        RuntimeUi.Place(leftArea, new Vector2(0f, 0f), new Vector2(0.6f, 1f));
+        radar = FacilityRadarView.Create(leftArea, FacilityRadarSettings.Default, terminalFont, new ConnectServerRadarContent(coordinator));
 
-        RefreshOpticalInterface();
+        Image side = RuntimeUi.FramedPanel("Status", transform, theme.panel, 18f);
+        RuntimeUi.Place(side.rectTransform, new Vector2(0.62f, 0f), new Vector2(1f, 1f));
+
+        roundText = Label(side.transform, 24f, TextAlignmentOptions.MidlineLeft, new Vector2(0.06f, 0.88f), new Vector2(0.94f, 0.97f));
+        targetText = Label(side.transform, 58f, TextAlignmentOptions.Center, new Vector2(0.04f, 0.68f), new Vector2(0.96f, 0.87f));
+        targetText.color = theme.info;
+        instructionText = Label(side.transform, 24f, TextAlignmentOptions.Top, new Vector2(0.06f, 0.43f), new Vector2(0.94f, 0.67f));
+        instructionText.enableAutoSizing = true;
+        instructionText.fontSizeMin = 15f;
+        instructionText.fontSizeMax = 24f;
+
+        timerLabel = Label(side.transform, 20f, TextAlignmentOptions.MidlineLeft, new Vector2(0.06f, 0.36f), new Vector2(0.94f, 0.42f));
+        timerFill = Gauge(side.transform, new Vector2(0.06f, 0.325f), new Vector2(0.94f, 0.355f), theme.accent);
+        traceLabel = Label(side.transform, 20f, TextAlignmentOptions.MidlineLeft, new Vector2(0.06f, 0.26f), new Vector2(0.94f, 0.32f));
+        traceFill = Gauge(side.transform, new Vector2(0.06f, 0.225f), new Vector2(0.94f, 0.255f), theme.danger);
+
+        log = Label(side.transform, 17f, TextAlignmentOptions.BottomLeft, new Vector2(0.06f, 0.02f), new Vector2(0.94f, 0.2f));
+        log.color = theme.dim;
     }
+
+    private TMP_Text Label(Transform parent, float size, TextAlignmentOptions alignment, Vector2 min, Vector2 max)
+    {
+        TMP_Text label = RuntimeUi.Text("Label", parent, size, alignment, terminalFont, RuntimeUi.Theme.text);
+        RuntimeUi.Place(label.rectTransform, min, max);
+        return label;
+    }
+
+    private static RectTransform Gauge(Transform parent, Vector2 min, Vector2 max, Color color)
+    {
+        Image track = RuntimeUi.Panel("Gauge", parent, new Color(0f, 0f, 0f, 0.6f));
+        RuntimeUi.Place(track.rectTransform, min, max);
+        Image fill = RuntimeUi.Panel("Fill", track.transform, color);
+        RuntimeUi.Place(fill.rectTransform, Vector2.zero, Vector2.one);
+        return fill.rectTransform;
+    }
+
+    private static void SetGauge(RectTransform fill, float value) =>
+        fill.anchorMax = new Vector2(Mathf.Clamp01(value), 1f);
 
     private void RefreshOpticalInterface()
     {
         if (coordinator == null)
             return;
 
+        DefragUiTheme theme = RuntimeUi.Theme;
         ConnectServerUplinkPhase phase = coordinator.Phase;
+        bool timed = phase == ConnectServerUplinkPhase.AwaitingOpticalScan || phase == ConnectServerUplinkPhase.AwaitingVerification;
         float timeLeft = Mathf.Max(0f, (float)(coordinator.Deadline - coordinator.ServerTime));
-        timer.text = phase == ConnectServerUplinkPhase.AwaitingOpticalScan ||
-                     phase == ConnectServerUplinkPhase.AwaitingVerification
-            ? $"UPLINK WINDOW: {timeLeft:00.0}s    TRACE: {coordinator.Trace:00}%"
-            : $"TRACE: {coordinator.Trace:00}%";
+
+        var pips = new System.Text.StringBuilder();
+        for (int i = 0; i < coordinator.RequiredRounds; i++)
+            pips.Append(i < coordinator.CompletedRounds ? $"<color=#{DefragUiTheme.Hex(theme.accent)}>■</color> " : $"<color=#{DefragUiTheme.Hex(theme.dim)}>■</color> ");
+        roundText.text = $"업링크  {pips}";
+        targetText.text = timed ? ConnectServerRadarContent.ShortId(coordinator.TargetRelayId) : "----";
+        timerLabel.text = timed ? $"남은 시간  {timeLeft:0}초" : "남은 시간  --";
+        SetGauge(timerFill, timed ? timeLeft / TimeLimitFor(phase) : 0f);
+        traceLabel.text = $"추적도  {coordinator.Trace:0}%   <size=80%><color=#{DefragUiTheme.Hex(theme.dim)}>100%가 되면 연결이 끊겨요</color></size>";
+        SetGauge(traceFill, coordinator.Trace / 100f);
 
         if (!hasDisplayedPhase || phase != displayedPhase)
         {
             hasDisplayedPhase = true;
             displayedPhase = phase;
-            AppendPhaseLog(phase);
+            OnPhaseEntered(phase);
         }
 
+        if (phase == ConnectServerUplinkPhase.AwaitingVerification)
+            EnsureCircuitView();
+    }
+
+    // The coordinator exposes only the deadline, so the first observed remaining time per phase becomes the bar's full length.
+    private float TimeLimitFor(ConnectServerUplinkPhase phase)
+    {
+        if (timeLimitCache < 0f || phase != timeLimitPhase)
+        {
+            timeLimitPhase = phase;
+            timeLimitCache = Mathf.Max(1f, (float)(coordinator.Deadline - coordinator.ServerTime));
+        }
+        return timeLimitCache;
+    }
+
+    private void OnPhaseEntered(ConnectServerUplinkPhase phase)
+    {
+        timeLimitCache = -1f;
         switch (phase)
         {
             case ConnectServerUplinkPhase.Idle:
-                challenge.color = DimGreen;
-                challenge.text = "REQUESTING SERVER HANDSHAKE...";
-                SetInputEnabled(false, "> INPUT LOCKED // REQUESTING HANDSHAKE");
-                break;
             case ConnectServerUplinkPhase.Connecting:
-                challenge.color = Green;
-                challenge.text = "CONNECTING TO OPTICAL RELAY NETWORK...";
-                SetInputEnabled(false, "> INPUT LOCKED // NEGOTIATING RELAY ROUTE");
+                instructionText.text = "릴레이 경로 협상 중...";
                 break;
             case ConnectServerUplinkPhase.AwaitingOpticalScan:
                 RemoveCircuitView();
-                challenge.color = Green;
-                challenge.text =
-                    $"연결 {coordinator.CompletedRounds + 1:00}/{coordinator.RequiredRounds:00}\n" +
-                    $"카메라 목표: {coordinator.TargetRelayId}\n" +
-                    "이 번호를 카메라 담당자에게 알려주세요";
-                SetInputEnabled(false,
-                    $"> 카메라가 {coordinator.TargetRelayId} 촬영 대기 중");
+                radar.gameObject.SetActive(true);
+                instructionText.text = "동료를 <color=#FFB347>주황 원</color>의 목표 릴레이로 안내하세요.\n동료가 IR 카메라로 촬영하면 다음 단계!";
+                AppendLog($"목표 지정: {coordinator.TargetRelayId}");
+                UiSfx.Play(UiCue.KnobZone);
                 break;
             case ConnectServerUplinkPhase.AwaitingVerification:
-                challenge.color = Green;
-                challenge.text = "OPTICAL CAPTURE ACCEPTED // CIRCUIT DATA LOADING";
-                SetInputEnabled(false, "> CIRCUIT INTERFACE ACTIVE");
-                EnsureCircuitView();
+                instructionText.text = "동료가 불러주는 좌표(예: B2, C3)대로\n모듈을 놓고 전송하세요.";
+                AppendLog("광학 캡처 성공 // 회로 데이터 수신");
+                UiSfx.Play(UiCue.CaptureAccepted);
                 break;
             case ConnectServerUplinkPhase.Suspended:
-                challenge.color = DimGreen;
-                challenge.text = "UPLINK SESSION SUSPENDED";
-                SetInputEnabled(false, "> INPUT LOCKED // SESSION SUSPENDED");
+                instructionText.text = "세션 일시정지";
                 break;
             case ConnectServerUplinkPhase.Completed:
-                challenge.color = Green;
-                challenge.text = "SERVER CONNECTION ESTABLISHED";
-                SetInputEnabled(false, "> CONNECTION ESTABLISHED");
+                instructionText.text = $"<color=#{DefragUiTheme.Hex(RuntimeUi.Theme.accent)}>서버 연결 완료!</color>";
+                AppendLog("모든 릴레이 검증 완료");
                 finished = true;
                 StartCoroutine(CompleteAfterDelay());
                 break;
             case ConnectServerUplinkPhase.Failed:
-                challenge.color = ErrorRed;
-                challenge.text = "TRACE LIMIT EXCEEDED\nUPLINK TERMINATED";
-                SetInputEnabled(false, "> INPUT LOCKED // TRACE LIMIT EXCEEDED");
+                instructionText.text = $"<color=#{DefragUiTheme.Hex(RuntimeUi.Theme.danger)}>추적 한도 초과 — 연결이 끊겼어요</color>";
+                AppendLog("TRACE LIMIT EXCEEDED");
                 finished = true;
                 StartCoroutine(FailOpticalAfterDelay());
                 break;
         }
     }
 
-    private void SetInputEnabled(bool enabled, string prompt = null)
+    private void AppendLog(string line)
     {
-        if (inputPlaceholder != null)
-            inputPlaceholder.text = string.IsNullOrWhiteSpace(prompt)
-                ? "> ENGLISH INPUT ONLY"
-                : prompt;
-
-        if (acceptingInput == enabled && input.interactable == enabled)
-            return;
-
-        acceptingInput = enabled;
-        input.interactable = enabled;
-        if (!enabled)
-        {
-            input.SetTextWithoutNotify(string.Empty);
-            return;
-        }
-
-        input.ActivateInputField();
-        if (EventSystem.current != null)
-            EventSystem.current.SetSelectedGameObject(input.gameObject);
-    }
-
-    private void AppendPhaseLog(ConnectServerUplinkPhase phase)
-    {
-        string message = phase switch
-        {
-            ConnectServerUplinkPhase.Connecting => "NEGOTIATING RELAY ROUTE",
-            ConnectServerUplinkPhase.AwaitingOpticalScan =>
-                $"ROUTE ISSUED: {coordinator.TargetRelayId} / {coordinator.TargetSector}",
-            ConnectServerUplinkPhase.AwaitingVerification => "OPTICAL CAPTURE ACCEPTED",
-            ConnectServerUplinkPhase.Suspended => "SESSION SUSPENDED",
-            ConnectServerUplinkPhase.Completed => "ALL RELAYS VERIFIED",
-            ConnectServerUplinkPhase.Failed => "TRACE LIMIT EXCEEDED",
-            _ => string.Empty
-        };
-        if (!string.IsNullOrEmpty(message))
-            log.text += $"\n> {message}";
-    }
-
-    private void TryAutocompleteUploadCommand()
-    {
-        string value = input.text.Trim().ToUpperInvariant();
-        if (value.Length > 0 && !"UPLOAD".StartsWith(value))
-            return;
-
-        input.SetTextWithoutNotify("UPLOAD ");
-        input.caretPosition = input.text.Length;
-        input.ActivateInputField();
+        logLines.Add($"> {line}");
+        while (logLines.Count > 4)
+            logLines.RemoveAt(0);
+        log.text = string.Join("\n", logLines);
     }
 
     private void OnVerificationResolved(bool success, string message)
     {
-        log.text += $"\n> {message}";
-        if (!success)
-            terminalSfx?.PlayIncorrectAnswer();
+        AppendLog(success ? "회로 검증 성공" : "배치가 달라요 — 동료와 좌표를 다시 맞춰보세요");
+        if (success)
+        {
+            UiSfx.Play(UiCue.RoundClear);
+            RemoveCircuitView();
+        }
         else
-            terminalSfx?.PlayRoundSuccess();
-        input.SetTextWithoutNotify(string.Empty);
-        if (!success && coordinator != null &&
-            coordinator.Phase == ConnectServerUplinkPhase.AwaitingVerification)
-            SetInputEnabled(false, "> 배치가 거부되었습니다 // 도형을 다시 맞추세요");
+        {
+            circuitView?.NotifyRejected();
+        }
     }
 
     private void EnsureCircuitView()
     {
-        int seed = coordinator != null ? coordinator.CircuitSeed : 0;
+        int seed = coordinator.CircuitSeed;
         if (seed == 0 || displayedCircuitSeed == seed) return;
         RemoveCircuitView();
         displayedCircuitSeed = seed;
+        radar.gameObject.SetActive(false);
         GameObject viewObject = new("Circuit Shape Puzzle", typeof(RectTransform), typeof(ConnectServerCircuitView));
-        viewObject.transform.SetParent(transform, false);
+        viewObject.transform.SetParent(leftArea, false);
         circuitView = viewObject.GetComponent<ConnectServerCircuitView>();
-        circuitView.Begin(seed, coordinator.CompletedRounds + 1, SubmitCircuitSolution);
+        circuitView.Begin(seed, coordinator.CompletedRounds + 1, circuitAssistDelay, SubmitCircuitSolution);
+        MinigameTutorial.ShowBlocking(new TutorialCard
+        {
+            Id = "connect.hacker.circuit",
+            Role = "해커 • 회로 복원",
+            Title = "말로 맞추는 회로",
+            Goal = "동료만 볼 수 있는 모양대로 모듈을 배치합니다.",
+            Steps = new[]
+            {
+                ("무전", "동료에게 \"칠해진 칸 좌표 불러줘!\"라고 하세요. (예: B2, B3, C3)"),
+                ("드래그", "모듈을 끌어 해당 칸에 놓고, Q/E로 회전할 수 있어요."),
+                ("ENTER", "모두 놓았으면 전송! 틀리면 추적도가 조금 오르고 다시 할 수 있어요."),
+                ("", "한참 어려우면 주황 윤곽이 보조로 나타나요.")
+            }
+        }, leftArea, null);
     }
 
     private void SubmitCircuitSolution(string placements)
@@ -284,13 +338,22 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
         if (circuitView != null) Destroy(circuitView.gameObject);
         circuitView = null;
         displayedCircuitSeed = 0;
+        if (radar != null) radar.gameObject.SetActive(true);
     }
 
     private IEnumerator FailOpticalAfterDelay()
     {
-        yield return new WaitForSecondsRealtime(1.1f);
+        yield return new WaitForSecondsRealtime(1.4f);
         ReportFailure();
     }
+
+    private IEnumerator CompleteAfterDelay()
+    {
+        yield return new WaitForSecondsRealtime(1.1f);
+        ReportSuccess();
+    }
+
+    // ---- Legacy text authentication, used only when no optical uplink coordinator is spawned. ----
 
     private void StartRound()
     {
@@ -328,14 +391,14 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
 
         if (submitted.Trim().ToUpperInvariant() != expectedResponse)
         {
-            terminalSfx?.PlayIncorrectAnswer();
+            UiSfx.Play(UiCue.CardWrong);
             FailAuthentication("INVALID REMOTE KEY");
             return;
         }
 
         acceptingInput = false;
         input.interactable = false;
-        terminalSfx?.PlayRoundSuccess();
+        UiSfx.Play(UiCue.RoundClear);
         hintRelay?.HideForTeammate();
         log.text += $"\n> NODE {currentRound:00} ACCEPTED";
 
@@ -379,12 +442,6 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
         StartRound();
     }
 
-    private IEnumerator CompleteAfterDelay()
-    {
-        yield return new WaitForSecondsRealtime(0.9f);
-        ReportSuccess();
-    }
-
     private void BuildInterface()
     {
         log = CreateText("System Log", 20f, TextAlignmentOptions.TopLeft);
@@ -409,7 +466,7 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
         Place((RectTransform)inputObject.transform,
             new Vector2(0.04f, 0.06f), new Vector2(0.96f, 0.22f),
             Vector2.zero, Vector2.zero);
-        inputObject.GetComponent<Image>().color = new Color(0f, 0.12f, 0.02f, 0.88f);
+        inputObject.GetComponent<Image>().color = RuntimeUi.Theme.panelRaised;
         OperationPanelStyle.Input(inputObject);
 
         TMP_Text inputText = CreateText(
@@ -431,7 +488,7 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
         input.onValidateInput = ValidateCommandCharacter;
         input.onValueChanged.AddListener(ForceUppercase);
         input.onSubmit.AddListener(Submit);
-        terminalSfx?.BindTyping(input);
+        device.TerminalSfx?.BindTyping(input);
     }
 
     private void ForceUppercase(string value)
@@ -449,20 +506,8 @@ public sealed class ConnectServerMinigame : HackingMinigameBase
         string name,
         float size,
         TextAlignmentOptions alignment,
-        Transform parent = null)
-    {
-        GameObject child = new(name, typeof(RectTransform), typeof(TextMeshProUGUI));
-        child.transform.SetParent(parent == null ? transform : parent, false);
-        TMP_Text text = child.GetComponent<TMP_Text>();
-        if (terminalFont != null)
-            text.font = terminalFont;
-        text.fontSize = size;
-        text.color = Green;
-        text.alignment = alignment;
-        text.fontStyle = FontStyles.Bold;
-        text.raycastTarget = false;
-        return text;
-    }
+        Transform parent = null) =>
+        RuntimeUi.Text(name, parent == null ? transform : parent, size, alignment, terminalFont, Green);
 
     private static char ValidateCommandCharacter(string _, int __, char character)
     {

@@ -17,6 +17,17 @@ namespace DeFrag.B1F
         public int Index { get; private set; } = -1;
         public bool IsOn { get; private set; }
 
+        // World point of the switch's OFF end, stable regardless of the knob's current state.
+        public Vector3 OffEndWorldPosition
+        {
+            get
+            {
+                Vector3 local = transform.localPosition;
+                local.x = offLocalX;
+                return transform.parent != null ? transform.parent.TransformPoint(local) : local;
+            }
+        }
+
         internal void Configure(int index) => Index = index;
 
         internal void ApplyState(bool isOn, bool immediate)

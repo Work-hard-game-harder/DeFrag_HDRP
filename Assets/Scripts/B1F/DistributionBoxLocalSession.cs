@@ -11,6 +11,35 @@ namespace DeFrag.B1F
 {
     public sealed class DistributionBoxLocalSession : MonoBehaviour
     {
+        private static readonly TutorialCard BoxCard = new()
+        {
+            Id = "distA.box",
+            Role = "카메라맨 • 배전함 조작",
+            Title = "스위치 맞추기",
+            Goal = "해커가 알려주는 대로 스위치를 ON/OFF 해서 비상전력을 복구합니다.",
+            Steps = new[]
+            {
+                ("마우스", "화면 가운데 조준점으로 스위치를 겨누세요. 왼쪽에 번호(1~5)가 떠요."),
+                ("E", "스위치를 OFF / ON 으로 밀어요."),
+                ("무전", "정답은 해커 화면에만 보여요. \"3번 어떻게 해?\"라고 물어보세요!"),
+                ("", "뱅크 A → B → C를 맞추면 메인 노브 단계로 넘어가요.")
+            }
+        };
+
+        private static readonly TutorialCard KnobCard = new()
+        {
+            Id = "distA.knob.box",
+            Role = "카메라맨 • 메인 노브",
+            Title = "해커의 신호에 맞춰 당겨라",
+            Goal = "바늘이 해커가 부르는 숫자 구간에 왔을 때 노브를 당깁니다.",
+            Steps = new[]
+            {
+                ("", "아래 눈금(0~10) 위를 바늘이 왔다 갔다 해요."),
+                ("무전", "해커에게 \"구간 몇이야?\" 물어보세요. (예: 6에서 8)"),
+                ("E", "바늘이 그 구간에 들어왔을 때 E! 3번 성공하면 전력 복구!")
+            }
+        };
+
         public static DistributionBoxLocalSession Active { get; private set; }
 
         private DistributionBoxController controller;
@@ -38,6 +67,9 @@ namespace DeFrag.B1F
         private float cameraDownPitchLimit;
         private float lookYaw;
         private float lookPitch;
+        private DistributionOperatorHud hud;
+        private bool tutorialOpen;
+        private bool knobBriefed;
 
         public bool IsFor(DistributionBoxController box) => active && controller == box;
 
@@ -113,6 +145,18 @@ namespace DeFrag.B1F
                 initialFieldOfView,
                 blendDuration,
                 blendCurve ?? AnimationCurve.Linear(0f, 0f, 1f, 1f)));
+
+            hud = DistributionOperatorHud.Create(box, interactionCamera);
+            knobBriefed = false;
+            ShowTutorial(BoxCard);
+        }
+
+        private void ShowTutorial(TutorialCard card)
+        {
+            if (MinigameTutorial.HasSeen(card.Id))
+                return;
+            tutorialOpen = true;
+            MinigameTutorial.ShowBlockingOverlay(card, () => tutorialOpen = false);
         }
 
         private static void CopyLocalCameraRenderingSettings(Camera source, Camera target)
@@ -146,6 +190,9 @@ namespace DeFrag.B1F
                 return;
             }
 
+            if (tutorialOpen)
+                return;
+
             if (waitingForInteractionKeyRelease)
             {
                 if (!Input.GetKey(KeyCode.E)) waitingForInteractionKeyRelease = false;
@@ -154,6 +201,13 @@ namespace DeFrag.B1F
 
             if (!cameraTransitionComplete)
                 return;
+
+            if (!knobBriefed && controller.Phase == DistributionPuzzlePhase.MainKnob)
+            {
+                knobBriefed = true;
+                ShowTutorial(KnobCard);
+                if (tutorialOpen) return;
+            }
 
             if (controller.Phase != DistributionPuzzlePhase.MainKnob)
                 UpdateCameraLook();
@@ -194,6 +248,8 @@ namespace DeFrag.B1F
 
             if (movement != null) movement.enabled = true;
             DistributionTimingGaugePresenter.TryHideImmediate();
+            if (hud != null) Destroy(hud.gameObject);
+            hud = null;
             playerInteraction?.TogglePlayerControl(true);
             viewSwitcher?.SetInteractionLocked(false);
             GameplayInputGate.Release(this);
@@ -212,7 +268,8 @@ namespace DeFrag.B1F
             float successWidth,
             float roundTripDuration,
             int round,
-            int totalRounds)
+            int totalRounds,
+            bool zoneHidden)
         {
             if (!active) return;
             DistributionTimingGaugePresenter.GetOrCreate().ShowAttempt(
@@ -221,7 +278,8 @@ namespace DeFrag.B1F
                 successWidth,
                 roundTripDuration,
                 round,
-                totalRounds);
+                totalRounds,
+                zoneHidden);
         }
 
         public void ShowTimingFailure()
@@ -378,8 +436,6 @@ namespace DeFrag.B1F
     [DisallowMultipleComponent]
     public sealed class DistributionTimingGaugePresenter : MonoBehaviour
     {
-        private static readonly Color TerminalGreen = new(0.1f, 1f, 0.2f, 1f);
-        private static readonly Color FailureRed = new(1f, 0.12f, 0.08f, 1f);
         private static DistributionTimingGaugePresenter instance;
 
         private RectTransform panel;
@@ -437,7 +493,8 @@ namespace DeFrag.B1F
             float successWidth,
             float duration,
             int round,
-            int totalRounds)
+            int totalRounds,
+            bool zoneHidden)
         {
             if (feedbackRoutine != null)
             {
@@ -445,14 +502,19 @@ namespace DeFrag.B1F
                 feedbackRoutine = null;
             }
 
+            DefragUiTheme theme = RuntimeUi.Theme;
             gameObject.SetActive(true);
             canvasGroup.alpha = 1f;
             panel.anchoredPosition = Vector2.zero;
-            trackImage.color = new Color(0f, 0.04f, 0.01f, 0.94f);
-            successImage.color = new Color(0.1f, 0.85f, 0.2f, 0.72f);
-            barImage.color = Color.white;
-            instruction.color = Color.white;
-            instruction.text = $"MAIN KNOB SYNC  {round:00}/{totalRounds:00}  //  PRESS [E] IN THE GREEN ZONE";
+            trackImage.color = new Color(0f, 0f, 0f, 0.7f);
+            successImage.color = new Color(theme.accent.r, theme.accent.g, theme.accent.b, 0.6f);
+            successImage.enabled = !zoneHidden;
+            barImage.color = theme.highlight;
+            instruction.color = theme.highlight;
+            instruction.text = zoneHidden
+                ? $"메인 노브 {round}/{totalRounds}  //  해커가 부르는 숫자 구간에 바늘이 오면 [E]"
+                : $"메인 노브 {round}/{totalRounds}  //  초록 구간에 바늘이 오면 [E]";
+            UiSfx.Play(UiCue.KnobZone);
 
             float halfWidth = successWidth * 0.5f;
             successZone.anchorMin = new Vector2(targetCenter - halfWidth, 0f);
@@ -493,9 +555,10 @@ namespace DeFrag.B1F
 
         private IEnumerator FailureRoutine()
         {
-            instruction.text = "SYNCHRONIZATION FAILED // RECALIBRATING";
-            instruction.color = FailureRed;
-            barImage.color = FailureRed;
+            instruction.text = "빗나갔어요! 다시 한 번 — 해커의 신호를 기다리세요";
+            instruction.color = RuntimeUi.Theme.danger;
+            barImage.color = RuntimeUi.Theme.danger;
+            UiSfx.Play(UiCue.RhythmMiss);
             Vector2 origin = panel.anchoredPosition;
             float elapsed = 0f;
             const float duration = 0.42f;
@@ -520,9 +583,10 @@ namespace DeFrag.B1F
 
         private IEnumerator SuccessRoutine()
         {
-            instruction.text = "SYNCHRONIZATION COMPLETE";
-            instruction.color = TerminalGreen;
-            barImage.color = TerminalGreen;
+            instruction.text = "동기화 성공!";
+            instruction.color = RuntimeUi.Theme.accent;
+            barImage.color = RuntimeUi.Theme.accent;
+            UiSfx.Play(UiCue.BankComplete);
             float elapsed = 0f;
             const float duration = 0.3f;
             while (elapsed < duration)
@@ -538,21 +602,32 @@ namespace DeFrag.B1F
         private void Build()
         {
             canvasGroup = gameObject.AddComponent<CanvasGroup>();
-            GameObject panelObject = new("Timing Panel", typeof(RectTransform), typeof(Image));
-            panelObject.transform.SetParent(transform, false);
-            panel = (RectTransform)panelObject.transform;
-            panel.anchorMin = new Vector2(0.23f, 0.11f);
-            panel.anchorMax = new Vector2(0.77f, 0.25f);
+            Image panelImage = RuntimeUi.FramedPanel("Timing Panel", transform, RuntimeUi.Theme.panel, 16f);
+            panel = panelImage.rectTransform;
+            panel.anchorMin = new Vector2(0.2f, 0.09f);
+            panel.anchorMax = new Vector2(0.8f, 0.27f);
             panel.offsetMin = panel.offsetMax = Vector2.zero;
-            panelObject.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.76f);
 
             GameObject track = new("Track", typeof(RectTransform), typeof(Image));
             track.transform.SetParent(panel, false);
             RectTransform trackRect = (RectTransform)track.transform;
-            trackRect.anchorMin = new Vector2(0.08f, 0.2f);
-            trackRect.anchorMax = new Vector2(0.92f, 0.57f);
+            trackRect.anchorMin = new Vector2(0.06f, 0.32f);
+            trackRect.anchorMax = new Vector2(0.94f, 0.6f);
             trackRect.offsetMin = trackRect.offsetMax = Vector2.zero;
             trackImage = track.GetComponent<Image>();
+            for (int tick = 0; tick <= 10; tick++)
+            {
+                Image mark = RuntimeUi.Panel($"Tick {tick}", trackRect, new Color(1f, 1f, 1f, 0.35f));
+                mark.rectTransform.anchorMin = new Vector2(tick / 10f, 0f);
+                mark.rectTransform.anchorMax = new Vector2(tick / 10f, 1f);
+                mark.rectTransform.sizeDelta = new Vector2(2f, 0f);
+                TMP_Text number = RuntimeUi.Text($"Tick Label {tick}", trackRect, 26f, TextAlignmentOptions.Center, null, RuntimeUi.Theme.info);
+                number.rectTransform.anchorMin = number.rectTransform.anchorMax = new Vector2(tick / 10f, 0f);
+                number.rectTransform.pivot = new Vector2(0.5f, 1f);
+                number.rectTransform.sizeDelta = new Vector2(50f, 34f);
+                number.rectTransform.anchoredPosition = new Vector2(0f, -4f);
+                number.text = tick.ToString();
+            }
 
             GameObject zone = new("Success Zone", typeof(RectTransform), typeof(Image));
             zone.transform.SetParent(trackRect, false);
@@ -565,17 +640,11 @@ namespace DeFrag.B1F
             movingBar.sizeDelta = new Vector2(12f, 0f);
             barImage = bar.GetComponent<Image>();
 
-            GameObject textObject = new(
-                "Instruction", typeof(RectTransform), typeof(TextMeshProUGUI));
-            textObject.transform.SetParent(panel, false);
-            instruction = textObject.GetComponent<TextMeshProUGUI>();
-            instruction.rectTransform.anchorMin = new Vector2(0.04f, 0.62f);
-            instruction.rectTransform.anchorMax = new Vector2(0.96f, 0.95f);
-            instruction.rectTransform.offsetMin = instruction.rectTransform.offsetMax = Vector2.zero;
-            instruction.fontSize = 22f;
-            instruction.fontStyle = FontStyles.Bold;
-            instruction.alignment = TextAlignmentOptions.Center;
-            instruction.raycastTarget = false;
+            instruction = RuntimeUi.Text("Instruction", panel, 24f, TextAlignmentOptions.Center);
+            RuntimeUi.Place(instruction.rectTransform, new Vector2(0.04f, 0.66f), new Vector2(0.96f, 0.95f));
+            instruction.enableAutoSizing = true;
+            instruction.fontSizeMin = 14f;
+            instruction.fontSizeMax = 24f;
         }
     }
 }

@@ -115,6 +115,7 @@ public sealed class CameraItem : MonoBehaviour
             : CameraMode.Normal);
         if (audioSource != null && clickSound != null)
             audioSource.PlayOneShot(clickSound);
+        UiSfx.Play(currentMode == CameraMode.Infrared ? UiCue.IrOn : UiCue.IrOff, 0.9f);
     }
 
     private void SetMode(CameraMode mode)

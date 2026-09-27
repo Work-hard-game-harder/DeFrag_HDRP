@@ -7,10 +7,10 @@ namespace DeFrag.B1F
     // Crank HUD: shows effort and ignition progress but never the target RPM, which only the panel sees.
     public sealed class GeneratorBCrankView : MonoBehaviour
     {
-        private static readonly Color Green = new(0.2f, 1f, 0.35f, 1f);
-        private static readonly Color Dim = new(0.12f, 0.4f, 0.2f, 1f);
-        private static readonly Color Red = new(1f, 0.18f, 0.12f, 1f);
-        private static readonly Color KeyIdle = new(0.03f, 0.14f, 0.07f, 0.95f);
+        private static Color Green => RuntimeUi.Theme.accent;
+        private static Color Dim => RuntimeUi.Theme.dim;
+        private static Color Red => RuntimeUi.Theme.danger;
+        private static Color KeyIdle => RuntimeUi.Theme.panelRaised;
 
         private const float KeyFlashSeconds = 0.12f;
 
@@ -18,6 +18,7 @@ namespace DeFrag.B1F
         private TMP_FontAsset font;
         private RectTransform wheel;
         private Image[] keys;
+        private TMP_Text[] keyLabels;
         private float[] keyFlashUntil;
         private Image[] cylinderLamps;
         private TMP_Text feedbackText;
@@ -46,7 +47,7 @@ namespace DeFrag.B1F
         {
             TMP_Text title = RuntimeUi.Text("Title", root, 44f, TextAlignmentOptions.Center, font, Green);
             RuntimeUi.Place(title.rectTransform, new Vector2(0.03f, 0.76f), new Vector2(0.97f, 0.97f));
-            title.text = "A · D 를 번갈아 연타!";
+            title.text = "A  D 를 번갈아 연타!";
 
             TMP_Text hint = RuntimeUi.Text("Hint", root, 23f, TextAlignmentOptions.Center, font, Green);
             RuntimeUi.Place(hint.rectTransform, new Vector2(0.03f, 0.62f), new Vector2(0.97f, 0.76f));
@@ -56,6 +57,7 @@ namespace DeFrag.B1F
             RuntimeUi.PlaceCentered(wheel, new Vector2(0.5f, 0.33f), new Vector2(150f, 150f));
 
             keys = new Image[2];
+            keyLabels = new TMP_Text[2];
             keyFlashUntil = new float[2];
             string[] labels = { "A", "D" };
             for (int i = 0; i < keys.Length; i++)
@@ -66,6 +68,7 @@ namespace DeFrag.B1F
                 TMP_Text keyLabel = RuntimeUi.Text("Label", keys[i].transform, 64f, TextAlignmentOptions.Center, font, Green);
                 RuntimeUi.Place(keyLabel.rectTransform, Vector2.zero, Vector2.one);
                 keyLabel.text = labels[i];
+                keyLabels[i] = keyLabel;
             }
 
             cylinderLamps = new Image[controller.RequiredCylinders];
@@ -95,7 +98,11 @@ namespace DeFrag.B1F
 
             wheel.localRotation = Quaternion.Euler(0f, 0f, -controller.SmoothedAngle);
             for (int i = 0; i < keys.Length; i++)
-                keys[i].color = Time.unscaledTime < keyFlashUntil[i] ? Green : KeyIdle;
+            {
+                bool flashing = Time.unscaledTime < keyFlashUntil[i];
+                keys[i].color = flashing ? Green : KeyIdle;
+                keyLabels[i].color = flashing ? KeyIdle : Green;
+            }
             for (int i = 0; i < cylinderLamps.Length; i++)
                 cylinderLamps[i].color = i < controller.IgnitedCylinders ? Green : Dim;
             if (Time.unscaledTime >= feedbackUntil)

@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,20 +10,16 @@ using UnityEngine.UI;
 /// </summary>
 public sealed class PasswordCrackingMinigame : HackingMinigameBase
 {
-    private static readonly char[] RhythmKeys = { 'Q', 'W', 'E', 'R', 'A', 'S', 'D', 'F' };
-
-    private static readonly Color Green = new(0.1f, 1f, 0.2f, 1f);
-    private static readonly Color DimGreen = new(0.02f, 0.42f, 0.08f, 1f);
-    private static readonly Color PerfectGreen = new(0.65f, 1f, 0.7f, 1f);
-    private static readonly Color ErrorRed = new(1f, 0.08f, 0.06f, 1f);
+    private static readonly char[] LaneKeys = { 'A', 'S', 'D', 'F' };
+    private static readonly float[] LanePitches = { 1f, 1.26f, 1.5f, 2f };
 
     [Header("Rhythm Rules")]
     [SerializeField, Min(1)] private int requiredHits = 4;
-    [SerializeField, Min(1)] private int allowedMisses = 3;
-    [SerializeField] private Vector2 approachDurationRange = new(0.95f, 1.45f);
-    [SerializeField] private Vector2 noteGapRange = new(0.22f, 0.5f);
-    [SerializeField, Range(0.03f, 0.2f)] private float goodScaleTolerance = 0.1f;
-    [SerializeField, Range(0.01f, 0.1f)] private float perfectScaleTolerance = 0.035f;
+    [SerializeField, Min(1)] private int allowedMisses = 5;
+    [SerializeField] private Vector2 approachDurationRange = new(1.3f, 1.7f);
+    [SerializeField] private Vector2 noteGapRange = new(0.35f, 0.6f);
+    [SerializeField, Range(0.03f, 0.3f)] private float goodScaleTolerance = 0.17f;
+    [SerializeField, Range(0.01f, 0.15f)] private float perfectScaleTolerance = 0.06f;
     [SerializeField, Min(1.1f)] private float approachStartScale = 2.35f;
 
     [Header("Presentation")]
@@ -34,31 +29,46 @@ public sealed class PasswordCrackingMinigame : HackingMinigameBase
     private RectTransform approachCircle;
     private Image targetRing;
     private Image approachRing;
+    private Image targetGlow;
     private TMP_Text keyText;
-    private TMP_Text instructionText;
     private TMP_Text judgementText;
     private TMP_Text progressText;
-    private TerminalSfxPlayer terminalSfx;
+    private readonly Image[] laneCaps = new Image[4];
+    private readonly TMP_Text[] laneLabels = new TMP_Text[4];
+    private readonly float[] laneFlashUntil = new float[4];
 
-    private char expectedKey;
-    private char previousKey;
+    private int expectedLane = -1;
+    private int previousLane = -1;
     private float noteElapsed;
     private float noteHitTime;
     private float currentApproachScale;
+    private float judgementPopAt;
     private int successfulHits;
     private int misses;
     private bool noteActive;
     private bool finished;
 
     public override string ControlHint =>
-        "[Q/W/E/R/A/S/D/F] HIT    [BACKSPACE] RETURN";
+        TerminalScreenController.KeyHints(("A S D F", "원이 겹칠 때 누르기"), ("BACKSPACE", "메뉴로"));
 
     public override void Begin(ConnectionDevice device, TerminalCommands command)
     {
-        terminalSfx = device.TerminalSfx;
         BuildInterface();
         UpdateProgress();
-        StartCoroutine(BeginSequence());
+        MinigameTutorial.ShowBlocking(new TutorialCard
+        {
+            Id = "terminal.rhythm",
+            Role = "해커 • 문 잠금 해제",
+            Title = "신호 동기화 (리듬)",
+            Goal = $"타이밍에 맞춰 {requiredHits}번 성공하면 문이 열립니다.",
+            Steps = new[]
+            {
+                ("", "가운데 원 안에 누를 키(A, S, D, F 중 하나)가 표시됩니다."),
+                ("", "바깥 원이 줄어들어 가운데 원과 겹치는 순간 — 원이 밝게 빛날 때"),
+                ("A  S  D  F", "표시된 키를 누르세요. 아래 키 안내가 같이 빛납니다."),
+                ("", $"실수는 {allowedMisses}번까지 괜찮아요. 천천히 해도 됩니다!")
+            }
+        }, (RectTransform)transform, () => StartCoroutine(BeginSequence()));
     }
 
     public override void End()
@@ -68,6 +78,8 @@ public sealed class PasswordCrackingMinigame : HackingMinigameBase
 
     private void Update()
     {
+        AnimateLanes();
+        AnimateJudgement();
         if (!noteActive || finished)
             return;
 
@@ -76,22 +88,27 @@ public sealed class PasswordCrackingMinigame : HackingMinigameBase
 
         if (TerminalKeyboardInput.TryGetRhythmKeyPressed(out char pressedKey))
         {
-            JudgeInput(pressedKey);
-            return;
+            int lane = System.Array.IndexOf(LaneKeys, pressedKey);
+            if (lane >= 0)
+            {
+                laneFlashUntil[lane] = Time.unscaledTime + 0.12f;
+                JudgeInput(lane);
+                return;
+            }
         }
 
         if (currentApproachScale < 1f - goodScaleTolerance)
-            ResolveMiss("놓침");
+            ResolveMiss("놓쳤어요");
     }
 
     private IEnumerator BeginSequence()
     {
-        instructionText.text =
-            "바깥 원이 가운데 원과 겹칠 때\n" +
-            "원 안에 표시된 키를 누르세요";
-        judgementText.color = Green;
-        judgementText.text = "준비";
-        yield return new WaitForSecondsRealtime(0.9f);
+        for (int beat = 3; beat >= 1; beat--)
+        {
+            ShowJudgement(beat.ToString(), RuntimeUi.Theme.highlight);
+            UiSfx.Play(UiCue.RhythmCountIn, 1f, beat == 1 ? 1.5f : 1f);
+            yield return new WaitForSecondsRealtime(0.45f);
+        }
         SpawnNextNote();
     }
 
@@ -100,64 +117,55 @@ public sealed class PasswordCrackingMinigame : HackingMinigameBase
         if (finished)
             return;
 
-        expectedKey = ChooseNextKey();
-        previousKey = expectedKey;
-        noteHitTime = Random.Range(
+        do expectedLane = Random.Range(0, LaneKeys.Length);
+        while (expectedLane == previousLane);
+        previousLane = expectedLane;
+        noteHitTime = Mathf.Max(0.5f, Random.Range(
             Mathf.Min(approachDurationRange.x, approachDurationRange.y),
-            Mathf.Max(approachDurationRange.x, approachDurationRange.y));
-        noteHitTime = Mathf.Max(0.35f, noteHitTime);
+            Mathf.Max(approachDurationRange.x, approachDurationRange.y)));
         noteElapsed = 0f;
         noteActive = true;
 
-        keyText.text = expectedKey.ToString();
-        keyText.color = Green;
-        judgementText.text = "신호 접근 중";
-        judgementText.color = DimGreen;
-        targetRing.color = Green;
-        targetCircle.localScale = Vector3.one;
+        keyText.text = LaneKeys[expectedLane].ToString();
+        keyText.color = RuntimeUi.Theme.highlight;
+        ShowJudgement("타이밍을 기다려요", RuntimeUi.Theme.dim, false);
+        targetRing.color = RuntimeUi.Theme.accent;
         currentApproachScale = approachStartScale;
         approachCircle.localScale = Vector3.one * currentApproachScale;
-        approachRing.color = PerfectGreen;
         approachRing.gameObject.SetActive(true);
     }
 
     private void UpdateApproachCircle()
     {
-        if (noteElapsed <= noteHitTime)
-        {
-            float progress = Mathf.Clamp01(noteElapsed / noteHitTime);
-            currentApproachScale = Mathf.Lerp(approachStartScale, 1f, progress);
-        }
-        else
-        {
-            float scalePerSecond = (approachStartScale - 1f) / noteHitTime;
-            currentApproachScale = 1f - (noteElapsed - noteHitTime) * scalePerSecond;
-        }
-
+        float scalePerSecond = (approachStartScale - 1f) / noteHitTime;
+        currentApproachScale = noteElapsed <= noteHitTime
+            ? Mathf.Lerp(approachStartScale, 1f, noteElapsed / noteHitTime)
+            : 1f - (noteElapsed - noteHitTime) * scalePerSecond;
         approachCircle.localScale = Vector3.one * currentApproachScale;
 
-        float scaleDifference = Mathf.Abs(currentApproachScale - 1f);
-        approachRing.color = scaleDifference <= goodScaleTolerance
-            ? PerfectGreen
-            : Green;
+        bool inWindow = Mathf.Abs(currentApproachScale - 1f) <= goodScaleTolerance;
+        approachRing.color = inWindow ? RuntimeUi.Theme.highlight : RuntimeUi.Theme.info;
+        targetGlow.color = new Color(RuntimeUi.Theme.accent.r, RuntimeUi.Theme.accent.g, RuntimeUi.Theme.accent.b, inWindow ? 0.45f : 0.08f);
+        if (inWindow && judgementText.text != "지금!")
+            ShowJudgement("지금!", RuntimeUi.Theme.highlight);
     }
 
-    private void JudgeInput(char pressedKey)
+    private void JudgeInput(int lane)
     {
-        if (pressedKey != expectedKey)
+        if (lane != expectedLane)
         {
-            ResolveMiss($"잘못된 키: {pressedKey}");
+            ResolveMiss($"{LaneKeys[lane]}가 아니라 {LaneKeys[expectedLane]}!");
             return;
         }
 
-        float scaleDifference = Mathf.Abs(currentApproachScale - 1f);
-        if (scaleDifference > goodScaleTolerance)
+        float difference = Mathf.Abs(currentApproachScale - 1f);
+        if (difference > goodScaleTolerance)
         {
-            ResolveMiss(currentApproachScale > 1f ? "너무 빠름" : "너무 늦음");
+            ResolveMiss(currentApproachScale > 1f ? "조금 빨라요" : "조금 늦어요");
             return;
         }
 
-        ResolveHit(scaleDifference <= perfectScaleTolerance);
+        ResolveHit(difference <= perfectScaleTolerance);
     }
 
     private void ResolveHit(bool perfect)
@@ -165,19 +173,17 @@ public sealed class PasswordCrackingMinigame : HackingMinigameBase
         noteActive = false;
         approachRing.gameObject.SetActive(false);
         successfulHits++;
-        terminalSfx?.PlayMenuSelected();
+        UiSfx.Play(perfect ? UiCue.RhythmPerfect : UiCue.RhythmGood, 1f, LanePitches[expectedLane]);
 
-        judgementText.color = PerfectGreen;
-        judgementText.text = perfect ? "PERFECT" : "GOOD";
-        targetRing.color = PerfectGreen;
-        targetCircle.localScale = Vector3.one * 1.08f;
-        keyText.color = Color.black;
+        ShowJudgement(perfect ? "PERFECT!" : "GOOD", RuntimeUi.Theme.accent);
+        targetRing.color = RuntimeUi.Theme.highlight;
+        keyText.color = RuntimeUi.Theme.accent;
         UpdateProgress();
 
         if (successfulHits >= requiredHits)
         {
             finished = true;
-            instructionText.text = "신호 동기화 완료 // 접근 승인";
+            ShowJudgement("동기화 완료 — 문이 열립니다", RuntimeUi.Theme.highlight);
             StartCoroutine(ReportAfterDelay(true));
             return;
         }
@@ -193,18 +199,17 @@ public sealed class PasswordCrackingMinigame : HackingMinigameBase
         noteActive = false;
         approachRing.gameObject.SetActive(false);
         misses++;
-        terminalSfx?.PlayIncorrectAnswer();
+        UiSfx.Play(UiCue.RhythmMiss);
 
-        judgementText.color = ErrorRed;
-        judgementText.text = reason;
-        targetRing.color = ErrorRed;
-        keyText.color = ErrorRed;
+        ShowJudgement(reason, RuntimeUi.Theme.danger);
+        targetRing.color = RuntimeUi.Theme.danger;
+        keyText.color = RuntimeUi.Theme.danger;
         UpdateProgress();
 
         if (misses >= allowedMisses)
         {
             finished = true;
-            instructionText.text = "동기화 실패 // 다시 시도하십시오";
+            ShowJudgement("동기화 실패 — 다시 시도하세요", RuntimeUi.Theme.danger);
             StartCoroutine(ReportAfterDelay(false));
             return;
         }
@@ -217,137 +222,116 @@ public sealed class PasswordCrackingMinigame : HackingMinigameBase
         float delay = Random.Range(
             Mathf.Min(noteGapRange.x, noteGapRange.y),
             Mathf.Max(noteGapRange.x, noteGapRange.y));
-        yield return new WaitForSecondsRealtime(Mathf.Max(0.1f, delay));
+        yield return new WaitForSecondsRealtime(Mathf.Max(0.15f, delay));
         SpawnNextNote();
     }
 
     private IEnumerator ReportAfterDelay(bool succeeded)
     {
-        yield return new WaitForSecondsRealtime(0.85f);
+        yield return new WaitForSecondsRealtime(0.9f);
         if (succeeded)
             ReportSuccess();
         else
             ReportFailure();
     }
 
-    private char ChooseNextKey()
-    {
-        char nextKey = RhythmKeys[Random.Range(0, RhythmKeys.Length)];
-        if (RhythmKeys.Length <= 1 || nextKey != previousKey)
-            return nextKey;
-
-        int currentIndex = System.Array.IndexOf(RhythmKeys, nextKey);
-        int offset = Random.Range(1, RhythmKeys.Length);
-        return RhythmKeys[(currentIndex + offset) % RhythmKeys.Length];
-    }
-
     private void UpdateProgress()
     {
-        StringBuilder markers = new();
+        string hit = DefragUiTheme.Hex(RuntimeUi.Theme.accent);
+        string empty = DefragUiTheme.Hex(RuntimeUi.Theme.dim);
+        string danger = DefragUiTheme.Hex(RuntimeUi.Theme.danger);
+        var builder = new System.Text.StringBuilder("성공  ");
         for (int i = 0; i < requiredHits; i++)
-            markers.Append(i < successfulHits ? "[O] " : "[-] ");
+            builder.Append(i < successfulHits ? $"<color=#{hit}>■</color> " : $"<color=#{empty}>■</color> ");
+        builder.Append("     여유  ");
+        for (int i = 0; i < allowedMisses; i++)
+            builder.Append(i < allowedMisses - misses ? $"<color=#{danger}>●</color> " : $"<color=#{empty}>○</color> ");
+        progressText.text = builder.ToString();
+    }
 
-        progressText.text =
-            $"동기화  {markers}    오류 {misses}/{allowedMisses}";
+    private void ShowJudgement(string text, Color color, bool pop = true)
+    {
+        judgementText.text = text;
+        judgementText.color = color;
+        if (pop)
+            judgementPopAt = Time.unscaledTime;
+    }
+
+    private void AnimateJudgement()
+    {
+        float t = Mathf.Clamp01((Time.unscaledTime - judgementPopAt) / 0.18f);
+        judgementText.rectTransform.localScale = Vector3.one * Mathf.Lerp(1.25f, 1f, t);
+    }
+
+    private void AnimateLanes()
+    {
+        DefragUiTheme theme = RuntimeUi.Theme;
+        for (int i = 0; i < laneCaps.Length; i++)
+        {
+            bool expected = noteActive && i == expectedLane;
+            bool flashing = Time.unscaledTime < laneFlashUntil[i];
+            laneCaps[i].color = flashing ? theme.highlight : expected ? new Color(theme.accent.r, theme.accent.g, theme.accent.b, 0.55f) : theme.panelRaised;
+            laneLabels[i].color = flashing ? theme.panel : expected ? theme.highlight : theme.dim;
+            laneCaps[i].rectTransform.localScale = Vector3.one * (expected ? 1.08f : 1f);
+        }
     }
 
     private void BuildInterface()
     {
-        instructionText = CreateText("Instruction", 22f, TextAlignmentOptions.Center);
-        Place(instructionText.rectTransform,
-            new Vector2(0f, 0.78f), Vector2.one,
-            new Vector2(10f, 0f), new Vector2(-10f, 0f));
+        DefragUiTheme theme = RuntimeUi.Theme;
+        progressText = CreateText("Progress", 26f, TextAlignmentOptions.Center, transform);
+        RuntimeUi.Place(progressText.rectTransform, new Vector2(0f, 0.88f), Vector2.one);
 
         RectTransform playField = CreateRect("Rhythm Play Field", transform);
-        Place(playField,
-            new Vector2(0f, 0.18f), new Vector2(1f, 0.78f),
-            Vector2.zero, Vector2.zero);
+        RuntimeUi.Place(playField, new Vector2(0f, 0.3f), new Vector2(1f, 0.88f));
 
-        targetCircle = CreateRing(
-            "Target Circle", playField, new Vector2(210f, 210f), Green, out targetRing);
-        approachCircle = CreateRing(
-            "Approach Circle", playField, new Vector2(210f, 210f), PerfectGreen, out approachRing);
+        Image glow = RuntimeUi.Panel("Target Glow", playField, Color.clear, RuntimeUiSprites.SoftGlow);
+        RuntimeUi.PlaceCentered(glow.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(420f, 420f));
+        targetGlow = glow;
 
-        keyText = CreateText("Required Key", 76f, TextAlignmentOptions.Center, playField);
-        Center(keyText.rectTransform, new Vector2(180f, 150f));
-        keyText.text = "-";
+        targetCircle = CreateRing("Target Circle", playField, new Vector2(230f, 230f), theme.accent, out targetRing);
+        approachCircle = CreateRing("Approach Circle", playField, new Vector2(230f, 230f), theme.info, out approachRing);
 
-        judgementText = CreateText("Judgement", 28f, TextAlignmentOptions.Center, playField);
-        Center(judgementText.rectTransform, new Vector2(360f, 60f));
-        judgementText.rectTransform.anchoredPosition = new Vector2(0f, -145f);
+        keyText = CreateText("Required Key", 110f, TextAlignmentOptions.Center, playField);
+        RuntimeUi.PlaceCentered(keyText.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(200f, 170f));
+        keyText.text = "•";
 
-        progressText = CreateText("Progress", 21f, TextAlignmentOptions.Center);
-        Place(progressText.rectTransform,
-            Vector2.zero, new Vector2(1f, 0.18f),
-            new Vector2(10f, 0f), new Vector2(-10f, 0f));
+        judgementText = CreateText("Judgement", 34f, TextAlignmentOptions.Center, transform);
+        RuntimeUi.Place(judgementText.rectTransform, new Vector2(0f, 0.2f), new Vector2(1f, 0.3f));
+
+        RectTransform lanes = CreateRect("Lane Keys", transform);
+        RuntimeUi.Place(lanes, new Vector2(0.2f, 0.02f), new Vector2(0.8f, 0.19f));
+        for (int i = 0; i < LaneKeys.Length; i++)
+        {
+            laneLabels[i] = RuntimeUi.KeyCap(lanes, LaneKeys[i].ToString(), new Vector2(110f, 96f), out laneCaps[i]);
+            RectTransform rect = laneCaps[i].rectTransform;
+            rect.anchorMin = rect.anchorMax = new Vector2((i + 0.5f) / LaneKeys.Length, 0.5f);
+            rect.anchoredPosition = Vector2.zero;
+        }
 
         approachRing.gameObject.SetActive(false);
     }
 
-    private RectTransform CreateRing(
-        string name,
-        Transform parent,
-        Vector2 size,
-        Color color,
-        out Image ring)
+    private RectTransform CreateRing(string name, Transform parent, Vector2 size, Color color, out Image ring)
     {
         RectTransform rect = CreateRect(name, parent);
-        Center(rect, size);
+        RuntimeUi.PlaceCentered(rect, new Vector2(0.5f, 0.5f), size);
         ring = rect.gameObject.AddComponent<Image>();
         ring.sprite = RuntimeRingSprite.Get();
-        ring.type = Image.Type.Simple;
         ring.preserveAspect = true;
         ring.color = color;
         ring.raycastTarget = false;
         return rect;
     }
 
-    private TMP_Text CreateText(
-        string name,
-        float size,
-        TextAlignmentOptions alignment,
-        Transform parent = null)
-    {
-        GameObject child = new(name, typeof(RectTransform), typeof(TextMeshProUGUI));
-        child.transform.SetParent(parent == null ? transform : parent, false);
-        TMP_Text text = child.GetComponent<TMP_Text>();
-        if (terminalFont != null)
-            text.font = terminalFont;
-        text.fontSize = size;
-        text.color = Green;
-        text.fontStyle = FontStyles.Bold;
-        text.alignment = alignment;
-        text.raycastTarget = false;
-        return text;
-    }
+    private TMP_Text CreateText(string name, float size, TextAlignmentOptions alignment, Transform parent) =>
+        RuntimeUi.Text(name, parent, size, alignment, terminalFont, RuntimeUi.Theme.text);
 
     private static RectTransform CreateRect(string name, Transform parent)
     {
         GameObject child = new(name, typeof(RectTransform));
         child.transform.SetParent(parent, false);
         return (RectTransform)child.transform;
-    }
-
-    private static void Center(RectTransform rect, Vector2 size)
-    {
-        rect.anchorMin = new Vector2(0.5f, 0.5f);
-        rect.anchorMax = new Vector2(0.5f, 0.5f);
-        rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.anchoredPosition = Vector2.zero;
-        rect.sizeDelta = size;
-    }
-
-    private static void Place(
-        RectTransform rect,
-        Vector2 anchorMin,
-        Vector2 anchorMax,
-        Vector2 minOffset,
-        Vector2 maxOffset)
-    {
-        rect.anchorMin = anchorMin;
-        rect.anchorMax = anchorMax;
-        rect.offsetMin = minOffset;
-        rect.offsetMax = maxOffset;
     }
 }
 

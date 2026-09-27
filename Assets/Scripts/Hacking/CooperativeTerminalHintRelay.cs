@@ -7,8 +7,6 @@ using UnityEngine.UI;
 
 public sealed class CooperativeTerminalHintRelay : NetworkBehaviour
 {
-    private static readonly Color HintGreen = new(0.1f, 1f, 0.2f);
-
     private Canvas hintCanvas;
     private TMP_Text hintText;
     private Coroutine hideRoutine;
@@ -238,10 +236,23 @@ public sealed class CooperativeTerminalHintRelay : NetworkBehaviour
     {
         EnsureHintInterface();
         hintText.text =
-            $"REMOTE AUTHENTICATION FRAGMENT\n" +
-            $"{terminalLabel}\n\n" +
-            $"{valueLabel}:  <color=#FFFFFF>{value}</color>";
+            $"<size=70%><color=#{DefragUiTheme.Hex(RuntimeUi.Theme.dim)}>해커가 요청한 단어  //  {terminalLabel}</color></size>\n\n" +
+            $"<size=140%><color=#{DefragUiTheme.Hex(RuntimeUi.Theme.highlight)}>{value}</color></size>\n\n" +
+            $"<size=70%>무전으로 불러주세요 (철자 하나씩!)</size>";
         hintCanvas.gameObject.SetActive(true);
+        UiSfx.Play(UiCue.Alert);
+        MinigameTutorial.ShowFloating(new TutorialCard
+        {
+            Id = "terminal.partnerHint",
+            Role = "동료 • 해커 지원",
+            Title = "해커가 단어를 기다려요",
+            Goal = "화면 가운데 단어를 무전으로 해커에게 알려주세요.",
+            Steps = new[]
+            {
+                ("", "해커 화면에서는 이 단어가 가려져 있어요."),
+                ("", "철자를 하나씩 또박또박 불러주면 해커가 입력합니다.")
+            }
+        });
 
         if (hideRoutine != null)
             StopCoroutine(hideRoutine);
@@ -286,31 +297,12 @@ public sealed class CooperativeTerminalHintRelay : NetworkBehaviour
         canvasObject.GetComponent<CanvasScaler>().referenceResolution =
             new Vector2(1920f, 1080f);
 
-        GameObject panel = new("Fragment Panel", typeof(RectTransform), typeof(Image));
-        panel.transform.SetParent(canvasObject.transform, false);
-        RectTransform panelRect = (RectTransform)panel.transform;
-        panelRect.anchorMin = new Vector2(0.28f, 0.4f);
-        panelRect.anchorMax = new Vector2(0.72f, 0.6f);
-        panelRect.offsetMin = Vector2.zero;
-        panelRect.offsetMax = Vector2.zero;
-        panel.GetComponent<Image>().color = new Color(0f, 0.04f, 0.01f, 0.94f);
+        Image panel = RuntimeUi.FramedPanel("Fragment Panel", canvasObject.transform, RuntimeUi.Theme.panelRaised, 22f);
+        RuntimeUi.Place(panel.rectTransform, new Vector2(0.3f, 0.36f), new Vector2(0.7f, 0.62f));
+        RuntimeUi.Scanlines(panel.transform, 0.05f);
 
-        GameObject textObject = new(
-            "Fragment Text",
-            typeof(RectTransform),
-            typeof(TextMeshProUGUI));
-        textObject.transform.SetParent(panel.transform, false);
-        RectTransform textRect = (RectTransform)textObject.transform;
-        textRect.anchorMin = Vector2.zero;
-        textRect.anchorMax = Vector2.one;
-        textRect.offsetMin = new Vector2(24f, 18f);
-        textRect.offsetMax = new Vector2(-24f, -18f);
-        hintText = textObject.GetComponent<TMP_Text>();
-        hintText.alignment = TextAlignmentOptions.Center;
-        hintText.color = HintGreen;
-        hintText.fontSize = 27f;
-        hintText.fontStyle = FontStyles.Bold;
-        hintText.raycastTarget = false;
+        hintText = RuntimeUi.Text("Fragment Text", panel.transform, 28f, TextAlignmentOptions.Center, null, RuntimeUi.Theme.text);
+        RuntimeUi.Stretch(hintText.rectTransform, 22f);
     }
 
     private IEnumerator HideAfterTimeout()
