@@ -1,5 +1,7 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using TMPro;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -7,9 +9,17 @@ namespace DeFrag.B1F
 {
     public enum GeneratorBSessionMode : byte
     {
-        Search,
-        Fuel,
-        Pressure
+        Panel,
+        Crank
+    }
+
+    public enum GeneratorBRejectReason : byte
+    {
+        PanelOccupied,
+        CrankOccupied,
+        HackingPadRequired,
+        FuelRequired,
+        AlreadyOperating
     }
 
     [DisallowMultipleComponent]
@@ -17,69 +27,58 @@ namespace DeFrag.B1F
     public sealed class GeneratorBController : NetworkBehaviour
     {
         public const ulong NoController = ulong.MaxValue;
-        public const string SearchCommand = "SEARCH FUEL_B_CONTINUOUS";
 
         public static GeneratorBController LocalInstance { get; private set; }
         public static event Action<GeneratorBController> LocalInstanceAvailable;
 
         [Header("Gameplay References")]
         [SerializeField] private B1FPowerController powerController;
-        [Tooltip("Optional. When assigned, only the player carrying this item may start SEARCH.")]
+        [Tooltip("Optional. When assigned, only the player holding this item may use the control panel.")]
         [SerializeField] private ItemData requiredHackingPad;
-        [Header("Quest Fuel Spawn")]
-        [SerializeField] private string requiredQuestId = "b1f_full_power";
-        [SerializeField] private GeneratorFuelCan fuelPrefab;
-        [SerializeField] private Transform[] fuelSpawnPoints = Array.Empty<Transform>();
-        private readonly NetworkList<ulong> spawnedFuelIds = new();
-        private bool fuelSpawned;
-        private bool spawnWarningShown;
         [SerializeField] private GeneratorBInteractionPoint controlPanelPoint;
         [SerializeField] private GeneratorBInteractionPoint fuelInletPoint;
         [SerializeField] private Camera controlInteractionCamera;
         [SerializeField] private Camera fuelInteractionCamera;
         [SerializeField, Min(0.5f)] private float maximumInteractionDistance = 5f;
+        [SerializeField, Min(0.5f)] private float operatorTimeout = 3f;
 
-        [Header("Search")]
+        [Header("Quest Fuel Spawn")]
+        [SerializeField] private string requiredQuestId = "b1f_full_power";
+        [SerializeField] private GeneratorFuelCan fuelPrefab;
+        [SerializeField] private Transform[] fuelSpawnPoints = Array.Empty<Transform>();
         [SerializeField, Min(1f)] private float signalInterval = 6f;
-
-        [Header("Cooperative Pressure")]
         [SerializeField, Range(1, 3)] private int requiredFuelCans = 2;
-        [SerializeField, Min(5f)] private float fillDuration = 18f;
-        [SerializeField, Range(0.05f, 0.5f)] private float minimumPressure = 0.25f;
-        [SerializeField, Range(0.55f, 0.95f)] private float dangerPressure = 0.8f;
-        [SerializeField, Min(0.01f)] private float pressureRisePerSecond = 0.12f;
-        [SerializeField, Min(0.01f)] private float ventPerSecond = 0.22f;
-        [Header("Progressive Pressure Difficulty")]
-        [SerializeField, Range(1f, 2f)] private float pressureSpeedMultiplierPerStage = 1.3f;
-        [SerializeField, Range(0f, 0.12f)] private float pressureWindowContractionPerStage = 0.055f;
-        [SerializeField, Min(0.5f)] private float overpressureGrace = 2f;
-        [SerializeField, Min(0.5f)] private float alarmCooldown = 2f;
-        private readonly NetworkVariable<ulong> fuelOperator = new(NoController);
-        private readonly NetworkVariable<float> pressure = new(0.45f);
-        private readonly NetworkVariable<float> fuelProgress = new(0f);
-        private readonly NetworkVariable<byte> consumedFuelCans = new(0);
-        private readonly NetworkVariable<float> dangerTime = new(0f);
-        private readonly NetworkVariable<bool> pouring = new(false);
-        private readonly NetworkVariable<bool> venting = new(false);
-        private readonly NetworkVariable<double> resumeAt = new(0d);
-        private bool pourRequested, ventRequested;
-        private double fuelHeartbeat, panelHeartbeat;
-        public float Pressure => pressure.Value;
-        public int PressureStage => Mathf.Clamp(Mathf.FloorToInt(fuelProgress.Value * 3f), 0, 2);
-        public float MinimumPressure => minimumPressure + pressureWindowContractionPerStage * PressureStage;
-        public float DangerPressure => dangerPressure - pressureWindowContractionPerStage * PressureStage;
-        public float DangerSecondsLeft => Mathf.Max(0f, overpressureGrace - dangerTime.Value);
-        public bool IsPouring => pouring.Value;
-        public bool IsVenting => venting.Value;
-        public bool IsCoolingDown => ServerTime < resumeAt.Value;
-        public bool BothOperatorsPresent => controllingClient.Value != NoController && fuelOperator.Value != NoController;
-        public bool OwnsSession(ulong id, GeneratorBSessionMode mode) =>
-            mode == GeneratorBSessionMode.Fuel ? fuelOperator.Value == id : controllingClient.Value == id;
 
-        [Header("Failure Noise")]
-        [SerializeField, Min(0f)] private float failedPourNoiseRadius = 18f;
+        [Header("Cold Start")]
+        [SerializeField] private GeneratorBCrankSettings crankSettings = GeneratorBCrankSettings.Default;
+        [Tooltip("역화 소음이 몬스터에게 들리는 반경입니다.")]
+        [SerializeField, Min(0f)] private float backfireNoiseRadius = 30f;
+        [SerializeField, Min(0.1f)] private float maximumIgnitionInputAge = 0.5f;
+
+        [Header("Facility Radar")]
+        [SerializeField] private FacilityRadarSettings radarSettings = FacilityRadarSettings.Default;
+        [Tooltip("미끼 소음이 몬스터에게 들리는 반경입니다.")]
+        [SerializeField, Min(1f)] private float decoyNoiseRadius = 60f;
+        [SerializeField, Min(1f)] private float decoyRechargeSeconds = 40f;
+        [Tooltip("레이더가 연료 위치를 뭉개서 보여주는 반경입니다. 가까이 가면 정확한 위치가 드러납니다.")]
+        [SerializeField, Min(1f)] private float fuelZoneRadius = 8f;
+        [SerializeField, Min(1f)] private float fuelRevealDistance = 12f;
+
+        [Header("Presentation")]
+        [Tooltip("런타임 UI 폰트입니다. 한글 글리프가 있는 터미널 폰트를 지정하세요.")]
+        [SerializeField] private TMP_FontAsset uiFont;
+        [Tooltip("연료 주입 완료부터 시동 성공까지 재생되는 긴장 BGM입니다.")]
+        [SerializeField] private AudioClip coldStartMusic;
+        [SerializeField, Range(0f, 1f)] private float coldStartMusicVolume = 0.55f;
+        [Tooltip("점화 바늘과 함께 도는 발전기 플라이휠(선택).")]
+        [SerializeField] private Transform flywheelVisual;
+        [SerializeField] private Vector3 flywheelLocalAxis = Vector3.right;
+        [SerializeField, Range(0f, 1f)] private float crankEngineVolume = 0.8f;
+
+        [Header("Generator Audio")]
         [SerializeField] private AudioSource generatorAudioSource;
         [SerializeField] private AudioClip pourSuccessClip;
+        [Tooltip("역화 순간 절차 생성 폭발음 위에 겹쳐 재생됩니다.")]
         [SerializeField] private AudioClip pourFailureClip;
         [SerializeField] private AudioClip generatorStartedClip;
         [SerializeField] private AudioClip generatorRunningLoopClip;
@@ -89,108 +88,100 @@ namespace DeFrag.B1F
         [SerializeField] private Transform pourVisual;
         [SerializeField] private Vector3 pourTiltEuler = new(0f, 0f, 72f);
         [SerializeField, Min(0.05f)] private float pourTiltDuration = 0.35f;
+        [SerializeField, Min(0.1f)] private float pourHoldDuration = 1.2f;
 
         [Header("Quest Signal")]
         [SerializeField] private string completionQuestSignal = QuestSignals.B1FGeneratorBCompleted;
         [SerializeField] private string completionQuestSourceId = "GENERATOR_B";
 
-        private readonly NetworkVariable<bool> searchActive = new(
-            false, NetworkVariableReadPermission.Everyone,
-            NetworkVariableWritePermission.Server);
-        private readonly NetworkVariable<ulong> controllingClient = new(
-            NoController, NetworkVariableReadPermission.Everyone,
-            NetworkVariableWritePermission.Server);
-        private readonly NetworkVariable<bool> completed = new(
-            false, NetworkVariableReadPermission.Everyone,
-            NetworkVariableWritePermission.Server);
+        private readonly NetworkList<ulong> spawnedFuelIds = new();
+        private readonly NetworkVariable<bool> searchActive = new();
+        private readonly NetworkVariable<bool> completed = new();
+        private readonly NetworkVariable<ulong> panelOperator = new(NoController);
+        private readonly NetworkVariable<ulong> crankOperator = new(NoController);
+        private readonly NetworkVariable<byte> consumedFuelCans = new();
+        private readonly NetworkVariable<float> rpm = new();
+        private readonly NetworkVariable<float> crankAngle = new();
+        private readonly NetworkVariable<byte> ignitedCylinders = new();
+        private readonly NetworkVariable<byte> backfireCount = new();
+        private readonly NetworkVariable<double> ignitionReadyAt = new();
+        private readonly NetworkVariable<double> decoyReadyAt = new();
 
+        private GeneratorBCrankSimulation crank;
+        private bool fuelSpawned;
+        private bool spawnWarningShown;
         private double nextSignalAt;
-        private Coroutine pourRoutine;
+        private double panelHeartbeat;
+        private double crankHeartbeat;
+
+        private AudioSource engineTurnSource;
+        private AudioSource musicSource;
         private Coroutine generatorAudioRoutine;
         private Coroutine fullPowerRoutine;
+        private Coroutine pourRoutine;
+        private Coroutine musicFadeRoutine;
         private Quaternion pourRestRotation;
         private bool pourVisualInitialized;
-        private bool localPourVisualState;
+        private Quaternion flywheelRestRotation;
+        private float smoothedAngle;
+
+        public event Action<Vector3> DecoyFired;
+        public event Action<GeneratorBIgnitionResult> IgnitionResolved;
 
         public bool SearchActive => searchActive.Value;
         public bool IsComplete => completed.Value;
-        public float FuelRatio => fuelProgress.Value;
-        public int FuelPercent => Mathf.FloorToInt(FuelRatio * 100f);
+        public bool IsPrimed => consumedFuelCans.Value >= requiredFuelCans;
         public int ConsumedFuelCans => consumedFuelCans.Value;
         public int RequiredFuelCans => requiredFuelCans;
+        public float Rpm => rpm.Value;
+        public float ServerAngle => crankAngle.Value;
+        public float SmoothedAngle => smoothedAngle;
+        public int IgnitedCylinders => ignitedCylinders.Value;
+        public int RequiredCylinders => Mathf.Max(1, crankSettings.cylinderBands?.Length ?? 1);
+        public float SectorDegrees => CrankModel.GetSectorDegrees(backfireCount.Value);
+        public Vector2 CurrentBand => CrankModel.GetBand(ignitedCylinders.Value);
+        public bool IgnitionCoolingDown => ServerTime < ignitionReadyAt.Value;
+        public float DecoyCooldownRemaining => Mathf.Max(0f, (float)(decoyReadyAt.Value - ServerTime));
+        public bool BothOperatorsPresent => panelOperator.Value != NoController && crankOperator.Value != NoController;
+        public bool CrankOperatorPresent => crankOperator.Value != NoController;
+        public TMP_FontAsset UiFont => uiFont;
+        public FacilityRadarSettings RadarSettings => radarSettings;
+        public float FuelZoneRadius => fuelZoneRadius;
+        public float FuelRevealDistance => fuelRevealDistance;
+        public float DegreesPerSecondAtFullRpm => crankSettings.degreesPerSecondAtFullRpm;
+        public Vector3 GeneratorPosition => fuelInletPoint != null ? fuelInletPoint.transform.position : transform.position;
         public double ServerTime => NetworkManager != null && NetworkManager.IsListening
             ? NetworkManager.ServerTime.Time
             : Time.unscaledTimeAsDouble;
         public GeneratorFuelCan FuelCan => GetNearestWorldFuel(transform.position);
-        public bool FuelSignalVisible => searchActive.Value && !completed.Value &&
+        public bool FuelSignalVisible => searchActive.Value && !completed.Value && !IsPrimed &&
                                          FuelCan != null && IsPowerStateValid();
 
-        private GeneratorFuelCan ResolveFuel(ulong id)
+        private GeneratorBCrankSimulation CrankModel => crank ??= new GeneratorBCrankSimulation(crankSettings);
+
+        public bool OwnsSession(ulong clientId, GeneratorBSessionMode mode) =>
+            mode == GeneratorBSessionMode.Crank ? crankOperator.Value == clientId : panelOperator.Value == clientId;
+
+        public IEnumerable<GeneratorFuelCan> WorldFuelCans()
         {
-            return NetworkManager != null && NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(id, out var item)
-                ? item.GetComponent<GeneratorFuelCan>() : null;
+            foreach (ulong id in spawnedFuelIds)
+            {
+                GeneratorFuelCan candidate = ResolveFuel(id);
+                if (candidate != null && candidate.WorldItem.State == NetworkItemState.World)
+                    yield return candidate;
+            }
         }
 
         public GeneratorFuelCan GetNearestWorldFuel(Vector3 position)
         {
             GeneratorFuelCan nearest = null;
             float best = float.PositiveInfinity;
-            foreach (ulong id in spawnedFuelIds)
+            foreach (GeneratorFuelCan candidate in WorldFuelCans())
             {
-                var candidate = ResolveFuel(id);
-                if (candidate == null || candidate.WorldItem.State != NetworkItemState.World) continue;
                 float distance = (candidate.SignalAnchor.position - position).sqrMagnitude;
                 if (distance < best) { nearest = candidate; best = distance; }
             }
             return nearest;
-        }
-
-        private GeneratorFuelCan GetHeldFuel(ulong clientId)
-        {
-            foreach (ulong id in spawnedFuelIds)
-            {
-                var candidate = ResolveFuel(id);
-                if (candidate != null && candidate.WorldItem.State == NetworkItemState.Held &&
-                    candidate.WorldItem.HolderClientId == clientId) return candidate;
-            }
-            return null;
-        }
-
-        private void TrySpawnFuelServer()
-        {
-            if (fuelSpawned || !IsPowerStateValid()) return;
-            var points = new System.Collections.Generic.List<Transform>();
-            foreach (var point in fuelSpawnPoints)
-                if (point != null && !points.Contains(point)) points.Add(point);
-            if (fuelPrefab == null || points.Count < 3)
-            {
-                if (!spawnWarningShown) Debug.LogError("[Generator B] Assign Fuel Prefab and at least three distinct Fuel Spawn Points.", this);
-                spawnWarningShown = true;
-                return;
-            }
-
-            // Mark the one-shot operation before spawning. An invalid/inactive network
-            // prefab must never make Update instantiate three more cans every frame.
-            fuelSpawned = true;
-            for (int i = 0; i < 3; i++)
-            {
-                int selected = UnityEngine.Random.Range(i, points.Count);
-                (points[i], points[selected]) = (points[selected], points[i]);
-                var can = Instantiate(fuelPrefab, points[i].position, points[i].rotation);
-                if (!can.gameObject.activeSelf)
-                    can.gameObject.SetActive(true);
-
-                NetworkObject fuelNetworkObject = can.WorldItem.NetworkObject;
-                if (fuelNetworkObject == null)
-                {
-                    Debug.LogError("[Generator B] Fuel prefab requires a NetworkObject.", can);
-                    Destroy(can.gameObject);
-                    continue;
-                }
-
-                fuelNetworkObject.Spawn(true);
-                spawnedFuelIds.Add(fuelNetworkObject.NetworkObjectId);
-            }
         }
 
         public override void OnNetworkSpawn()
@@ -200,43 +191,35 @@ namespace DeFrag.B1F
                 pourRestRotation = pourVisual.localRotation;
                 pourVisualInitialized = true;
             }
+            if (flywheelVisual != null)
+                flywheelRestRotation = flywheelVisual.localRotation;
+
+            crank = new GeneratorBCrankSimulation(crankSettings);
+            consumedFuelCans.OnValueChanged += OnFuelCountChanged;
+            completed.OnValueChanged += OnCompletedChanged;
             LocalInstance = this;
             LocalInstanceAvailable?.Invoke(this);
+
             if (completed.Value)
                 StartLocalGeneratorAudio(false);
+            else if (IsPrimed)
+                SetColdStartMusic(true);
+
             if (!IsServer)
                 return;
 
             nextSignalAt = ServerTime;
+            decoyReadyAt.Value = 0d;
             NetworkManager.OnClientDisconnectCallback += OnClientDisconnected;
-        }
-
-        private void Reset() => TryAutoAssignInteractionPoints();
-
-        private void OnValidate()
-        {
-            fillDuration = Mathf.Max(5f, fillDuration);
-            requiredFuelCans = Mathf.Clamp(requiredFuelCans, 1, 3);
-            minimumPressure = Mathf.Clamp(minimumPressure, 0.05f, 0.5f);
-            dangerPressure = Mathf.Clamp(dangerPressure, minimumPressure + 0.1f, 0.95f);
-            pressureWindowContractionPerStage = Mathf.Min(
-                pressureWindowContractionPerStage,
-                Mathf.Max(0f, (dangerPressure - minimumPressure - 0.05f) * 0.25f));
-            TryAutoAssignInteractionPoints();
         }
 
         public override void OnNetworkDespawn()
         {
-            if (generatorAudioRoutine != null)
-            {
-                StopCoroutine(generatorAudioRoutine);
-                generatorAudioRoutine = null;
-            }
-            if (fullPowerRoutine != null)
-            {
-                StopCoroutine(fullPowerRoutine);
-                fullPowerRoutine = null;
-            }
+            consumedFuelCans.OnValueChanged -= OnFuelCountChanged;
+            completed.OnValueChanged -= OnCompletedChanged;
+            StopRoutine(ref generatorAudioRoutine);
+            StopRoutine(ref fullPowerRoutine);
+            StopRoutine(ref musicFadeRoutine);
             if (IsServer && NetworkManager != null)
                 NetworkManager.OnClientDisconnectCallback -= OnClientDisconnected;
             if (LocalInstance == this)
@@ -246,189 +229,292 @@ namespace DeFrag.B1F
             }
         }
 
+        private void Reset() => TryAutoAssignInteractionPoints();
+
+        private void OnValidate()
+        {
+            requiredFuelCans = Mathf.Clamp(requiredFuelCans, 1, 3);
+            TryAutoAssignInteractionPoints();
+            if (crank != null)
+                crank.Settings = crankSettings;
+        }
+
         private void Update()
         {
-            if (!IsServer) return;
-            UpdatePressureServer();
+            if (IsSpawned)
+                UpdateLocalCrankPresentation();
+
+            if (!IsServer || !IsSpawned)
+                return;
+
             TrySpawnFuelServer();
-            if (!searchActive.Value || completed.Value || !IsPowerStateValid()) return;
-            if (ServerTime >= nextSignalAt)
+            ReleaseStaleOperatorsServer();
+            if (completed.Value || !IsPowerStateValid())
+                return;
+
+            if (searchActive.Value && !IsPrimed && ServerTime >= nextSignalAt)
             {
                 PlayFuelSignalClientRpc();
                 nextSignalAt = ServerTime + signalInterval;
             }
+
+            if (IsPrimed)
+                SimulateCrankServer();
         }
 
         public string GetInteractionText(GeneratorBInteractionType interactionType)
         {
-            if (!completed.Value && !IsPowerStateValid()) return "발전기 B // 현재 목표에서 사용할 수 없음";
-            if (completed.Value)
-                return "발전기 B // FULL POWER";
+            if (completed.Value) return "발전기 B // 가동 중";
+            if (!IsPowerStateValid()) return "발전기 B // 현재 목표에서 사용할 수 없음";
 
             if (interactionType == GeneratorBInteractionType.FuelInlet)
+            {
+                if (IsPrimed) return "발전기 B 시동 크랭크 // 돌리기 (E)";
+                string count = $"[{consumedFuelCans.Value}/{requiredFuelCans}]";
                 return HasLocalPlayerFuel()
-                    ? "발전기 B 주유구 // 비상 연료 주입 (E)"
-                    : "발전기 B 주유구 // 비상 연료 필요";
+                    ? $"발전기 B 주유구 // 연료 붓기 (E)  {count}"
+                    : $"발전기 B 주유구 // 연료통이 필요합니다  {count}";
+            }
 
             if (requiredHackingPad != null && !HasLocalRequiredHackingPad())
                 return "발전기 B 제어 패널 // 해킹패드 필요";
-            return searchActive.Value
-                ? "발전기 B 제어 패널 // 압력 밸브 조작 (E)"
-                : "발전기 B 제어 패널 // 시스템 진단 (E)";
+            return IsPrimed
+                ? "발전기 B 제어 패널 // 점화 제어 (E)"
+                : "발전기 B 제어 패널 // 시설 레이더 열기 (E)";
         }
 
-        public void InteractAt(
-            GeneratorBInteractionType interactionType,
-            PlayerInteraction player)
+        public void InteractAt(GeneratorBInteractionType interactionType, PlayerInteraction player)
         {
-            if (player == null || completed.Value || !IsPowerStateValid())
-                return;
-            RequestSessionServerRpc(interactionType);
+            if (player != null && !completed.Value && IsPowerStateValid() && IsSpawned)
+                RequestSessionServerRpc(interactionType);
         }
 
-        public void SubmitSearchCommand(string command)
+        public void SendHeartbeat()
         {
-            string normalized = string.IsNullOrWhiteSpace(command)
-                ? string.Empty
-                : command.Trim().ToUpperInvariant();
-            SubmitSearchCommandServerRpc(normalized);
+            if (IsSpawned) HeartbeatServerRpc();
         }
 
-        public void SetCooperativeInput(GeneratorBSessionMode mode, bool held)
+        public void SubmitCrankStroke(int side)
         {
-            if (IsSpawned)
-                SetCooperativeInputServerRpc(mode, held);
+            if (IsSpawned) CrankStrokeServerRpc((byte)Mathf.Clamp(side, 0, 1));
+        }
+
+        public void SubmitIgnition()
+        {
+            if (IsSpawned) IgniteServerRpc(ServerTime);
+        }
+
+        public void SubmitDecoy(Vector3 worldPosition)
+        {
+            if (IsSpawned) DecoyServerRpc(worldPosition);
         }
 
         public void ReleaseLocalControl()
         {
-            if (IsSpawned)
-                ReleaseControlServerRpc();
+            if (IsSpawned) ReleaseControlServerRpc();
         }
 
         [ServerRpc(RequireOwnership = false)]
-        private void RequestSessionServerRpc(
-            GeneratorBInteractionType interactionType,
-            ServerRpcParams rpc = default)
+        private void RequestSessionServerRpc(GeneratorBInteractionType interactionType, ServerRpcParams rpc = default)
         {
             ulong sender = rpc.Receive.SenderClientId;
-            GeneratorBInteractionPoint requestedPoint = GetInteractionPoint(interactionType);
-            if (completed.Value || !IsPowerStateValid() ||
-                requestedPoint == null ||
+            GeneratorBInteractionPoint point = interactionType == GeneratorBInteractionType.FuelInlet
+                ? fuelInletPoint
+                : controlPanelPoint;
+            if (completed.Value || !IsPowerStateValid() || point == null ||
                 !TryGetPlayer(sender, out NetworkObject playerObject) ||
-                Vector3.Distance(playerObject.transform.position, requestedPoint.transform.position) >
-                maximumInteractionDistance)
+                Vector3.Distance(playerObject.transform.position, point.transform.position) > maximumInteractionDistance)
                 return;
 
-            GeneratorBSessionMode mode = interactionType == GeneratorBInteractionType.FuelInlet
-                ? GeneratorBSessionMode.Fuel
-                : searchActive.Value ? GeneratorBSessionMode.Pressure : GeneratorBSessionMode.Search;
-            if (mode == GeneratorBSessionMode.Fuel)
+            if (interactionType == GeneratorBInteractionType.ControlPanel)
+                BeginPanelServer(sender, playerObject);
+            else if (!IsPrimed)
+                TryPourServer(sender);
+            else
+                BeginCrankServer(sender);
+        }
+
+        private void BeginPanelServer(ulong sender, NetworkObject playerObject)
+        {
+            if (crankOperator.Value == sender)
             {
-                if (fuelOperator.Value != NoController || controllingClient.Value == sender) return;
-            }
-            else if (controllingClient.Value != NoController || fuelOperator.Value == sender) return;
-            if (mode == GeneratorBSessionMode.Fuel && !IsFuelHeldBy(sender))
+                RejectClientRpc(GeneratorBRejectReason.AlreadyOperating, TargetClient(sender));
                 return;
-            if (mode != GeneratorBSessionMode.Fuel &&
-                requiredHackingPad != null &&
+            }
+            if (panelOperator.Value != NoController && panelOperator.Value != sender)
+            {
+                RejectClientRpc(GeneratorBRejectReason.PanelOccupied, TargetClient(sender));
+                return;
+            }
+            if (requiredHackingPad != null &&
                 (!playerObject.TryGetComponent(out NetworkPlayerInventory inventory) ||
                  !inventory.ContainsHeldItem(requiredHackingPad)))
+            {
+                RejectClientRpc(GeneratorBRejectReason.HackingPadRequired, TargetClient(sender));
                 return;
+            }
 
-            if (mode == GeneratorBSessionMode.Fuel)
-            { fuelOperator.Value = sender; fuelHeartbeat = ServerTime; }
-            else { controllingClient.Value = sender; panelHeartbeat = ServerTime; }
-
-            BeginLocalSessionClientRpc(
-                mode,
-                TargetClient(sender));
-        }
-
-        [ServerRpc(RequireOwnership = false)]
-        private void SubmitSearchCommandServerRpc(
-            string command,
-            ServerRpcParams rpc = default)
-        {
-            ulong sender = rpc.Receive.SenderClientId;
-            if (sender != controllingClient.Value || completed.Value || !IsPowerStateValid())
-                return;
-
-            bool accepted = string.Equals(
-                command, SearchCommand, StringComparison.OrdinalIgnoreCase);
-            if (accepted)
+            panelOperator.Value = sender;
+            panelHeartbeat = ServerTime;
+            if (!searchActive.Value)
             {
                 searchActive.Value = true;
                 nextSignalAt = ServerTime;
-                controllingClient.Value = NoController;
+                SearchStartedClientRpc(sender);
+            }
+            BeginLocalSessionClientRpc(GeneratorBSessionMode.Panel, TargetClient(sender));
+        }
+
+        private void BeginCrankServer(ulong sender)
+        {
+            if (panelOperator.Value == sender)
+            {
+                RejectClientRpc(GeneratorBRejectReason.AlreadyOperating, TargetClient(sender));
+                return;
+            }
+            if (crankOperator.Value != NoController && crankOperator.Value != sender)
+            {
+                RejectClientRpc(GeneratorBRejectReason.CrankOccupied, TargetClient(sender));
+                return;
             }
 
-            ResolveSearchCommandClientRpc(accepted, TargetClient(sender));
+            crankOperator.Value = sender;
+            crankHeartbeat = ServerTime;
+            BeginLocalSessionClientRpc(GeneratorBSessionMode.Crank, TargetClient(sender));
         }
 
-        private bool ConsumeCurrentFuelCanServer()
+        private void TryPourServer(ulong sender)
         {
-            ulong operatorId = fuelOperator.Value;
-            ulong panelOperatorId = controllingClient.Value;
-            var can = GetHeldFuel(operatorId);
-            if (can == null || !TryGetPlayer(operatorId, out var player) ||
-                !player.TryGetComponent<NetworkPlayerInventory>(out var inventory) ||
-                !inventory.TryConsumeHeldItemServer(can.WorldItem.NetworkObjectId)) return false;
-            consumedFuelCans.Value++;
-            fuelProgress.Value = Mathf.Clamp01(
-                consumedFuelCans.Value / (float)requiredFuelCans);
-            pourRequested = ventRequested = false;
-            pouring.Value = venting.Value = false;
-            fuelOperator.Value = NoController;
-            controllingClient.Value = NoController;
-            PlayPourResultClientRpc(true);
-            FuelCanConsumedClientRpc(
-                consumedFuelCans.Value,
-                requiredFuelCans,
-                TargetClient(operatorId));
-            if (panelOperatorId != NoController)
-                FuelStageCompleteClientRpc(
-                    consumedFuelCans.Value,
-                    requiredFuelCans,
-                    TargetClient(panelOperatorId));
-            return true;
+            GeneratorFuelCan can = GetHeldFuel(sender);
+            if (can == null || !TryGetPlayer(sender, out NetworkObject player) ||
+                !player.TryGetComponent(out NetworkPlayerInventory inventory) ||
+                !inventory.TryConsumeHeldItemServer(can.WorldItem.NetworkObjectId))
+            {
+                RejectClientRpc(GeneratorBRejectReason.FuelRequired, TargetClient(sender));
+                return;
+            }
+
+            consumedFuelCans.Value = (byte)Mathf.Min(requiredFuelCans, consumedFuelCans.Value + 1);
+            PlayPourClientRpc();
+            if (!IsPrimed)
+                return;
+
+            CrankModel.Reset();
+            ignitedCylinders.Value = 0;
+            backfireCount.Value = 0;
+            ignitionReadyAt.Value = 0d;
+            StopFuelSignalClientRpc();
         }
 
-        private void CompleteFuelServer()
+        [ServerRpc(RequireOwnership = false)]
+        private void HeartbeatServerRpc(ServerRpcParams rpc = default)
         {
-            fuelProgress.Value = 1f;
-            searchActive.Value = false;
+            ulong sender = rpc.Receive.SenderClientId;
+            if (panelOperator.Value == sender) panelHeartbeat = ServerTime;
+            if (crankOperator.Value == sender) crankHeartbeat = ServerTime;
+        }
+
+        [ServerRpc(RequireOwnership = false)]
+        private void CrankStrokeServerRpc(byte side, ServerRpcParams rpc = default)
+        {
+            if (rpc.Receive.SenderClientId != crankOperator.Value || !IsPrimed || completed.Value)
+                return;
+            crankHeartbeat = ServerTime;
+            CrankModel.ApplyStroke(side, ServerTime);
+        }
+
+        [ServerRpc(RequireOwnership = false)]
+        private void IgniteServerRpc(double observedServerTime, ServerRpcParams rpc = default)
+        {
+            ulong sender = rpc.Receive.SenderClientId;
+            if (sender != panelOperator.Value || !IsPrimed || completed.Value || !IsPowerStateValid() ||
+                IgnitionCoolingDown)
+                return;
+
+            panelHeartbeat = ServerTime;
+            double age = ServerTime - observedServerTime;
+            if (age < -0.1d || age > maximumIgnitionInputAge)
+                observedServerTime = ServerTime;
+
+            GeneratorBIgnitionResult result = CrankModel.Evaluate(
+                ignitedCylinders.Value, backfireCount.Value, observedServerTime);
+            switch (result)
+            {
+                case GeneratorBIgnitionResult.Hit:
+                    CrankModel.ApplyHit();
+                    ignitedCylinders.Value++;
+                    ignitionReadyAt.Value = ServerTime + crankSettings.hitCooldown;
+                    IgnitionResultClientRpc(result);
+                    if (ignitedCylinders.Value >= RequiredCylinders)
+                        CompleteServer();
+                    break;
+                case GeneratorBIgnitionResult.Backfire:
+                    CrankModel.ApplyBackfire();
+                    backfireCount.Value = (byte)Mathf.Min(byte.MaxValue, backfireCount.Value + 1);
+                    ignitionReadyAt.Value = ServerTime + crankSettings.backfireCooldown;
+                    WorldNoiseSystem.Emit(GeneratorPosition, backfireNoiseRadius);
+                    IgnitionResultClientRpc(result);
+                    break;
+                default:
+                    IgnitionResultClientRpc(result, TargetClient(sender));
+                    break;
+            }
+        }
+
+        [ServerRpc(RequireOwnership = false)]
+        private void DecoyServerRpc(Vector3 worldPosition, ServerRpcParams rpc = default)
+        {
+            if (rpc.Receive.SenderClientId != panelOperator.Value || completed.Value ||
+                ServerTime < decoyReadyAt.Value)
+                return;
+
+            if (UnityEngine.AI.NavMesh.SamplePosition(worldPosition, out UnityEngine.AI.NavMeshHit hit,
+                    radarSettings.decoySampleRadius, UnityEngine.AI.NavMesh.AllAreas))
+                worldPosition = hit.position;
+            else
+                return;
+
+            decoyReadyAt.Value = ServerTime + decoyRechargeSeconds;
+            WorldNoiseSystem.EmitUrgent(worldPosition, decoyNoiseRadius);
+            DecoyFiredClientRpc(worldPosition);
+        }
+
+        [ServerRpc(RequireOwnership = false)]
+        private void ReleaseControlServerRpc(ServerRpcParams rpc = default) =>
+            ReleaseOperatorServer(rpc.Receive.SenderClientId);
+
+        private void SimulateCrankServer()
+        {
+            CrankModel.Tick(Time.deltaTime, ServerTime);
+            if (!Mathf.Approximately(rpm.Value, CrankModel.Rpm))
+                rpm.Value = CrankModel.Rpm;
+            if (!Mathf.Approximately(crankAngle.Value, CrankModel.Angle))
+                crankAngle.Value = CrankModel.Angle;
+        }
+
+        private void CompleteServer()
+        {
             completed.Value = true;
-            controllingClient.Value = NoController;
+            searchActive.Value = false;
+            panelOperator.Value = NoController;
+            crankOperator.Value = NoController;
             StopFuelSignalClientRpc();
             PlayGeneratorStartedClientRpc();
-            Vector3 investigationPosition = fuelInletPoint != null
-                ? fuelInletPoint.transform.position
-                : transform.position;
-            if (powerController != null &&
-                !powerController.ForceTvMonsterInvestigateServer(investigationPosition))
-            {
-                Debug.LogWarning(
-                    "[GeneratorB] TV Monster could not begin forced generator investigation.",
-                    this);
-            }
+            if (powerController != null && !powerController.ForceTvMonsterInvestigateServer(GeneratorPosition))
+                Debug.LogWarning("[GeneratorB] TV Monster could not begin forced generator investigation.", this);
             BeginFullPowerTransitionServer();
             if (QuestManager.Instance != null && !string.IsNullOrWhiteSpace(completionQuestSignal))
-                QuestManager.Instance.ReportProgress(
-                    completionQuestSignal,
-                    completionQuestSourceId);
+                QuestManager.Instance.ReportProgress(completionQuestSignal, completionQuestSourceId);
         }
 
         private void BeginFullPowerTransitionServer()
         {
-            if (!IsServer || powerController == null)
+            if (powerController == null)
             {
                 Debug.LogError("[GeneratorB] Full power controller is not assigned on the server.", this);
                 return;
             }
-
-            if (fullPowerRoutine != null)
-                StopCoroutine(fullPowerRoutine);
+            StopRoutine(ref fullPowerRoutine);
             fullPowerRoutine = StartCoroutine(SetFullPowerWhenReady());
         }
 
@@ -445,161 +531,104 @@ namespace DeFrag.B1F
             }
 
             if (powerController.CurrentState != B1FPowerState.FullPower)
-                Debug.LogError(
-                    $"[GeneratorB] Failed to enter FullPower from {powerController.CurrentState}.",
-                    this);
+                Debug.LogError($"[GeneratorB] Failed to enter FullPower from {powerController.CurrentState}.", this);
             fullPowerRoutine = null;
         }
 
-        [ServerRpc(RequireOwnership = false)]
-        private void SetCooperativeInputServerRpc(
-            GeneratorBSessionMode mode,
-            bool held,
-            ServerRpcParams rpc = default)
+        private void TrySpawnFuelServer()
         {
-            ulong sender = rpc.Receive.SenderClientId;
-            if (completed.Value || !IsPowerStateValid()) return;
-            if (mode == GeneratorBSessionMode.Fuel && fuelOperator.Value == sender)
+            if (fuelSpawned || !IsPowerStateValid()) return;
+            var points = new List<Transform>();
+            foreach (Transform point in fuelSpawnPoints)
+                if (point != null && !points.Contains(point)) points.Add(point);
+            if (fuelPrefab == null || points.Count < 3)
             {
-                pourRequested = held;
-                fuelHeartbeat = ServerTime;
+                if (!spawnWarningShown)
+                    Debug.LogError("[Generator B] Assign Fuel Prefab and at least three distinct Fuel Spawn Points.", this);
+                spawnWarningShown = true;
+                return;
             }
-            else if (mode == GeneratorBSessionMode.Pressure && controllingClient.Value == sender)
-            {
-                ventRequested = held;
-                panelHeartbeat = ServerTime;
-            }
-        }
 
-        private void UpdatePressureServer()
-        {
-            if (completed.Value || !IsPowerStateValid()) return;
-
-            if (searchActive.Value)
+            // Marked before spawning so an invalid prefab can never respawn cans every frame.
+            fuelSpawned = true;
+            for (int i = 0; i < 3; i++)
             {
-                if (fuelOperator.Value != NoController && ServerTime - fuelHeartbeat > 3d)
+                int selected = UnityEngine.Random.Range(i, points.Count);
+                (points[i], points[selected]) = (points[selected], points[i]);
+                GeneratorFuelCan can = Instantiate(fuelPrefab, points[i].position, points[i].rotation);
+                if (!can.gameObject.activeSelf)
+                    can.gameObject.SetActive(true);
+
+                NetworkObject fuelNetworkObject = can.WorldItem.NetworkObject;
+                if (fuelNetworkObject == null)
                 {
-                    fuelOperator.Value = NoController;
-                    pourRequested = false;
+                    Debug.LogError("[Generator B] Fuel prefab requires a NetworkObject.", can);
+                    Destroy(can.gameObject);
+                    continue;
                 }
-                if (controllingClient.Value != NoController && ServerTime - panelHeartbeat > 3d)
-                {
-                    controllingClient.Value = NoController;
-                    ventRequested = false;
-                }
+
+                fuelNetworkObject.Spawn(true);
+                spawnedFuelIds.Add(fuelNetworkObject.NetworkObjectId);
             }
-
-            bool fuelAlive = fuelOperator.Value != NoController &&
-                             ServerTime - fuelHeartbeat < 0.75d &&
-                             IsFuelHeldBy(fuelOperator.Value);
-            bool panelAlive = controllingClient.Value != NoController &&
-                              ServerTime - panelHeartbeat < 0.75d;
-            bool ready = fuelAlive && panelAlive && ServerTime >= resumeAt.Value;
-            bool activePour = ready && pourRequested;
-            bool activeVent = ready && ventRequested;
-            pouring.Value = activePour;
-            venting.Value = activeVent;
-
-            float delta = Time.deltaTime;
-            float speedMultiplier = Mathf.Pow(pressureSpeedMultiplierPerStage, PressureStage);
-            float change = activePour
-                ? pressureRisePerSecond * speedMultiplier
-                : -pressureRisePerSecond * 0.12f;
-            if (activeVent) change -= ventPerSecond * speedMultiplier;
-            pressure.Value = Mathf.Clamp01(pressure.Value + change * delta);
-
-            bool productive = activePour && pressure.Value >= MinimumPressure &&
-                              pressure.Value < DangerPressure;
-            if (productive)
-            {
-                float nextCanThreshold = Mathf.Clamp01(
-                    (consumedFuelCans.Value + 1f) / requiredFuelCans);
-                fuelProgress.Value = Mathf.Min(
-                    nextCanThreshold,
-                    fuelProgress.Value + delta / fillDuration);
-            }
-
-            if (activePour && pressure.Value >= DangerPressure)
-                dangerTime.Value += delta;
-            else
-                dangerTime.Value = Mathf.Max(0f, dangerTime.Value - delta * 1.5f);
-
-            if (dangerTime.Value >= overpressureGrace)
-            {
-                dangerTime.Value = 0f;
-                pressure.Value = Mathf.Max(MinimumPressure, DangerPressure - 0.18f);
-                resumeAt.Value = ServerTime + alarmCooldown;
-                pourRequested = false;
-                pouring.Value = false;
-                Vector3 position = fuelInletPoint != null
-                    ? fuelInletPoint.transform.position : transform.position;
-                WorldNoiseSystem.Emit(position, failedPourNoiseRadius);
-                PlayPourResultClientRpc(false);
-            }
-
-            float threshold = Mathf.Clamp01(
-                (consumedFuelCans.Value + 1f) / requiredFuelCans);
-            if (fuelOperator.Value != NoController && fuelProgress.Value >= threshold &&
-                ConsumeCurrentFuelCanServer() && consumedFuelCans.Value >= requiredFuelCans)
-                CompleteFuelServer();
         }
 
-        [ServerRpc(RequireOwnership = false)]
-        private void ReleaseControlServerRpc(ServerRpcParams rpc = default)
+        private void ReleaseStaleOperatorsServer()
         {
-            ulong sender = rpc.Receive.SenderClientId;
-            if (controllingClient.Value == sender)
-            {
-                controllingClient.Value = NoController;
-                ventRequested = false;
-            }
-            if (fuelOperator.Value == sender)
-            {
-                fuelOperator.Value = NoController;
-                pourRequested = false;
-            }
+            double now = ServerTime;
+            if (panelOperator.Value != NoController && now - panelHeartbeat > operatorTimeout)
+                panelOperator.Value = NoController;
+            if (crankOperator.Value != NoController && now - crankHeartbeat > operatorTimeout)
+                crankOperator.Value = NoController;
         }
 
-        private bool IsFuelHeldBy(ulong clientId) =>
-            GetHeldFuel(clientId) != null;
+        private void ReleaseOperatorServer(ulong clientId)
+        {
+            if (panelOperator.Value == clientId) panelOperator.Value = NoController;
+            if (crankOperator.Value == clientId) crankOperator.Value = NoController;
+        }
+
+        private void OnClientDisconnected(ulong clientId) => ReleaseOperatorServer(clientId);
+
+        private GeneratorFuelCan ResolveFuel(ulong id) =>
+            NetworkManager != null && NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(id, out NetworkObject item)
+                ? item.GetComponent<GeneratorFuelCan>()
+                : null;
+
+        private GeneratorFuelCan GetHeldFuel(ulong clientId)
+        {
+            foreach (ulong id in spawnedFuelIds)
+            {
+                GeneratorFuelCan candidate = ResolveFuel(id);
+                if (candidate != null && candidate.WorldItem.State == NetworkItemState.Held &&
+                    candidate.WorldItem.HolderClientId == clientId)
+                    return candidate;
+            }
+            return null;
+        }
 
         private bool HasLocalPlayerFuel()
         {
             NetworkManager manager = NetworkManager.Singleton;
-            return manager != null && manager.IsListening &&
-                   IsFuelHeldBy(manager.LocalClientId);
+            return manager != null && manager.IsListening && GetHeldFuel(manager.LocalClientId) != null;
         }
 
         private bool HasLocalRequiredHackingPad()
         {
             if (requiredHackingPad == null)
                 return true;
-
-            NetworkManager manager = NetworkManager.Singleton;
-            NetworkPlayerInventory inventory = manager?.LocalClient?.PlayerObject?
+            NetworkPlayerInventory inventory = NetworkManager.Singleton?.LocalClient?.PlayerObject?
                 .GetComponent<NetworkPlayerInventory>();
             return inventory != null && inventory.ContainsHeldItem(requiredHackingPad);
         }
 
-        private GeneratorBInteractionPoint GetInteractionPoint(
-            GeneratorBInteractionType interactionType) =>
-            interactionType == GeneratorBInteractionType.FuelInlet
-                ? fuelInletPoint
-                : controlPanelPoint;
-
         private void TryAutoAssignInteractionPoints()
         {
-            GeneratorBInteractionPoint[] points =
-                GetComponentsInChildren<GeneratorBInteractionPoint>(true);
-            foreach (GeneratorBInteractionPoint point in points)
+            foreach (GeneratorBInteractionPoint point in GetComponentsInChildren<GeneratorBInteractionPoint>(true))
             {
-                if (point == null)
-                    continue;
-                if (point.InteractionType == GeneratorBInteractionType.ControlPanel &&
-                    controlPanelPoint == null)
+                if (point == null) continue;
+                if (point.InteractionType == GeneratorBInteractionType.ControlPanel && controlPanelPoint == null)
                     controlPanelPoint = point;
-                else if (point.InteractionType == GeneratorBInteractionType.FuelInlet &&
-                         fuelInletPoint == null)
+                else if (point.InteractionType == GeneratorBInteractionType.FuelInlet && fuelInletPoint == null)
                     fuelInletPoint = point;
             }
         }
@@ -607,8 +636,7 @@ namespace DeFrag.B1F
         private bool IsPowerStateValid() =>
             QuestManager.Instance != null && QuestManager.Instance.IsQuestActive(requiredQuestId) &&
             powerController != null &&
-            (powerController.CurrentState == B1FPowerState.EmergencyPower ||
-             powerController.CanRestoreGenerator);
+            (powerController.CurrentState == B1FPowerState.EmergencyPower || powerController.CanRestoreGenerator);
 
         private bool TryGetPlayer(ulong clientId, out NetworkObject playerObject)
         {
@@ -618,32 +646,22 @@ namespace DeFrag.B1F
                    (playerObject = client.PlayerObject) != null;
         }
 
-        private void OnClientDisconnected(ulong clientId)
-        {
-            if (controllingClient.Value == clientId)
-                controllingClient.Value = NoController;
-            if (fuelOperator.Value == clientId)
-                fuelOperator.Value = NoController;
-        }
-
         private static ClientRpcParams TargetClient(ulong clientId) => new()
         {
             Send = new ClientRpcSendParams { TargetClientIds = new[] { clientId } }
         };
 
         [ClientRpc]
-        private void BeginLocalSessionClientRpc(
-            GeneratorBSessionMode mode,
-            ClientRpcParams clientRpc = default)
+        private void BeginLocalSessionClientRpc(GeneratorBSessionMode mode, ClientRpcParams clientRpc = default)
         {
-            NetworkManager manager = NetworkManager.Singleton;
-            PlayerInteraction player = manager?.LocalClient?.PlayerObject?
+            PlayerInteraction player = NetworkManager.Singleton?.LocalClient?.PlayerObject?
                 .GetComponentInChildren<PlayerInteraction>(true);
-            Camera sessionCamera = mode == GeneratorBSessionMode.Fuel
-                ? fuelInteractionCamera
-                : controlInteractionCamera;
+            Camera sessionCamera = mode == GeneratorBSessionMode.Crank ? fuelInteractionCamera : controlInteractionCamera;
             if (player == null || sessionCamera == null)
+            {
+                ReleaseLocalControl();
                 return;
+            }
 
             GeneratorBLocalSession session = GetComponent<GeneratorBLocalSession>();
             if (session == null)
@@ -652,73 +670,183 @@ namespace DeFrag.B1F
         }
 
         [ClientRpc]
-        private void ResolveSearchCommandClientRpc(
-            bool accepted,
-            ClientRpcParams clientRpc = default)
+        private void RejectClientRpc(GeneratorBRejectReason reason, ClientRpcParams clientRpc = default)
         {
-            GeneratorBLocalSession.Active?.ResolveSearchCommand(this, accepted);
+            string message = reason switch
+            {
+                GeneratorBRejectReason.PanelOccupied => "동료가 제어 패널을 사용 중입니다",
+                GeneratorBRejectReason.CrankOccupied => "동료가 크랭크를 돌리는 중입니다",
+                GeneratorBRejectReason.HackingPadRequired => "제어 패널은 해킹패드를 든 채로 사용해야 합니다",
+                GeneratorBRejectReason.FuelRequired => "연료통을 손에 들고 주유구를 사용하세요",
+                _ => "이미 발전기의 다른 위치를 조작 중입니다"
+            };
+            GeneratorBToast.Show(message, GeneratorBToast.Warning, 3f, uiFont);
         }
 
         [ClientRpc]
-        private void FuelCanConsumedClientRpc(
-            int consumed,
-            int required,
-            ClientRpcParams clientRpc = default)
+        private void SearchStartedClientRpc(ulong radarOperator)
         {
-            GeneratorBLocalSession.Active?.ResolveFuelCanConsumed(this, consumed, required);
+            if (NetworkManager.Singleton == null || NetworkManager.Singleton.LocalClientId == radarOperator)
+                return;
+            GeneratorBToast.Show(
+                "해커가 시설 레이더를 켰습니다!\n카메라(C) → IR 모드(우클릭)로 연료 신호를 추적하세요.\n무전으로 해커의 길 안내를 들으세요.",
+                GeneratorBToast.Info, 7f, uiFont);
         }
 
         [ClientRpc]
-        private void FuelStageCompleteClientRpc(
-            int consumed,
-            int required,
-            ClientRpcParams clientRpc = default)
+        private void PlayPourClientRpc()
         {
-            GeneratorBLocalSession.Active?.ResolveFuelStageComplete(this, consumed, required);
+            if (generatorAudioSource != null && pourSuccessClip != null)
+                generatorAudioSource.PlayOneShot(pourSuccessClip);
+            if (pourVisual != null)
+            {
+                StopRoutine(ref pourRoutine);
+                pourRoutine = StartCoroutine(PourPresentation());
+            }
+        }
+
+        [ClientRpc]
+        private void IgnitionResultClientRpc(GeneratorBIgnitionResult result, ClientRpcParams clientRpc = default)
+        {
+            if (result == GeneratorBIgnitionResult.Backfire)
+            {
+                AudioSource.PlayClipAtPoint(ProceduralSfx.Backfire, GeneratorPosition, 1f);
+                if (generatorAudioSource != null && pourFailureClip != null)
+                    generatorAudioSource.PlayOneShot(pourFailureClip);
+            }
+            else if (result == GeneratorBIgnitionResult.Hit)
+            {
+                AudioSource.PlayClipAtPoint(ProceduralSfx.IgnitionCatch, GeneratorPosition, 1f);
+            }
+            IgnitionResolved?.Invoke(result);
+        }
+
+        [ClientRpc]
+        private void DecoyFiredClientRpc(Vector3 worldPosition)
+        {
+            AudioSource.PlayClipAtPoint(ProceduralSfx.DecoyBurst, worldPosition, 1f);
+            DecoyFired?.Invoke(worldPosition);
         }
 
         [ClientRpc]
         private void PlayFuelSignalClientRpc()
         {
-            foreach (ulong id in spawnedFuelIds)
-            {
-                var can = ResolveFuel(id);
-                if (can != null && can.WorldItem.State == NetworkItemState.World) can.PlaySignal();
-            }
+            foreach (GeneratorFuelCan can in WorldFuelCans())
+                can.PlaySignal();
         }
 
         [ClientRpc]
         private void StopFuelSignalClientRpc()
         {
-            foreach (ulong id in spawnedFuelIds) ResolveFuel(id)?.StopSignal();
+            foreach (ulong id in spawnedFuelIds)
+                ResolveFuel(id)?.StopSignal();
         }
 
         [ClientRpc]
-        private void PlayPourResultClientRpc(bool success)
+        private void PlayGeneratorStartedClientRpc() => StartLocalGeneratorAudio(true);
+
+        private void OnFuelCountChanged(byte previous, byte next)
         {
-            if (generatorAudioSource != null)
+            if (next <= previous)
+                return;
+            if (next >= requiredFuelCans)
             {
-                AudioClip clip = success ? pourSuccessClip : pourFailureClip;
-                if (clip != null)
-                    generatorAudioSource.PlayOneShot(clip);
+                GeneratorBToast.Show(
+                    "연료 주입 완료! 이제 시동을 겁니다.\n한 명은 주유구 크랭크(A·D 연타), 한 명은 제어 패널 점화(SPACE)!",
+                    GeneratorBToast.Info, 7f, uiFont);
+                SetColdStartMusic(true);
             }
-
+            else
+            {
+                GeneratorBToast.Show($"연료 {next}/{requiredFuelCans} 주입 — 연료통이 더 필요합니다",
+                    GeneratorBToast.Info, 4f, uiFont);
+            }
         }
 
-        [ClientRpc]
-        private void PlayGeneratorStartedClientRpc()
+        private void OnCompletedChanged(bool previous, bool next)
         {
-            StartLocalGeneratorAudio(true);
+            if (!next) return;
+            SetColdStartMusic(false);
+            if (engineTurnSource != null)
+                engineTurnSource.Stop();
+            GeneratorBToast.Show("발전기 가동!\n괴물이 소리를 듣고 달려옵니다 — 도망치세요!", GeneratorBToast.Warning, 5f, uiFont);
+        }
+
+        private void UpdateLocalCrankPresentation()
+        {
+            bool cranking = IsPrimed && !completed.Value;
+            float rpmValue = cranking ? rpm.Value : 0f;
+
+            // Integrate locally for smooth motion and pull toward the replicated server angle.
+            smoothedAngle = Mathf.Repeat(smoothedAngle + rpmValue * crankSettings.degreesPerSecondAtFullRpm * Time.deltaTime, 360f);
+            smoothedAngle = Mathf.Repeat(
+                smoothedAngle + Mathf.DeltaAngle(smoothedAngle, crankAngle.Value) * Mathf.Clamp01(Time.deltaTime * 8f), 360f);
+
+            if (flywheelVisual != null)
+                flywheelVisual.localRotation = flywheelRestRotation * Quaternion.AngleAxis(smoothedAngle, flywheelLocalAxis);
+
+            if (!cranking)
+                return;
+            EnsureEngineTurnSource();
+            engineTurnSource.volume = Mathf.Lerp(0f, crankEngineVolume, Mathf.Clamp01(rpmValue * 3f));
+            engineTurnSource.pitch = Mathf.Lerp(0.35f, 2.2f, rpmValue);
+            if (!engineTurnSource.isPlaying)
+                engineTurnSource.Play();
+        }
+
+        private void EnsureEngineTurnSource()
+        {
+            if (engineTurnSource != null) return;
+            GameObject sourceObject = new("Generator B Crank Audio");
+            sourceObject.transform.SetParent(transform, false);
+            sourceObject.transform.position = GeneratorPosition;
+            engineTurnSource = sourceObject.AddComponent<AudioSource>();
+            engineTurnSource.clip = ProceduralSfx.EngineTurnLoop;
+            engineTurnSource.loop = true;
+            engineTurnSource.playOnAwake = false;
+            engineTurnSource.spatialBlend = 1f;
+            engineTurnSource.rolloffMode = AudioRolloffMode.Linear;
+            engineTurnSource.minDistance = 3f;
+            engineTurnSource.maxDistance = 35f;
+        }
+
+        private void SetColdStartMusic(bool playing)
+        {
+            if (coldStartMusic == null) return;
+            if (musicSource == null)
+            {
+                musicSource = gameObject.AddComponent<AudioSource>();
+                musicSource.clip = coldStartMusic;
+                musicSource.loop = true;
+                musicSource.playOnAwake = false;
+                musicSource.spatialBlend = 0f;
+                musicSource.volume = 0f;
+            }
+            StopRoutine(ref musicFadeRoutine);
+            musicFadeRoutine = StartCoroutine(FadeMusic(playing ? coldStartMusicVolume : 0f, playing ? 2f : 3f));
+        }
+
+        private IEnumerator FadeMusic(float target, float duration)
+        {
+            if (target > 0f && !musicSource.isPlaying)
+                musicSource.Play();
+            float start = musicSource.volume;
+            for (float t = 0f; t < duration; t += Time.unscaledDeltaTime)
+            {
+                musicSource.volume = Mathf.Lerp(start, target, t / duration);
+                yield return null;
+            }
+            musicSource.volume = target;
+            if (target <= 0f)
+                musicSource.Stop();
+            musicFadeRoutine = null;
         }
 
         private void StartLocalGeneratorAudio(bool playStartup)
         {
-            if (generatorAudioSource == null)
-                return;
-            if (generatorAudioRoutine != null)
-                StopCoroutine(generatorAudioRoutine);
-            generatorAudioRoutine = StartCoroutine(
-                PlayGeneratorAudioSequence(playStartup));
+            if (generatorAudioSource == null) return;
+            StopRoutine(ref generatorAudioRoutine);
+            generatorAudioRoutine = StartCoroutine(PlayGeneratorAudioSequence(playStartup));
         }
 
         private IEnumerator PlayGeneratorAudioSequence(bool playStartup)
@@ -741,37 +869,38 @@ namespace DeFrag.B1F
                 generatorAudioSource.loop = true;
                 generatorAudioSource.Play();
             }
-
             generatorAudioRoutine = null;
         }
 
-        public void SetLocalPourPresentation(bool active)
+        private IEnumerator PourPresentation()
         {
-            if (pourVisual == null || localPourVisualState == active) return;
             if (!pourVisualInitialized)
             {
                 pourRestRotation = pourVisual.localRotation;
                 pourVisualInitialized = true;
             }
-            localPourVisualState = active;
-            if (pourRoutine != null) StopCoroutine(pourRoutine);
-            Quaternion target = active
-                ? pourRestRotation * Quaternion.Euler(pourTiltEuler)
-                : pourRestRotation;
-            pourRoutine = StartCoroutine(RotatePour(
-                pourVisual.localRotation, target, pourTiltDuration));
+            Quaternion tilted = pourRestRotation * Quaternion.Euler(pourTiltEuler);
+            yield return RotatePour(pourVisual.localRotation, tilted, pourTiltDuration);
+            yield return new WaitForSecondsRealtime(pourHoldDuration);
+            yield return RotatePour(pourVisual.localRotation, pourRestRotation, pourTiltDuration);
+            pourRoutine = null;
         }
 
         private IEnumerator RotatePour(Quaternion from, Quaternion to, float duration)
         {
-            float elapsed = 0f;
-            while (elapsed < duration)
+            for (float elapsed = 0f; elapsed < duration; elapsed += Time.unscaledDeltaTime)
             {
-                elapsed += Time.unscaledDeltaTime;
                 pourVisual.localRotation = Quaternion.Slerp(from, to, elapsed / duration);
                 yield return null;
             }
             pourVisual.localRotation = to;
+        }
+
+        private void StopRoutine(ref Coroutine routine)
+        {
+            if (routine != null)
+                StopCoroutine(routine);
+            routine = null;
         }
     }
 }

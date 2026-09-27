@@ -33276,6 +33276,12 @@ MonoBehaviour:
   spawnPoints:
   - {fileID: 355558341}
   - {fileID: 369529313}
+  distributionBoxAHostSpawnPoint: {fileID: 0}
+  distributionBoxAClientSpawnPoint: {fileID: 0}
+  controlRoomHostSpawnPoint: {fileID: 0}
+  controlRoomClientSpawnPoint: {fileID: 0}
+  generatorHostSpawnPoint: {fileID: 0}
+  generatorClientSpawnPoint: {fileID: 0}
 --- !u!4 &1715665261
 Transform:
   m_ObjectHideFlags: 0
