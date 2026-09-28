@@ -2116,6 +2116,7 @@ MonoBehaviour:
   completionQuestSignal: 
   colorOverrides: []
   audioOverrides: []
+  triggerVisual: {fileID: 0}
 --- !u!65 &134077247
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2507,6 +2508,7 @@ MonoBehaviour:
   completionQuestSignal: 
   colorOverrides: []
   audioOverrides: []
+  triggerVisual: {fileID: 0}
 --- !u!65 &165681821
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -2955,6 +2957,7 @@ MonoBehaviour:
   completionQuestSignal: 
   colorOverrides: []
   audioOverrides: []
+  triggerVisual: {fileID: 0}
 --- !u!65 &219570074
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4521,6 +4524,11 @@ MonoBehaviour:
   flywheelVisual: {fileID: 0}
   flywheelLocalAxis: {x: 1, y: 0, z: 0}
   crankEngineVolume: 0.8
+  paPrimedClip: {fileID: 0}
+  paBackfireClip: {fileID: 0}
+  paOnlineClip: {fileID: 0}
+  paVolume: 0.85
+  paBackfireCooldown: 8
   generatorAudioSource: {fileID: 266757280}
   pourSuccessClip: {fileID: 8300000, guid: f911a474f0146e142b1b8289c198c746, type: 3}
   pourFailureClip: {fileID: 8300000, guid: 720dce99587e77341ba9ec4755df5a18, type: 3}
@@ -10157,6 +10165,7 @@ MonoBehaviour:
   completionQuestSignal: 
   colorOverrides: []
   audioOverrides: []
+  triggerVisual: {fileID: 0}
 --- !u!65 &516327319
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -17874,6 +17883,8 @@ MonoBehaviour:
   boxARequiredQuestId: b1f_emergency_power
   maximumUseDistance: 6
   hintRefreshSeconds: 30
+  rotateHints: 0
+  revealKnobZoneToOperator: 0
   availableText: "\uBC30\uC804\uD568 \uC5F4\uAE30 (E \uD640\uB4DC)"
   occupiedText: "\uB2E4\uB978 \uD50C\uB808\uC774\uC5B4\uAC00 \uC870\uC791 \uC911\uC785\uB2C8\uB2E4"
   unavailableText: "\uD604\uC7AC \uC804\uB825 \uC0C1\uD0DC\uC5D0\uC11C\uB294 \uC0AC\uC6A9\uD560
@@ -25403,6 +25414,7 @@ MonoBehaviour:
   completionQuestSignal: 
   colorOverrides: []
   audioOverrides: []
+  triggerVisual: {fileID: 0}
 --- !u!65 &1272190788
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -30882,6 +30894,7 @@ MonoBehaviour:
   completionQuestSignal: B1F_CONTROL_ROOM_REACHED
   colorOverrides: []
   audioOverrides: []
+  triggerVisual: {fileID: 0}
 --- !u!65 &1549077944
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -33177,6 +33190,7 @@ MonoBehaviour:
   completionQuestSignal: 
   colorOverrides: []
   audioOverrides: []
+  triggerVisual: {fileID: 0}
 --- !u!65 &1715606650
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -35053,6 +35067,7 @@ MonoBehaviour:
   completionQuestSignal: 
   colorOverrides: []
   audioOverrides: []
+  triggerVisual: {fileID: 0}
 --- !u!65 &1853784550
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -36795,6 +36810,7 @@ MonoBehaviour:
   completionQuestSignal: 
   colorOverrides: []
   audioOverrides: []
+  triggerVisual: {fileID: 0}
 --- !u!65 &1941103622
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -39611,6 +39627,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   wrongRelayTrace: 28
+  wrongCircuitTrace: 8
   timeoutTrace: 20
   traceLimit: 100
   wrongRelayAlarmRadius: 60
@@ -39819,19 +39836,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 047718e5d7f64d7194c244796fabd8a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeFrag.B1F.B1FStoryDebugCheckpoint
-  startAfterDistributionBoxA: 0
-  startAfterConnectServer: 0
+  startCheckpoint: 0
   freezeTvMonsterInPlace: 0
+  giveRoleItems: 1
+  hackingPadItem: {fileID: 0}
+  cameraItem: {fileID: 0}
   disableQuestBarriers: 0
   questBarriersToDisable:
   - {fileID: 1120666424}
   distributionBoxA: {fileID: 924678998}
   powerController: {fileID: 2116658093}
   connectServerCoordinator: {fileID: 2116658094}
+  escapeSequence: {fileID: 0}
+  generatorB: {fileID: 0}
+  spawnPointRegistry: {fileID: 0}
   distributionBoxAQuestId: b1f_emergency_power
   connectServerQuestId: b1f_connect_server
+  downloadInterruptedQuestId: b1f_download_initial
   connectServerTerminalId: terminal_31
   networkReadyTimeout: 20
+  storyStateTimeout: 90
 --- !u!1001 &8524021200001
 PrefabInstance:
   m_ObjectHideFlags: 0

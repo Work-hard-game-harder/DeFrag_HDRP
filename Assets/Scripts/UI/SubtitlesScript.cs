@@ -139,6 +139,7 @@ public class SubtitlesScript : MonoBehaviour
             }
         }
     }
+
     private AudioClip GetCurrentSubtitleAudioOverride()
     {
         if (activeAudioOverrides == null)

@@ -34,6 +34,30 @@ public class SubtitleTrigger : MonoBehaviour
     [SerializeField]
     private SubtitleAudioOverride[] audioOverrides;
 
+    [Header("Trigger Visual")]
+    [Tooltip("이 Trigger의 자막 전체가 재생되는 동안 함께 표시할 이미지 시퀀스입니다.")]
+    [SerializeField]
+    private UISpriteSequencePlayer triggerVisual;
+
+    public UISpriteSequencePlayer TriggerVisual => triggerVisual;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void ResetSceneTriggerState()
+    {
+        // Reload Scene이 꺼진 Editor Play Mode에서도 이전 실행의 one-shot 상태가
+        // 다음 실행으로 넘어가지 않게 합니다.
+        SubtitleTrigger[] triggers =
+            FindObjectsByType<SubtitleTrigger>(FindObjectsInactive.Include);
+        foreach (SubtitleTrigger trigger in triggers)
+            trigger.hasTriggered = false;
+    }
+
+    private void Awake()
+    {
+        if (triggerVisual != null)
+            triggerVisual.StopAndHide();
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         TryPlayForPlayer(other);
@@ -65,11 +89,7 @@ public class SubtitleTrigger : MonoBehaviour
             }
 
             hasTriggered = true;
-            subtitlesScript.PlaySubtitles(
-                mySubtitles,
-                colorOverrides,
-                audioOverrides,
-                CompleteQuestLink);
+            PlaySubtitlesWithTriggerVisual(CompleteQuestLink);
         }
     }
 
@@ -132,11 +152,34 @@ public class SubtitleTrigger : MonoBehaviour
             onComplete?.Invoke();
         };
 
+        PlaySubtitlesWithTriggerVisual(combinedCallback);
+    }
+
+    private void PlaySubtitlesWithTriggerVisual(System.Action onComplete)
+    {
+        if (triggerVisual != null)
+        {
+            triggerVisual.gameObject.SetActive(true);
+            triggerVisual.PlayFromBeginning();
+        }
+
         subtitlesScript.PlaySubtitles(
             mySubtitles,
             colorOverrides,
             audioOverrides,
-            combinedCallback);
+            () =>
+            {
+                if (triggerVisual != null)
+                    triggerVisual.StopAndHide();
+
+                onComplete?.Invoke();
+            });
+    }
+
+    private void OnDisable()
+    {
+        if (triggerVisual != null)
+            triggerVisual.StopAndHide();
     }
 
     /*

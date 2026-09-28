@@ -73,6 +73,21 @@ public sealed class SubtitleSortingController : MonoBehaviour
             ? subtitle.subtitlesPanel
             : subtitle.gameObject;
 
+        // 컷신/인트로가 이미 명시적인 최상위 Overlay Canvas에 배치한 자막은
+        // 재생 도중 다시 부모를 바꾸지 않습니다. 부모 Canvas를 갈아타는 프레임에
+        // 검정 배경만 남는 렌더링 누락을 방지합니다.
+        Canvas preparedCanvas = target.transform.parent != null
+            ? target.transform.parent.GetComponent<Canvas>()
+            : null;
+        if (preparedCanvas != null &&
+            preparedCanvas.isRootCanvas &&
+            preparedCanvas.renderMode == RenderMode.ScreenSpaceOverlay &&
+            preparedCanvas.overrideSorting &&
+            preparedCanvas.sortingOrder >= SubtitleSortingOrder)
+        {
+            return preparedCanvas;
+        }
+
         Canvas sourceCanvas = target.GetComponentInParent<Canvas>();
         CanvasScaler sourceScaler = sourceCanvas != null ? sourceCanvas.GetComponent<CanvasScaler>() : null;
 
