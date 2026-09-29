@@ -482,6 +482,7 @@ MonoBehaviour:
   keypadUIPanel: {fileID: 2305637951056750532}
   passwordText: {fileID: 3629087083423454472}
   errorText: {fileID: 7490060760147142153}
+  keypad3D: {fileID: 111278762}
   wrongCodeAlarm: {fileID: 0}
   correctPassword: 7H36BE
   nextSceneName: B1F
@@ -675,6 +676,86 @@ Transform:
   - {fileID: 1235203116}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &111278760
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 111278761}
+  - component: {fileID: 111278762}
+  m_Layer: 0
+  m_Name: Elevator Keypad 3D
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &111278761
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 111278760}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 1.2980003, y: 2.135, z: 2.9070005}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3752151532792230187}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &111278762
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 111278760}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2dd9fbf152b895848ada6cbfec3073f8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ElevatorKeypad3D
+  panelSize: {x: 0.32, y: 0.6}
+  cornerRadius: 0.045
+  bodyDepth: 0.024
+  displayArea:
+    serializedVersion: 2
+    x: -0.125
+    y: 0.08
+    width: 0.25
+    height: 0.17
+  touchArea:
+    serializedVersion: 2
+    x: -0.125
+    y: -0.23
+    width: 0.25
+    height: 0.29
+  fingerprintCentre: {x: 0, y: -0.262}
+  fingerprintDiameter: 0.03
+  font: {fileID: 11400000, guid: 8d3019094b1de0d4f945de276623be45, type: 2}
+  shellColor: {r: 0.93, g: 0.94, b: 0.95, a: 1}
+  bezelColor: {r: 0.78, g: 0.8, b: 0.83, a: 1}
+  accent: {r: 0.3, g: 0.93, b: 1, a: 1}
+  correctColor: {r: 0.35, g: 1, b: 0.55, a: 1}
+  wrongColor: {r: 1, g: 0.25, b: 0.22, a: 1}
+  ledGlow: 2.2
+  displayGlow: 1.8
+  padGlow: 0.32
+  systemLine: 'SYSTEM: ACTIVE  |  LEVEL: SECURE  |  ENTRANCE: B1F'
+  handPrefab: {fileID: 5121539141373870876, guid: d711b58320bac1f4eb3387894711eca2, type: 3}
+  handScale: 0.6
+  screenFill: 0.86
+  fieldOfViewScale: 0.9
+  flyInSeconds: 0.6
+  flyOutSeconds: 0.45
+  promptText: "\uCF54\uB4DC\uB97C \uC785\uB825\uD558\uC138\uC694  |  ENTER \uD655\uC778 
+    |  ESC \uB2EB\uAE30"
+  idleText: TOUCH TO AUTHENTICATE
 --- !u!1 &111836953
 GameObject:
   m_ObjectHideFlags: 0
@@ -2930,7 +3011,7 @@ MonoBehaviour:
   - {fileID: 4723605023301824232}
   playlist: []
   outputWidth: 3600
-  outputHeight: 1280
+  outputHeight: 992
   playOnEnable: 1
   muteAudio: 1
   rotateVideo180: 1
@@ -2946,7 +3027,7 @@ MonoBehaviour:
     uvToScreenX: {x: -1.3910743, y: -0.0000001995609, z: 1.0000002}
     uvToScreenY: {x: 0.000000067633756, y: -0.999999, z: 0.99999946}
     aspect: 0.7188689
-  fitMode: 0
+  fitMode: 1
   screenFitShader: {fileID: 4800000, guid: e0ec08c6f6f45b647a5690dfa7d05785, type: 3}
   screenTextureSize: 1280
   fillBlur: 5
@@ -14390,7 +14471,7 @@ MonoBehaviour:
   - {fileID: 7062708437307348527}
   playlist: []
   outputWidth: 3600
-  outputHeight: 1280
+  outputHeight: 992
   playOnEnable: 1
   muteAudio: 1
   rotateVideo180: 1
@@ -14406,7 +14487,7 @@ MonoBehaviour:
     uvToScreenX: {x: -1.3910778, y: -0.0000002718092, z: 1.0000007}
     uvToScreenY: {x: -0.0000009306528, y: -0.9999999, z: 1.0000002}
     aspect: 0.7188677
-  fitMode: 0
+  fitMode: 1
   screenFitShader: {fileID: 4800000, guid: e0ec08c6f6f45b647a5690dfa7d05785, type: 3}
   screenTextureSize: 1280
   fillBlur: 5
@@ -16637,9 +16718,9 @@ MonoBehaviour:
   targetRenderers:
   - {fileID: 4611309854053278034}
   playlist:
-  - {fileID: 32900000, guid: 00227e00e18c2a54395bcea9483489be, type: 3}
-  outputWidth: 1920
-  outputHeight: 1080
+  - {fileID: 32900000, guid: 5503bb7e419abee46975544f09b1e518, type: 3}
+  outputWidth: 2464
+  outputHeight: 800
   playOnEnable: 1
   muteAudio: 1
   rotateVideo180: 0
@@ -16651,7 +16732,7 @@ MonoBehaviour:
     uvToScreenX: {x: -0.00000029297232, y: -1.0000001, z: 1.0000001}
     uvToScreenY: {x: 3.081597, y: 0.000000053991602, z: 0.00000042102295}
     aspect: 3.0815988
-  fitMode: 0
+  fitMode: 1
   screenFitShader: {fileID: 4800000, guid: e0ec08c6f6f45b647a5690dfa7d05785, type: 3}
   screenTextureSize: 2048
   fillBlur: 5
@@ -18414,7 +18495,7 @@ MonoBehaviour:
   - {fileID: 104087664}
   playlist: []
   outputWidth: 3600
-  outputHeight: 1280
+  outputHeight: 992
   playOnEnable: 1
   muteAudio: 1
   rotateVideo180: 1
@@ -18438,7 +18519,7 @@ MonoBehaviour:
     uvToScreenX: {x: -1.3910748, y: -0.00000032949168, z: 1.000001}
     uvToScreenY: {x: -0.0000005365931, y: -0.9999997, z: 0.9999998}
     aspect: 0.7188688
-  fitMode: 0
+  fitMode: 1
   screenFitShader: {fileID: 4800000, guid: e0ec08c6f6f45b647a5690dfa7d05785, type: 3}
   screenTextureSize: 1280
   fillBlur: 5
@@ -21774,7 +21855,7 @@ MonoBehaviour:
   - {fileID: 5665955587508118908}
   playlist: []
   outputWidth: 3600
-  outputHeight: 1280
+  outputHeight: 992
   playOnEnable: 1
   muteAudio: 1
   rotateVideo180: 1
@@ -21794,7 +21875,7 @@ MonoBehaviour:
     uvToScreenX: {x: -1.3910743, y: -0.00000045440078, z: 1.0000004}
     uvToScreenY: {x: -0.00000031593513, y: -1, z: 1.0000001}
     aspect: 0.7188689
-  fitMode: 0
+  fitMode: 1
   screenFitShader: {fileID: 4800000, guid: e0ec08c6f6f45b647a5690dfa7d05785, type: 3}
   screenTextureSize: 1280
   fillBlur: 5
@@ -22269,9 +22350,9 @@ MonoBehaviour:
   - {fileID: 730670583}
   - {fileID: 7360870709660081322}
   playlist:
-  - {fileID: 32900000, guid: efb5c7dbecd7515419cc5295c832e171, type: 3}
+  - {fileID: 32900000, guid: 2c0316a4e61fcf94bb773e7d761f82a3, type: 3}
   outputWidth: 3600
-  outputHeight: 1280
+  outputHeight: 992
   playOnEnable: 1
   muteAudio: 1
   rotateVideo180: 1
@@ -22287,7 +22368,7 @@ MonoBehaviour:
     uvToScreenX: {x: -1.3910732, y: -0.00000024571588, z: 1.0000007}
     uvToScreenY: {x: -0.00000086392646, y: -0.99999994, z: 1.0000002}
     aspect: 0.71887
-  fitMode: 0
+  fitMode: 1
   screenFitShader: {fileID: 4800000, guid: e0ec08c6f6f45b647a5690dfa7d05785, type: 3}
   screenTextureSize: 1280
   fillBlur: 5
@@ -34262,7 +34343,10 @@ PrefabInstance:
     - {fileID: -5149403954189299339, guid: dc387a345bac14d469e317d6482e73e1, type: 3}
     - {fileID: -3939918691273387854, guid: dc387a345bac14d469e317d6482e73e1, type: 3}
     - {fileID: -4504250812654484733, guid: dc387a345bac14d469e317d6482e73e1, type: 3}
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: dc387a345bac14d469e317d6482e73e1, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 111278761}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 4486967742120434330, guid: dc387a345bac14d469e317d6482e73e1, type: 3}
       insertIndex: -1

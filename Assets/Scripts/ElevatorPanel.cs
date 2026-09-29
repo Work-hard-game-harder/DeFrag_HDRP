@@ -12,6 +12,10 @@ public class ElevatorPanel : MonoBehaviour, IInteractable
     [SerializeField] private TextMeshProUGUI passwordText;
     [SerializeField] private TextMeshProUGUI errorText;
 
+    [Header("3D 키패드 (지정하면 위 UI 대신 사용)")]
+    [Tooltip("벽에 붙은 SF 터치 키패드. 카메라가 패널 앞으로 이동하고, 입력할 때마다 손이 터치 패드를 누르며, 오답이면 자리별로 초록/빨강을 표시합니다.")]
+    [SerializeField] private ElevatorKeypad3D keypad3D;
+
     [Header("오답 경보")]
     [SerializeField] private ElevatorWrongCodeAlarm wrongCodeAlarm;
 
@@ -93,6 +97,7 @@ public class ElevatorPanel : MonoBehaviour, IInteractable
         {
             if (Input.GetKeyDown(KeyCode.Alpha0 + i) || Input.GetKeyDown(KeyCode.Keypad0 + i))
             {
+                if (keypad3D != null) keypad3D.PressCharacter((char)('0' + i));
                 AppendCharacter(i.ToString());
                 return;
             }
@@ -103,19 +108,21 @@ public class ElevatorPanel : MonoBehaviour, IInteractable
         {
             if (Input.GetKeyDown(key))
             {
+                if (keypad3D != null) keypad3D.PressCharacter((char)('A' + (key - KeyCode.A)));
                 AppendCharacter(key.ToString());
                 return;
             }
         }
 
-        if (Input.GetKeyDown(KeyCode.Backspace) && currentInput.Length > 0)
+        if (Input.GetKeyDown(KeyCode.Backspace))
         {
-            currentInput = currentInput.Substring(0, currentInput.Length - 1);
-            UpdateDisplay();
+            if (keypad3D != null) keypad3D.PressBackspace();
+            RemoveLastCharacter();
         }
 
         if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
         {
+            if (keypad3D != null) keypad3D.PressSubmit();
             CheckPassword();
         }
     }
@@ -174,6 +181,14 @@ public class ElevatorPanel : MonoBehaviour, IInteractable
         isKeypadActive = true;
         waitForInteractionKeyRelease = true;
         currentInput = "";
+
+        Camera playerCamera = savedPlayer != null ? savedPlayer.GetComponentInParent<Camera>() : null;
+        if (keypad3D != null && keypad3D.BeginFocus(playerCamera, correctPassword.Length))
+        {
+            UpdateDisplay();
+            return;
+        }
+
         UpdateDisplay();
         if (keypadUIPanel != null) keypadUIPanel.SetActive(true);
         if (errorText != null) errorText.gameObject.SetActive(false);
@@ -184,6 +199,7 @@ public class ElevatorPanel : MonoBehaviour, IInteractable
         isKeypadActive = false;
         waitForInteractionKeyRelease = false;
         if (keypadUIPanel != null) keypadUIPanel.SetActive(false);
+        if (keypad3D != null) keypad3D.EndFocus();
         GameplayInputGate.Release(this);
         
         if (savedPlayer != null)
@@ -234,8 +250,16 @@ public class ElevatorPanel : MonoBehaviour, IInteractable
         UpdateDisplay();
     }
 
+    void RemoveLastCharacter()
+    {
+        if (currentInput.Length == 0) return;
+        currentInput = currentInput.Substring(0, currentInput.Length - 1);
+        UpdateDisplay();
+    }
+
     void UpdateDisplay()
     {
+        if (keypad3D != null) keypad3D.SetEntry(currentInput, correctPassword.Length);
         if (passwordText != null)
         {
             passwordText.text = currentInput;
@@ -252,18 +276,28 @@ public class ElevatorPanel : MonoBehaviour, IInteractable
         if (currentInput.Length != correctPassword.Length)
         {
             ShowError("암호를 끝까지 입력해 주세요.");
+            if (keypad3D != null) keypad3D.ShowMessage("암호를 끝까지 입력해 주세요.", true);
             return;
         }
 
         if (currentInput == correctPassword)
         {
             Debug.Log("암호 일치! 다음 층으로 이동합니다.");
+            if (keypad3D != null) keypad3D.ShowGranted("엘리베이터 사용이 승인되었습니다.");
             StartCoroutine(ApproveAndLoadRoutine());
         }
         else
         {
             Debug.Log("암호 불일치!");
             ShowError("틀린 암호입니다.");
+            if (keypad3D != null)
+            {
+                // 자리별 판정: 맞은 글자는 초록, 틀린 글자는 빨강.
+                var slotCorrect = new bool[correctPassword.Length];
+                for (int i = 0; i < slotCorrect.Length; i++)
+                    slotCorrect[i] = i < currentInput.Length && currentInput[i] == correctPassword[i];
+                keypad3D.ShowDenied(currentInput, slotCorrect, "틀린 암호입니다. 경보가 울립니다!");
+            }
             if (wrongCodeAlarm != null)
                 wrongCodeAlarm.Trigger(savedPlayer);
             else

@@ -14,10 +14,12 @@ internal static class SetupLobbyFScreenVideosOnce
     private const string SessionKey = "DeFrag.SetupLobbyFScreenVideos.v6";
 
     private const string MaterialFolder = "Assets/Prefabs/Lobby Floor/FBX/Materials/";
-    // Fewer simultaneous decoders is lighter and more reliable, so vertical videos 3..7 live side by side
-    // in one 3600x1280 atlas that a single player decodes. All clips are H.264 Baseline (no B-frames):
+    // Fewer simultaneous decoders is lighter and more reliable, so the five wall screens (3..7) live side by side
+    // in one 3600x992 atlas (5 x 720x992, the screens' own ~0.72 aspect) that a single player decodes.
+    // Both clips are baked by NexusScreenPromoBaker (DEFRAG > LobbyF > Bake Nexus Screen Videos).
+    // All clips are H.264 Baseline (no B-frames):
     // Unity's Windows decoder warns about and stalls on reordered timestamps.
-    private const string VerticalAtlasPath = "Assets/Movies/Screens1080/세로스크린_아틀라스_3-7.mp4";
+    private const string VerticalAtlasPath = NexusScreenPromoBaker.PortraitVideoPath;
     private const string VerticalAtlasOwner = "Vertical Screen 3";
     private const int VerticalAtlasTiles = 5;
 
@@ -53,14 +55,14 @@ internal static class SetupLobbyFScreenVideosOnce
 
     private static readonly ScreenSetup[] Setups =
     {
-        // Videos 1 and 2 are joined into one file: swapping clips on a VideoPlayer froze it on frame 0.
-        new("Large Screen 1-2 Loop", MaterialFolder + "Monitor_glass대형.mat", "대형스크린", false, 1920, 1080, 2048, -1,
-            "Assets/Movies/Screens1080/대형스크린_1-2_연속.mp4"),
-        new(VerticalAtlasOwner, MaterialFolder + "Monitor_glass가로1.mat", "Screen_A", true, 3600, 1280, 1280, 0, VerticalAtlasPath),
-        new("Vertical Screen 4", MaterialFolder + "Monitor_glass가로2.mat", "Screen_A", true, 3600, 1280, 1280, 1),
-        new("Vertical Screen 5", MaterialFolder + "Monitor_glass가로3.mat", "Screen_A", true, 3600, 1280, 1280, 2),
-        new("Vertical Screen 6", MaterialFolder + "Monitor_glass가로4.mat", "Screen_A", true, 3600, 1280, 1280, 3),
-        new("Vertical Screen 7", MaterialFolder + "Monitor_glass가로5.mat", "Screen_A", true, 3600, 1280, 1280, 4),
+        // One looping clip (swapping clips on a VideoPlayer froze it on frame 0); 2464x800 matches the ~3.08:1 screen.
+        new("Large Screen 1-2 Loop", MaterialFolder + "Monitor_glass대형.mat", "대형스크린", false, 2464, 800, 2048, -1,
+            NexusScreenPromoBaker.WideVideoPath),
+        new(VerticalAtlasOwner, MaterialFolder + "Monitor_glass가로1.mat", "Screen_A", true, 3600, 992, 1280, 0, VerticalAtlasPath),
+        new("Vertical Screen 4", MaterialFolder + "Monitor_glass가로2.mat", "Screen_A", true, 3600, 992, 1280, 1),
+        new("Vertical Screen 5", MaterialFolder + "Monitor_glass가로3.mat", "Screen_A", true, 3600, 992, 1280, 2),
+        new("Vertical Screen 6", MaterialFolder + "Monitor_glass가로4.mat", "Screen_A", true, 3600, 992, 1280, 3),
+        new("Vertical Screen 7", MaterialFolder + "Monitor_glass가로5.mat", "Screen_A", true, 3600, 992, 1280, 4),
     };
 
     static SetupLobbyFScreenVideosOnce()
@@ -131,6 +133,7 @@ internal static class SetupLobbyFScreenVideosOnce
             SerializedProperty playlist = serialized.FindProperty("playlist");
             if (serialized.FindProperty("targetRenderers").arraySize == 0 ||
                 serialized.FindProperty("rotateVideo180").boolValue != setup.Rotate180 ||
+                serialized.FindProperty("fitMode").enumValueIndex != (int)ScreenFitMode.Fill ||
                 serialized.FindProperty("rotationShader").objectReferenceValue == null ||
                 serialized.FindProperty("screenFitShader").objectReferenceValue == null ||
                 serialized.FindProperty("screenMappings").arraySize != serialized.FindProperty("targetRenderers").arraySize ||
@@ -193,6 +196,8 @@ internal static class SetupLobbyFScreenVideosOnce
         serialized.FindProperty("playOnEnable").boolValue = true;
         serialized.FindProperty("muteAudio").boolValue = true;
         serialized.FindProperty("rotateVideo180").boolValue = setup.Rotate180;
+        // The clips are authored at each screen's aspect, so Fill only trims the last percent instead of adding blurred bars.
+        serialized.FindProperty("fitMode").enumValueIndex = (int)ScreenFitMode.Fill;
         serialized.FindProperty("rotationShader").objectReferenceValue =
             AssetDatabase.LoadAssetAtPath<Shader>("Assets/Shaders/HiddenVideoRotate180.shader");
         // 1080p H.264 copies of the 4K HEVC sources: lighter, and every Windows PC can decode them.

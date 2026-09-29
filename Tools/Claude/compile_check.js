@@ -17,7 +17,9 @@ const outDir = path.join(os.tmpdir(), 'defrag-compile-check');
 fs.mkdirSync(outDir, { recursive: true });
 
 const xml = s => s.replace(/&amp;/g, '&').replace(/&apos;/g, "'").replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
-const compileFiles = [...csproj.matchAll(/<Compile Include="([^"]+)"/g)].map(m => xml(m[1]));
+// Files deleted since Unity last wrote the csproj are skipped.
+const compileFiles = [...csproj.matchAll(/<Compile Include="([^"]+)"/g)].map(m => xml(m[1]))
+  .filter(f => fs.existsSync(path.resolve(projectRoot, f)));
 // Pick up newly added scripts that the (possibly stale) csproj does not list yet.
 const listed = new Set(compileFiles.map(f => path.resolve(projectRoot, f).toLowerCase()));
 (function walk(dir) {
