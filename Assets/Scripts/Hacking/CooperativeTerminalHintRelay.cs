@@ -37,6 +37,45 @@ public sealed class CooperativeTerminalHintRelay : NetworkBehaviour
             terminalId, (TerminalWorldPhase)rawPhase, (TerminalCommands)rawCommand);
     }
 
+    // ── Operator screen mirror (presentation only, owner → server → teammates) ──
+    public const int MirrorChunkBytes = 3000;
+    private const int MirrorMaxChunks = 12;
+
+    public void SendTerminalMirrorFrame(string terminalId, ushort frame, byte[] jpeg)
+    {
+        if (!IsOwner || !IsSpawned || jpeg == null || string.IsNullOrWhiteSpace(terminalId)) return;
+        int count = Mathf.CeilToInt(jpeg.Length / (float)MirrorChunkBytes);
+        if (count <= 0 || count > MirrorMaxChunks) return;
+        for (int i = 0; i < count; i++)
+        {
+            int start = i * MirrorChunkBytes;
+            byte[] part = new byte[Mathf.Min(MirrorChunkBytes, jpeg.Length - start)];
+            System.Buffer.BlockCopy(jpeg, start, part, 0, part.Length);
+            SendTerminalMirrorChunkServerRpc(terminalId, frame, (byte)i, (byte)count, part);
+        }
+    }
+
+    [ServerRpc]
+    private void SendTerminalMirrorChunkServerRpc(
+        string terminalId, ushort frame, byte index, byte count, byte[] data,
+        ServerRpcParams rpcParams = default)
+    {
+        if (data == null || data.Length > MirrorChunkBytes || count == 0 || count > MirrorMaxChunks || index >= count)
+            return;
+        ClientRpcParams targets = TeammatesOf(rpcParams.Receive.SenderClientId);
+        if (targets.Send.TargetClientIds.Count == 0)
+            return;
+        ReceiveTerminalMirrorChunkClientRpc(terminalId, frame, index, count, data, targets);
+    }
+
+    [ClientRpc]
+    private void ReceiveTerminalMirrorChunkClientRpc(
+        string terminalId, ushort frame, byte index, byte count, byte[] data,
+        ClientRpcParams rpcParams = default)
+    {
+        TerminalMirrorAssembler.Receive(terminalId, frame, index, count, data);
+    }
+
     public void RequestTerminalCommandCompletion(
         string terminalId,
         TerminalCommands command)

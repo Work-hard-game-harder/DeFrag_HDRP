@@ -54,6 +54,8 @@ public sealed class ConnectionDevice : MonoBehaviour, IInteractable
     private TerminalSfxPlayer terminalSfx;
     private TerminalWorldScreenPresenter worldScreen;
 
+    public static IEnumerable<ConnectionDevice> All => ActiveDevices.Values;
+    public TerminalWorldScreenPresenter WorldScreen => worldScreen;
     public string TerminalId => terminalId;
     public string DisplayName => displayName;
     public TMP_FontAsset MicrophoneStatusFont => microphoneStatusFont;
@@ -174,6 +176,12 @@ public sealed class ConnectionDevice : MonoBehaviour, IInteractable
     {
         if (ActiveDevices.TryGetValue(NormalizeTerminalId(synchronizedTerminalId), out var device))
             device.worldScreen?.SetState(phase, command);
+    }
+
+    public static void ApplyMirrorFrame(string synchronizedTerminalId, byte[] jpeg)
+    {
+        if (ActiveDevices.TryGetValue(NormalizeTerminalId(synchronizedTerminalId), out var device))
+            device.worldScreen?.ShowMirrorFrame(jpeg);
     }
 
     public static void ApplySynchronizedCompletion(

@@ -39,6 +39,7 @@ public sealed class CameraItem : MonoBehaviour
     public bool IsEquipped => isEquipped;
     public bool IsViewActive => isViewActive;
     public CameraMode CurrentMode => currentMode;
+    public CameraBattery Battery => battery;
 
     public event Action<CameraMode> ModeChanged;
     public event Action PhotoTaken;

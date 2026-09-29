@@ -11,11 +11,20 @@ internal static class SetupLobbyFScreenVideosOnce
 {
     private const string ScenePath = "Assets/Scene/LobbyF.unity";
     private const string RootName = "[LobbyF] Screen Video Players";
-    private const string SessionKey = "DeFrag.SetupLobbyFScreenVideos.v3";
+    private const string SessionKey = "DeFrag.SetupLobbyFScreenVideos.v6";
+
+    private const string MaterialFolder = "Assets/Prefabs/Lobby Floor/FBX/Materials/";
+    // Fewer simultaneous decoders is lighter and more reliable, so vertical videos 3..7 live side by side
+    // in one 3600x1280 atlas that a single player decodes. All clips are H.264 Baseline (no B-frames):
+    // Unity's Windows decoder warns about and stalls on reordered timestamps.
+    private const string VerticalAtlasPath = "Assets/Movies/Screens1080/세로스크린_아틀라스_3-7.mp4";
+    private const string VerticalAtlasOwner = "Vertical Screen 3";
+    private const int VerticalAtlasTiles = 5;
 
     private readonly struct ScreenSetup
     {
-        public ScreenSetup(string name, string materialPath, string rendererNamePrefix, bool rotate180, int width, int height, params string[] clipPaths)
+        public ScreenSetup(string name, string materialPath, string rendererNamePrefix, bool rotate180, int width, int height,
+            int screenTextureSize, int atlasTile, params string[] clipPaths)
         {
             Name = name;
             MaterialPath = materialPath;
@@ -23,6 +32,8 @@ internal static class SetupLobbyFScreenVideosOnce
             Rotate180 = rotate180;
             Width = width;
             Height = height;
+            ScreenTextureSize = screenTextureSize;
+            AtlasTile = atlasTile;
             ClipPaths = clipPaths;
         }
 
@@ -32,23 +43,24 @@ internal static class SetupLobbyFScreenVideosOnce
         public bool Rotate180 { get; }
         public int Width { get; }
         public int Height { get; }
+        public int ScreenTextureSize { get; }
+        /// <summary>Tile of the vertical atlas this screen shows, or -1 when it plays its own clips.</summary>
+        public int AtlasTile { get; }
         public string[] ClipPaths { get; }
+        public bool DecodesAtlas => AtlasTile >= 0 && Name == VerticalAtlasOwner;
+        public bool FollowsAtlas => AtlasTile >= 0 && Name != VerticalAtlasOwner;
     }
 
     private static readonly ScreenSetup[] Setups =
     {
-        new("Large Screen 1-2 Loop", "Assets/Prefabs/Lobby Floor/FBX/Materials/Monitor_glass대형.mat", "대형스크린", false, 1920, 1080,
-            "Assets/Movies/대형스크린1.mp4", "Assets/Movies/대형스크린2.mp4"),
-        new("Vertical Screen 3", "Assets/Prefabs/Lobby Floor/FBX/Materials/Monitor_glass가로1.mat", "Screen_A", true, 1080, 1920,
-            "Assets/Movies/세로스크린3.mp4"),
-        new("Vertical Screen 4", "Assets/Prefabs/Lobby Floor/FBX/Materials/Monitor_glass가로2.mat", "Screen_A", true, 1080, 1920,
-            "Assets/Movies/세로스크린4.mp4"),
-        new("Vertical Screen 5", "Assets/Prefabs/Lobby Floor/FBX/Materials/Monitor_glass가로3.mat", "Screen_A", true, 1080, 1920,
-            "Assets/Movies/세로스크린5.mp4"),
-        new("Vertical Screen 6", "Assets/Prefabs/Lobby Floor/FBX/Materials/Monitor_glass가로4.mat", "Screen_A", true, 1080, 1920,
-            "Assets/Movies/세로스크린6.mp4"),
-        new("Vertical Screen 7", "Assets/Prefabs/Lobby Floor/FBX/Materials/Monitor_glass가로5.mat", "Screen_A", true, 1080, 1920,
-            "Assets/Movies/세로스크린7.mp4"),
+        // Videos 1 and 2 are joined into one file: swapping clips on a VideoPlayer froze it on frame 0.
+        new("Large Screen 1-2 Loop", MaterialFolder + "Monitor_glass대형.mat", "대형스크린", false, 1920, 1080, 2048, -1,
+            "Assets/Movies/Screens1080/대형스크린_1-2_연속.mp4"),
+        new(VerticalAtlasOwner, MaterialFolder + "Monitor_glass가로1.mat", "Screen_A", true, 3600, 1280, 1280, 0, VerticalAtlasPath),
+        new("Vertical Screen 4", MaterialFolder + "Monitor_glass가로2.mat", "Screen_A", true, 3600, 1280, 1280, 1),
+        new("Vertical Screen 5", MaterialFolder + "Monitor_glass가로3.mat", "Screen_A", true, 3600, 1280, 1280, 2),
+        new("Vertical Screen 6", MaterialFolder + "Monitor_glass가로4.mat", "Screen_A", true, 3600, 1280, 1280, 3),
+        new("Vertical Screen 7", MaterialFolder + "Monitor_glass가로5.mat", "Screen_A", true, 3600, 1280, 1280, 4),
     };
 
     static SetupLobbyFScreenVideosOnce()
@@ -98,7 +110,7 @@ internal static class SetupLobbyFScreenVideosOnce
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
         AssetDatabase.SaveAssets();
-        Debug.Log("LobbyF screen videos configured: large 1→2 loop, vertical 3→7 on materials 1→5.");
+        Debug.Log("LobbyF screen videos configured: large 1→2 loop, vertical 3→7 atlas on materials 1→5 (UV-mapped, aspect kept).");
     }
 
     private static bool IsConfigured(GameObject root)
@@ -116,9 +128,17 @@ internal static class SetupLobbyFScreenVideosOnce
                 return false;
 
             var serialized = new SerializedObject(controller);
+            SerializedProperty playlist = serialized.FindProperty("playlist");
             if (serialized.FindProperty("targetRenderers").arraySize == 0 ||
                 serialized.FindProperty("rotateVideo180").boolValue != setup.Rotate180 ||
-                serialized.FindProperty("rotationShader").objectReferenceValue == null)
+                serialized.FindProperty("rotationShader").objectReferenceValue == null ||
+                serialized.FindProperty("screenFitShader").objectReferenceValue == null ||
+                serialized.FindProperty("screenMappings").arraySize != serialized.FindProperty("targetRenderers").arraySize ||
+                (serialized.FindProperty("decodeSource").objectReferenceValue != null) != setup.FollowsAtlas)
+                return false;
+            if (!setup.FollowsAtlas &&
+                (playlist.arraySize == 0 ||
+                 AssetDatabase.GetAssetPath(playlist.GetArrayElementAtIndex(0).objectReferenceValue) != setup.ClipPaths[0]))
                 return false;
         }
 
@@ -148,7 +168,7 @@ internal static class SetupLobbyFScreenVideosOnce
         for (int index = 0; index < clips.Length; index++)
             clips[index] = AssetDatabase.LoadAssetAtPath<VideoClip>(setup.ClipPaths[index]);
 
-        if (material == null || Array.Exists(clips, clip => clip == null))
+        if (material == null || Array.Exists(clips, clip => clip == null) || (setup.FollowsAtlas && root.Find(VerticalAtlasOwner) == null))
         {
             Debug.LogError($"Could not configure {setup.Name}: a material or video clip is missing.", target);
             return;
@@ -175,7 +195,19 @@ internal static class SetupLobbyFScreenVideosOnce
         serialized.FindProperty("rotateVideo180").boolValue = setup.Rotate180;
         serialized.FindProperty("rotationShader").objectReferenceValue =
             AssetDatabase.LoadAssetAtPath<Shader>("Assets/Shaders/HiddenVideoRotate180.shader");
+        // 1080p H.264 copies of the 4K HEVC sources: lighter, and every Windows PC can decode them.
+        serialized.FindProperty("screenFitShader").objectReferenceValue =
+            AssetDatabase.LoadAssetAtPath<Shader>("Assets/Shaders/HiddenVideoScreenFit.shader");
+        serialized.FindProperty("screenTextureSize").intValue = setup.ScreenTextureSize;
+        Transform atlasOwner = setup.FollowsAtlas ? root.Find(VerticalAtlasOwner) : null;
+        serialized.FindProperty("decodeSource").objectReferenceValue =
+            atlasOwner != null ? atlasOwner.GetComponent<MaterialVideoPlaylistPlayer>() : null;
+        serialized.FindProperty("sourceRect").rectValue = setup.AtlasTile >= 0
+            ? new Rect((float)setup.AtlasTile / VerticalAtlasTiles, 0f, 1f / VerticalAtlasTiles, 1f)
+            : new Rect(0f, 0f, 1f, 1f);
         serialized.ApplyModifiedPropertiesWithoutUndo();
+        // Screen meshes map their UVs sideways/flipped and only use part of the texture: measure them.
+        controller.BakeScreenMappings();
 
         EditorUtility.SetDirty(videoPlayer);
         EditorUtility.SetDirty(controller);

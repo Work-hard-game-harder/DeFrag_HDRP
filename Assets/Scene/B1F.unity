@@ -2911,6 +2911,7 @@ MonoBehaviour:
     audioClip: {fileID: 8300000, guid: 0a049abeeb3dff7479ab693d67ac1d46, type: 3}
   - subtitleIndex: 2
     audioClip: {fileID: 8300000, guid: 0a049abeeb3dff7479ab693d67ac1d46, type: 3}
+  triggerVisual: {fileID: 0}
 --- !u!65 &134077247
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3421,6 +3422,7 @@ MonoBehaviour:
   completionQuestSignal: 
   colorOverrides: []
   audioOverrides: []
+  triggerVisual: {fileID: 0}
 --- !u!65 &165681821
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3952,6 +3954,7 @@ MonoBehaviour:
   completionQuestSignal: 
   colorOverrides: []
   audioOverrides: []
+  triggerVisual: {fileID: 0}
 --- !u!65 &219570074
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -13529,6 +13532,7 @@ MonoBehaviour:
   completionQuestSignal: 
   colorOverrides: []
   audioOverrides: []
+  triggerVisual: {fileID: 0}
 --- !u!65 &516327319
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -33508,6 +33512,7 @@ MonoBehaviour:
   completionQuestSignal: 
   colorOverrides: []
   audioOverrides: []
+  triggerVisual: {fileID: 0}
 --- !u!65 &1272190788
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -39447,6 +39452,7 @@ MonoBehaviour:
   completionQuestSignal: B1F_CONTROL_ROOM_REACHED
   colorOverrides: []
   audioOverrides: []
+  triggerVisual: {fileID: 0}
 --- !u!65 &1549077944
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -42805,6 +42811,7 @@ MonoBehaviour:
   completionQuestSignal: 
   colorOverrides: []
   audioOverrides: []
+  triggerVisual: {fileID: 0}
 --- !u!65 &1715606650
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -46509,6 +46516,7 @@ MonoBehaviour:
   completionQuestSignal: 
   colorOverrides: []
   audioOverrides: []
+  triggerVisual: {fileID: 0}
 --- !u!65 &1853784550
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -49149,6 +49157,7 @@ MonoBehaviour:
   completionQuestSignal: 
   colorOverrides: []
   audioOverrides: []
+  triggerVisual: {fileID: 0}
 --- !u!65 &1941103622
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -53076,8 +53085,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 047718e5d7f64d7194c244796fabd8a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeFrag.B1F.B1FStoryDebugCheckpoint
-  startCheckpoint: 2
-  freezeTvMonsterInPlace: 0
+  startCheckpoint: 1
+  freezeTvMonsterInPlace: 1
   giveRoleItems: 1
   hackingPadItem: {fileID: 4609237498574060728}
   cameraItem: {fileID: 698339785}

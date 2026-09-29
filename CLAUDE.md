@@ -41,6 +41,7 @@
 - **탈출 시퀀스 (`B1F Escape Sequence`, Astra 설계):** 컷씬마다 담당자가 있다.
   - 컷씬0 경고(혜준), 컷씬1 접근(영주), 컷씬2 문 파손 간접연출1(서연), 컷씬3 문 파손 2(**은서 = 이 사용자**), 비상구(탈출).
   - Claude는 사용자 몫인 **문 파손 2(BreachVideo 단계)만** 작업했다. 다른 단계는 사용자가 지시하기 전에는 손대지 않는다.
+- **MPPM 클론 에디터(Player 2 등)에는 절대 연결하지 않는다.** 클론은 사용자의 디버깅 전용이다. Unity MCP는 항상 메인 에디터로 고정(`--project-path`)해서 쓴다.
 - **씬 저장:** 사용자가 직접 한다. MCP로 씬을 바꿨으면 저장하라고 알린다.
 - **Artlist 크레딧:**
   - 추가 제작 예산은 1000크레딧이고, 그 이상은 사용자 승인이 필요하다.
@@ -77,6 +78,7 @@
     - 빠지면 relay가 먼저 찾은 에디터에 붙는다. Multiplayer Play Mode의 가상 플레이어 클론(`Library/VP/mppm...`)이 그 대상이 될 수 있다.
     - 그러면 메인 에디터의 Connected Clients에 보이지 않고, 스크립트 수정이나 컴파일도 메인에 반영되지 않는다.
     - 연결된 곳은 `Unity_ManageEditor GetProjectRoot`로 확인한다.
+    - 경로 없는 relay가 떠 있으면, MPPM Player 2 클론이 켜질 때 그 클론에 붙으려고 한다. 클론은 MCP 연결 승인 창을 지원하지 않아서 그대로 꺼진다. (2026-09-29 메인 PC에서 사용자 범위 `unity-mcp`를 제거해 해결)
   - 세션 도중에 `.mcp.json`을 고쳤으면 새 세션부터 적용된다.
     - 그 사이에는 `Temp/ClaudeMcp/umcp.py`(프로젝트 경로를 고정한 relay 호출 스크립트)를 쓴다.
     - `Temp/`는 git에 올라가지 않으므로, 없으면 새로 만든다.
@@ -212,7 +214,81 @@
   - Artlist 생성: 몬스터 그르렁·킁킁·숨소리·비명(MONSTER 효과), 한국어 라디오 속삭임 "거기… 있지? / 숨소리… 들려… / 나와… / 찾았다", 플레이어 헐떡임, Lyria 긴장 BGM(27.9초 루프).
   - 나머지는 `gen_locker_sfx.py`로 합성했다.
 
+**기기 화면·카메라 연출** (2026-09-29)
+- 공용 유틸리티:
+  - `Scripts/Devices/OffscreenUiSurface`: 런타임 UI를 멀리 떨어진 전용 카메라로 RenderTexture에 그린다. 후처리를 끄고 프레임 수를 제한한다.
+  - `Scripts/Devices/DeviceScreenQuad`: 모델 위에 발광 화면 판을 붙인다. 콜라이더는 없다.
+  - 재질 템플릿은 `Resources/Devices/DeviceScreen.mat`(HDRP Lit, 발광 맵)이다.
+- **해킹패드** `HackingPadScreen` (HackingPad 프리팹):
+  - 화면 위치는 메시 좌표로 측정했다 (중심 (0.0134, 0.0131, -0.0284), 크기 0.150×0.101, +Y 방향).
+  - 내 손(1인칭, 부모에 EquipmentController가 있음)에서는 H-PAD OS 실시간 UI를 12fps로 그린다.
+    - 가장 가까운 터미널, 거리, 신호 막대, 파형, LINK READY(사거리 6m), 현재 목표를 보여준다.
+    - TV 몬스터가 14m 안에 오면 화면이 흔들리고 "SIGNAL INTERFERENCE" 표시가 뜬다.
+  - 바닥이나 상대 손에 있을 때는 공유 STANDBY 화면을 쓴다.
+  - 청록 포인트 라이트와 발광이 맥동한다. NetworkWorldItem이 렌더러를 끄면 따라서 꺼진다.
+- **카메라 들기(C)** `CameraViewSwitcher`:
+  - 흐름: 들어 올리기 0.36초 → LCD가 눈을 향함 → 화면이 꽉 차는 거리(약 5cm)까지 가속 0.24초 → 전체 화면 카메라 뷰로 전환 → 뷰파인더 부팅.
+  - 내릴 때는 이 과정을 역순으로 재생한다.
+  - LCD 위치는 Camera(Item) 메시의 -X 면, 중심 (-0.0772, -0.0548, -0.011), 크기 0.215×0.154다.
+  - 전환 중에는 ItemCam이 LCD용 RenderTexture에 그린다. 이때 손에 든 카메라 레이어는 촬영에서 뺀다.
+  - 잠금, 장착 해제, 컷씬 상황에서는 `CancelToLowered`로 즉시 원래 상태로 돌아간다.
+  - 손에 든 카메라가 옆으로 누운 이유: 장착 코드(`EquipmentController.Equip`)가 heldPrefab의 루트 회전(270°)을 (0,-180,0)으로 덮어쓰기 때문이다.
+- **뷰파인더** `CameraViewfinderHud`:
+  - 구성: 브래킷, 조준점, REC와 타임코드, 배터리 5칸, MODE NORMAL/IR NIGHT, 노출계, 키 안내, 셔터 섬광, IMG 번호, IR 녹색 톤, LOW BATTERY 경고.
+  - 기존 Cam Canvas의 "focus image"와 "Battery UI"는 런타임에 숨긴다. `useViewfinderHud`를 끄면 기존 UI로 돌아간다.
+- **터미널 접속 연출** `HackingSessionController`:
+  - 카메라가 모니터 유리 정면으로 날아가며 FOV가 85%로 줄어든다 (0.55초).
+  - 이어서 `TerminalCrtOverlay`로 CRT가 켜지는 효과(0.3초)와 함께 UI가 나타나고, 패널 뒤에 어두운 배경이 깔린다.
+  - 나갈 때는 CRT가 꺼지는 효과(0.26초) 뒤 카메라가 원래 자리로 돌아온다 (0.42초).
+  - `TerminalWorldScreenPresenter.TryGetScreenPose`: 기울어진 키오스크 유리도 가로축과 (세로+깊이) 대각선으로 법선을 계산한다.
+- **동료 관전(미러)**:
+  - `TerminalScreenStreamer`(조작자 전용): 4fps로 320×180 JPEG를 만들어 `CooperativeTerminalHintRelay`로 보낸다.
+    - 조각 크기 3000B(UnityTransport MaxPayloadSize 6144 이하)로 나눠 서버를 거쳐 동료에게 전달한다.
+    - 에디터에서는 `CaptureScreenshotAsTexture`, 빌드에서는 `CaptureScreenshotIntoRenderTexture`(상하 반전)로 캡처한다.
+  - 받는 쪽에서는 `TerminalMirrorAssembler`가 조각을 다시 합치고, 모니터 캔버스에 "● LIVE // OPERATOR VIEW"로 띄운다. 1.5초 동안 프레임이 없으면 상태 화면으로 돌아간다.
+  - 테스트용으로 에디터·개발 빌드 전용 `TerminalScreenStreamer.BeginLoopback`(내 모니터에 표시)이 있다.
+- **월드 스크린 버그 수정**: 기존 모니터가 늘 검게 보였다.
+  - 원인 1: 표시 카메라의 near clip이 0.3인데 캔버스가 0.1 거리에 있어 잘려 나갔다.
+  - 원인 2: Awake에서 한 번만 렌더했다.
+  - 수정: near를 0.02로 바꾸고, 후처리를 끄고, 시작 후 3프레임 동안 다시 렌더한다.
+  - 키오스크 유리(ConnectionDevice_glass)는 UV가 세로라서 내용을 270° 돌려 그린다(`contentRotation`, -1이면 자동).
+- **효과음:** `Resources/DeviceSfx/`의 Camera_Raise·PowerOn·Lower, Terminal_DiveIn·CrtOn·CrtOff (`Tools/Claude/gen_device_sfx.py`로 합성, Artlist 0크레딧).
+
+**LobbyF 벽 모니터 영상** (2026-09-29, 사용자 코드 `MaterialVideoPlaylistPlayer`·`SetupLobbyFScreenVideosOnce` 확장)
+- **원인:**
+  - 화면 메시(Screen_A.*, 대형스크린)의 유리 UV는 텍스처 전체가 아니라 일부만 쓴다. 세로는 U 0~0.719·V 뒤집힘, 대형은 U 0~0.325에 90° 돌아감.
+  - 그래서 세로는 오른쪽이 잘리고 가로로 늘어났고, 대형은 누운 띠만 보였다. `Monitor_glass가로5/6.mat`의 Base Map Tiling(-1.46, -1)은 이전 수동 보정 흔적이다.
+  - 재생 멈춤: VideoPlayer의 `skipOnDrop=true`는 로딩 끊김 뒤 한 프레임에 멈춰 루프가 돌 때까지 안 풀렸다. 재생목록 클립 교체 직후 0프레임에 멈추는 현상도 있었다. 에디터 로그에는 "Unexpected timestamp…baseline profile" 경고가 떴다.
+- **수정:**
+  - `MaterialVideoPlaylistPlayer`에 `ScreenUvMapping[]`(메시 UV→화면 좌표 아핀 변환 + 실제 가로세로비)를 추가했다. 컴포넌트 우클릭 **Bake Screen UV Mappings**로 메시에서 측정한다.
+  - `Hidden/DeFrag/VideoScreenFit`(`Assets/Shaders/HiddenVideoScreenFit.shader`)로 UV 배치별 텍스처에 영상을 똑바로, 원래 비율로 그린다. 남는 여백은 같은 프레임을 흐리게 깔아 채운다. `fitMode`(Fit/Fill/Stretch), `fillBlur`, `fillBrightness`로 조정한다.
+  - 재질의 Tiling/Offset은 PropertyBlock으로 (1,1,0,0)으로 덮어쓴다. 재질 파일은 손대지 않았다.
+  - `skipOnDrop=false`, 2.5초 동안 프레임이 멈추면 재시작하는 감시를 넣었다. LobbyF의 다른 VideoPlayer 2개(nexus 안내, OFFICE3 TV)도 skipOnDrop을 껐다.
+  - **공유 디코딩(아틀라스):** `decodeSource` + `sourceRect`. 세로 영상 3~7을 3600×1280 한 파일에 나란히 넣고, Vertical Screen 3이 디코딩하면 4~7은 자기 칸만 가져다 쓴다. 디코더가 7개에서 3개로 줄었다.
+  - 영상 파일은 `Assets/Movies/Screens1080/`에 새로 만들었다. 모두 H.264 **Baseline**(B-프레임 없음)이고 오디오는 없다.
+    - `대형스크린_1-2_연속.mp4`: 1920×1080, 원본 1과 2를 이어 붙여 41초. 클립 교체가 없게 했다.
+    - `세로스크린_아틀라스_3-7.mp4`: 칸당 720×1280, 60초. 각 영상을 반복해 채웠다.
+  - 원본 4K HEVC(`Assets/Movies/대형스크린1/2`, `세로스크린3~7.mp4`, 약 200MB)는 더 이상 참조되지 않는다. 지워도 되지만 사용자 판단에 맡긴다.
+  - 재생성: ffmpeg `-profile:v baseline -crf 20~21 -g 60 -an`, 아틀라스는 `-stream_loop -1` 입력 5개를 `hstack`하고 `-t 60`.
+- **셋업:** `Tools/LobbyF/Setup Screen Videos` 메뉴 또는 LobbyF를 열면 자동 실행된다(SessionKey v6). **이 스크립트는 씬을 자동 저장한다.**
+
 ## 현재 상태 (최신화할 것)
+
+- **진행 중: LobbyF 개선 (2026-09-29 시작, 메인 PC).** 작업량 제한으로 끊기면 새 세션은 이 목록에서 체크 안 된 항목부터 이어서 한다. 항목을 끝낼 때마다 체크하고, 작업 로그에 한 줄씩 남긴다.
+  - Artlist 예산: 이 작업에만 3000크레딧까지 쓸 수 있다. 사용량은 아래 크레딧 장부에 기록한다.
+  - **다음 세션은 a-1/a-2(엘리베이터 키패드)부터 시작한다.** 조사해 둔 것:
+    - 코드: `Assets/Scripts/ElevatorPanel.cs` (사용자 작성, 레거시 Input으로 0-9·A-Z 입력, Enter 확인, Esc/우클릭 닫기). 정답은 씬 값 `7H36BE`, 다음 씬 `B1F`, 퀘스트 `lobby_find_elevator`. 오답이면 `ElevatorWrongCodeAlarm.Trigger`(몬스터 호출)가 실행된다. 이 흐름은 유지한다.
+    - 오브젝트: `Lobby/Entrance/gateasset`(원점 기준 메시, 렌더러 중심 (-0.22, 2.16, 2.62), 크기 3.98×4.26×0.57, BoxCollider, ElevatorPanel·AudioSource·ElevatorWrongCodeAlarm).
+    - 현재 UI: `Subtitle/Canvas/KeypadUIPanel`(Gemini 배경 이미지 + `PasswordText` NanumSquareB 100 + `ErrorText` + 안내문 "사원번호 2자리 등 조합" 문구, DungGeunMo 36).
+    - 설계 방향(안): 터미널 접속처럼 카메라를 패널 앞으로 이동한다. `OffscreenUiSurface`로 그린 패널 면(표시창 6칸 + 키 라벨)을 RT로 만들고, 키캡은 윗면 UV가 자기 라벨 영역인 박스 메시로 돌출시킨다. 키를 누르면 키가 들어가고 빛나며 파문이 퍼지고, 카메라가 살짝 기울어진다. 오답이면 칸별로 초록/빨강을 표시한다.
+    - HDRP는 물리 노출이라 unlit TMP 3D 글자가 어둡게 보일 수 있다. 발광(emissive) RT 방식(`DeviceScreenQuad`)을 쓴다.
+  - [ ] a-1 엘리베이터 비밀번호 오답 시 자리별 색 표시 (맞은 글자 초록, 틀린 글자 빨강)
+  - [ ] a-2 엘리베이터 패널을 세련된 3D 느낌으로 리디자인. 입력할 때 플레이어가 3D 키패드를 누르는 애니메이션
+  - [ ] b-1 단서 난이도 완화: 추가 단서 배치
+  - [ ] b-2 OFFICE2 MONITOR 패널의 메모와 휴지통에 단서와 이스터에그 추가
+  - [x] c 벽의 세로 모니터 영상 비율과 잘림 수정 (2026-09-29, 플레이 캡처로 확인)
+  - [x] d 벽의 대형 가로 모니터 영상이 재생되지 않는 문제 수정 (2026-09-29, 플레이 캡처로 확인)
+    - c·d 내용은 아래 "LobbyF 벽 모니터 영상" 섹션 참고. LobbyF 씬은 셋업 스크립트가 자동 저장했고, 이후 skipOnDrop 변경분은 사용자 저장이 필요하다.
 
 - **완료 (커밋 1caa575까지):**
   - 발전기 B 개편.
@@ -225,6 +301,14 @@
   - 사용자가 만든 플레이어 락커 입·출입 모션이 아직 임포트되지 않았다.
     - 플레이어 Animator에 `Base Layer.LockerEnter`, `LockerHidden`, `LockerExit` 상태로 넣으면 원격 플레이어에게 자동으로 재생된다.
     - 강제 개방도 현재 `LockerExit`를 재생한다.
+- **기기 화면·카메라 연출 (2026-09-29, 미커밋):**
+  - 플레이 모드에서 확인한 것 (네트워크 없이 테스트 리그 사용):
+    - 해킹패드 화면(1인칭 OS, 바닥 STANDBY).
+    - 터미널 접속과 복귀. 카메라 위치·FOV, 입력 잠금이 원래대로 복원됐다.
+    - 키오스크 대기 화면이 똑바로 나온다.
+    - 루프백 미러가 동작한다.
+  - 카메라 C 연출은 실제 장착 흐름으로는 확인하지 못했다. LCD 자세, 화면 채우기, HUD만 따로 캡처했다.
+  - 2인 네트워크 미러 전송도 아직 확인하지 못했다.
 - **미검증:** 실제 2인 네트워크 플레이.
   - 컷씬: 양쪽 화면에 재생되는지, 끝나고 조작이 복구되는지, 파손된 문을 통과할 수 있는지.
   - 미니게임: 튜토리얼이 1회만 뜨는지, 모니터와 조작자 동기화가 되는지.
@@ -250,6 +334,40 @@
 - **문 파손 2:** 0크레딧 (효과음은 코드로 합성).
 
 ## 작업 로그 (최신이 위)
+
+### 2026-09-29 · 메인 PC (EUNSEO) · LobbyF 벽 모니터 영상 (c, d)
+- **한 일:** 위 "LobbyF 벽 모니터 영상" 섹션 참고.
+  - 스크립트: `MaterialVideoPlaylistPlayer`(UV 매핑, 비율 맞춤, 공유 디코딩, 멈춤 감시)와 `SetupLobbyFScreenVideosOnce`(아틀라스, 새 클립, 베이크)를 확장했다.
+  - 셰이더: `HiddenVideoScreenFit.shader`를 새로 만들었다.
+  - 영상: `Assets/Movies/Screens1080/`에 2개를 새로 만들었다.
+- **검증한 것:**
+  - 컴파일 에러 0.
+  - 플레이 모드에서 대형·아틀라스 플레이어가 처음부터 30fps로 계속 재생된다 (프레임 수 샘플링).
+  - 캡처로 확인: 세로 화면 Screen_A.006·.009·.011은 좌우·상하 반전 없이("NEXUS" 글자로 확인) 가운데에 원래 비율로 나오고, 양옆은 흐린 여백이다. 대형 화면도 똑바로 나온다.
+- **검증 못 한 것:**
+  - 빌드에서의 재생.
+  - 실제 플레이어 시점에서의 밝기. 화면 재질 발광이 4000이라 영상이 하얗게 날아 보인다. 원래 설정이라 건드리지 않았다.
+  - 대형 재질을 쓰는 2층 위쪽 화면은 이름이 "대형스크린"이 아니라 대상에 포함되지 않았다.
+- **참고:** 에디터가 포커스를 잃으면 영상 재생이 멈춘 것처럼 보일 수 있다. 프레임 확인은 여러 번 샘플링해서 해야 한다.
+- **Artlist:** 0크레딧.
+
+### 2026-09-29 · 메인 PC (EUNSEO) · 카메라 C 연출, 뷰파인더, 해킹패드 발광 화면, 터미널 접속 연출과 동료 미러
+- **한 일:** 위 "기기 화면·카메라 연출"을 추가했다. 새 스크립트 8개를 만들었고, 기존 스크립트 6개를 좁게 수정했다.
+  - 기존 수정: CameraItem(Battery getter), CameraViewSwitcher, ConnectionDevice(All, WorldScreen, ApplyMirrorFrame), CooperativeTerminalHintRelay(미러 RPC), HackingSessionController, TerminalWorldScreenPresenter.
+  - 프리팹: HackingPad에 `HackingPadScreen`을 붙였다.
+  - 리소스: `Resources/Devices`, `Resources/DeviceSfx`.
+- **버그 수정:** 월드 스크린이 검게 보이던 문제 (near clip과 Awake 렌더 시점).
+- **검증한 것:**
+  - 컴파일 에러 0.
+  - 플레이 모드 캡처(Terminal_31 앞 테스트 리그): 패드 OS, 접속 후 UI, 복귀 상태, 키오스크 대기 화면, 정면 관전 시점의 미러(루프백).
+  - 카메라 LCD 자세(좌우·상하 반전 없음), 화면 채우기, 뷰파인더 HUD.
+  - 콘솔 에러 0. 처음 생긴 Quad 콜라이더 에러는 콜라이더 없는 메시로 바꿔 해결했다.
+- **검증 못 한 것:**
+  - 실제 플레이어 프리팹에서 C를 눌렀을 때의 전체 들어 올리기 흐름.
+  - 2인 네트워크 미러 전송과 대역폭.
+  - 빌드에서 `CaptureScreenshotIntoRenderTexture`의 상하 방향.
+  - 상대가 든 패드의 STANDBY 화면 (PlayerHeldItemVisualPresenter 복제본에서 컴포넌트가 유지되는지).
+- **참고:** 플레이 모드 중 `LiberationSans SDF - Fallback.asset`이 동적 글리프 추가로 바뀐다. 커밋하지 않고 되돌려도 된다.
 
 ### 2026-09-28 · 메인 PC (EUNSEO) · 락커 숨기 긴장감 + TV 몬스터 락커 수색
 - **해결한 문제:** 락커 바로 앞에서 숨으면 추격이 계속 이어졌다.
