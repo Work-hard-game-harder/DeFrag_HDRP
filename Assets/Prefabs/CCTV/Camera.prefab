@@ -83,7 +83,7 @@ Light:
     serializedVersion: 2
     m_Bits: 4294967295
   m_RenderingLayerMask: 1
-  m_Lightmapping: 1
+  m_Lightmapping: 2
   m_LightShadowCasterMode: 2
   m_AreaSize: {x: 4.2, y: 1}
   m_BounceIntensity: 0
@@ -357,6 +357,9 @@ MonoBehaviour:
   maxAngle: 90
   pauseDuration: 2
   audioSource: {fileID: 8997127893126683107}
+  normalLightColor: {r: 1, g: 0.35, b: 0, a: 1}
+  alarmLightColor: {r: 1, g: 0, b: 0, a: 1}
+  alarmDuration: 5
 --- !u!82 &8997127893126683107
 AudioSource:
   m_ObjectHideFlags: 0

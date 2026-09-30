@@ -98,32 +98,10 @@ public class SubtitleTrigger : MonoBehaviour
         if (!string.IsNullOrWhiteSpace(completionQuestSignal))
         {
             QuestManager.Instance?.ReportProgress(completionQuestSignal, gameObject.name);
-            if (revealPendingQuestAfterSubtitle) StartCoroutine(RevealAfterAcknowledgement());
-            return;
         }
-        if (revealPendingQuestAfterSubtitle) RevealPendingQuest();
-    }
 
-    private System.Collections.IEnumerator RevealAfterAcknowledgement()
-    {
-        float deadline = Time.realtimeSinceStartup + 10f;
-        while (Time.realtimeSinceStartup < deadline)
-        {
-            var quests = QuestManager.Instance;
-            if (quests != null && quests.IsWaitingForSubtitleReveal &&
-                quests.CurrentStep != null && quests.CurrentStep.requiredSignal == completionQuestSignal)
-            {
-                RevealPendingQuest();
-                yield break;
-            }
-            yield return null;
-        }
-    }
-
-    private static void RevealPendingQuest()
-    {
-        // 완료된 퀘스트가 다음 단계 공개를 기다리는 경우에만 UI를 표시합니다.
-        QuestManager.Instance?.RevealPendingQuestAfterSubtitle();
+        if (revealPendingQuestAfterSubtitle)
+            QuestManager.Instance?.RequestPendingQuestRevealAfterSubtitle();
     }
 
     // 무전기 등 UnityEvent(인스펙터)에서 연결하는 용도 - 매개변수 없음
@@ -157,12 +135,6 @@ public class SubtitleTrigger : MonoBehaviour
 
     private void PlaySubtitlesWithTriggerVisual(System.Action onComplete)
     {
-        if (triggerVisual != null)
-        {
-            triggerVisual.gameObject.SetActive(true);
-            triggerVisual.PlayFromBeginning();
-        }
-
         subtitlesScript.PlaySubtitles(
             mySubtitles,
             colorOverrides,
@@ -173,6 +145,14 @@ public class SubtitleTrigger : MonoBehaviour
                     triggerVisual.StopAndHide();
 
                 onComplete?.Invoke();
+            },
+            () =>
+            {
+                if (triggerVisual == null)
+                    return;
+
+                triggerVisual.gameObject.SetActive(true);
+                triggerVisual.PlayFromBeginning();
             });
     }
 

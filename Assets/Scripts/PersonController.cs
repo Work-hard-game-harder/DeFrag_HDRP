@@ -1230,11 +1230,17 @@ namespace StarterAssets
         }
 
         [ServerRpc]
-        private void ConfirmLobbyHintServerRpc(string hintId)
+        private void ConfirmLobbyHintServerRpc(
+            string hintId,
+            ServerRpcParams rpcParams = default)
         {
             HintConfirmationTracker tracker = HintConfirmationTracker.Instance;
             if (tracker == null ||
-                !tracker.TryConfirmOnServer(hintId, out int count, out bool emergency))
+                !tracker.TryConfirmOnServer(
+                    hintId,
+                    rpcParams.Receive.SenderClientId,
+                    out int count,
+                    out bool emergency))
                 return;
 
             ApplyLobbyHintConfirmationClientRpc(hintId, count, emergency);
@@ -1248,6 +1254,78 @@ namespace StarterAssets
         {
             HintConfirmationTracker.Instance?.ApplyServerConfirmation(
                 hintId, count, emergency, this);
+        }
+
+        public void RequestLobbyHintClosed(string hintId)
+        {
+            if (string.IsNullOrWhiteSpace(hintId)) return;
+
+            if (IsSpawned && IsOwner)
+                CloseLobbyHintServerRpc(hintId);
+        }
+
+        [ServerRpc]
+        private void CloseLobbyHintServerRpc(
+            string hintId,
+            ServerRpcParams rpcParams = default)
+        {
+            HintConfirmationTracker tracker = HintConfirmationTracker.Instance;
+            if (tracker == null ||
+                !tracker.TryCloseHintOnServer(
+                    hintId,
+                    rpcParams.Receive.SenderClientId))
+                return;
+
+            ApplyLobbyHintThresholdPresentationClientRpc();
+        }
+
+        [ClientRpc]
+        private void ApplyLobbyHintThresholdPresentationClientRpc()
+        {
+            HintConfirmationTracker.Instance?.ApplyThresholdPresentationStart(this);
+        }
+
+        public void RequestLobbyHintPresentation(string hintId)
+        {
+            if (string.IsNullOrWhiteSpace(hintId)) return;
+
+            if (IsSpawned && IsOwner)
+                StartLobbyHintPresentationServerRpc(hintId);
+        }
+
+        [ServerRpc]
+        private void StartLobbyHintPresentationServerRpc(string hintId)
+        {
+            HintConfirmationTracker tracker = HintConfirmationTracker.Instance;
+            if (tracker == null ||
+                !tracker.TryStartHintPresentationOnServer(hintId, out bool emergency))
+                return;
+
+            ApplyLobbyHintPresentationClientRpc(hintId, emergency);
+        }
+
+        [ClientRpc]
+        private void ApplyLobbyHintPresentationClientRpc(
+            string hintId,
+            bool emergency)
+        {
+            HintConfirmationTracker.Instance?.ApplySharedHintPresentationStart(
+                hintId, emergency);
+        }
+
+        public void RequestLobbyHintPresentationCompletion(string hintId)
+        {
+            if (string.IsNullOrWhiteSpace(hintId)) return;
+
+            if (IsSpawned && IsOwner)
+                CompleteLobbyHintPresentationServerRpc(hintId);
+        }
+
+        [ServerRpc]
+        private void CompleteLobbyHintPresentationServerRpc(string hintId)
+        {
+            HintConfirmationTracker.Instance?
+                .TryCompleteHintPresentationQuestOnServer(hintId);
         }
 
         public void RequestLobbyBroadcastStart(string broadcastId, float duration)

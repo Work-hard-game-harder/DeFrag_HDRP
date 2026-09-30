@@ -416,6 +416,9 @@ MonoBehaviour:
   onInteractEvent:
     m_PersistentCalls:
       m_Calls: []
+  onSubtitlePresentationCompleted:
+    m_PersistentCalls:
+      m_Calls: []
   isInteracted: 0
 --- !u!65 &97161662
 BoxCollider:
@@ -995,6 +998,81 @@ Light:
   m_LightUnit: 0
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!1 &127688738
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 127688739}
+  - component: {fileID: 127688741}
+  - component: {fileID: 127688740}
+  m_Layer: 5
+  m_Name: Image
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &127688739
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 127688738}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 4.4, y: 4.4, z: 4.4}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 764410424}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 4.53, y: -22.72}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &127688740
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 127688738}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: e8bb0e08945d21340b4dc0a024673c01, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &127688741
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 127688738}
+  m_CullTransparentMesh: 1
 --- !u!1 &174929879
 GameObject:
   m_ObjectHideFlags: 0
@@ -1591,7 +1669,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 39f948f419971424dae51dfed5cee4a9, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 78.879
+      value: 78.413
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 39f948f419971424dae51dfed5cee4a9, type: 3}
       propertyPath: m_LocalPosition.y
@@ -1599,7 +1677,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 39f948f419971424dae51dfed5cee4a9, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 73.442
+      value: 73.358
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 39f948f419971424dae51dfed5cee4a9, type: 3}
       propertyPath: m_LocalRotation.w
@@ -1697,6 +1775,21 @@ MonoBehaviour:
   onInteractEvent:
     m_PersistentCalls:
       m_Calls: []
+  onSubtitlePresentationCompleted:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1661652711}
+        m_TargetAssemblyTypeName: SharedHintFocusPresentation, Assembly-CSharp
+        m_MethodName: RequestStart
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   isInteracted: 0
 --- !u!4 &274732458 stripped
 Transform:
@@ -1741,7 +1834,7 @@ MonoBehaviour:
   - "\uB204\uAD70\uAC00\uAC00 \uB193\uACE0 \uAC04 \uC0AC\uC6D0\uC99D."
   - "\uC55E\uC5D0\uB294 07\uC774\uB77C\uACE0 \uC801\uD600\uC788\uB2E4."
   walkietakie: {fileID: 0}
-  revealPendingQuestAfterSubtitle: 0
+  revealPendingQuestAfterSubtitle: 1
   requiredQuestId: 
   completionQuestSignal: 
   colorOverrides: []
@@ -2027,6 +2120,8 @@ GameObject:
   m_Component:
   - component: {fileID: 291870993}
   - component: {fileID: 291870992}
+  - component: {fileID: 291870994}
+  - component: {fileID: 291870995}
   m_Layer: 0
   m_Name: HintConfirmationTracker
   m_TagString: Untagged
@@ -2051,6 +2146,10 @@ MonoBehaviour:
   onConfirmedHintCountChanged:
     m_PersistentCalls:
       m_Calls: []
+  questProgressHintId: EmployeeBadge
+  questProgressSignal: LOBBY_EMPLOYEE_BADGE_INSPECTED
+  questProgressSourceId: LOBBY_EMPLOYEE_BADGE
+  deferredPresentationHintId: EmployeeBadge
   sharedBroadcastId: TV
   sharedBroadcastPresentation: {fileID: 8424344033849766708}
 --- !u!4 &291870993
@@ -2068,6 +2167,59 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &291870994
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 291870991}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1d39bd6e31f346488bc819570bac242a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HintThresholdAssistPresentation
+  hintTracker: {fileID: 291870992}
+  assistSubtitle: {fileID: 291870995}
+--- !u!114 &291870995
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 291870991}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 517b6eaf78ce4324fa21739d8507f731, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SubtitleTrigger
+  subtitlesScript: {fileID: 8430087059669167798}
+  mySubtitles:
+  - "\uB125\uC11C\uC2A4\uB188\uB4E4\uC774 \uC6B0\uB9AC\uAC00 \uC62C \uAC78 \uC54C\uC558\uB098
+    \uBCF4\uAD70"
+  - "\uBD88\uC774 \uBAA8\uB450 \uAEBC\uC84C\uC5B4. \uC8FC\uBCC0\uC744 \uC870\uC2EC\uD574\uC11C
+    \uC774\uB3D9\uD558\uAC8C."
+  - "T\uB97C \uB204\uB974\uBA74 \uC190\uC804\uB4F1\uC744 \uC774\uC6A9\uD560 \uC218
+    \uC788\uC73C\uB2C8 \uCC38\uACE0\uD558\uAC8C."
+  walkietakie: {fileID: 0}
+  revealPendingQuestAfterSubtitle: 0
+  requiredQuestId: 
+  completionQuestSignal: 
+  colorOverrides:
+  - subtitleIndex: 0
+    color: {r: 0.5254902, g: 1, b: 0.7921569, a: 1}
+  - subtitleIndex: 1
+    color: {r: 0.5254902, g: 1, b: 0.7921569, a: 1}
+  - subtitleIndex: 2
+    color: {r: 1, g: 0.91147983, b: 0, a: 1}
+  audioOverrides:
+  - subtitleIndex: 0
+    audioClip: {fileID: 8300000, guid: 0a049abeeb3dff7479ab693d67ac1d46, type: 3}
+  - subtitleIndex: 1
+    audioClip: {fileID: 8300000, guid: 0a049abeeb3dff7479ab693d67ac1d46, type: 3}
+  - subtitleIndex: 2
+    audioClip: {fileID: 8300000, guid: 0a049abeeb3dff7479ab693d67ac1d46, type: 3}
+  triggerVisual: {fileID: 895306137}
 --- !u!1 &306512486
 GameObject:
   m_ObjectHideFlags: 0
@@ -4977,6 +5129,9 @@ MonoBehaviour:
   onInteractEvent:
     m_PersistentCalls:
       m_Calls: []
+  onSubtitlePresentationCompleted:
+    m_PersistentCalls:
+      m_Calls: []
   isInteracted: 0
 --- !u!1 &612928563
 GameObject:
@@ -6374,6 +6529,251 @@ MeshRenderer:
   m_CorrespondingSourceObject: {fileID: 9026353232482292943, guid: dc387a345bac14d469e317d6482e73e1, type: 3}
   m_PrefabInstance: {fileID: 3752151532792230186}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &764410423
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 764410424}
+  - component: {fileID: 764410427}
+  - component: {fileID: 764410426}
+  - component: {fileID: 764410425}
+  m_Layer: 5
+  m_Name: Mini AssistImage
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &764410424
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 764410423}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1.37, y: 8.5936365, z: 0.9453}
+  m_ConstrainProportionsScale: 1
+  m_Children:
+  - {fileID: 127688739}
+  m_Father: {fileID: 9107565421505426214}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -1213.7, y: 428}
+  m_SizeDelta: {x: 240, y: 240}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &764410425
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 764410423}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 931cb37758057a24c93fd18f7632c62b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UISpriteSequencePlayer
+  targetImage: {fileID: 764410426}
+  frames:
+  - {fileID: 1429478534, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 545886585, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -1440975943, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -118835868, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -2121123240, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -1803360852, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 362647376, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 521090303, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -1545676322, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 206147948, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -1064020585, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 170764570, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -1719462205, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -76567125, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 36107163, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1381492710, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 504482839, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 2065996989, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 285772508, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -383478342, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -221857865, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -254839882, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1958430270, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -1510567415, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 836457559, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 2135062520, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1985859039, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 2049616315, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 2012576873, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -570298101, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 106636094, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1995720690, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1420433704, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1161113010, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -2024343271, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -970506364, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1626325378, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -127966680, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -2053418209, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -385366406, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -415807134, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1964900041, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -353525210, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -1643217840, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -81184899, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -750863876, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -1172466886, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 118041853, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1297177454, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 182246001, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -967906957, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 979854245, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1915303872, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 750890242, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 733841410, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -566731805, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -1286472629, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -437069453, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1435218514, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 51171202, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -908458290, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 691723504, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 2086850131, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -661736181, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1703754363, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 608068519, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1242422402, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1022385297, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 984762155, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -651171629, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1122416772, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1714986258, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 786616889, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -1018968667, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -930431605, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -1690301953, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1820982676, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 430145635, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 512845196, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 572983913, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1613933280, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 65945888, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -700350996, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1763468894, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -186862802, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -6724846, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -267693163, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1437517130, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -859816205, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -1890214657, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1429519943, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1116648635, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 708631582, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1646705428, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 42017125, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -1350914144, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1888108944, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 924254223, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 218388683, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 2107800705, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -2146697413, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -90069749, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 709111462, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -1605896669, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -166448614, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -795818708, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 31321288, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -312727127, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -540093252, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -756112360, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -717271622, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -1512327600, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1491065309, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -225408397, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1932010406, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1050535119, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -1300469059, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -1668268151, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1960571745, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1034251184, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -1350982011, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -326348737, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -1259866017, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1943696349, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -490232298, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -1572017015, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -1667266367, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -420086931, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -1573913099, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 26315909, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1470805087, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 38877515, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 179928828, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -853447875, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -552066189, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -1449389684, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -1192554447, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 999700241, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1477395109, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -1423153057, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -1376636536, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 25575640, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1191681671, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 2019034065, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -1430107155, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 1057782086, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -406549194, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 344528541, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -1861980820, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: -1967286766, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  - {fileID: 543897605, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  framesPerSecond: 15
+  loop: 1
+  playOnEnable: 0
+--- !u!114 &764410426
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 764410423}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 1429478534, guid: 04a83c3da0a195e48b6e0e3f7873adf6, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 1
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &764410427
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 764410423}
+  m_CullTransparentMesh: 1
 --- !u!1 &764936488
 GameObject:
   m_ObjectHideFlags: 0
@@ -6983,7 +7383,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0c14031be22ea8347b41c6c40bb8453d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestBarrier
-  blockingQuestId: lobby_walkie
+  blockingQuestId: lobby_find_another
   blockingStepIndex: 0
 --- !u!1 &846301374
 GameObject:
@@ -7092,10 +7492,29 @@ MonoBehaviour:
   questContainerPanel: {fileID: 431463845528877712}
   questProgressText: {fileID: 3460160040197453879}
   questList:
-  - questId: lobby_walkie
-    questTitle: "\uBB34\uC804\uAE30\uB97C \uCC3E\uC73C\uC2DC\uC624"
+  - questId: lobby_find_walkie_talkie
+    questTitle: "\uBB34\uC804\uAE30\uB97C \uCC3E\uC544\uB77C"
     requiredSignal: LOBBY_WALKIE_ACQUIRED
-    progressScope: 1
+    progressScope: 0
+    revealMode: 0
+    targetCount: 1
+    rejectDuplicateSources: 1
+    persistUntilSceneChange: 0
+    currentCount: 0
+  - questId: lobby_find_another
+    questTitle: "\uC548\uB0B4\uB370\uC2A4\uD06C\uC5D0\uC11C \uB3C4\uC6C0 \uB420\uB9CC\uD55C
+      \uAC83\uC744 \uCC3E\uC544\uB77C"
+    requiredSignal: LOBBY_EMPLOYEE_BADGE_INSPECTED
+    progressScope: 0
+    revealMode: 0
+    targetCount: 1
+    rejectDuplicateSources: 1
+    persistUntilSceneChange: 0
+    currentCount: 0
+  - questId: lobby_employee_badge
+    questTitle: "\uC810\uBA78\uD558\uB294 \uBD88\uBE5B\uC73C\uB85C \uC774\uB3D9\uD558\uB77C"
+    requiredSignal: LOBBY_BLINKING_LIGHT_REACHED
+    progressScope: 0
     revealMode: 0
     targetCount: 1
     rejectDuplicateSources: 1
@@ -7378,7 +7797,7 @@ GameObject:
   - component: {fileID: 895306135}
   - component: {fileID: 895306137}
   m_Layer: 5
-  m_Name: AssistImage
+  m_Name: Main AssistImage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -11110,6 +11529,9 @@ MonoBehaviour:
   onInteractEvent:
     m_PersistentCalls:
       m_Calls: []
+  onSubtitlePresentationCompleted:
+    m_PersistentCalls:
+      m_Calls: []
   isInteracted: 0
 --- !u!1 &1092438464
 GameObject:
@@ -13561,6 +13983,10 @@ PrefabInstance:
     - target: {fileID: 4803340593279672233, guid: 6e2477ebacb9b8c47816f3edbdf5ba08, type: 3}
       propertyPath: m_ShapeRadius
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4803340593279672233, guid: 6e2477ebacb9b8c47816f3edbdf5ba08, type: 3}
+      propertyPath: m_Lightmapping
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 4803340593279672233, guid: 6e2477ebacb9b8c47816f3edbdf5ba08, type: 3}
       propertyPath: m_LuxAtDistance
@@ -18307,6 +18733,9 @@ MonoBehaviour:
   onInteractEvent:
     m_PersistentCalls:
       m_Calls: []
+  onSubtitlePresentationCompleted:
+    m_PersistentCalls:
+      m_Calls: []
   isInteracted: 0
 --- !u!1 &1599180750
 GameObject:
@@ -19087,6 +19516,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1661652705}
   - component: {fileID: 1661652706}
+  - component: {fileID: 1661652710}
+  - component: {fileID: 1661652711}
   m_Layer: 0
   m_Name: Power
   m_TagString: Untagged
@@ -19144,9 +19575,94 @@ MonoBehaviour:
   firstOffDuration: 0.8
   onDuration: 0.65
   offDuration: 0.65
+  powerSfxSource: {fileID: 0}
+  flickerClip: {fileID: 8300000, guid: 6c191674d908c774bb24366f6d946c73, type: 3}
+  powerDownClip: {fileID: 8300000, guid: 71752113f1a66a44baff5d41a4bdaa90, type: 3}
+  flickerVolume: 1
+  powerDownVolume: 1
   onEmergencyPowerStarted:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1661652710
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1661652704}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 517b6eaf78ce4324fa21739d8507f731, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SubtitleTrigger
+  subtitlesScript: {fileID: 8430087059669167798}
+  mySubtitles:
+  - "\uD655\uC778\uC744 \uBAA8\uB450 \uB05D\uB0C8\uB098?"
+  - "\uC810\uBA78\uD558\uB294 \uBD88\uBE5B\uC774 \uBCF4\uC774\uC9C0? \uADF8\uACF3\uC73C\uB85C
+    \uC774\uB3D9\uD558\uBA74 \uB41C\uB2E4."
+  walkietakie: {fileID: 0}
+  revealPendingQuestAfterSubtitle: 1
+  requiredQuestId: 
+  completionQuestSignal: 
+  colorOverrides:
+  - subtitleIndex: 0
+    color: {r: 0.5254902, g: 1, b: 0.7921569, a: 1}
+  - subtitleIndex: 1
+    color: {r: 0.5254902, g: 1, b: 0.7921569, a: 1}
+  audioOverrides:
+  - subtitleIndex: 0
+    audioClip: {fileID: 8300000, guid: 0a049abeeb3dff7479ab693d67ac1d46, type: 3}
+  - subtitleIndex: 1
+    audioClip: {fileID: 8300000, guid: 0a049abeeb3dff7479ab693d67ac1d46, type: 3}
+  triggerVisual: {fileID: 764410425}
+--- !u!114 &1661652711
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1661652704}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9592f21be46046a3a6a6b557e9224ca0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SharedHintFocusPresentation
+  hintTracker: {fileID: 291870992}
+  hintId: EmployeeBadge
+  focusTarget: {fileID: 999534213}
+  lookStartDelay: 0.12
+  overshootDegrees: 1.5
+  settleDuration: 0.22
+  microSwayAmount: 0.15
+  microSwaySpeed: 1.2
+  focusDuration: 1.4
+  returnDuration: 1.2
+  fallbackFocusHoldDuration: 2
+  blendCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  assistSubtitle: {fileID: 1661652710}
 --- !u!1 &1675688591
 GameObject:
   m_ObjectHideFlags: 0
@@ -23827,6 +24343,9 @@ MonoBehaviour:
   questSourceId: 
   questProgressAmount: 1
   onInteractEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  onSubtitlePresentationCompleted:
     m_PersistentCalls:
       m_Calls: []
   isInteracted: 0
@@ -34305,6 +34824,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -2481865569501256677, guid: dc387a345bac14d469e317d6482e73e1, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.435
+      objectReference: {fileID: 0}
     - target: {fileID: -2268493968148393607, guid: dc387a345bac14d469e317d6482e73e1, type: 3}
       propertyPath: m_Layer
       value: 6
@@ -37952,6 +38475,18 @@ MonoBehaviour:
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 7683991503915512351}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 1
         m_CallState: 2
 --- !u!33 &4896652567769416462
 MeshFilter:
@@ -42209,7 +42744,7 @@ MonoBehaviour:
   - "\uC5D8\uB808\uBCA0\uC774\uD130\uAC00 \uC791\uB3D9\uB418\uC9C0 \uC54A\uB294\uB2E4.
     \uBCF4\uC548\uCF54\uB4DC\uAC00 \uD544\uC694\uD55C \uB4EF \uD558\uB2E4."
   walkietakie: {fileID: 0}
-  revealPendingQuestAfterSubtitle: 1
+  revealPendingQuestAfterSubtitle: 0
   requiredQuestId: 
   completionQuestSignal: 
   colorOverrides: []
@@ -43073,9 +43608,10 @@ MonoBehaviour:
   subtitlesScript: {fileID: 8430087059669167798}
   mySubtitles:
   - "\uBB34\uC804\uAE30\uC778 \uAC83 \uAC19\uB2E4."
+  - "\uBB34\uC804\uAE30 \uB9D0\uACE0 \uB2E4\uB978 \uAC74 \uB354 \uC5C6\uC73C\uB824\uB098?"
   walkietakie: {fileID: 6653929418703030037}
   revealPendingQuestAfterSubtitle: 1
-  requiredQuestId: 
+  requiredQuestId: LOBBY_WALKIE_ACQUIRED
   completionQuestSignal: 
   colorOverrides: []
   audioOverrides: []
@@ -45887,6 +46423,9 @@ MonoBehaviour:
   onInteractEvent:
     m_PersistentCalls:
       m_Calls: []
+  onSubtitlePresentationCompleted:
+    m_PersistentCalls:
+      m_Calls: []
   isInteracted: 0
 --- !u!114 &7712296854155119982
 MonoBehaviour:
@@ -46047,10 +46586,12 @@ MonoBehaviour:
   mySubtitles:
   - "\uC55E\uC5D0 CCTV\uAC00 \uC788\uB294 \uAC83 \uAC19\uC73C\uB2C8 \uC870\uC2EC\uD574\uC11C
     \uAC00\uC790"
+  - "\uC774 \uC548\uC73C\uB85C \uB4E4\uC5B4\uAC00\uBA74 \uC9C0\uD558\uB85C \uB0B4\uB824\uAC08
+    \uC218 \uC788\uB294 \uBC29\uBC95\uC744 \uCC3E\uC744 \uC218 \uC788\uC744 \uAC70\uC57C."
   walkietakie: {fileID: 0}
-  revealPendingQuestAfterSubtitle: 0
-  requiredQuestId: 
-  completionQuestSignal: 
+  revealPendingQuestAfterSubtitle: 1
+  requiredQuestId: lobby_employee_badge
+  completionQuestSignal: LOBBY_BLINKING_LIGHT_REACHED
   colorOverrides: []
   audioOverrides: []
   triggerVisual: {fileID: 0}
@@ -47695,6 +48236,9 @@ MonoBehaviour:
   onInteractEvent:
     m_PersistentCalls:
       m_Calls: []
+  onSubtitlePresentationCompleted:
+    m_PersistentCalls:
+      m_Calls: []
   isInteracted: 0
 --- !u!114 &8454829487890125833
 MonoBehaviour:
@@ -48383,10 +48927,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SubtitleIntroPresentation
   subtitleTrigger: {fileID: 8736550563334665738}
-  startDelay: 1
-  backgroundColor: {r: 0, g: 0, b: 0, a: 0}
-  backgroundSortingOrder: 31999
-  fadeOutDuration: 0.25
+  startDelay: 0
+  backgroundColor: {r: 0, g: 0, b: 0, a: 1}
+  backgroundSortingOrder: 31998
+  fadeOutDuration: 0.5
 --- !u!64 &8742577322547614995
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -49323,6 +49867,7 @@ RectTransform:
   - {fileID: 3959838969523657287}
   - {fileID: 1166573608995557602}
   - {fileID: 895306134}
+  - {fileID: 764410424}
   m_Father: {fileID: 5435327681673261511}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}

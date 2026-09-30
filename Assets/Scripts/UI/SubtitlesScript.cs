@@ -1,10 +1,20 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
 public class SubtitlesScript : MonoBehaviour
 {
+    private sealed class PlaybackRequest
+    {
+        public string[] Subtitles;
+        public SubtitleColorOverride[] ColorOverrides;
+        public SubtitleAudioOverride[] AudioOverrides;
+        public Action OnFinished;
+        public Action OnStarted;
+    }
+
     public static event Action PlaybackStarted;
 
     public TextMeshProUGUI subtitlesText;
@@ -25,6 +35,9 @@ public class SubtitlesScript : MonoBehaviour
     private SubtitleColorOverride[] activeColorOverrides;
     private SubtitleAudioOverride[] activeAudioOverrides;
     private Color defaultSubtitleColor;
+    private readonly Queue<PlaybackRequest> playbackQueue = new();
+
+    public bool IsPlaying => subtitles != null;
 
     private void Start()
     {
@@ -77,23 +90,61 @@ public class SubtitlesScript : MonoBehaviour
         SubtitleAudioOverride[] audioOverrides,
         Action callback = null)
     {
+        PlaySubtitles(
+            newSubtitles,
+            colorOverrides,
+            audioOverrides,
+            callback,
+            null);
+    }
+
+    public void PlaySubtitles(
+        string[] newSubtitles,
+        SubtitleColorOverride[] colorOverrides,
+        SubtitleAudioOverride[] audioOverrides,
+        Action callback,
+        Action onStarted)
+    {
         if (newSubtitles == null || newSubtitles.Length == 0)
         {
+            onStarted?.Invoke();
             callback?.Invoke();
             return;
         }
 
-        subtitles = newSubtitles;
-        activeColorOverrides = colorOverrides;
-        activeAudioOverrides = audioOverrides;
+        PlaybackRequest request = new()
+        {
+            Subtitles = newSubtitles,
+            ColorOverrides = colorOverrides,
+            AudioOverrides = audioOverrides,
+            OnFinished = callback,
+            OnStarted = onStarted
+        };
+
+        if (IsPlaying || playbackQueue.Count > 0)
+        {
+            playbackQueue.Enqueue(request);
+            TryStartNextQueuedPlayback();
+            return;
+        }
+
+        StartPlayback(request);
+    }
+
+    private void StartPlayback(PlaybackRequest request)
+    {
+        subtitles = request.Subtitles;
+        activeColorOverrides = request.ColorOverrides;
+        activeAudioOverrides = request.AudioOverrides;
 
         index = 0;
-        onFinished = callback;
+        onFinished = request.OnFinished;
 
         subtitlesText.text = string.Empty;
         subtitlesPanel.SetActive(true);
 
         ApplyCurrentSubtitleColor();
+        request.OnStarted?.Invoke();
 
         AcquireCutsceneLock();
         PlaybackStarted?.Invoke();
@@ -212,6 +263,7 @@ public class SubtitlesScript : MonoBehaviour
         subtitlesText.color = defaultSubtitleColor;
         activeColorOverrides = null;
         activeAudioOverrides = null;
+        playbackQueue.Clear();
     }
 
     private void NextSubtitle()
@@ -234,13 +286,24 @@ public class SubtitlesScript : MonoBehaviour
         ReleaseCutsceneLock();
         StopTypewriterSound();
         // subtitlesPanel과 이 컴포넌트가 같은 GameObject에 있을 수 있다.
-        // SetActive(false)가 OnDisable을 즉시 호출하기 전에 콜백을 보관해야 한다.
-        subtitlesPanel.SetActive(false);
+        // 이미 대기 중인 자막이 있으면 비활성화로 큐를 지우지 않고 바로 이어간다.
+        if (playbackQueue.Count == 0)
+            subtitlesPanel.SetActive(false);
 
         finishedCallback?.Invoke();
         subtitlesText.color = defaultSubtitleColor;
         activeColorOverrides = null;
         activeAudioOverrides = null;
+
+        TryStartNextQueuedPlayback();
+    }
+
+    private void TryStartNextQueuedPlayback()
+    {
+        if (IsPlaying || playbackQueue.Count == 0 || !isActiveAndEnabled)
+            return;
+
+        StartPlayback(playbackQueue.Dequeue());
     }
 
     private void AcquireCutsceneLock()

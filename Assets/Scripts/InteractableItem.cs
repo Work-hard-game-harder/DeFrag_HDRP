@@ -43,6 +43,8 @@ public class InteractableItem : MonoBehaviour, IInteractable
 
     [Header("Events")]
     [SerializeField] protected UnityEvent onInteractEvent;
+    [Tooltip("Subtitle 모드에서 모든 자막 재생이 끝난 뒤 호출됩니다.")]
+    [SerializeField] private UnityEvent onSubtitlePresentationCompleted;
 
     [HideInInspector] public bool isInteracted;
 
@@ -67,7 +69,11 @@ public class InteractableItem : MonoBehaviour, IInteractable
 
     public void Interact(PlayerInteraction player)
     {
-        if (!isInteracted)
+        bool isFirstInteraction = !isInteracted;
+        bool reportPresentationClosed = isFirstInteraction &&
+                                        hintConfirmationTracker != null &&
+                                        !string.IsNullOrWhiteSpace(hintId);
+        if (isFirstInteraction)
         {
             CompleteFirstInteraction();
             ReportHintConfirmation();
@@ -75,15 +81,23 @@ public class InteractableItem : MonoBehaviour, IInteractable
 
         if (player == null)
         {
+            if (reportPresentationClosed)
+                ReportHintPresentationClosed();
             return;
         }
 
         if (useCameraPresentation)
         {
             if (cameraPresentation != null)
-                cameraPresentation.Begin(player);
+                cameraPresentation.Begin(
+                    player,
+                    reportPresentationClosed ? ReportHintPresentationClosed : null);
             else
+            {
                 Debug.LogWarning("[InteractableItem] Camera Presentation is not assigned.", this);
+                if (reportPresentationClosed)
+                    ReportHintPresentationClosed();
+            }
             return;
         }
 
@@ -91,15 +105,32 @@ public class InteractableItem : MonoBehaviour, IInteractable
         {
             case HintPresentationMode.Subtitle:
                 player.CloseAllUI();
-                subtitlePresentation?.PlaySubtitleFromInteract();
+                if (subtitlePresentation != null)
+                    subtitlePresentation.PlaySubtitleFromInteract(
+                        () =>
+                        {
+                            onSubtitlePresentationCompleted?.Invoke();
+                            if (reportPresentationClosed)
+                                ReportHintPresentationClosed();
+                        });
+                else
+                {
+                    onSubtitlePresentationCompleted?.Invoke();
+                    if (reportPresentationClosed)
+                        ReportHintPresentationClosed();
+                }
                 break;
 
             case HintPresentationMode.Sprite:
-                player.OpenHint(hintSprite);
+                player.OpenHint(
+                    hintSprite,
+                    reportPresentationClosed ? ReportHintPresentationClosed : null);
                 break;
 
             default:
                 player.CloseAllUI();
+                if (reportPresentationClosed)
+                    ReportHintPresentationClosed();
                 break;
         }
     }
@@ -108,6 +139,12 @@ public class InteractableItem : MonoBehaviour, IInteractable
     {
         if (hintConfirmationTracker != null)
             hintConfirmationTracker.ConfirmHint(hintId, this);
+    }
+
+    private void ReportHintPresentationClosed()
+    {
+        if (hintConfirmationTracker != null)
+            hintConfirmationTracker.CompleteHintPresentation(hintId, this);
     }
 
     private void CompleteFirstInteraction()

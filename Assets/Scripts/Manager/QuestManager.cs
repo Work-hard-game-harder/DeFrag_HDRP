@@ -20,6 +20,7 @@ public class QuestManager : MonoBehaviour
     private readonly Dictionary<int, HashSet<string>> acceptedSources = new();
     private int currentStepIndex;
     private int pendingStepIndex = -1;
+    private Coroutine pendingSubtitleRevealRoutine;
 
     public Action onQuestStepChanged;
 
@@ -218,6 +219,38 @@ public class QuestManager : MonoBehaviour
             relay.RequestSharedQuestReveal();
         else
             Debug.LogError("[QuestManager] 공용 퀘스트 공개 요청을 보낼 로컬 플레이어를 찾지 못했습니다.", this);
+    }
+
+    public void RequestPendingQuestRevealAfterSubtitle(float timeoutSeconds = 10f)
+    {
+        if (pendingSubtitleRevealRoutine != null)
+            return;
+
+        pendingSubtitleRevealRoutine = StartCoroutine(
+            WaitForPendingQuestReveal(Mathf.Max(0f, timeoutSeconds)));
+    }
+
+    private System.Collections.IEnumerator WaitForPendingQuestReveal(float timeoutSeconds)
+    {
+        float deadline = Time.realtimeSinceStartup + timeoutSeconds;
+        do
+        {
+            if (IsWaitingForSubtitleReveal)
+            {
+                pendingSubtitleRevealRoutine = null;
+                RevealPendingQuestAfterSubtitle();
+                yield break;
+            }
+
+            yield return null;
+        }
+        while (Time.realtimeSinceStartup < deadline);
+
+        pendingSubtitleRevealRoutine = null;
+        Debug.LogWarning(
+            "[QuestManager] 자막 종료 후 공개 대기 중인 퀘스트를 찾지 못했습니다. " +
+            "현재 퀘스트의 Required Signal과 Persist Until Scene Change 설정을 확인하세요.",
+            this);
     }
 
     public bool TryRevealSharedPendingOnServer()

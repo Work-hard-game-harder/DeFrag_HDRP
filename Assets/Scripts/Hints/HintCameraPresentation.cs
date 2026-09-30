@@ -90,6 +90,7 @@ public sealed class HintCameraPresentation : MonoBehaviour
     private bool externalVideoClockLoops;
     private double videoExternalClock;
     private bool sharedVideoActive;
+    private Action presentationClosedCallback;
 
     public bool IsActive => active;
 
@@ -111,10 +112,14 @@ public sealed class HintCameraPresentation : MonoBehaviour
             debugVideoRoutine = StartCoroutine(PrepareAndLoopDebugVideo());
     }
 
-    public void Begin(PlayerInteraction player)
+    public void Begin(PlayerInteraction player, Action onClosed = null)
     {
         ConfigureVideoOutput();
-        if (active || player == null || presentationCamera == null) return;
+        if (active || player == null || presentationCamera == null)
+        {
+            onClosed?.Invoke();
+            return;
+        }
 
         if (synchronizeVideoPlayback && videoPlayer != null)
         {
@@ -125,7 +130,13 @@ public sealed class HintCameraPresentation : MonoBehaviour
                 sharedBroadcastId, duration, this);
         }
 
-        if (!GameplayInputGate.TryAcquire(this)) return;
+        if (!GameplayInputGate.TryAcquire(this))
+        {
+            onClosed?.Invoke();
+            return;
+        }
+
+        presentationClosedCallback = onClosed;
 
         playerInteraction = player;
         playerCamera = player.GetComponent<Camera>();
@@ -139,6 +150,9 @@ public sealed class HintCameraPresentation : MonoBehaviour
         {
             GameplayInputGate.Release(this);
             ClearReferences();
+            Action failedCallback = presentationClosedCallback;
+            presentationClosedCallback = null;
+            failedCallback?.Invoke();
             return;
         }
 
@@ -805,6 +819,8 @@ public sealed class HintCameraPresentation : MonoBehaviour
 
     private void RestoreImmediately()
     {
+        Action closedCallback = presentationClosedCallback;
+        presentationClosedCallback = null;
         if (videoPlayer != null && !debugAutoPlayVideoOnStart && !sharedVideoActive)
         {
             videoPlayer.loopPointReached -= HandleVideoFinished;
@@ -836,6 +852,7 @@ public sealed class HintCameraPresentation : MonoBehaviour
         returning = false;
         sessionRoutine = null;
         ClearReferences();
+        closedCallback?.Invoke();
     }
 
     private static void CopyCameraRenderingSettings(Camera source, Camera target)
@@ -865,7 +882,12 @@ public sealed class HintCameraPresentation : MonoBehaviour
 
     private void OnDisable()
     {
-        if (active) RestoreImmediately();
+        if (active)
+        {
+            // Scene teardown is not a user closing a hint presentation.
+            presentationClosedCallback = null;
+            RestoreImmediately();
+        }
     }
 
     private void OnDestroy()

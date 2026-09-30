@@ -291,14 +291,23 @@ public class PlayerInteraction : MonoBehaviour
         if (interactionHUD != null) interactionHUD.SetActive(false);
     }
 
-    public void OpenHint(Sprite sprite)
+    private System.Action hintClosedCallback;
+
+    public void OpenHint(Sprite sprite, System.Action onClosed = null)
     {
         if (hintPanel == null || hintImage == null || sprite == null)
+        {
+            onClosed?.Invoke();
             return;
+        }
 
         if (!GameplayInputGate.TryAcquire(this))
+        {
+            onClosed?.Invoke();
             return;
+        }
 
+        hintClosedCallback = onClosed;
         hintImage.sprite = sprite;
         hintPanel.SetActive(true);
         TogglePlayerControl(false);
@@ -306,11 +315,15 @@ public class PlayerInteraction : MonoBehaviour
 
     private void CloseHintPanel()
     {
+        System.Action closedCallback = hintClosedCallback;
+        hintClosedCallback = null;
+
         if (hintPanel != null)
             hintPanel.SetActive(false);
 
         GameplayInputGate.Release(this);
         TogglePlayerControl(true);
+        closedCallback?.Invoke();
     }
 
     public void OpenSequence(HintSequencePresentation presentation)
@@ -369,6 +382,7 @@ public class PlayerInteraction : MonoBehaviour
 
     private void OnDisable()
     {
+        hintClosedCallback = null;
         if (activeSequence != null)
             CloseSequence();
         else

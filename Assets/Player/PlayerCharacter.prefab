@@ -2749,6 +2749,11 @@ MonoBehaviour:
   toggleKey: 116
   spotLight: {fileID: 3384989117648530326}
   startsOn: 0
+  flashlightSfxSource: {fileID: 0}
+  turnOnClip: {fileID: 8300000, guid: d7760c8499321d8438b6004c5ef835ce, type: 3}
+  turnOffClip: {fileID: 8300000, guid: d7760c8499321d8438b6004c5ef835ce, type: 3}
+  turnOnVolume: 1
+  turnOffVolume: 1
 --- !u!114 &7349012846091223006
 MonoBehaviour:
   m_ObjectHideFlags: 0

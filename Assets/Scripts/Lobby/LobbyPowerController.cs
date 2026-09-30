@@ -1,4 +1,5 @@
 using System.Collections;
+using System;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -28,16 +29,28 @@ namespace DeFrag.Lobby
         [Min(0f)] [SerializeField] private float onDuration = 0.65f;
         [Min(0f)] [SerializeField] private float offDuration = 0.65f;
 
+        [Header("SFX")]
+        [Tooltip("비어 있으면 이 오브젝트에 2D AudioSource를 자동 생성합니다.")]
+        [SerializeField] private AudioSource powerSfxSource;
+        [SerializeField] private AudioClip flickerClip;
+        [SerializeField] private AudioClip powerDownClip;
+        [Range(0f, 1f)] [SerializeField] private float flickerVolume = 1f;
+        [Range(0f, 1f)] [SerializeField] private float powerDownVolume = 1f;
+
         [Header("Events")]
         [SerializeField] private UnityEvent onEmergencyPowerStarted;
 
         private Coroutine flickerRoutine;
+        private bool initialized;
 
         public LobbyPowerState CurrentState { get; private set; }
+        public event Action EmergencyPowerStarted;
 
         private void Awake()
         {
+            EnsureAudioSource();
             ApplyState(initialState);
+            initialized = true;
         }
 
         public void PlayHintWarning(bool switchToEmergencyAfterFlicker)
@@ -49,6 +62,7 @@ namespace DeFrag.Lobby
                 StopCoroutine(flickerRoutine);
 
             SetFlickerTargetsActive(true);
+            PlayFlickerSfx();
             flickerRoutine = StartCoroutine(
                 FlickerRoutine(switchToEmergencyAfterFlicker));
         }
@@ -79,6 +93,7 @@ namespace DeFrag.Lobby
 
         private void ApplyState(LobbyPowerState state)
         {
+            LobbyPowerState previousState = CurrentState;
             if (flickerRoutine != null)
             {
                 StopCoroutine(flickerRoutine);
@@ -95,8 +110,14 @@ namespace DeFrag.Lobby
             if (powerOff != null)
                 powerOff.SetActive(state == LobbyPowerState.PowerOff);
 
+            if (initialized && state != previousState && state != LobbyPowerState.FullPower)
+                PlayPowerDownSfx();
+
             if (state == LobbyPowerState.EmergencyPower)
+            {
                 onEmergencyPowerStarted?.Invoke();
+                EmergencyPowerStarted?.Invoke();
+            }
         }
 
         private void SetFlickerTargetsActive(bool active)
@@ -106,6 +127,39 @@ namespace DeFrag.Lobby
                 if (target != null)
                     target.SetActive(active);
             }
+        }
+
+        private void EnsureAudioSource()
+        {
+            if (powerSfxSource == null)
+                powerSfxSource = GetComponent<AudioSource>();
+            if (powerSfxSource == null)
+                powerSfxSource = gameObject.AddComponent<AudioSource>();
+
+            powerSfxSource.playOnAwake = false;
+            powerSfxSource.loop = false;
+            powerSfxSource.spatialBlend = 0f;
+            powerSfxSource.dopplerLevel = 0f;
+        }
+
+        private void PlayFlickerSfx()
+        {
+            if (powerSfxSource == null || flickerClip == null)
+                return;
+
+            // 겹친 점멸 요청은 기존 소리를 중첩하지 않고 새 점멸부터 다시 들려준다.
+            powerSfxSource.Stop();
+            powerSfxSource.PlayOneShot(flickerClip, flickerVolume);
+        }
+
+        private void PlayPowerDownSfx()
+        {
+            if (powerSfxSource == null || powerDownClip == null)
+                return;
+
+            // 최종 소등음이 점멸음 뒤에 명확히 들리도록 점멸음을 정리한다.
+            powerSfxSource.Stop();
+            powerSfxSource.PlayOneShot(powerDownClip, powerDownVolume);
         }
     }
 }
