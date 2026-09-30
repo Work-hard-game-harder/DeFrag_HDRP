@@ -1,6 +1,6 @@
 using System.Collections;
-using System.Collections.Generic;
 using StarterAssets;
+using DeFrag.Lobby;
 using Unity.Cinemachine;
 using Unity.Netcode;
 using UnityEngine;
@@ -9,12 +9,22 @@ using UnityEngine.InputSystem;
 [DisallowMultipleComponent]
 public sealed class SharedHintFocusPresentation : MonoBehaviour
 {
+    [System.Serializable]
+    private sealed class HintFocusTarget
+    {
+        public string hintId;
+        public Transform target;
+    }
+
     [Header("Shared Hint")]
     [SerializeField] private HintConfirmationTracker hintTracker;
     [SerializeField] private string hintId = "EmployeeBadge";
+    [SerializeField] private LobbyPowerController powerController;
 
     [Header("Local Camera Presentation")]
     [SerializeField] private Transform focusTarget;
+    [Tooltip("힌트 ID별 포커스 대상입니다. 일치 항목이 없으면 Focus Target을 사용합니다.")]
+    [SerializeField] private HintFocusTarget[] focusTargetsByHint;
     [SerializeField] private float lookStartDelay = 0.12f;
     [SerializeField] private float overshootDegrees = 1.5f;
     [SerializeField] private float settleDuration = 0.22f;
@@ -39,14 +49,19 @@ public sealed class SharedHintFocusPresentation : MonoBehaviour
     private CinemachineBrain cinemachineBrain;
     private Quaternion originalCameraRotation;
     private bool originalPlayerInputEnabled;
+    private bool originalMovementEnabled;
     private bool originalBrainEnabled;
     private bool controlsLocked;
-    private readonly Queue<bool> pendingPresentations = new();
+    private bool assistStartPending;
+    private bool storyAssistStarted;
+    private Transform activeFocusTarget;
 
     private void OnEnable()
     {
         if (hintTracker == null)
             hintTracker = HintConfirmationTracker.Instance;
+        if (powerController == null)
+            powerController = GetComponent<LobbyPowerController>();
 
         if (hintTracker != null)
         {
@@ -91,20 +106,25 @@ public sealed class SharedHintFocusPresentation : MonoBehaviour
         }
     }
 
-    private void HandleHintWarningFocusRequested(bool showAssist)
+    private void HandleHintWarningFocusRequested(string warningHintId, bool showAssist)
     {
-        if (presentationRoutine != null)
-        {
-            pendingPresentations.Enqueue(showAssist);
-            return;
-        }
+        activeFocusTarget = ResolveFocusTarget(warningHintId);
+        assistStartPending |= showAssist;
 
-        presentationRoutine = StartCoroutine(PresentationRoutine(showAssist));
+        // A new warning refreshes the current focus immediately. It must not
+        // wait behind a long Assist subtitle while the actual lights flicker.
+        if (presentationRoutine != null)
+            StopCoroutine(presentationRoutine);
+
+        presentationRoutine = StartCoroutine(PresentationRoutine());
     }
 
-    private IEnumerator PresentationRoutine(bool showAssist)
+    private IEnumerator PresentationRoutine()
     {
-        if (focusTarget == null)
+        Transform target = activeFocusTarget != null
+            ? activeFocusTarget
+            : focusTarget;
+        if (target == null)
         {
             Debug.LogError(
                 "[SharedHintFocusPresentation] Focus Target이 연결되지 않았습니다.",
@@ -113,55 +133,94 @@ public sealed class SharedHintFocusPresentation : MonoBehaviour
             yield break;
         }
 
-        while (!GameplayInputGate.TryAcquire(this))
-            yield return null;
-
-        if (!TryResolveLocalPlayer())
+        if (!controlsLocked)
         {
-            Debug.LogError(
-                "[SharedHintFocusPresentation] 로컬 플레이어 카메라를 찾지 못했습니다.",
-                this);
-            GameplayInputGate.Release(this);
-            presentationRoutine = null;
-            yield break;
+            while (!GameplayInputGate.TryAcquire(this))
+                yield return null;
+
+            if (!TryResolveLocalPlayer())
+            {
+                Debug.LogError(
+                    "[SharedHintFocusPresentation] 로컬 플레이어 카메라를 찾지 못했습니다.",
+                    this);
+                GameplayInputGate.Release(this);
+                presentationRoutine = null;
+                yield break;
+            }
+
+            LockLocalControls();
+            originalCameraRotation = playerCamera.transform.rotation;
+
+            // Let Cinemachine and the player controller finish their current
+            // frame before this component takes ownership of the camera pose.
+            if (lookStartDelay > 0f)
+                yield return new WaitForSecondsRealtime(lookStartDelay);
+            else
+                yield return null;
         }
 
-        LockLocalControls();
-
-        originalCameraRotation = playerCamera.transform.rotation;
-        Vector3 direction = focusTarget.position - playerCamera.transform.position;
+        Vector3 direction = target.position - playerCamera.transform.position;
         Quaternion focusRotation = direction.sqrMagnitude > 0.0001f
             ? Quaternion.LookRotation(direction.normalized, Vector3.up)
             : originalCameraRotation;
 
-        yield return RotateCamera(originalCameraRotation, focusRotation, focusDuration);
+        yield return RotateCamera(
+            playerCamera.transform.rotation,
+            focusRotation,
+            focusDuration);
 
-        bool subtitleFinished = false;
-        if (showAssist && assistSubtitle != null)
-        {
-            assistSubtitle.PlaySubtitleFromInteract(() => subtitleFinished = true);
-            while (!subtitleFinished)
-                yield return null;
-        }
-        else if (fallbackFocusHoldDuration > 0f)
-        {
-            yield return new WaitForSecondsRealtime(fallbackFocusHoldDuration);
-        }
+        TryStartStoryAssist();
+
+        float holdDuration = powerController != null
+            ? Mathf.Max(
+                fallbackFocusHoldDuration,
+                powerController.WarningDuration - focusDuration)
+            : fallbackFocusHoldDuration;
+        if (holdDuration > 0f)
+            yield return new WaitForSecondsRealtime(holdDuration);
 
         yield return RotateCamera(
             playerCamera.transform.rotation,
             originalCameraRotation,
             returnDuration);
 
-        if (showAssist)
-            RequestQuestCompletion();
-
         RestoreLocalControls();
         presentationRoutine = null;
+    }
 
-        if (pendingPresentations.Count > 0)
-            presentationRoutine = StartCoroutine(
-                PresentationRoutine(pendingPresentations.Dequeue()));
+    private Transform ResolveFocusTarget(string warningHintId)
+    {
+        if (!string.IsNullOrWhiteSpace(warningHintId) &&
+            focusTargetsByHint != null)
+        {
+            foreach (HintFocusTarget binding in focusTargetsByHint)
+            {
+                if (binding != null &&
+                    binding.target != null &&
+                    string.Equals(
+                        binding.hintId?.Trim(),
+                        warningHintId.Trim(),
+                        System.StringComparison.OrdinalIgnoreCase))
+                {
+                    return binding.target;
+                }
+            }
+        }
+
+        return focusTarget;
+    }
+
+    private void TryStartStoryAssist()
+    {
+        if (!assistStartPending || storyAssistStarted)
+            return;
+
+        assistStartPending = false;
+        storyAssistStarted = true;
+        if (assistSubtitle != null)
+            assistSubtitle.PlaySubtitleFromInteract(RequestQuestCompletion);
+        else
+            RequestQuestCompletion();
     }
 
     private void RequestQuestCompletion()
@@ -217,6 +276,10 @@ public sealed class SharedHintFocusPresentation : MonoBehaviour
         originalPlayerInputEnabled = playerInput != null && playerInput.enabled;
         if (playerInput != null)
             playerInput.enabled = false;
+
+        originalMovementEnabled = movement != null && movement.enabled;
+        if (movement != null)
+            movement.enabled = false;
 
         if (inputs != null)
         {
@@ -277,6 +340,8 @@ public sealed class SharedHintFocusPresentation : MonoBehaviour
             cinemachineBrain.enabled = originalBrainEnabled;
         if (playerInput != null)
             playerInput.enabled = originalPlayerInputEnabled;
+        if (movement != null)
+            movement.enabled = originalMovementEnabled;
 
         cameraViewSwitcher?.SetInteractionLocked(false);
         playerInteraction?.TogglePlayerControl(true);
@@ -295,7 +360,6 @@ public sealed class SharedHintFocusPresentation : MonoBehaviour
             presentationRoutine = null;
         }
 
-        pendingPresentations.Clear();
         RestoreLocalControls();
     }
 

@@ -44,6 +44,7 @@ public sealed class HintConfirmationTracker : MonoBehaviour
     private int authoritativeConfirmedHintCount;
     private bool thresholdPresentationApplied;
     private bool thresholdAssistPending;
+    private string localThresholdHintId;
     private double serverBroadcastStartTime = double.NegativeInfinity;
     private float serverBroadcastDuration;
 
@@ -53,7 +54,7 @@ public sealed class HintConfirmationTracker : MonoBehaviour
     public int EmergencyPowerThreshold => emergencyPowerThreshold;
     public event Action<int> ConfirmedHintCountChanged;
     public event Action<string> SharedHintPresentationStarted;
-    public event Action<bool> HintWarningFocusRequested;
+    public event Action<string, bool> HintWarningFocusRequested;
     public event Action ThresholdPresentationStarted;
 
     private void Awake()
@@ -227,7 +228,7 @@ public sealed class HintConfirmationTracker : MonoBehaviour
         // If it is also the threshold hint, the final power transition restarts
         // the warning safely and still waits for that flicker before Assist #2.
         powerController?.PlayHintWarning(false);
-        HintWarningFocusRequested?.Invoke(true);
+        HintWarningFocusRequested?.Invoke(hintId, true);
         SharedHintPresentationStarted?.Invoke(hintId);
     }
 
@@ -241,7 +242,7 @@ public sealed class HintConfirmationTracker : MonoBehaviour
         Debug.Log(
             "[LobbyHint] The third hint presentation closed. Starting the shared power/Assist event.",
             context);
-        HintWarningFocusRequested?.Invoke(false);
+        HintWarningFocusRequested?.Invoke(localThresholdHintId, false);
 
         if (powerController == null ||
             powerController.CurrentState == LobbyPowerState.EmergencyPower)
@@ -309,6 +310,8 @@ public sealed class HintConfirmationTracker : MonoBehaviour
         authoritativeConfirmedHintCount = Mathf.Max(
             authoritativeConfirmedHintCount,
             count);
+        if (count == emergencyPowerThreshold)
+            localThresholdHintId = hintId?.Trim();
 
         Debug.Log(
             $"[LobbyHint] Confirmed: {hintId} ({count}/{emergencyPowerThreshold})",
@@ -321,7 +324,7 @@ public sealed class HintConfirmationTracker : MonoBehaviour
         if (!IsDeferredPresentationHint(hintId) && count < emergencyPowerThreshold)
         {
             powerController?.PlayHintWarning(false);
-            HintWarningFocusRequested?.Invoke(false);
+            HintWarningFocusRequested?.Invoke(hintId, false);
         }
     }
 

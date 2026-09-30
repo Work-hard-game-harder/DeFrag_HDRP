@@ -44,6 +44,8 @@ namespace DeFrag.Lobby
         private bool initialized;
 
         public LobbyPowerState CurrentState { get; private set; }
+        public float WarningDuration => firstOffDuration +
+                                        flickerCount * (onDuration + offDuration);
         public event Action EmergencyPowerStarted;
 
         private void Awake()

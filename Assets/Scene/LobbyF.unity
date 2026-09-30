@@ -9814,7 +9814,7 @@ Light:
   m_LightShadowCasterMode: 2
   m_AreaSize: {x: 1, y: 1}
   m_BounceIntensity: 1
-  m_ColorTemperature: 2000000
+  m_ColorTemperature: 20000
   m_UseColorTemperature: 1
   m_BoundingSphereOverride: {x: 6.035012e+28, y: 2.818327e+20, z: 2.4650075e+32, w: 4.543735e+30}
   m_UseBoundingSphereOverride: 0
@@ -19556,7 +19556,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Lobby.LobbyPowerController
   fullPower: {fileID: 1757959464}
-  emergencyPower: {fileID: 1150525233}
+  emergencyPower: {fileID: 1523717876}
   powerOff: {fileID: 672842809}
   initialState: 0
   flickerTargets:
@@ -19629,7 +19629,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SharedHintFocusPresentation
   hintTracker: {fileID: 291870992}
   hintId: EmployeeBadge
+  powerController: {fileID: 0}
   focusTarget: {fileID: 999534213}
+  focusTargetsByHint:
+  - hintId: Report
+    target: {fileID: 1523717877}
   lookStartDelay: 0.12
   overshootDegrees: 1.5
   settleDuration: 0.22
