@@ -7529,8 +7529,8 @@ MonoBehaviour:
     clipAudioVolume: 0
     flicker: 0
     start: 10.4
-    end: 20.6
-    playbackSpeed: 0.45
+    end: 23.20302
+    playbackSpeed: 0.4
     fadeIn: 0.4
     scale: {x: 1.02, y: 1.12}
   sounds:
@@ -7560,31 +7560,31 @@ MonoBehaviour:
     volume: 0.5
     loop: 1
     fadeIn: 1
-    fadeOutAt: 20.6
+    fadeOutAt: 23.20302
     fadeOutDuration: 1
-  - clip: {fileID: 8300000, guid: 20ec1a4933c62d64bbfac9572fed44b9, type: 3}
+  - clip: {fileID: 8300000, guid: c65fd404fb6a46545aefe17b30d2414b, type: 3}
     at: 11
     volume: 1
     loop: 0
     fadeIn: 0
     fadeOutAt: 0
     fadeOutDuration: 1
-  - clip: {fileID: 8300000, guid: 32250027ed3e1e24eb2e210a5333a91f, type: 3}
-    at: 15.8
+  - clip: {fileID: 8300000, guid: 722b866d62f2739438a9bdb15390d751, type: 3}
+    at: 16.31102
     volume: 0.9
     loop: 0
     fadeIn: 0
     fadeOutAt: 0
     fadeOutDuration: 1
   - clip: {fileID: 8300000, guid: efd6d44e0bf22fe43be0f2d51388000d, type: 3}
-    at: 18.5
+    at: 21.10302
     volume: 0.6
     loop: 0
     fadeIn: 0
     fadeOutAt: 0
     fadeOutDuration: 1
   - clip: {fileID: 8300000, guid: c2ac84cbdd169294cac83e4c633aa27d, type: 3}
-    at: 21.4
+    at: 24.00302
     volume: 0.9
     loop: 0
     fadeIn: 0
@@ -7594,18 +7594,18 @@ MonoBehaviour:
   - speaker: "\uC694\uC6D0"
     text: "\uC5EC\uAE30\uAC00... \uB9D0\uB85C\uB9CC \uB4E3\uB358 \uADF8 AI \uC5F0\uAD6C\uC18C\uB85C\uAD70."
     start: 11
-    end: 15.6
+    end: 16.111021
   - speaker: "\uBCF8\uBD80 (\uD1B5\uD654)"
     text: "\uADF8\uB798. 1\uCE35\uC740 \uD3C9\uBC94\uD55C \uD68C\uC0AC\uCC98\uB7FC
       \uAFB8\uBA70\uB1A8\uC744 \uAC70\uC57C. \uC870\uC6A9\uD788 \uC6C0\uC9C1\uC5EC."
-    start: 15.8
-    end: 21
+    start: 16.31102
+    end: 23.30302
   openingCaption: "02:13 AM  \xB7  NEXUS DATA SCIENCES HQ"
   openingCaptionTime: {x: 0.8, y: 4.2}
-  titleTime: {x: 20.6, y: 24.4}
+  titleTime: {x: 23.20302, y: 27.00302}
   titleText: NEXUS
   titleSubtext: "DATA SCIENCES  \xB7  1F LOBBY"
-  revealAt: 24.9
+  revealAt: 27.503021
   revealDuration: 1.2
   gradeShader: {fileID: 4800000, guid: 5a4e9b65601ce8347a12371e1f053e4a, type: 3}
   font: {fileID: 11400000, guid: 8d3019094b1de0d4f945de276623be45, type: 2}

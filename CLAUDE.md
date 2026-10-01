@@ -317,7 +317,7 @@
 - **소리:** `UiSfx`의 KeyType(터치 위치에 따라 음높이), MenuBack(DEL), MenuConfirm(ENTER), AccessDenied, TaskSuccess, TerminalBoot/Close를 쓴다.
 
 **LobbyF 오프닝 시네마틱** (2026-10-01 노트북)
-- LobbyF에 들어올 때마다 로컬 화면에서 약 26초짜리 시네마틱을 재생한 뒤 게임을 시작한다. 네트워크 상태는 만들지 않는다 (피어마다 각자 재생).
+- LobbyF에 들어올 때마다 로컬 화면에서 약 29초짜리 시네마틱을 재생한 뒤 게임을 시작한다. 네트워크 상태는 만들지 않는다 (피어마다 각자 재생).
 - **`Scripts/Lobby/LobbyIntroCinematic`** (씬 오브젝트 `LobbyF Intro Cinematic`):
   - `Shot` 목록: VideoClip 또는 정지 이미지(`still`). 샷별 시작·끝, 재생 속도, 페이드, 확대(push-in), 깜빡임(`flicker`), 영상 자체 소리(`playClipAudio`).
   - `SoundCue` 목록(효과음·VO·BGM, 페이드), `SubtitleLine` 목록(화자 + 대사), 시작 캡션, NEXUS 타이틀 카드, `revealAt`에서 게임 화면으로 페이드.
@@ -329,9 +329,12 @@
   - Shot1 `Intro_Shot1_Arrival.mp4`(건물 외관 → 걸어감, Veo 생성 발소리 포함) 0.6–4.6초.
   - Shot2 `Intro_Shot2_Lock.mp4`(유리문 잠금 따기, Veo 생성 소리 포함) 4.4–8.4초.
   - 정지 컷 `Art/LobbyF/IntroCinematic/Intro_Cut4_Entry.jpg`(문으로 들어가는 실루엣, 깜빡임) 8.2–10.6초.
-  - Shot3 `Intro_Shot3_Lobby.mp4`(로비 안, 전화 통화, 무음) 10.4–20.6초, 속도 0.45.
-  - VO: 요원 `Intro_VO_Agent_A.mp3`(11.0초, "여기가... 말로만 듣던 그 AI 연구소로군."), 본부 통화 `Intro_VO_Partner.mp3`(15.8초).
-  - 타이틀 20.6–24.4초, 게임 화면 공개 24.9초.
+  - Shot3 `Intro_Shot3_Lobby.mp4`(로비 안, 전화 통화, 무음) 10.4–23.2초, 속도 0.4 (영상이 끝나면 마지막 프레임에서 확대만 이어짐).
+  - VO는 **영어**다 (사용자 요청: 한국어 발음이 어색함). 자막은 한국어 번역 그대로 둔다.
+    - 요원 `Intro_VO_Agent_EN.mp3`(Wit, American, 11.0초): "So this is it... the AI lab we've only heard rumors about."
+    - 본부 통화 `Intro_VO_Partner_EN.mp3`(Mono, PHONE_CALL, 16.3초): "Copy that. The first floor's dressed up like an ordinary office. Move quietly."
+    - 예전 한국어 VO(`Intro_VO_Agent_A/B.mp3`, `Intro_VO_Partner.mp3`)는 더 이상 참조되지 않는다.
+  - 타이틀 23.2–27.0초, 게임 화면 공개 27.5초. 스킵 안내는 타이틀이 시작되면 숨긴다.
 - **영상 파일:** `Assets/Movies/LobbyF/Intro/`. Veo 3.1 Lite 결과(1280×720, 24fps, H.264 High + B-프레임)라서 VideoClipImporter의 **트랜스코딩을 켜 두었다**. 끄면 Windows 디코더에서 멈출 수 있다. Shot1·2는 `importAudio`를 켜야 소리가 난다.
 - **소리:** `Assets/SoundSources/LobbyF/Intro/`. 합성음은 `node Tools/Claude/gen_intro_sfx.js Assets/SoundSources/LobbyF/Intro`로 다시 만든다. 영상 자체 소리와 겹치는 발소리·잠금 효과음 큐는 뺐다 (파일은 남아 있음).
 - **스토리보드 원본:** `Assets/Art/LobbyF/IntroCinematic/Source~/` (승인본 `Intro_Storyboard_6.png`, 컷별 `Cut1~6.jpg`, 반려본 폴더들). `~` 폴더라 임포트되지 않는다.
@@ -394,10 +397,10 @@
 
 ## Artlist 크레딧 장부
 
-- **누적 사용:** 4846 (플랜 16,500 중, 2026-10-01 잔액 11,654로 확인).
+- **누적 사용:** 4878 (플랜 16,500 중. 2026-10-01 잔액 11,654를 확인한 뒤 영어 음성에 32를 더 썼다).
 - **LobbyF 오프닝 시네마틱 (2026-10-01, 기본 1000 + 사용자 승인 약 960, 실제 약 2993):**
   - 반려·낭비: 승인 전에 만든 첫 영상 묶음 971, 키프레임 v2 200, 수정 편집 3회 600. 이 때문에 "스토리보드 먼저" 규칙이 생겼다.
-  - 승인본 스토리보드 격자 1장 200, 최종 영상 3개 1004(Veo 3.1 Lite 720p 4초: 소리 포함 376, 무음 252), 음성 18(Eleven v3).
+  - 승인본 스토리보드 격자 1장 200, 최종 영상 3개 1004(Veo 3.1 Lite 720p 4초: 소리 포함 376, 무음 252), 한국어 음성 18, 영어 음성 2줄 32(Eleven v3, 한 줄 15~17).
 - **LobbyF 개선 (별도 예산 3000 중 1270):**
   - 엘리베이터 키패드 원화 1장(Nano Banana 2, 90).
   - 벽 스크린 이미지 1180:
@@ -425,6 +428,7 @@
   - 처음엔 리로드가 꺼진 플레이 진입 때문에 시네마틱이 시작되지 않았고, 팀원 시작 자막과 겹쳤다. 둘 다 고쳤다.
   - 그레인 해시의 정밀도 문제로 생긴 대각선 줄무늬를 고쳤고, 그림자 톤을 바꿔 보라 기운을 줄였다.
 - **검증 못 한 것:** 소리 청취, 2인 네트워크, 빌드.
+- **추가 (같은 날):** 사용자 요청으로 VO를 영어로 다시 만들었다 (32크레딧). 대사가 길어져 타임라인을 늘렸다. 플레이 모드 AudioSource 로그로 두 VO가 겹치지 않고 순서대로 재생되는 것을 확인했다.
 
 ### 2026-09-29 · 노트북 · LobbyF 가로·대형 스크린 Nexus 홍보 영상
 - **한 일:** 위 "Nexus 홍보 영상으로 교체" 참고.

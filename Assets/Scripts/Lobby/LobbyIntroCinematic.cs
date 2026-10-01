@@ -306,7 +306,7 @@ public sealed class LobbyIntroCinematic : MonoBehaviour
         bool held = Input.GetKey(KeyCode.Space) || Input.GetKey(KeyCode.Return) || Input.GetKey(KeyCode.KeypadEnter);
         skipHeld = held ? skipHeld + Time.unscaledDeltaTime : Mathf.MoveTowards(skipHeld, 0f, Time.unscaledDeltaTime * 2f);
         float progress = Mathf.Clamp01(skipHeld / holdToSkipSeconds);
-        skipHint.alpha = clock > 1.5f && clock < revealAt ? Mathf.Lerp(0.35f, 1f, progress) * (1f - titleGroup.alpha) : 0f;
+        skipHint.alpha = clock > 1.5f && clock < titleTime.x ? Mathf.Lerp(0.35f, 1f, progress) : 0f;
         skipHint.text = progress > 0f ? $"SKIP  {new string('■', Mathf.CeilToInt(progress * 8f))}" : "HOLD SPACE TO SKIP";
         if (progress >= 1f)
         {
