@@ -39,6 +39,10 @@ public class SubtitleTrigger : MonoBehaviour
     [SerializeField]
     private UISpriteSequencePlayer triggerVisual;
 
+    [Header("Trigger Activation")]
+    [Tooltip("플레이어가 Collider에 진입했을 때 자막을 자동으로 재생합니다.")]
+    [SerializeField] private bool playOnPlayerEnter = true;
+
     public UISpriteSequencePlayer TriggerVisual => triggerVisual;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -60,14 +64,25 @@ public class SubtitleTrigger : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
+        if (!playOnPlayerEnter)
+            return;
+
         TryPlayForPlayer(other);
     }
 
-    private void OnTriggerStay(Collider other) => TryPlayForPlayer(other);
+    private void OnTriggerStay(Collider other)
+    {
+        if (!playOnPlayerEnter)
+            return;
+
+        TryPlayForPlayer(other);
+    }
 
     private void TryPlayForPlayer(Collider other)
     {
         if (hasTriggered) return;
+        // LobbyF 오프닝 시네마틱 중에는 대기했다가, 끝난 뒤 OnTriggerStay로 이어서 재생합니다.
+        if (LobbyIntroCinematic.IsPlaying) return;
         var player = other.GetComponentInParent<StarterAssets.PersonController>();
         if (player != null && player.IsSpawned && !player.IsOwner) return;
         if (player != null || other.CompareTag("Player"))

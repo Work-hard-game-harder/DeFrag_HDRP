@@ -465,6 +465,7 @@ MonoBehaviour:
   colorOverrides: []
   audioOverrides: []
   triggerVisual: {fileID: 0}
+  playOnPlayerEnter: 1
 --- !u!1 &103334515 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4486967742120434330, guid: dc387a345bac14d469e317d6482e73e1, type: 3}
@@ -1073,6 +1074,144 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 127688738}
   m_CullTransparentMesh: 1
+--- !u!1 &142446262
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 142446263}
+  - component: {fileID: 142446267}
+  - component: {fileID: 142446266}
+  - component: {fileID: 142446265}
+  - component: {fileID: 142446264}
+  m_Layer: 0
+  m_Name: Trigger3-1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &142446263
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 142446262}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: 0.7071068, w: 0.7071068}
+  m_LocalPosition: {x: -7.42, y: 2.07, z: -31.58}
+  m_LocalScale: {x: 0.40676007, y: 1, z: 1.0125}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3198835308442206272}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 90}
+--- !u!114 &142446264
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 142446262}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 517b6eaf78ce4324fa21739d8507f731, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SubtitleTrigger
+  subtitlesScript: {fileID: 8430087059669167798}
+  mySubtitles:
+  - "\uC55E\uC5D0 G\uB77C\uACE0 \uC801\uD78C \uBC29\uC774 \uC788\uB2E4.."
+  - "\uC5EC\uAE30\uBD80\uD130 \uC218\uC0C9\uD574\uBCFC\uAE4C?"
+  walkietakie: {fileID: 0}
+  revealPendingQuestAfterSubtitle: 0
+  requiredQuestId: 
+  completionQuestSignal: 
+  colorOverrides: []
+  audioOverrides: []
+  triggerVisual: {fileID: 0}
+  playOnPlayerEnter: 1
+--- !u!64 &142446265
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 142446262}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &142446266
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 142446262}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 73c176f402d2c2f4d929aa5da7585d17, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &142446267
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 142446262}
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &174929879
 GameObject:
   m_ObjectHideFlags: 0
@@ -1840,6 +1979,7 @@ MonoBehaviour:
   colorOverrides: []
   audioOverrides: []
   triggerVisual: {fileID: 0}
+  playOnPlayerEnter: 1
 --- !u!1 &275213209
 GameObject:
   m_ObjectHideFlags: 0
@@ -2197,9 +2337,10 @@ MonoBehaviour:
   mySubtitles:
   - "\uB125\uC11C\uC2A4\uB188\uB4E4\uC774 \uC6B0\uB9AC\uAC00 \uC62C \uAC78 \uC54C\uC558\uB098
     \uBCF4\uAD70"
-  - "\uBD88\uC774 \uBAA8\uB450 \uAEBC\uC84C\uC5B4. \uC8FC\uBCC0\uC744 \uC870\uC2EC\uD574\uC11C
-    \uC774\uB3D9\uD558\uAC8C."
-  - "T\uB97C \uB204\uB974\uBA74 \uC190\uC804\uB4F1\uC744 \uC774\uC6A9\uD560 \uC218
+  - "\uBD88\uC774 \uBAA8\uB450 \uAEBC\uC84C\uC5B4. \uAE38\uC744 \uC54C\uB824\uC8FC\uAE30
+    \uC5B4\uB835\uAC8C \uB418\uC5C8\uB124."
+  - "\uCC59\uACA8\uAC04 \uC190\uC804\uB4F1\uC740 \uC798 \uAC00\uC9C0\uACE0 \uC788\uACA0\uC9C0?"
+  - "T\uB97C \uB204\uB974\uBA74 \uC190\uC804\uB4F1\uC744 \uC0AC\uC6A9\uD560 \uC218
     \uC788\uC73C\uB2C8 \uCC38\uACE0\uD558\uAC8C."
   walkietakie: {fileID: 0}
   revealPendingQuestAfterSubtitle: 0
@@ -2211,6 +2352,8 @@ MonoBehaviour:
   - subtitleIndex: 1
     color: {r: 0.5254902, g: 1, b: 0.7921569, a: 1}
   - subtitleIndex: 2
+    color: {r: 0.5254902, g: 1, b: 0.7921569, a: 1}
+  - subtitleIndex: 3
     color: {r: 1, g: 0.91147983, b: 0, a: 1}
   audioOverrides:
   - subtitleIndex: 0
@@ -2219,7 +2362,10 @@ MonoBehaviour:
     audioClip: {fileID: 8300000, guid: 0a049abeeb3dff7479ab693d67ac1d46, type: 3}
   - subtitleIndex: 2
     audioClip: {fileID: 8300000, guid: 0a049abeeb3dff7479ab693d67ac1d46, type: 3}
-  triggerVisual: {fileID: 895306137}
+  - subtitleIndex: 3
+    audioClip: {fileID: 8300000, guid: 0a049abeeb3dff7479ab693d67ac1d46, type: 3}
+  triggerVisual: {fileID: 764410425}
+  playOnPlayerEnter: 1
 --- !u!1 &306512486
 GameObject:
   m_ObjectHideFlags: 0
@@ -4374,11 +4520,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2356460683572222620, guid: 6e2477ebacb9b8c47816f3edbdf5ba08, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -11.764
+      value: -23.056
       objectReference: {fileID: 0}
     - target: {fileID: 2356460683572222620, guid: 6e2477ebacb9b8c47816f3edbdf5ba08, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 6.641
+      value: 6.82
       objectReference: {fileID: 0}
     - target: {fileID: 2356460683572222620, guid: 6e2477ebacb9b8c47816f3edbdf5ba08, type: 3}
       propertyPath: m_LocalPosition.z
@@ -6547,7 +6693,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &764410424
 RectTransform:
   m_ObjectHideFlags: 0
@@ -7460,6 +7606,176 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 846301374}
   m_CullTransparentMesh: 1
+--- !u!1 &874568383
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 874568385}
+  - component: {fileID: 874568384}
+  m_Layer: 0
+  m_Name: LobbyF Intro Cinematic
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &874568384
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 874568383}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c414a8bb2651c8842b5613cfda60e89c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LobbyIntroCinematic
+  playOnStart: 1
+  holdToSkipSeconds: 1.2
+  prepareTimeout: 10
+  shots:
+  - clip: {fileID: 32900000, guid: 492d9f602ffc1f544a75b29ac025fef8, type: 3}
+    still: {fileID: 0}
+    playClipAudio: 1
+    clipAudioVolume: 0.9
+    flicker: 0
+    start: 0.6
+    end: 4.6
+    playbackSpeed: 1
+    fadeIn: 1.2
+    scale: {x: 1, y: 1.03}
+  - clip: {fileID: 32900000, guid: 45d71c8d1174b6542a5bff0b39a648a7, type: 3}
+    still: {fileID: 0}
+    playClipAudio: 1
+    clipAudioVolume: 0.9
+    flicker: 0
+    start: 4.4
+    end: 8.4
+    playbackSpeed: 1
+    fadeIn: 0.4
+    scale: {x: 1.02, y: 1.06}
+  - clip: {fileID: 0}
+    still: {fileID: 2800000, guid: 0d208054208a35049bd382c57939601c, type: 3}
+    playClipAudio: 0
+    clipAudioVolume: 0
+    flicker: 0.35
+    start: 8.2
+    end: 10.6
+    playbackSpeed: 1
+    fadeIn: 0.3
+    scale: {x: 1, y: 1.09}
+  - clip: {fileID: 32900000, guid: 79bad2dae2ff2304089742645a34591d, type: 3}
+    still: {fileID: 0}
+    playClipAudio: 0
+    clipAudioVolume: 0
+    flicker: 0
+    start: 10.4
+    end: 20.6
+    playbackSpeed: 0.45
+    fadeIn: 0.4
+    scale: {x: 1.02, y: 1.12}
+  sounds:
+  - clip: {fileID: 8300000, guid: 603df870a61389f41bffdaf68144302a, type: 3}
+    at: 0
+    volume: 0.3
+    loop: 1
+    fadeIn: 1.5
+    fadeOutAt: 8.4
+    fadeOutDuration: 1
+  - clip: {fileID: 8300000, guid: 9304929028a4ed94a8a7aedc08a965cb, type: 3}
+    at: 0.2
+    volume: 0.5
+    loop: 0
+    fadeIn: 0
+    fadeOutAt: 0
+    fadeOutDuration: 1
+  - clip: {fileID: 8300000, guid: 779bf8ecc4d834d4a92a76509fb0eb0a, type: 3}
+    at: 8.4
+    volume: 0.8
+    loop: 0
+    fadeIn: 0
+    fadeOutAt: 0
+    fadeOutDuration: 1
+  - clip: {fileID: 8300000, guid: a09e59242ae998e408e04c6b87f37e31, type: 3}
+    at: 10.2
+    volume: 0.5
+    loop: 1
+    fadeIn: 1
+    fadeOutAt: 20.6
+    fadeOutDuration: 1
+  - clip: {fileID: 8300000, guid: 20ec1a4933c62d64bbfac9572fed44b9, type: 3}
+    at: 11
+    volume: 1
+    loop: 0
+    fadeIn: 0
+    fadeOutAt: 0
+    fadeOutDuration: 1
+  - clip: {fileID: 8300000, guid: 32250027ed3e1e24eb2e210a5333a91f, type: 3}
+    at: 15.8
+    volume: 0.9
+    loop: 0
+    fadeIn: 0
+    fadeOutAt: 0
+    fadeOutDuration: 1
+  - clip: {fileID: 8300000, guid: efd6d44e0bf22fe43be0f2d51388000d, type: 3}
+    at: 18.5
+    volume: 0.6
+    loop: 0
+    fadeIn: 0
+    fadeOutAt: 0
+    fadeOutDuration: 1
+  - clip: {fileID: 8300000, guid: c2ac84cbdd169294cac83e4c633aa27d, type: 3}
+    at: 21.4
+    volume: 0.9
+    loop: 0
+    fadeIn: 0
+    fadeOutAt: 0
+    fadeOutDuration: 1
+  subtitles:
+  - speaker: "\uC694\uC6D0"
+    text: "\uC5EC\uAE30\uAC00... \uB9D0\uB85C\uB9CC \uB4E3\uB358 \uADF8 AI \uC5F0\uAD6C\uC18C\uB85C\uAD70."
+    start: 11
+    end: 15.6
+  - speaker: "\uBCF8\uBD80 (\uD1B5\uD654)"
+    text: "\uADF8\uB798. 1\uCE35\uC740 \uD3C9\uBC94\uD55C \uD68C\uC0AC\uCC98\uB7FC
+      \uAFB8\uBA70\uB1A8\uC744 \uAC70\uC57C. \uC870\uC6A9\uD788 \uC6C0\uC9C1\uC5EC."
+    start: 15.8
+    end: 21
+  openingCaption: "02:13 AM  \xB7  NEXUS DATA SCIENCES HQ"
+  openingCaptionTime: {x: 0.8, y: 4.2}
+  titleTime: {x: 20.6, y: 24.4}
+  titleText: NEXUS
+  titleSubtext: "DATA SCIENCES  \xB7  1F LOBBY"
+  revealAt: 24.9
+  revealDuration: 1.2
+  gradeShader: {fileID: 4800000, guid: 5a4e9b65601ce8347a12371e1f053e4a, type: 3}
+  font: {fileID: 11400000, guid: 8d3019094b1de0d4f945de276623be45, type: 2}
+  letterboxAspect: 2.39
+  sortingOrder: 32500
+  grain: 0.05
+  vignette: 0.4
+  contrast: 1.12
+  saturation: 0.8
+--- !u!4 &874568385
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 874568383}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &878033520
 GameObject:
   m_ObjectHideFlags: 0
@@ -7521,8 +7837,7 @@ MonoBehaviour:
     persistUntilSceneChange: 0
     currentCount: 0
   - questId: lobby_find_elevator
-    questTitle: "\uC9C0\uD558 1\uCE35\uC73C\uB85C \uB0B4\uB824\uAC08 \uBC29\uBC95\uC744
-      \uCC3E\uC544\uB77C"
+    questTitle: "\uC5D8\uB9AC\uBCA0\uC774\uD130 \uBCF4\uC548 \uCF54\uB4DC\uB97C \uC54C\uC544\uB0B4\uB77C"
     requiredSignal: 
     progressScope: 1
     revealMode: 0
@@ -11500,6 +11815,7 @@ MonoBehaviour:
   colorOverrides: []
   audioOverrides: []
   triggerVisual: {fileID: 0}
+  playOnPlayerEnter: 1
 --- !u!114 &1091811267
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -18704,6 +19020,7 @@ MonoBehaviour:
   colorOverrides: []
   audioOverrides: []
   triggerVisual: {fileID: 0}
+  playOnPlayerEnter: 1
 --- !u!114 &1576243639
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19560,17 +19877,14 @@ MonoBehaviour:
   powerOff: {fileID: 672842809}
   initialState: 0
   flickerTargets:
-  - {fileID: 1786320536}
+  - {fileID: 638517469}
+  - {fileID: 896410010}
+  - {fileID: 1315114308}
   - {fileID: 999534212}
   - {fileID: 1837898735}
-  - {fileID: 550989934}
-  - {fileID: 1523717876}
   - {fileID: 1891086603}
-  - {fileID: 1751811006}
   - {fileID: 1786320536}
-  - {fileID: 638517469}
-  - {fileID: 1035966105}
-  - {fileID: 1417698364}
+  - {fileID: 1523717876}
   flickerCount: 3
   firstOffDuration: 0.8
   onDuration: 0.65
@@ -19598,8 +19912,9 @@ MonoBehaviour:
   subtitlesScript: {fileID: 8430087059669167798}
   mySubtitles:
   - "\uD655\uC778\uC744 \uBAA8\uB450 \uB05D\uB0C8\uB098?"
-  - "\uC810\uBA78\uD558\uB294 \uBD88\uBE5B\uC774 \uBCF4\uC774\uC9C0? \uADF8\uACF3\uC73C\uB85C
-    \uC774\uB3D9\uD558\uBA74 \uB41C\uB2E4."
+  - "\uC810\uBA78\uD558\uB294 \uBD88\uBE5B\uC774 \uBCF4\uC774\uC9C0? \uC6B0\uB9AC\uAC00
+    \uAE38\uC744 \uC54C\uB824\uC904\uD14C\uB2C8 \uC790\uB124\uB294 \uB530\uB77C\uB9CC
+    \uC624\uAC8C."
   walkietakie: {fileID: 0}
   revealPendingQuestAfterSubtitle: 1
   requiredQuestId: 
@@ -19615,6 +19930,7 @@ MonoBehaviour:
   - subtitleIndex: 1
     audioClip: {fileID: 8300000, guid: 0a049abeeb3dff7479ab693d67ac1d46, type: 3}
   triggerVisual: {fileID: 764410425}
+  playOnPlayerEnter: 1
 --- !u!114 &1661652711
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19632,8 +19948,18 @@ MonoBehaviour:
   powerController: {fileID: 0}
   focusTarget: {fileID: 999534213}
   focusTargetsByHint:
+  - hintId: EmployeeBadge
+    target: {fileID: 638517470}
+  - hintId: Office1Schedule
+    target: {fileID: 896410011}
   - hintId: Report
     target: {fileID: 1523717877}
+  - hintId: Monitor_Running
+    target: {fileID: 1315114309}
+  - hintId: WhiteBoard_Conf
+    target: {fileID: 1786320537}
+  - hintId: TV
+    target: {fileID: 1837898736}
   lookStartDelay: 0.12
   overshootDegrees: 1.5
   settleDuration: 0.22
@@ -20978,6 +21304,7 @@ MonoBehaviour:
   colorOverrides: []
   audioOverrides: []
   triggerVisual: {fileID: 0}
+  playOnPlayerEnter: 1
 --- !u!64 &1807771192
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -30985,7 +31312,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3650377660924838687}
-  m_Enabled: 0
+  m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -31286,13 +31613,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3650377660924838687}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.7071068, y: 0.7071068, z: -0, w: 0}
-  m_LocalPosition: {x: -23.47, y: 2.07, z: -30.94}
-  m_LocalScale: {x: 0.40676007, y: 1, z: 0.9160999}
+  m_LocalRotation: {x: 0.6885983, y: 0.6885983, z: -0.16072479, w: -0.16072479}
+  m_LocalPosition: {x: -28.23, y: 2.07, z: -24.91}
+  m_LocalScale: {x: 0.40676007, y: 1, z: 2.4278617}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3198835308442206272}
-  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 90}
+  m_LocalEulerAnglesHint: {x: 0, y: 206.276, z: 90}
 --- !u!1001 &2560878810252393628
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -32925,6 +33252,7 @@ Transform:
   - {fileID: 1807771190}
   - {fileID: 2373326762390677197}
   - {fileID: 7046571160237841995}
+  - {fileID: 142446263}
   - {fileID: 5502030899337054075}
   - {fileID: 2558918827389908169}
   - {fileID: 5940567036728046099}
@@ -37397,6 +37725,7 @@ MonoBehaviour:
   colorOverrides: []
   audioOverrides: []
   triggerVisual: {fileID: 0}
+  playOnPlayerEnter: 1
 --- !u!64 &4603368280858991991
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -41272,6 +41601,7 @@ MonoBehaviour:
   colorOverrides: []
   audioOverrides: []
   triggerVisual: {fileID: 0}
+  playOnPlayerEnter: 1
 --- !u!1 &5836994795606471766
 GameObject:
   m_ObjectHideFlags: 0
@@ -42745,8 +43075,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SubtitleTrigger
   subtitlesScript: {fileID: 8430087059669167798}
   mySubtitles:
-  - "\uC5D8\uB808\uBCA0\uC774\uD130\uAC00 \uC791\uB3D9\uB418\uC9C0 \uC54A\uB294\uB2E4.
-    \uBCF4\uC548\uCF54\uB4DC\uAC00 \uD544\uC694\uD55C \uB4EF \uD558\uB2E4."
+  - "\uC9C0\uD558 1\uCE35\uC73C\uB85C \uB0B4\uB824\uAC00\uB824\uBA74 \uC774 \uC5D8\uB9AC\uBCA0\uC774\uD130\uB97C
+    \uC774\uC6A9\uD574\uC57C \uD574"
+  - "\uBCF4\uC548 \uCF54\uB4DC\uB97C \uC5B4\uB514\uC11C \uC54C\uC544\uC57C \uD558\uC9C0?"
   walkietakie: {fileID: 0}
   revealPendingQuestAfterSubtitle: 0
   requiredQuestId: 
@@ -42754,6 +43085,7 @@ MonoBehaviour:
   colorOverrides: []
   audioOverrides: []
   triggerVisual: {fileID: 0}
+  playOnPlayerEnter: 1
 --- !u!4 &6484141456905887658
 Transform:
   m_ObjectHideFlags: 0
@@ -43399,8 +43731,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SubtitleTrigger
   subtitlesScript: {fileID: 8430087059669167798}
   mySubtitles:
-  - "\uC774\uACF3\uC5D0\uC11C \uB2E8\uC11C\uB97C \uCC3E\uC544\uC57C \uD560 \uAC83
-    \uAC19\uB2E4."
+  - "\uC774\uACF3\uC5D0\uC11C \uB2E8\uC11C\uB97C \uB354 \uCC3E\uC544\uC57C \uD560
+    \uAC83 \uAC19\uB2E4."
   walkietakie: {fileID: 0}
   revealPendingQuestAfterSubtitle: 0
   requiredQuestId: 
@@ -43408,6 +43740,7 @@ MonoBehaviour:
   colorOverrides: []
   audioOverrides: []
   triggerVisual: {fileID: 0}
+  playOnPlayerEnter: 1
 --- !u!64 &6769264308427489186
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -43620,6 +43953,7 @@ MonoBehaviour:
   colorOverrides: []
   audioOverrides: []
   triggerVisual: {fileID: 0}
+  playOnPlayerEnter: 1
 --- !u!23 &6858131457096277688
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -46456,6 +46790,7 @@ MonoBehaviour:
   colorOverrides: []
   audioOverrides: []
   triggerVisual: {fileID: 0}
+  playOnPlayerEnter: 1
 --- !u!23 &7713727050620978225
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -46588,10 +46923,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SubtitleTrigger
   subtitlesScript: {fileID: 8430087059669167798}
   mySubtitles:
+  - "\uC774\uACF3\uC744 \uC218\uC0C9\uD574 \uC5D8\uB9AC\uBCA0\uC774\uD130 \uBCF4\uC548
+    \uCF54\uB4DC\uC5D0 \uB300\uD55C \uAC78 \uCC3E\uC544\uC57C \uD560 \uAC83 \uAC19\uB2E4."
   - "\uC55E\uC5D0 CCTV\uAC00 \uC788\uB294 \uAC83 \uAC19\uC73C\uB2C8 \uC870\uC2EC\uD574\uC11C
     \uAC00\uC790"
-  - "\uC774 \uC548\uC73C\uB85C \uB4E4\uC5B4\uAC00\uBA74 \uC9C0\uD558\uB85C \uB0B4\uB824\uAC08
-    \uC218 \uC788\uB294 \uBC29\uBC95\uC744 \uCC3E\uC744 \uC218 \uC788\uC744 \uAC70\uC57C."
   walkietakie: {fileID: 0}
   revealPendingQuestAfterSubtitle: 1
   requiredQuestId: lobby_employee_badge
@@ -46599,6 +46934,7 @@ MonoBehaviour:
   colorOverrides: []
   audioOverrides: []
   triggerVisual: {fileID: 0}
+  playOnPlayerEnter: 1
 --- !u!33 &7780924365748762211
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -47554,7 +47890,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 1
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
@@ -48269,6 +48605,7 @@ MonoBehaviour:
   colorOverrides: []
   audioOverrides: []
   triggerVisual: {fileID: 0}
+  playOnPlayerEnter: 1
 --- !u!4 &8483474416858481729
 Transform:
   m_ObjectHideFlags: 0
@@ -48918,6 +49255,7 @@ MonoBehaviour:
   - subtitleIndex: 3
     audioClip: {fileID: 8300000, guid: 0a049abeeb3dff7479ab693d67ac1d46, type: 3}
   triggerVisual: {fileID: 895306137}
+  playOnPlayerEnter: 1
 --- !u!114 &8736550563334665739
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -49251,7 +49589,7 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 3, y: 5, z: 2}
+  m_Size: {x: 0.14, y: 0.08, z: 0.3}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!4 &8889921665161821242
 Transform:
@@ -50100,3 +50438,4 @@ SceneRoots:
   - {fileID: 612928564}
   - {fileID: 1188741532}
   - {fileID: 2048562238}
+  - {fileID: 874568385}
