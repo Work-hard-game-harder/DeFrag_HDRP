@@ -7606,6 +7606,176 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 846301374}
   m_CullTransparentMesh: 1
+--- !u!1 &874568383
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 874568385}
+  - component: {fileID: 874568384}
+  m_Layer: 0
+  m_Name: LobbyF Intro Cinematic
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &874568384
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 874568383}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c414a8bb2651c8842b5613cfda60e89c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LobbyIntroCinematic
+  playOnStart: 1
+  holdToSkipSeconds: 1.2
+  prepareTimeout: 10
+  shots:
+  - clip: {fileID: 32900000, guid: 492d9f602ffc1f544a75b29ac025fef8, type: 3}
+    still: {fileID: 0}
+    playClipAudio: 1
+    clipAudioVolume: 0.9
+    flicker: 0
+    start: 0.6
+    end: 4.6
+    playbackSpeed: 1
+    fadeIn: 1.2
+    scale: {x: 1, y: 1.03}
+  - clip: {fileID: 32900000, guid: 45d71c8d1174b6542a5bff0b39a648a7, type: 3}
+    still: {fileID: 0}
+    playClipAudio: 1
+    clipAudioVolume: 0.9
+    flicker: 0
+    start: 4.4
+    end: 8.4
+    playbackSpeed: 1
+    fadeIn: 0.4
+    scale: {x: 1.02, y: 1.06}
+  - clip: {fileID: 0}
+    still: {fileID: 2800000, guid: 0d208054208a35049bd382c57939601c, type: 3}
+    playClipAudio: 0
+    clipAudioVolume: 0
+    flicker: 0.35
+    start: 8.2
+    end: 10.6
+    playbackSpeed: 1
+    fadeIn: 0.3
+    scale: {x: 1, y: 1.09}
+  - clip: {fileID: 32900000, guid: 79bad2dae2ff2304089742645a34591d, type: 3}
+    still: {fileID: 0}
+    playClipAudio: 0
+    clipAudioVolume: 0
+    flicker: 0
+    start: 10.4
+    end: 20.6
+    playbackSpeed: 0.45
+    fadeIn: 0.4
+    scale: {x: 1.02, y: 1.12}
+  sounds:
+  - clip: {fileID: 8300000, guid: 603df870a61389f41bffdaf68144302a, type: 3}
+    at: 0
+    volume: 0.3
+    loop: 1
+    fadeIn: 1.5
+    fadeOutAt: 8.4
+    fadeOutDuration: 1
+  - clip: {fileID: 8300000, guid: 9304929028a4ed94a8a7aedc08a965cb, type: 3}
+    at: 0.2
+    volume: 0.5
+    loop: 0
+    fadeIn: 0
+    fadeOutAt: 0
+    fadeOutDuration: 1
+  - clip: {fileID: 8300000, guid: 779bf8ecc4d834d4a92a76509fb0eb0a, type: 3}
+    at: 8.4
+    volume: 0.8
+    loop: 0
+    fadeIn: 0
+    fadeOutAt: 0
+    fadeOutDuration: 1
+  - clip: {fileID: 8300000, guid: a09e59242ae998e408e04c6b87f37e31, type: 3}
+    at: 10.2
+    volume: 0.5
+    loop: 1
+    fadeIn: 1
+    fadeOutAt: 20.6
+    fadeOutDuration: 1
+  - clip: {fileID: 8300000, guid: 20ec1a4933c62d64bbfac9572fed44b9, type: 3}
+    at: 11
+    volume: 1
+    loop: 0
+    fadeIn: 0
+    fadeOutAt: 0
+    fadeOutDuration: 1
+  - clip: {fileID: 8300000, guid: 32250027ed3e1e24eb2e210a5333a91f, type: 3}
+    at: 15.8
+    volume: 0.9
+    loop: 0
+    fadeIn: 0
+    fadeOutAt: 0
+    fadeOutDuration: 1
+  - clip: {fileID: 8300000, guid: efd6d44e0bf22fe43be0f2d51388000d, type: 3}
+    at: 18.5
+    volume: 0.6
+    loop: 0
+    fadeIn: 0
+    fadeOutAt: 0
+    fadeOutDuration: 1
+  - clip: {fileID: 8300000, guid: c2ac84cbdd169294cac83e4c633aa27d, type: 3}
+    at: 21.4
+    volume: 0.9
+    loop: 0
+    fadeIn: 0
+    fadeOutAt: 0
+    fadeOutDuration: 1
+  subtitles:
+  - speaker: "\uC694\uC6D0"
+    text: "\uC5EC\uAE30\uAC00... \uB9D0\uB85C\uB9CC \uB4E3\uB358 \uADF8 AI \uC5F0\uAD6C\uC18C\uB85C\uAD70."
+    start: 11
+    end: 15.6
+  - speaker: "\uBCF8\uBD80 (\uD1B5\uD654)"
+    text: "\uADF8\uB798. 1\uCE35\uC740 \uD3C9\uBC94\uD55C \uD68C\uC0AC\uCC98\uB7FC
+      \uAFB8\uBA70\uB1A8\uC744 \uAC70\uC57C. \uC870\uC6A9\uD788 \uC6C0\uC9C1\uC5EC."
+    start: 15.8
+    end: 21
+  openingCaption: "02:13 AM  \xB7  NEXUS DATA SCIENCES HQ"
+  openingCaptionTime: {x: 0.8, y: 4.2}
+  titleTime: {x: 20.6, y: 24.4}
+  titleText: NEXUS
+  titleSubtext: "DATA SCIENCES  \xB7  1F LOBBY"
+  revealAt: 24.9
+  revealDuration: 1.2
+  gradeShader: {fileID: 4800000, guid: 5a4e9b65601ce8347a12371e1f053e4a, type: 3}
+  font: {fileID: 11400000, guid: 8d3019094b1de0d4f945de276623be45, type: 2}
+  letterboxAspect: 2.39
+  sortingOrder: 32500
+  grain: 0.05
+  vignette: 0.4
+  contrast: 1.12
+  saturation: 0.8
+--- !u!4 &874568385
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 874568383}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &878033520
 GameObject:
   m_ObjectHideFlags: 0
@@ -50268,3 +50438,4 @@ SceneRoots:
   - {fileID: 612928564}
   - {fileID: 1188741532}
   - {fileID: 2048562238}
+  - {fileID: 874568385}
