@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,9 +13,10 @@ public sealed class CameraViewfinderHud : MonoBehaviour
     private const float BootDuration = 0.45f;
     private const int BatterySegments = 5;
 
-    private static readonly Color HudWhite = new(0.9f, 0.97f, 0.95f, 0.92f);
-    private static readonly Color RecRed = new(1f, 0.2f, 0.16f, 1f);
-    private static readonly Color IrGreen = new(0.45f, 1f, 0.4f, 0.95f);
+    private static readonly Color HudWhite = new(1f, 1f, 1f, 0.94f);
+    private static readonly Color RecRed = new(1f, 0.24f, 0.18f, 1f);
+    private static readonly Color IrGreen = new(0.28f, 1f, 0.76f, 0.96f);
+    private static readonly Color RailColor = new(0.015f, 0.035f, 0.04f, 0.62f);
 
     private CameraItem item;
     private Canvas canvas;
@@ -23,6 +25,7 @@ public sealed class CameraViewfinderHud : MonoBehaviour
     private RawImage noise;
     private Image irTint, flash, recDot;
     private Image[] battery;
+    private readonly List<Image> themedDecorations = new();
     private RectTransform meterMarker;
     private TMP_Text rec, timecode, batteryLabel, mode, exposure, device, hints, toast, lowBattery;
     private Texture2D noiseTexture;
@@ -30,7 +33,6 @@ public sealed class CameraViewfinderHud : MonoBehaviour
     private float recordSeconds;
     private float flashAlpha;
     private float toastUntil;
-    private int photoCount;
     private bool visible;
 
     public void Initialize(CameraItem cameraItem, int sortingOrder)
@@ -64,10 +66,9 @@ public sealed class CameraViewfinderHud : MonoBehaviour
 
     private void OnPhotoTaken()
     {
-        photoCount++;
         flashAlpha = 0.85f;
         toastUntil = Time.unscaledTime + 1.1f;
-        toast.text = $"■ CAPTURED   IMG {photoCount:0000}";
+        toast.text = "■ CAPTURED!";
     }
 
     private void Update()
@@ -79,6 +80,7 @@ public sealed class CameraViewfinderHud : MonoBehaviour
 
         bool ir = item.CurrentMode == CameraItem.CameraMode.Infrared;
         Color hud = ir ? IrGreen : HudWhite;
+        ApplyTheme(hud);
         CameraBattery cell = item.Battery;
         float charge = cell != null ? cell.ChargeRatio : 1f;
 
@@ -156,62 +158,103 @@ public sealed class CameraViewfinderHud : MonoBehaviour
         vignette.raycastTarget = false;
         RuntimeUi.Stretch(vignette.rectTransform);
 
+        AddStatusRails(root);
+
         frame = new GameObject("Frame", typeof(RectTransform)).GetComponent<RectTransform>();
         frame.SetParent(root, false);
-        RuntimeUi.Stretch(frame, 70f);
-        AddBrackets(frame, 110f, 4f);
+        RuntimeUi.Stretch(frame, 56f);
+        AddBrackets(frame, 86f, 3f);
         AddReticle(root);
 
         // Top-left: REC + timecode
         recDot = RuntimeUi.Panel("Rec Dot", frame, RecRed);
-        Anchor(recDot.rectTransform, new Vector2(0f, 1f), new Vector2(40f, -44f), new Vector2(22f, 22f));
+        Anchor(recDot.rectTransform, new Vector2(0f, 1f), new Vector2(30f, -34f), new Vector2(16f, 16f));
         recDot.sprite = CircleSprite();
-        rec = Label("REC", frame, 34f, TextAlignmentOptions.MidlineLeft, new Vector2(0f, 1f), new Vector2(66f, -44f), new Vector2(120f, 40f));
-        rec.text = "REC";
-        timecode = Label("Timecode", frame, 30f, TextAlignmentOptions.MidlineLeft, new Vector2(0f, 1f), new Vector2(160f, -44f), new Vector2(260f, 40f));
+        rec = Label("REC", frame, 24f, TextAlignmentOptions.MidlineLeft, new Vector2(0f, 1f), new Vector2(50f, -34f), new Vector2(90f, 34f));
+        rec.text = "LIVE";
+        timecode = Label("Timecode", frame, 24f, TextAlignmentOptions.MidlineLeft, new Vector2(0f, 1f), new Vector2(122f, -34f), new Vector2(250f, 34f));
 
         // Top-right: battery
         battery = new Image[BatterySegments];
         for (int i = 0; i < BatterySegments; i++)
         {
             battery[i] = RuntimeUi.Panel($"Cell {i}", frame, HudWhite);
-            Anchor(battery[i].rectTransform, new Vector2(1f, 1f), new Vector2(-210f + i * 26f, -44f), new Vector2(20f, 26f));
+            Anchor(battery[i].rectTransform, new Vector2(1f, 1f), new Vector2(-174f + i * 21f, -34f), new Vector2(15f, 20f));
         }
-        batteryLabel = Label("Battery", frame, 24f, TextAlignmentOptions.MidlineRight, new Vector2(1f, 1f), new Vector2(-250f, -44f), new Vector2(170f, 34f));
+        batteryLabel = Label("Battery", frame, 21f, TextAlignmentOptions.MidlineRight, new Vector2(1f, 1f), new Vector2(-212f, -34f), new Vector2(150f, 30f));
         batteryLabel.rectTransform.pivot = new Vector2(1f, 0.5f);
 
         // Bottom-left: mode + exposure + device
-        mode = Label("Mode", frame, 30f, TextAlignmentOptions.MidlineLeft, new Vector2(0f, 0f), new Vector2(40f, 96f), new Vector2(520f, 40f));
-        exposure = Label("Exposure", frame, 22f, TextAlignmentOptions.MidlineLeft, new Vector2(0f, 0f), new Vector2(40f, 62f), new Vector2(520f, 30f));
-        exposure.text = "ISO 3200   F2.8   1/60   AWB";
-        device = Label("Device", frame, 20f, TextAlignmentOptions.MidlineLeft, new Vector2(0f, 0f), new Vector2(40f, 32f), new Vector2(520f, 28f));
-        device.text = "NVCAM-01  //  DEFRAG FIELD UNIT";
+        mode = Label("Mode", frame, 25f, TextAlignmentOptions.MidlineLeft, new Vector2(0f, 0f), new Vector2(30f, 74f), new Vector2(440f, 34f));
+        exposure = Label("Exposure", frame, 19f, TextAlignmentOptions.MidlineLeft, new Vector2(0f, 0f), new Vector2(30f, 46f), new Vector2(440f, 26f));
+        exposure.text = "ISO 3200  ·  F2.8  ·  1/60  ·  AWB";
+        device = Label("Device", frame, 17f, TextAlignmentOptions.MidlineLeft, new Vector2(0f, 0f), new Vector2(30f, 21f), new Vector2(440f, 24f));
+        device.text = "NVCAM-01  /  FIELD UNIT";
 
         // Bottom-right: key hints
-        hints = Label("Hints", frame, 22f, TextAlignmentOptions.MidlineRight, new Vector2(1f, 0f), new Vector2(-40f, 40f), new Vector2(700f, 30f));
+        hints = Label("Hints", frame, 18f, TextAlignmentOptions.MidlineRight, new Vector2(1f, 0f), new Vector2(-30f, 28f), new Vector2(660f, 28f));
         hints.rectTransform.pivot = new Vector2(1f, 0.5f);
-        hints.text = "[우클릭] IR 전환    [좌클릭] 촬영    [C] 내리기";
+        hints.text = "RMB  IR MODE     LMB  CAPTURE     C  LOWER";
 
         // Bottom-centre exposure meter
         RectTransform meter = new GameObject("Meter", typeof(RectTransform)).GetComponent<RectTransform>();
         meter.SetParent(frame, false);
-        Anchor(meter, new Vector2(0.5f, 0f), new Vector2(0f, 110f), new Vector2(340f, 30f));
+        Anchor(meter, new Vector2(0.5f, 0f), new Vector2(0f, 72f), new Vector2(300f, 26f));
         for (int i = -3; i <= 3; i++)
         {
             Image tick = RuntimeUi.Panel($"Tick {i}", meter, new Color(1f, 1f, 1f, 0.55f));
-            Anchor(tick.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(i * 50f, 0f), new Vector2(i == 0 ? 4f : 2f, i == 0 ? 22f : 12f));
+            Anchor(tick.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(i * 42f, 0f), new Vector2(i == 0 ? 3f : 2f, i == 0 ? 18f : 10f));
+            themedDecorations.Add(tick);
         }
         Image marker = RuntimeUi.Panel("Marker", meter, HudWhite);
+        themedDecorations.Add(marker);
         meterMarker = marker.rectTransform;
         Anchor(meterMarker, new Vector2(0.5f, 0.5f), new Vector2(0f, -16f), new Vector2(10f, 10f));
 
-        toast = Label("Toast", root, 34f, TextAlignmentOptions.Center, new Vector2(0.5f, 0.5f), new Vector2(0f, -170f), new Vector2(700f, 50f));
-        lowBattery = Label("Low Battery", root, 40f, TextAlignmentOptions.Center, new Vector2(0.5f, 0.5f), new Vector2(0f, 160f), new Vector2(700f, 60f));
+        toast = Label("Toast", root, 28f, TextAlignmentOptions.Center, new Vector2(0.5f, 0.5f), new Vector2(0f, -152f), new Vector2(620f, 44f));
+        lowBattery = Label("Low Battery", root, 34f, TextAlignmentOptions.Center, new Vector2(0.5f, 0.5f), new Vector2(0f, 145f), new Vector2(620f, 52f));
         lowBattery.text = "LOW BATTERY";
         lowBattery.color = RecRed;
 
         flash = RuntimeUi.Panel("Shutter Flash", root, Color.clear);
         RuntimeUi.Stretch(flash.rectTransform);
+    }
+
+    private void AddStatusRails(Transform root)
+    {
+        Image top = RuntimeUi.Panel("Top Status Rail", root, RailColor);
+        RectTransform topRect = top.rectTransform;
+        topRect.anchorMin = new Vector2(0f, 1f);
+        topRect.anchorMax = Vector2.one;
+        topRect.pivot = new Vector2(0.5f, 1f);
+        topRect.anchoredPosition = Vector2.zero;
+        topRect.sizeDelta = new Vector2(0f, 94f);
+
+        Image bottom = RuntimeUi.Panel("Bottom Status Rail", root, RailColor);
+        RectTransform bottomRect = bottom.rectTransform;
+        bottomRect.anchorMin = Vector2.zero;
+        bottomRect.anchorMax = new Vector2(1f, 0f);
+        bottomRect.pivot = new Vector2(0.5f, 0f);
+        bottomRect.anchoredPosition = Vector2.zero;
+        bottomRect.sizeDelta = new Vector2(0f, 112f);
+
+        Image topLine = RuntimeUi.Panel("Top Accent", root, new Color(HudWhite.r, HudWhite.g, HudWhite.b, 0.28f));
+        themedDecorations.Add(topLine);
+        RectTransform topLineRect = topLine.rectTransform;
+        topLineRect.anchorMin = new Vector2(0f, 1f);
+        topLineRect.anchorMax = Vector2.one;
+        topLineRect.pivot = new Vector2(0.5f, 1f);
+        topLineRect.anchoredPosition = new Vector2(0f, -94f);
+        topLineRect.sizeDelta = new Vector2(0f, 2f);
+
+        Image bottomLine = RuntimeUi.Panel("Bottom Accent", root, new Color(HudWhite.r, HudWhite.g, HudWhite.b, 0.22f));
+        themedDecorations.Add(bottomLine);
+        RectTransform bottomLineRect = bottomLine.rectTransform;
+        bottomLineRect.anchorMin = Vector2.zero;
+        bottomLineRect.anchorMax = new Vector2(1f, 0f);
+        bottomLineRect.pivot = new Vector2(0.5f, 0f);
+        bottomLineRect.anchoredPosition = new Vector2(0f, 112f);
+        bottomLineRect.sizeDelta = new Vector2(0f, 2f);
     }
 
     private static TMP_Text Label(string name, Transform parent, float size, TextAlignmentOptions alignment,
@@ -224,6 +267,21 @@ public sealed class CameraViewfinderHud : MonoBehaviour
         return text;
     }
 
+    private void ApplyTheme(Color theme)
+    {
+        foreach (Image decoration in themedDecorations)
+        {
+            if (decoration == null)
+                continue;
+
+            Color color = decoration.color;
+            color.r = theme.r;
+            color.g = theme.g;
+            color.b = theme.b;
+            decoration.color = color;
+        }
+    }
+
     private static void Anchor(RectTransform rect, Vector2 anchor, Vector2 position, Vector2 size)
     {
         rect.anchorMin = rect.anchorMax = anchor;
@@ -232,20 +290,22 @@ public sealed class CameraViewfinderHud : MonoBehaviour
         rect.sizeDelta = size;
     }
 
-    private static void AddBrackets(RectTransform target, float length, float thickness)
+    private void AddBrackets(RectTransform target, float length, float thickness)
     {
         for (int corner = 0; corner < 4; corner++)
         {
             Vector2 anchor = new(corner % 2, corner / 2);
             Vector2 inward = new(anchor.x > 0.5f ? -1f : 1f, anchor.y > 0.5f ? -1f : 1f);
             Image horizontal = RuntimeUi.Panel("Bracket H", target, HudWhite);
+            themedDecorations.Add(horizontal);
             Anchor(horizontal.rectTransform, anchor, new Vector2(inward.x * length * 0.5f, inward.y * thickness * 0.5f), new Vector2(length, thickness));
             Image vertical = RuntimeUi.Panel("Bracket V", target, HudWhite);
+            themedDecorations.Add(vertical);
             Anchor(vertical.rectTransform, anchor, new Vector2(inward.x * thickness * 0.5f, inward.y * length * 0.5f), new Vector2(thickness, length));
         }
     }
 
-    private static void AddReticle(Transform parent)
+    private void AddReticle(Transform parent)
     {
         Color color = new(1f, 1f, 1f, 0.7f);
         (Vector2 pos, Vector2 size)[] arms =
@@ -256,9 +316,11 @@ public sealed class CameraViewfinderHud : MonoBehaviour
         foreach (var arm in arms)
         {
             Image line = RuntimeUi.Panel("Reticle", parent, color);
+            themedDecorations.Add(line);
             Anchor(line.rectTransform, new Vector2(0.5f, 0.5f), arm.pos, arm.size);
         }
         Image dot = RuntimeUi.Panel("Reticle Dot", parent, color);
+        themedDecorations.Add(dot);
         Anchor(dot.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(5f, 5f));
     }
 
