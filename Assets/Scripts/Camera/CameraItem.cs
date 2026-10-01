@@ -116,7 +116,6 @@ public sealed class CameraItem : MonoBehaviour
             : CameraMode.Normal);
         if (audioSource != null && clickSound != null)
             audioSource.PlayOneShot(clickSound);
-        UiSfx.Play(currentMode == CameraMode.Infrared ? UiCue.IrOn : UiCue.IrOff, 0.9f);
     }
 
     private void SetMode(CameraMode mode)
@@ -153,8 +152,8 @@ public sealed class CameraItem : MonoBehaviour
         if (audioSource != null && shutterSound != null)
             audioSource.PlayOneShot(shutterSound);
 
+        // This is an in-game shutter signal only. No screenshot or image file is created.
         PhotoTaken?.Invoke();
-        Debug.Log("Photo Taken!");
     }
 
     public void SetEquipped(bool equipped)

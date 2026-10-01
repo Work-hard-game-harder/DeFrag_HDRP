@@ -45,6 +45,7 @@ public sealed class CameraViewSwitcher : MonoBehaviour
     private Vector3 restPosition;
     private Quaternion restRotation;
     private CameraViewfinderHud hud;
+    private CameraShutterFlash shutterFlash;
     private AudioSource sfx;
     private AudioClip raiseClip, powerOnClip, lowerClip;
 
@@ -58,6 +59,7 @@ public sealed class CameraViewSwitcher : MonoBehaviour
     private void Awake()
     {
         equipment = GetComponent<EquipmentController>();
+        EnsureShutterFlash();
         SetCameraViewActive(false);
     }
 
@@ -72,13 +74,19 @@ public sealed class CameraViewSwitcher : MonoBehaviour
     private void OnEnable()
     {
         if (cameraItem != null)
+        {
             cameraItem.ViewActiveChanged += OnItemViewRequested;
+            cameraItem.PhotoTaken += OnPhotoTaken;
+        }
     }
 
     private void OnDisable()
     {
         if (cameraItem != null)
+        {
             cameraItem.ViewActiveChanged -= OnItemViewRequested;
+            cameraItem.PhotoTaken -= OnPhotoTaken;
+        }
 
         CancelToLowered();
     }
@@ -130,12 +138,25 @@ public sealed class CameraViewSwitcher : MonoBehaviour
         CameraItem equipmentCameraItem,
         Canvas overlayCanvas)
     {
+        if (isActiveAndEnabled && cameraItem != null)
+        {
+            cameraItem.ViewActiveChanged -= OnItemViewRequested;
+            cameraItem.PhotoTaken -= OnPhotoTaken;
+        }
+
         playerCamera = sourceCamera;
         playerAudioListener = sourceAudioListener;
         itemCamera = equipmentCamera;
         itemAudioListener = equipmentAudioListener;
         cameraItem = equipmentCameraItem;
         cameraOverlayCanvas = overlayCanvas;
+        EnsureShutterFlash();
+
+        if (isActiveAndEnabled && cameraItem != null)
+        {
+            cameraItem.ViewActiveChanged += OnItemViewRequested;
+            cameraItem.PhotoTaken += OnPhotoTaken;
+        }
     }
 
     public void SetLocalPresentationEnabled(bool enabled)
@@ -344,6 +365,27 @@ public sealed class CameraViewSwitcher : MonoBehaviour
         hud = gameObject.AddComponent<CameraViewfinderHud>();
         hud.Initialize(cameraItem, cameraOverlayCanvas.sortingOrder - 1);
         if (IsCameraViewActive) hud.Show(false);
+    }
+
+    private void EnsureShutterFlash()
+    {
+        if (cameraOverlayCanvas == null)
+            return;
+
+        if (shutterFlash == null)
+            shutterFlash = GetComponent<CameraShutterFlash>();
+        if (shutterFlash == null)
+            shutterFlash = gameObject.AddComponent<CameraShutterFlash>();
+
+        shutterFlash.Initialize(cameraOverlayCanvas);
+    }
+
+    private void OnPhotoTaken()
+    {
+        if (!localPresentationEnabled || !IsCameraViewActive)
+            return;
+
+        shutterFlash?.Play();
     }
 
     private void Play(AudioClip clip, float volume)
