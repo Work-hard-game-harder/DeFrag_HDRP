@@ -47,6 +47,9 @@
   - 추가 제작 예산은 1000크레딧이고, 그 이상은 사용자 승인이 필요하다.
   - 생성 전에는 반드시 `get_generation_cost`로 견적을 받는다.
   - 음악 견적: Lyria 3 Pro 300, Lyria 3 150 (30초 기준).
+  - **영상 작업 순서 (사용자 지시):** 영상을 먼저 만들지 않는다. 스토리보드 스틸을 한 장의 격자 이미지(Nano Banana 2 i2i, 200)로 일관되게 뽑아 보여주고, 사용자가 허가한 뒤에만 그 컷을 시작/끝 프레임으로 영상을 만든다.
+  - 캐릭터 생김새를 모르면 추측하지 말고 Unity에서 플레이어 모델을 캡처하거나 사용자에게 이미지를 요청한다.
+  - 사용자에게는 한국어로만 답한다.
 - **보안 (다시 시도하지 말 것):**
   - `~/.claude.json`은 자격 증명 파일이라 읽지 않는다.
   - 파일로 에디터 코드를 실행하는 브리지는 만들지 않는다.
@@ -313,7 +316,35 @@
 - **기존 문제 참고:** 예전 UI는 PersonController를 끄지 않아서, 입력 중 W/A/S/D를 누르면 캐릭터가 움직일 수 있었다. 새 패널에서는 막힌다.
 - **소리:** `UiSfx`의 KeyType(터치 위치에 따라 음높이), MenuBack(DEL), MenuConfirm(ENTER), AccessDenied, TaskSuccess, TerminalBoot/Close를 쓴다.
 
+**LobbyF 오프닝 시네마틱** (2026-10-01 노트북)
+- LobbyF에 들어올 때마다 로컬 화면에서 약 26초짜리 시네마틱을 재생한 뒤 게임을 시작한다. 네트워크 상태는 만들지 않는다 (피어마다 각자 재생).
+- **`Scripts/Lobby/LobbyIntroCinematic`** (씬 오브젝트 `LobbyF Intro Cinematic`):
+  - `Shot` 목록: VideoClip 또는 정지 이미지(`still`). 샷별 시작·끝, 재생 속도, 페이드, 확대(push-in), 깜빡임(`flicker`), 영상 자체 소리(`playClipAudio`).
+  - `SoundCue` 목록(효과음·VO·BGM, 페이드), `SubtitleLine` 목록(화자 + 대사), 시작 캡션, NEXUS 타이틀 카드, `revealAt`에서 게임 화면으로 페이드.
+  - 모든 영상이 Prepare된 뒤 시작하고, `prepareTimeout`(10초) 안에 준비되지 않으면 건너뛴다. Space/Enter를 1.2초 누르면 스킵한다.
+  - 재생 중에는 `GameplayInputGate`, 로컬 PersonController 비활성, `AudioListener.pause`(시네마틱 소리는 `ignoreListenerPause`)로 게임을 멈춘다.
+  - 캔버스 sortingOrder 32500(자막 박스 32000보다 위). 정적 `IsPlaying`과 `Finished` 이벤트를 제공한다.
+  - 필름 룩은 `Assets/Shaders/HiddenCinematicGrade.shader`(`Hidden/DeFrag/CinematicGrade`): 노출, 대비, 채도, 스플릿 톤, 비네트, 색수차, 그레인.
+- **현재 구성:** 영상 3개 + 정지 컷 1개.
+  - Shot1 `Intro_Shot1_Arrival.mp4`(건물 외관 → 걸어감, Veo 생성 발소리 포함) 0.6–4.6초.
+  - Shot2 `Intro_Shot2_Lock.mp4`(유리문 잠금 따기, Veo 생성 소리 포함) 4.4–8.4초.
+  - 정지 컷 `Art/LobbyF/IntroCinematic/Intro_Cut4_Entry.jpg`(문으로 들어가는 실루엣, 깜빡임) 8.2–10.6초.
+  - Shot3 `Intro_Shot3_Lobby.mp4`(로비 안, 전화 통화, 무음) 10.4–20.6초, 속도 0.45.
+  - VO: 요원 `Intro_VO_Agent_A.mp3`(11.0초, "여기가... 말로만 듣던 그 AI 연구소로군."), 본부 통화 `Intro_VO_Partner.mp3`(15.8초).
+  - 타이틀 20.6–24.4초, 게임 화면 공개 24.9초.
+- **영상 파일:** `Assets/Movies/LobbyF/Intro/`. Veo 3.1 Lite 결과(1280×720, 24fps, H.264 High + B-프레임)라서 VideoClipImporter의 **트랜스코딩을 켜 두었다**. 끄면 Windows 디코더에서 멈출 수 있다. Shot1·2는 `importAudio`를 켜야 소리가 난다.
+- **소리:** `Assets/SoundSources/LobbyF/Intro/`. 합성음은 `node Tools/Claude/gen_intro_sfx.js Assets/SoundSources/LobbyF/Intro`로 다시 만든다. 영상 자체 소리와 겹치는 발소리·잠금 효과음 큐는 뺐다 (파일은 남아 있음).
+- **스토리보드 원본:** `Assets/Art/LobbyF/IntroCinematic/Source~/` (승인본 `Intro_Storyboard_6.png`, 컷별 `Cut1~6.jpg`, 반려본 폴더들). `~` 폴더라 임포트되지 않는다.
+- **팀원 코드와의 연결 (좁은 수정):**
+  - `SubtitleTrigger.TryPlayForPlayer`: 시네마틱 중에는 대기한다.
+  - `SubtitleIntroPresentation.PlayAfterInitialization`: 시네마틱이 끝난 뒤 시작 자막("성공적으로 잠입한 것 같군." 무전기 인트로)을 재생한다.
+- **함정:** 이 프로젝트는 Enter Play Mode Options로 도메인·씬 리로드가 꺼져 있다. 정적 값과 직렬화 안 된 필드가 이전 실행에서 남으므로, `RuntimeInitializeOnLoadMethod(SubsystemRegistration)`로 정적 값을, `Start`에서 phase를 초기화한다. 새 컴포넌트도 같은 처리가 필요하다.
+
 ## 현재 상태 (최신화할 것)
+
+- **LobbyF 오프닝 시네마틱 (2026-10-01 노트북, 미커밋):** 플레이 모드 캡처로 전체 흐름 확인. **LobbyF 씬 저장 필요.**
+  - 확인 못 한 것: 소리를 귀로 들어 본 것(영상 자체 소리 볼륨, VO 타이밍), 실제 2인 네트워크 진입(호스트·클라이언트 각각 재생되는지, 끝난 뒤 조작 복원), 빌드에서의 영상 재생.
+  - Shot3 중간(약 12~13초)에 Veo 전환 때문에 두 캐릭터 머리가 화면을 크게 가리는 프레임이 있다. 거슬리면 Shot3 시작 구간을 조정한다.
 
 - **진행 중: LobbyF 개선 (2026-09-29 시작, 메인 PC).** 작업량 제한으로 끊기면 새 세션은 이 목록에서 체크 안 된 항목부터 이어서 한다. 항목을 끝낼 때마다 체크하고, 작업 로그에 한 줄씩 남긴다.
   - Artlist 예산: 이 작업에만 3000크레딧까지 쓸 수 있다. 사용량은 아래 크레딧 장부에 기록한다.
@@ -363,7 +394,10 @@
 
 ## Artlist 크레딧 장부
 
-- **누적 사용:** 1853 (플랜 16,500 중).
+- **누적 사용:** 4846 (플랜 16,500 중, 2026-10-01 잔액 11,654로 확인).
+- **LobbyF 오프닝 시네마틱 (2026-10-01, 기본 1000 + 사용자 승인 약 960, 실제 약 2993):**
+  - 반려·낭비: 승인 전에 만든 첫 영상 묶음 971, 키프레임 v2 200, 수정 편집 3회 600. 이 때문에 "스토리보드 먼저" 규칙이 생겼다.
+  - 승인본 스토리보드 격자 1장 200, 최종 영상 3개 1004(Veo 3.1 Lite 720p 4초: 소리 포함 376, 무음 252), 음성 18(Eleven v3).
 - **LobbyF 개선 (별도 예산 3000 중 1270):**
   - 엘리베이터 키패드 원화 1장(Nano Banana 2, 90).
   - 벽 스크린 이미지 1180:
@@ -378,6 +412,19 @@
 - **문 파손 2:** 0크레딧 (효과음은 코드로 합성).
 
 ## 작업 로그 (최신이 위)
+
+### 2026-10-01 · 노트북 · LobbyF 오프닝 시네마틱
+- **한 일:** 위 "LobbyF 오프닝 시네마틱" 참고.
+  - 새 파일: `Scripts/Lobby/LobbyIntroCinematic.cs`, `Shaders/HiddenCinematicGrade.shader`, `Tools/Claude/gen_intro_sfx.js`, `Movies/LobbyF/Intro/`(영상 3), `SoundSources/LobbyF/Intro/`(합성음 + VO), `Art/LobbyF/IntroCinematic/`.
+  - 팀원 코드 좁은 수정: `SubtitleTrigger`, `SubtitleIntroPresentation` (시네마틱이 끝날 때까지 대기).
+  - LobbyF 씬에 `LobbyF Intro Cinematic` 오브젝트를 추가하고 타임라인을 설정했다 (MCP, **저장 안 함**).
+  - 사용자 피드백: 캐릭터 후드는 옆으로 넓게 퍼진 납작한 귀(서 있는 귀·롭이어 아님), 근육질이 아닌 정장, 건물은 버려진 평범한 회사로 위장, LobbyF 시작 지점 배경과 이어질 것, 배경보다 플레이어 묘사 우선, 진중한 목소리.
+- **검증한 것:**
+  - 오프라인 컴파일 에러 0, Unity 콘솔 에러 0.
+  - 플레이 모드 캡처: 시작 캡션 → 외관 → 잠금 → 진입 컷 → 로비 + 자막 2줄 → NEXUS 타이틀 → 게임 화면, 이어서 팀원의 무전기 시작 자막이 뜬다.
+  - 처음엔 리로드가 꺼진 플레이 진입 때문에 시네마틱이 시작되지 않았고, 팀원 시작 자막과 겹쳤다. 둘 다 고쳤다.
+  - 그레인 해시의 정밀도 문제로 생긴 대각선 줄무늬를 고쳤고, 그림자 톤을 바꿔 보라 기운을 줄였다.
+- **검증 못 한 것:** 소리 청취, 2인 네트워크, 빌드.
 
 ### 2026-09-29 · 노트북 · LobbyF 가로·대형 스크린 Nexus 홍보 영상
 - **한 일:** 위 "Nexus 홍보 영상으로 교체" 참고.
