@@ -2912,6 +2912,7 @@ MonoBehaviour:
   - subtitleIndex: 2
     audioClip: {fileID: 8300000, guid: 0a049abeeb3dff7479ab693d67ac1d46, type: 3}
   triggerVisual: {fileID: 0}
+  playOnPlayerEnter: 1
 --- !u!65 &134077247
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3423,6 +3424,7 @@ MonoBehaviour:
   colorOverrides: []
   audioOverrides: []
   triggerVisual: {fileID: 0}
+  playOnPlayerEnter: 1
 --- !u!65 &165681821
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -3955,6 +3957,7 @@ MonoBehaviour:
   colorOverrides: []
   audioOverrides: []
   triggerVisual: {fileID: 0}
+  playOnPlayerEnter: 1
 --- !u!65 &219570074
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -13533,6 +13536,7 @@ MonoBehaviour:
   colorOverrides: []
   audioOverrides: []
   triggerVisual: {fileID: 0}
+  playOnPlayerEnter: 1
 --- !u!65 &516327319
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -33513,6 +33517,7 @@ MonoBehaviour:
   colorOverrides: []
   audioOverrides: []
   triggerVisual: {fileID: 0}
+  playOnPlayerEnter: 1
 --- !u!65 &1272190788
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -35485,6 +35490,206 @@ ParticleSystem:
   m_CorrespondingSourceObject: {fileID: 2377597848597312555, guid: 54dbf8c4180bab04f950dfead3c0cffc, type: 3}
   m_PrefabInstance: {fileID: 1141465131}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1379638399
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1379638401}
+  - component: {fileID: 1379638400}
+  m_Layer: 0
+  m_Name: B1F Elevator Intro Cinematic
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1379638400
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1379638399}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c414a8bb2651c8842b5613cfda60e89c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LobbyIntroCinematic
+  playOnStart: 1
+  holdToSkipSeconds: 1.2
+  prepareTimeout: 10
+  shots:
+  - clip: {fileID: 32900000, guid: 4030c4771ba79e84abba6f6c598740d2, type: 3}
+    still: {fileID: 0}
+    playClipAudio: 1
+    clipAudioVolume: 0.8
+    flicker: 0
+    start: 0.5
+    end: 4.5
+    playbackSpeed: 1
+    fadeIn: 1
+    scale: {x: 1, y: 1.03}
+  - clip: {fileID: 32900000, guid: 7dfb5569dabeff045b991846cf81796f, type: 3}
+    still: {fileID: 0}
+    playClipAudio: 1
+    clipAudioVolume: 0.8
+    flicker: 0
+    start: 4.4
+    end: 7.4
+    playbackSpeed: 1
+    fadeIn: 0.25
+    scale: {x: 1, y: 1.03}
+  - clip: {fileID: 32900000, guid: 2a043c4cdce04994ea55fb43fbf23ac1, type: 3}
+    still: {fileID: 0}
+    playClipAudio: 1
+    clipAudioVolume: 0.8
+    flicker: 0
+    start: 7.3
+    end: 10.3
+    playbackSpeed: 1
+    fadeIn: 0.25
+    scale: {x: 1, y: 1.04}
+  - clip: {fileID: 32900000, guid: 85740ecdfb46a764d9ec54e0877b6106, type: 3}
+    still: {fileID: 0}
+    playClipAudio: 1
+    clipAudioVolume: 0.9
+    flicker: 0
+    start: 10.2
+    end: 13.2
+    playbackSpeed: 1
+    fadeIn: 0.25
+    scale: {x: 1, y: 1.04}
+  - clip: {fileID: 32900000, guid: 4415a7f251fe80040a9f988219b8be59, type: 3}
+    still: {fileID: 0}
+    playClipAudio: 1
+    clipAudioVolume: 0.9
+    flicker: 0
+    start: 13.1
+    end: 17.1
+    playbackSpeed: 1
+    fadeIn: 0.3
+    scale: {x: 1, y: 1.03}
+  - clip: {fileID: 32900000, guid: 6a4d76beee1022d489c7383f47a3b806, type: 3}
+    still: {fileID: 0}
+    playClipAudio: 1
+    clipAudioVolume: 0.7
+    flicker: 0
+    start: 17
+    end: 20
+    playbackSpeed: 1
+    fadeIn: 0.2
+    scale: {x: 1, y: 1}
+  - clip: {fileID: 32900000, guid: 3cd89b769fca58a4cb2697339e6b04cf, type: 3}
+    still: {fileID: 0}
+    playClipAudio: 1
+    clipAudioVolume: 0.8
+    flicker: 0
+    start: 19.9
+    end: 23.9
+    playbackSpeed: 1
+    fadeIn: 0.25
+    scale: {x: 1, y: 1.04}
+  - clip: {fileID: 32900000, guid: 50e4d7f1ca4decc4e850b675f9d408a3, type: 3}
+    still: {fileID: 0}
+    playClipAudio: 1
+    clipAudioVolume: 0.9
+    flicker: 0
+    start: 23.8
+    end: 26.8
+    playbackSpeed: 1
+    fadeIn: 0.25
+    scale: {x: 1, y: 1.02}
+  - clip: {fileID: 32900000, guid: d2e630c0460037e45b2659686221b2c4, type: 3}
+    still: {fileID: 0}
+    playClipAudio: 1
+    clipAudioVolume: 0.45
+    flicker: 0
+    start: 26.7
+    end: 31.7
+    playbackSpeed: 1
+    fadeIn: 0.4
+    scale: {x: 1, y: 1.04}
+  - clip: {fileID: 32900000, guid: a13097c8f2eb94240b4161c7ce56feb1, type: 3}
+    still: {fileID: 0}
+    playClipAudio: 1
+    clipAudioVolume: 0.45
+    flicker: 0
+    start: 31.6
+    end: 36.4
+    playbackSpeed: 1
+    fadeIn: 0.3
+    scale: {x: 1, y: 1.06}
+  sounds:
+  - clip: {fileID: 8300000, guid: e557ee5895045634e847ee8e956c5b69, type: 3}
+    at: 27.4
+    volume: 1
+    loop: 0
+    fadeIn: 0
+    fadeOutAt: 0
+    fadeOutDuration: 1
+  - clip: {fileID: 8300000, guid: 4ca332b44b5923b4ba4ba293082e924f, type: 3}
+    at: 31.9
+    volume: 1
+    loop: 0
+    fadeIn: 0
+    fadeOutAt: 0
+    fadeOutDuration: 1
+  - clip: {fileID: 8300000, guid: c2ac84cbdd169294cac83e4c633aa27d, type: 3}
+    at: 37.2
+    volume: 0.7
+    loop: 0
+    fadeIn: 0
+    fadeOutAt: 0
+    fadeOutDuration: 1
+  subtitles:
+  - speaker: "\uC694\uC6D0 A"
+    text: "\uC758\uC678\uB85C \uAC00\uAE4C\uC6B4 \uACF3\uC5D0 \uC9C0\uD558\uB85C
+      \uB0B4\uB824\uAC08 \uC218\uB2E8\uC774 \uC788\uC5C8\uAD70."
+    start: 27.4
+    end: 31.3
+  - speaker: "\uC694\uC6D0 B"
+    text: "\uC9C0\uAE08\uBD80\uD130\uAC00 \uC2DC\uC791\uC774\uACA0\uC9C0. \uAE34\uC7A5\uC744
+      \uD480\uC9C0 \uB9C8."
+    start: 31.9
+    end: 36.3
+  openingCaption: "02:31 AM  \xB7  NEXUS HQ  \xB7  SERVICE ELEVATOR"
+  openingCaptionTime: {x: 0.8, y: 4.2}
+  titleTime: {x: 36.4, y: 40}
+  titleText: B1
+  titleSubtext: "NEXUS  \xB7  SUBLEVEL 1  \xB7  RESTRICTED"
+  titleCardColor: {r: 0.02, g: 0.02, b: 0.025, a: 1}
+  titleInk: {r: 0.9, g: 0.92, b: 0.94, a: 1}
+  titleSubInk: {r: 0.55, g: 0.58, b: 0.62, a: 1}
+  titleRuleColor: {r: 0.85, g: 0.12, b: 0.12, a: 1}
+  revealAt: 40.5
+  revealDuration: 1.2
+  gradeShader: {fileID: 4800000, guid: 5a4e9b65601ce8347a12371e1f053e4a, type: 3}
+  font: {fileID: 11400000, guid: 8d3019094b1de0d4f945de276623be45, type: 2}
+  letterboxAspect: 2.39
+  sortingOrder: 32500
+  grain: 0.05
+  vignette: 0.4
+  contrast: 1.12
+  saturation: 0.85
+--- !u!4 &1379638401
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1379638399}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1384665388
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -39453,6 +39658,7 @@ MonoBehaviour:
   colorOverrides: []
   audioOverrides: []
   triggerVisual: {fileID: 0}
+  playOnPlayerEnter: 1
 --- !u!65 &1549077944
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -42812,6 +43018,7 @@ MonoBehaviour:
   colorOverrides: []
   audioOverrides: []
   triggerVisual: {fileID: 0}
+  playOnPlayerEnter: 1
 --- !u!65 &1715606650
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -46517,6 +46724,7 @@ MonoBehaviour:
   colorOverrides: []
   audioOverrides: []
   triggerVisual: {fileID: 0}
+  playOnPlayerEnter: 1
 --- !u!65 &1853784550
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -49158,6 +49366,7 @@ MonoBehaviour:
   colorOverrides: []
   audioOverrides: []
   triggerVisual: {fileID: 0}
+  playOnPlayerEnter: 1
 --- !u!65 &1941103622
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -55267,3 +55476,4 @@ SceneRoots:
   - {fileID: 8524021200010}
   - {fileID: 8524021200012}
   - {fileID: 1169422161}
+  - {fileID: 1379638401}
