@@ -421,6 +421,10 @@ public class QuestManager : MonoBehaviour
         !IsWaitingForSubtitleReveal && CurrentStep != null &&
         string.Equals(CurrentStep.questId, questId, StringComparison.OrdinalIgnoreCase);
 
+    public bool IsQuestPending(string questId) =>
+        IsWaitingForSubtitleReveal && PendingStep != null &&
+        string.Equals(PendingStep.questId, questId, StringComparison.OrdinalIgnoreCase);
+
     private QuestStep GetStep(int index) =>
         index >= 0 && index < questList.Count ? questList[index] : null;
 

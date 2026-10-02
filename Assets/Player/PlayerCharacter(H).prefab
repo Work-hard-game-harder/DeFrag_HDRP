@@ -610,6 +610,15 @@ MonoBehaviour:
   cameraItem: {fileID: 6767060980139100289}
   cameraOverlayCanvas: {fileID: 8968839979216758565}
   itemCameraFieldOfView: 67
+  useViewfinderHud: 1
+  raiseDuration: 0.36
+  pushDuration: 0.24
+  pullDuration: 0.18
+  lowerDuration: 0.3
+  presentLcdPoint: {x: 0, y: -0.025, z: 0.24}
+  lcdCenter: {x: -0.0772, y: -0.0548, z: -0.011}
+  lcdSize: {x: 0.215, y: 0.154}
+  lcdGlow: 1.3
 --- !u!114 &2683992198885452138
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2762,30 +2771,30 @@ GameObject:
   - component: {fileID: 6730870902330787505}
   - component: {fileID: 3507045698917650693}
   - component: {fileID: 8981397236343574808}
+  - component: {fileID: 1095481969773090955}
   - component: {fileID: 5026559601196946210}
   - component: {fileID: 5745487489445018000}
   - component: {fileID: 2167304961188310751}
-  - component: {fileID: 1095481969773090955}
   - component: {fileID: 949082781300913998}
   - component: {fileID: 5276715667392532125}
-  - component: {fileID: 7349012846091223101}
   - component: {fileID: 7349012846091223102}
-  - component: {fileID: 7349012846091223103}
-  - component: {fileID: 7349012846091223104}
+  - component: {fileID: 7851964327015289635}
+  - component: {fileID: 7349012846091223108}
+  - component: {fileID: 7349012846091223111}
   - component: {fileID: 7349012846091223110}
-  - component: {fileID: 7349012846091223105}
-  - component: {fileID: 7349012846091223106}
-  - component: {fileID: 7349012846091223107}
-  - component: {fileID: 6292500446856489754}
+  - component: {fileID: 7349012846091223101}
   - component: {fileID: 6599072761980130246}
   - component: {fileID: -574059606829602058}
   - component: {fileID: 8697075961925148635}
   - component: {fileID: 7255047732428418656}
   - component: {fileID: 1264422813971240959}
+  - component: {fileID: 7349012846091223103}
+  - component: {fileID: 7349012846091223107}
+  - component: {fileID: 7349012846091223106}
+  - component: {fileID: 7349012846091223105}
+  - component: {fileID: 7349012846091223104}
+  - component: {fileID: 6292500446856489754}
   - component: {fileID: 7851964327015289634}
-  - component: {fileID: 7851964327015289635}
-  - component: {fileID: 7349012846091223108}
-  - component: {fileID: 7349012846091223111}
   m_Layer: 7
   m_Name: PlayerCharacter(H)
   m_TagString: Player
@@ -2993,6 +3002,23 @@ MonoBehaviour:
   m_DefaultActionMap: Player
   m_SplitScreenIndex: -1
   m_Camera: {fileID: 7146755445071539165}
+--- !u!114 &1095481969773090955
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8628133643110585351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 909d917d73a63f940ac158d02e936645, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BasicRigidBodyPush
+  pushLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  canPush: 0
+  strength: 1.1
 --- !u!114 &5026559601196946210
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3005,7 +3031,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 4213798826
+  GlobalObjectIdHash: 3097368093
   InScenePlacedSourceGlobalObjectIdHash: 3097368093
   DeferredDespawnTick: 0
   Ownership: 1
@@ -3082,23 +3108,6 @@ MonoBehaviour:
   analogMovement: 0
   cursorLocked: 1
   cursorInputForLook: 1
---- !u!114 &1095481969773090955
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8628133643110585351}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 909d917d73a63f940ac158d02e936645, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BasicRigidBodyPush
-  pushLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  canPush: 0
-  strength: 1.1
 --- !u!114 &949082781300913998
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3197,21 +3206,6 @@ MonoBehaviour:
       Synchronize: 1
       ParameterType: 4
   AnimatorParametersExpanded: 0
---- !u!114 &7349012846091223101
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8628133643110585351}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ca831e2973968744bd12d479291d220, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerStats
-  maxHealth: 100
-  Health: 100
-  Inventory: []
 --- !u!114 &7349012846091223102
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3226,7 +3220,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Combat.NetworkPlayerHealth
   ShowTopMostFoldoutHeaderGroup: 1
   playerStats: {fileID: 7349012846091223101}
---- !u!114 &7349012846091223103
+--- !u!114 &7851964327015289635
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -3235,17 +3229,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 8628133643110585351}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7ed08438ea144ef39d550a16fa6c365d, type: 3}
+  m_Script: {fileID: 11500000, guid: 878bbe47510fab146a0abde0571d8b98, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Player.OwnerCharacterVisibility
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkPlayerInventory
   ShowTopMostFoldoutHeaderGroup: 1
-  characterRenderers:
-  - {fileID: 2098391301559306203}
-  ownerHiddenLayer:
-    serializedVersion: 2
-    m_Bits: 8192
-  applyAsLocalWhenNotNetworkSpawned: 0
---- !u!114 &7349012846091223104
+  maximumSlots: 4
+  maximumPickupDistance: 7
+  maximumDropDistance: 2.5
+  maximumThrowSpeed: 12
+--- !u!114 &7349012846091223108
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -3254,16 +3246,49 @@ MonoBehaviour:
   m_GameObject: {fileID: 8628133643110585351}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 29c69481b9941a44d8251158a0965e11, type: 3}
+  m_Script: {fileID: 11500000, guid: 479db814b02a4fe5a87e6e58e5f81762, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
-  soundBaseRange: 15
-  soundRangeMultiplier: 10
-  micSensitivity: 100
-  noiseThreshold: 0.01
-  listenContinuously: 1
-  networkPublishInterval: 0.1
-  networkSilenceTimeout: 0.35
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Combat.NetworkPartyFailureController
+  ShowTopMostFoldoutHeaderGroup: 1
+  playerStats: {fileID: 7349012846091223101}
+  deathScreenPrefab: {fileID: 100000, guid: d97c22a1ea7f4b42a810835869bcec42, type: 3}
+  playerDespawnDelay: 0.15
+  uiFadeDuration: 0.5
+--- !u!114 &7349012846091223111
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8628133643110585351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4241f481221541b89ff1abf56b8f9e2d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Player.NetworkWalkieTalkieVoice
+  ShowTopMostFoldoutHeaderGroup: 1
+  microphoneInput: {fileID: 0}
+  walkieTalkieController: {fileID: 7349012846091223105}
+  soundEmitter: {fileID: 7349012846091223104}
+  proximityPlayback: {fileID: 0}
+  proximityOutputMixerGroup: {fileID: -4808670016587676743, guid: 2f73f41f978fecb46a4479e077c1712e, type: 2}
+  proximityPlaybackVolume: 1
+  proximityMinDistance: 1
+  proximityMaxDistance: 15
+  voiceStartThreshold: 0.035
+  voiceStopThreshold: 0.018
+  voiceReleaseDelay: 0.2
+  walkiePlayback: {fileID: 0}
+  walkieOutputMixerGroup: {fileID: 2985195005353930710, guid: 2f73f41f978fecb46a4479e077c1712e, type: 2}
+  walkiePlaybackVolume: 1
+  networkSampleRate: 16000
+  packetDurationMilliseconds: 20
+  jitterBufferMilliseconds: 80
+  maxBufferedMilliseconds: 500
+  maxPacketsPerFrame: 3
+  logDiagnostics: 0
+  sentPacketCount: 0
+  receivedPacketCount: 0
 --- !u!114 &7349012846091223110
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3287,7 +3312,7 @@ MonoBehaviour:
   indicatorOffsetFromHead: {x: 0, y: 1.5, z: 0}
   fallbackRootOffset: {x: 0, y: 0, z: 0}
   showForOwner: 1
---- !u!114 &7349012846091223105
+--- !u!114 &7349012846091223101
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -3296,82 +3321,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 8628133643110585351}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b6d1831a17874d05861f21aa0a60a94d, type: 3}
+  m_Script: {fileID: 11500000, guid: 2ca831e2973968744bd12d479291d220, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EasyPeasyFirstPersonController.WalkieTalkieController
-  equipToggleKey: 114
-  transmitMouseButton: 0
-  blockTransmissionOverUI: 1
-  walkieTalkieVisual: {fileID: 0}
-  walkieTalkieVisualPrefab: {fileID: 8980702806714624822, guid: 85ab41cf77a70f24dbf949840e32657c, type: 3}
-  visualParent: {fileID: 7822176977971299958}
-  lockFirstPersonLocalRotation: 1
-  firstPersonLocalEulerAngles: {x: -90, y: 210, z: 0}
-  worldVisualPrefab: {fileID: 8980702806714624822, guid: 85ab41cf77a70f24dbf949840e32657c, type: 3}
-  worldAttachmentBone: 18
-  worldHandLocalPosition: {x: -0.09, y: 0.197, z: 0.039}
-  worldHandLocalEulerAngles: {x: 7.444, y: -89.908, z: -77.445}
-  worldHandLocalScale: {x: 1, y: 1, z: 1}
-  pickupHint: {fileID: 0}
-  walkieTalkieAnimator: {fileID: 0}
-  soundEmitter: {fileID: 7349012846091223104}
-  micVolumeUI: {fileID: 0}
-  talkingParameter: isTalking
-  playbackSpeedParameter: Speed
-  talkingPlaybackSpeed: 1
-  idlePlaybackSpeed: -1
-  startsWithWalkieTalkie: 0
-  startsEquipped: 0
---- !u!114 &7349012846091223106
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8628133643110585351}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c7e2904f5a324d61a844af73db89e102, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WalkieTalkieVoiceRecorder
-  minRecordingSeconds: 2
-  maxRecordingSeconds: 5
-  silencePeakThreshold: 0.0005
-  silenceRmsThreshold: 0.002
-  folderName: WalkieTalkieRecordings
-  maxStoredRecordings: 30
---- !u!114 &7349012846091223107
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8628133643110585351}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 913c2b23859d4a4ba3e3acf956c9cd85, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WalkieTalkieSfx
-  walkieTalkieController: {fileID: 7349012846091223105}
-  audioSource: {fileID: 0}
-  outputMixerGroup: {fileID: -1756255783097824108, guid: 2f73f41f978fecb46a4479e077c1712e, type: 2}
-  audioSourceObjectName: Walkie-Talkie Sound
-  transmissionStartClip: {fileID: 8300000, guid: 245cc9dba1b5f2249a2a487e35612f7d, type: 3}
-  transmissionStopClip: {fileID: 8300000, guid: 01b46350f0bb13640a478aa194e4ed1e, type: 3}
-  volume: 0.3
---- !u!114 &6292500446856489754
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8628133643110585351}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a3333333333333333333333333333333, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CooperativeTerminalHintRelay
-  ShowTopMostFoldoutHeaderGroup: 1
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerStats
+  maxHealth: 100
+  Health: 100
+  Inventory: []
 --- !u!114 &6599072761980130246
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3484,6 +3439,129 @@ MonoBehaviour:
   turnOffClip: {fileID: 8300000, guid: d7760c8499321d8438b6004c5ef835ce, type: 3}
   turnOnVolume: 1
   turnOffVolume: 1
+--- !u!114 &7349012846091223103
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8628133643110585351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ed08438ea144ef39d550a16fa6c365d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Player.OwnerCharacterVisibility
+  ShowTopMostFoldoutHeaderGroup: 1
+  characterRenderers:
+  - {fileID: 2098391301559306203}
+  ownerHiddenLayer:
+    serializedVersion: 2
+    m_Bits: 8192
+  applyAsLocalWhenNotNetworkSpawned: 0
+--- !u!114 &7349012846091223107
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8628133643110585351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 913c2b23859d4a4ba3e3acf956c9cd85, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WalkieTalkieSfx
+  walkieTalkieController: {fileID: 7349012846091223105}
+  audioSource: {fileID: 0}
+  outputMixerGroup: {fileID: -1756255783097824108, guid: 2f73f41f978fecb46a4479e077c1712e, type: 2}
+  audioSourceObjectName: Walkie-Talkie Sound
+  transmissionStartClip: {fileID: 8300000, guid: 245cc9dba1b5f2249a2a487e35612f7d, type: 3}
+  transmissionStopClip: {fileID: 8300000, guid: 01b46350f0bb13640a478aa194e4ed1e, type: 3}
+  volume: 0.3
+--- !u!114 &7349012846091223106
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8628133643110585351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7e2904f5a324d61a844af73db89e102, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WalkieTalkieVoiceRecorder
+  minRecordingSeconds: 2
+  maxRecordingSeconds: 5
+  silencePeakThreshold: 0.0005
+  silenceRmsThreshold: 0.002
+  folderName: WalkieTalkieRecordings
+  maxStoredRecordings: 30
+--- !u!114 &7349012846091223105
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8628133643110585351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6d1831a17874d05861f21aa0a60a94d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EasyPeasyFirstPersonController.WalkieTalkieController
+  equipToggleKey: 114
+  transmitMouseButton: 0
+  blockTransmissionOverUI: 1
+  walkieTalkieVisual: {fileID: 0}
+  walkieTalkieVisualPrefab: {fileID: 8980702806714624822, guid: 85ab41cf77a70f24dbf949840e32657c, type: 3}
+  visualParent: {fileID: 7822176977971299958}
+  lockFirstPersonLocalRotation: 1
+  firstPersonLocalEulerAngles: {x: -90, y: 210, z: 0}
+  worldVisualPrefab: {fileID: 8980702806714624822, guid: 85ab41cf77a70f24dbf949840e32657c, type: 3}
+  worldAttachmentBone: 18
+  worldHandLocalPosition: {x: -0.09, y: 0.197, z: 0.039}
+  worldHandLocalEulerAngles: {x: 7.444, y: -89.908, z: -77.445}
+  worldHandLocalScale: {x: 1, y: 1, z: 1}
+  pickupHint: {fileID: 0}
+  walkieTalkieAnimator: {fileID: 0}
+  soundEmitter: {fileID: 7349012846091223104}
+  micVolumeUI: {fileID: 0}
+  talkingParameter: isTalking
+  playbackSpeedParameter: Speed
+  talkingPlaybackSpeed: 1
+  idlePlaybackSpeed: -1
+  startsWithWalkieTalkie: 0
+  startsEquipped: 0
+--- !u!114 &7349012846091223104
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8628133643110585351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29c69481b9941a44d8251158a0965e11, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  soundBaseRange: 15
+  soundRangeMultiplier: 10
+  micSensitivity: 100
+  noiseThreshold: 0.01
+  listenContinuously: 1
+  networkPublishInterval: 0.1
+  networkSilenceTimeout: 0.35
+--- !u!114 &6292500446856489754
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8628133643110585351}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a3333333333333333333333333333333, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CooperativeTerminalHintRelay
+  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!114 &7851964327015289634
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3535,75 +3613,6 @@ MonoBehaviour:
   postExposure: -0.35
   volumePriority: 1200
   movementSpeedReduction: 2
---- !u!114 &7851964327015289635
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8628133643110585351}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 878bbe47510fab146a0abde0571d8b98, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::NetworkPlayerInventory
-  ShowTopMostFoldoutHeaderGroup: 1
-  maximumSlots: 4
-  maximumPickupDistance: 7
-  maximumDropDistance: 2.5
-  maximumThrowSpeed: 12
---- !u!114 &7349012846091223108
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8628133643110585351}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 479db814b02a4fe5a87e6e58e5f81762, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Combat.NetworkPartyFailureController
-  ShowTopMostFoldoutHeaderGroup: 1
-  playerStats: {fileID: 7349012846091223101}
-  deathScreenPrefab: {fileID: 100000, guid: d97c22a1ea7f4b42a810835869bcec42, type: 3}
-  playerDespawnDelay: 0.15
-  uiFadeDuration: 0.5
---- !u!114 &7349012846091223111
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8628133643110585351}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4241f481221541b89ff1abf56b8f9e2d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DeFrag.Player.NetworkWalkieTalkieVoice
-  ShowTopMostFoldoutHeaderGroup: 1
-  microphoneInput: {fileID: 0}
-  walkieTalkieController: {fileID: 7349012846091223105}
-  soundEmitter: {fileID: 7349012846091223104}
-  proximityPlayback: {fileID: 0}
-  proximityOutputMixerGroup: {fileID: -4808670016587676743, guid: 2f73f41f978fecb46a4479e077c1712e, type: 2}
-  proximityPlaybackVolume: 1
-  proximityMinDistance: 1
-  proximityMaxDistance: 15
-  voiceStartThreshold: 0.035
-  voiceStopThreshold: 0.018
-  voiceReleaseDelay: 0.2
-  walkiePlayback: {fileID: 0}
-  walkieOutputMixerGroup: {fileID: 2985195005353930710, guid: 2f73f41f978fecb46a4479e077c1712e, type: 2}
-  walkiePlaybackVolume: 1
-  networkSampleRate: 16000
-  packetDurationMilliseconds: 20
-  jitterBufferMilliseconds: 80
-  maxBufferedMilliseconds: 500
-  maxPacketsPerFrame: 3
-  logDiagnostics: 0
-  sentPacketCount: 0
-  receivedPacketCount: 0
 --- !u!1 &8846232740498023747
 GameObject:
   m_ObjectHideFlags: 0

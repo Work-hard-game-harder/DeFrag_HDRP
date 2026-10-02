@@ -22,6 +22,17 @@ public sealed class HintConfirmationTracker : MonoBehaviour
     [SerializeField] private string questProgressSignal;
     [SerializeField] private string questProgressSourceId;
 
+    [Header("All Hints Quest Progress")]
+    [Min(1)] [SerializeField] private int allHintsRequiredCount = 6;
+    [Tooltip("고유 힌트를 모두 확인하고 마지막 힌트 연출이 닫히면 서버에서 한 번 보고합니다.")]
+    [SerializeField] private string allHintsConfirmedSignal;
+    [SerializeField] private string allHintsConfirmedSourceId = "LOBBY_ALL_HINTS";
+
+    [Header("All Hints Follow-up Subtitle")]
+    [Tooltip("모든 힌트 퀘스트 완료 후, 다음 퀘스트를 공개하기 전에 로컬로 재생할 자막입니다.")]
+    [SerializeField] private SubtitleTrigger allHintsCompletedSubtitleTrigger;
+    [SerializeField] private string allHintsFollowupQuestId = "lobby_find_elevator";
+
     [Header("Deferred Shared Presentation")]
     [Tooltip("이 Hint는 확인 직후가 아니라 기존 자막 종료 후 공용 불빛 연출을 시작합니다.")]
     [SerializeField] private string deferredPresentationHintId;
@@ -41,9 +52,16 @@ public sealed class HintConfirmationTracker : MonoBehaviour
     private string serverThresholdHintId;
     private ulong serverThresholdHintOwnerClientId = ulong.MaxValue;
     private bool serverThresholdPresentationStarted;
+    private bool serverAllHintsQuestReported;
+    private bool serverAllHintsQuestPending;
+    private bool serverAllHintsQuestReportInProgress;
+    private string serverAllHintsFinalHintId;
+    private ulong serverAllHintsFinalHintOwnerClientId = ulong.MaxValue;
+    private QuestManager subscribedQuestManager;
     private int authoritativeConfirmedHintCount;
     private bool thresholdPresentationApplied;
     private bool thresholdAssistPending;
+    private bool localAllHintsSubtitleStarted;
     private string localThresholdHintId;
     private double serverBroadcastStartTime = double.NegativeInfinity;
     private float serverBroadcastDuration;
@@ -64,11 +82,46 @@ public sealed class HintConfirmationTracker : MonoBehaviour
             powerController.EmergencyPowerStarted += HandleEmergencyPowerStarted;
     }
 
+    private void Start()
+    {
+        subscribedQuestManager = QuestManager.Instance;
+        if (subscribedQuestManager != null)
+            subscribedQuestManager.onQuestStepChanged += HandleQuestStepChanged;
+    }
+
     private void OnDestroy()
     {
         if (powerController != null)
             powerController.EmergencyPowerStarted -= HandleEmergencyPowerStarted;
+        if (subscribedQuestManager != null)
+            subscribedQuestManager.onQuestStepChanged -= HandleQuestStepChanged;
         if (Instance == this) Instance = null;
+    }
+
+    private void HandleQuestStepChanged()
+    {
+        // The players may finish every hint before the corresponding quest is
+        // active. Keep the authoritative completion pending and submit it when
+        // the quest chain advances to the matching step.
+        if (serverAllHintsQuestPending && !serverAllHintsQuestReported)
+            ReportAllHintsQuestProgressOnServer();
+
+        TryPlayAllHintsCompletedSubtitle();
+    }
+
+    private void TryPlayAllHintsCompletedSubtitle()
+    {
+        if (localAllHintsSubtitleStarted ||
+            allHintsCompletedSubtitleTrigger == null ||
+            string.IsNullOrWhiteSpace(allHintsFollowupQuestId) ||
+            subscribedQuestManager == null ||
+            !subscribedQuestManager.IsQuestPending(allHintsFollowupQuestId))
+        {
+            return;
+        }
+
+        localAllHintsSubtitleStarted = true;
+        allHintsCompletedSubtitleTrigger.PlaySubtitleFromInteract();
     }
 
     public void ConfirmHint(string hintId, Object context)
@@ -155,6 +208,11 @@ public sealed class HintConfirmationTracker : MonoBehaviour
             serverThresholdHintId = normalizedHintId;
             serverThresholdHintOwnerClientId = requesterClientId;
         }
+        if (count == allHintsRequiredCount)
+        {
+            serverAllHintsFinalHintId = normalizedHintId;
+            serverAllHintsFinalHintOwnerClientId = requesterClientId;
+        }
         return true;
     }
 
@@ -162,14 +220,18 @@ public sealed class HintConfirmationTracker : MonoBehaviour
         string hintId,
         ulong requesterClientId = ulong.MaxValue)
     {
+        if (string.IsNullOrWhiteSpace(hintId))
+            return false;
+
+        string normalizedHintId = hintId.Trim();
+        TryCompleteAllHintsQuestOnClose(normalizedHintId, requesterClientId);
+
         if (serverThresholdPresentationStarted ||
-            string.IsNullOrWhiteSpace(hintId) ||
             string.IsNullOrWhiteSpace(serverThresholdHintId))
         {
             return false;
         }
 
-        string normalizedHintId = hintId.Trim();
         if (!serverConfirmedHintIds.Contains(normalizedHintId) ||
             !string.Equals(
                 normalizedHintId,
@@ -183,6 +245,25 @@ public sealed class HintConfirmationTracker : MonoBehaviour
 
         serverThresholdPresentationStarted = true;
         return true;
+    }
+
+    private void TryCompleteAllHintsQuestOnClose(
+        string normalizedHintId,
+        ulong requesterClientId)
+    {
+        if (serverAllHintsQuestReported ||
+            string.IsNullOrWhiteSpace(serverAllHintsFinalHintId) ||
+            !string.Equals(
+                normalizedHintId,
+                serverAllHintsFinalHintId,
+                StringComparison.OrdinalIgnoreCase) ||
+            requesterClientId != serverAllHintsFinalHintOwnerClientId)
+        {
+            return;
+        }
+
+        serverAllHintsQuestPending = true;
+        ReportAllHintsQuestProgressOnServer();
     }
 
     public bool TryStartHintPresentationOnServer(string hintId, out bool emergency)
@@ -296,6 +377,65 @@ public sealed class HintConfirmationTracker : MonoBehaviour
                 1);
         if (changed)
             questManager.BroadcastSharedSnapshotFromServer();
+        return changed;
+    }
+
+    private bool ReportAllHintsQuestProgressOnServer()
+    {
+        if (serverAllHintsQuestReported ||
+            serverAllHintsQuestReportInProgress ||
+            string.IsNullOrWhiteSpace(allHintsConfirmedSignal))
+        {
+            return serverAllHintsQuestReported;
+        }
+
+        QuestManager questManager = QuestManager.Instance;
+        if (questManager == null)
+            return false;
+
+        string sourceId = string.IsNullOrWhiteSpace(allHintsConfirmedSourceId)
+            ? "LOBBY_ALL_HINTS"
+            : allHintsConfirmedSourceId.Trim();
+
+        NetworkManager networkManager = NetworkManager.Singleton;
+        if (networkManager != null && networkManager.IsListening && !networkManager.IsServer)
+            return false;
+
+        serverAllHintsQuestReportInProgress = true;
+        bool changed;
+        try
+        {
+            if (networkManager == null || !networkManager.IsListening)
+            {
+                changed = questManager.ReportProgress(
+                    allHintsConfirmedSignal,
+                    sourceId);
+            }
+            else
+            {
+                changed = questManager.TryReportSharedProgressOnServer(
+                    allHintsConfirmedSignal,
+                    sourceId,
+                    1);
+                if (changed)
+                    questManager.BroadcastSharedSnapshotFromServer();
+            }
+        }
+        finally
+        {
+            serverAllHintsQuestReportInProgress = false;
+        }
+
+        if (changed)
+        {
+            serverAllHintsQuestReported = true;
+            serverAllHintsQuestPending = false;
+            Debug.Log(
+                $"[LobbyHint] All {allHintsRequiredCount} unique hints were confirmed. " +
+                $"Reported quest signal '{allHintsConfirmedSignal}'.",
+                this);
+        }
+
         return changed;
     }
 

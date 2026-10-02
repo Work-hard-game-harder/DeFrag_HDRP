@@ -20,6 +20,7 @@ public class SubtitleTrigger : MonoBehaviour
     public SubtitlesScript subtitlesScript; // 씬에 배치된 SubtitleBox 연결
     public string[] mySubtitles;            // 이 트리거에서 재생할 기존 자막 목록
     private bool hasTriggered = false;
+    private bool playbackRequested;
     public GameObject walkietakie; // 워키토키 획득 시 활성화할 오브젝트
 
     [Header("Quest UI Link")]
@@ -39,6 +40,10 @@ public class SubtitleTrigger : MonoBehaviour
     [SerializeField]
     private UISpriteSequencePlayer triggerVisual;
 
+    [Header("Optional Subtitle Interlude")]
+    [Tooltip("비어 있으면 기존처럼 모든 자막을 연속 재생합니다.")]
+    [SerializeField] private SubtitleCameraInterlude subtitleInterlude;
+
     [Header("Trigger Activation")]
     [Tooltip("플레이어가 Collider에 진입했을 때 자막을 자동으로 재생합니다.")]
     [SerializeField] private bool playOnPlayerEnter = true;
@@ -53,7 +58,10 @@ public class SubtitleTrigger : MonoBehaviour
         SubtitleTrigger[] triggers =
             FindObjectsByType<SubtitleTrigger>(FindObjectsInactive.Include);
         foreach (SubtitleTrigger trigger in triggers)
+        {
             trigger.hasTriggered = false;
+            trigger.playbackRequested = false;
+        }
     }
 
     private void Awake()
@@ -80,7 +88,7 @@ public class SubtitleTrigger : MonoBehaviour
 
     private void TryPlayForPlayer(Collider other)
     {
-        if (hasTriggered) return;
+        if (hasTriggered || playbackRequested) return;
         // LobbyF 오프닝 시네마틱 중에는 대기했다가, 끝난 뒤 OnTriggerStay로 이어서 재생합니다.
         if (LobbyIntroCinematic.IsPlaying) return;
         var player = other.GetComponentInParent<StarterAssets.PersonController>();
@@ -128,6 +136,11 @@ public class SubtitleTrigger : MonoBehaviour
     // 엘리베이터 등 코드에서 콜백을 넘기는 용도
     public void PlaySubtitleFromInteract(System.Action onComplete)
     {
+        // 물리 트리거와 명시적 호출이 같은 프레임에 겹치더라도
+        // 같은 자막 요청을 재생 큐에 두 번 넣지 않습니다.
+        if (playbackRequested)
+            return;
+
         if (subtitlesScript == null || mySubtitles == null || mySubtitles.Length == 0)
         {
             Debug.LogWarning($"[{nameof(SubtitleTrigger)}] {name}에 재생할 자막이 설정되지 않았습니다.", this);
@@ -150,29 +163,52 @@ public class SubtitleTrigger : MonoBehaviour
 
     private void PlaySubtitlesWithTriggerVisual(System.Action onComplete)
     {
+        if (playbackRequested)
+            return;
+
+        playbackRequested = true;
+        System.Action finished = () =>
+        {
+            playbackRequested = false;
+
+            if (triggerVisual != null)
+                triggerVisual.StopAndHide();
+
+            onComplete?.Invoke();
+        };
+        System.Action started = () =>
+        {
+            if (triggerVisual == null)
+                return;
+
+            triggerVisual.gameObject.SetActive(true);
+            triggerVisual.PlayFromBeginning();
+        };
+
+        if (subtitleInterlude != null)
+        {
+            subtitlesScript.PlaySubtitlesWithInterlude(
+                mySubtitles,
+                colorOverrides,
+                audioOverrides,
+                subtitleInterlude.PauseAfterSubtitleIndex,
+                subtitleInterlude.Play,
+                finished,
+                started);
+            return;
+        }
+
         subtitlesScript.PlaySubtitles(
             mySubtitles,
             colorOverrides,
             audioOverrides,
-            () =>
-            {
-                if (triggerVisual != null)
-                    triggerVisual.StopAndHide();
-
-                onComplete?.Invoke();
-            },
-            () =>
-            {
-                if (triggerVisual == null)
-                    return;
-
-                triggerVisual.gameObject.SetActive(true);
-                triggerVisual.PlayFromBeginning();
-            });
+            finished,
+            started);
     }
 
     private void OnDisable()
     {
+        playbackRequested = false;
         if (triggerVisual != null)
             triggerVisual.StopAndHide();
     }

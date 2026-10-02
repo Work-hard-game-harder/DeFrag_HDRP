@@ -1,22 +1,46 @@
+using StarterAssets;
 using UnityEngine;
 
 public class ElevatorTrigger : MonoBehaviour
 {
-    private bool isTriggered = false;
-    public SubtitleTrigger subtitleTrigger;
+    [SerializeField] private SubtitleTrigger subtitleTrigger;
+    [Tooltip("ì´ í€˜ìŠ¤íŠ¸ê°€ ì‹¤ì œë¡œ ê³µê°œë˜ì–´ í™œì„±í™”ë˜ë©´ íŠ¸ë¦¬ê±°ë¥¼ ì œê±°í•©ë‹ˆë‹¤.")]
+    [SerializeField] private string removeWhenQuestId;
+
+    private bool isTriggered;
+    private QuestManager subscribedQuestManager;
+
+    private void Start()
+    {
+        subscribedQuestManager = QuestManager.Instance;
+        if (subscribedQuestManager == null)
+        {
+            Debug.LogError("[ElevatorTrigger] QuestManagerê°€ ì—°ê²°ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤.", this);
+            return;
+        }
+
+        subscribedQuestManager.onQuestStepChanged += HandleQuestStepChanged;
+        RemoveIfTargetQuestIsActive();
+    }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (isTriggered || !other.CompareTag("Player")) return;
-        isTriggered = true;
+        if (isTriggered) return;
 
-        // 1. ¸ÕÀú Äù½ºÆ®¸¦ ÁøÇà½ÃÄÑ IsWaitingForSubtitleRevealÀ» true·Î ¸¸µç´Ù
-        if (QuestManager.Instance != null)
+        PersonController player = other.GetComponentInParent<PersonController>();
+        if (player != null)
         {
-            QuestManager.Instance.ProgressActiveQuest(1);
+            // ìë§‰ì€ ê° í´ë¼ì´ì–¸íŠ¸ê°€ ì†Œìœ í•œ ë¡œì»¬ í”Œë ˆì´ì–´ì—ê²Œë§Œ í‘œì‹œí•©ë‹ˆë‹¤.
+            if (player.IsSpawned && !player.IsOwner)
+                return;
+        }
+        else if (!other.CompareTag("Player"))
+        {
+            return;
         }
 
-        // 2. ±× ´ÙÀ½ ÀÚ¸· Àç»ı ¡æ ³¡³ª¸é RevealPendingQuest°¡ Á¤»óÀûÀ¸·Î µ¿ÀÛ
+        isTriggered = true;
+
         if (subtitleTrigger != null)
         {
             subtitleTrigger.PlaySubtitleFromInteract(OnSequenceFinished);
@@ -29,6 +53,35 @@ public class ElevatorTrigger : MonoBehaviour
 
     private void OnSequenceFinished()
     {
+        // ë§ˆì§€ë§‰ í€˜ìŠ¤íŠ¸ê°€ ì•„ì§ ê³µê°œë˜ì§€ ì•Šì•˜ë‹¤ë©´ ì˜¤ë¸Œì íŠ¸ë¥¼ ìœ ì§€í•˜ì—¬
+        // í”Œë ˆì´ì–´ê°€ ë‚˜ê°”ë‹¤ê°€ ë‹¤ì‹œ ë“¤ì–´ì™”ì„ ë•Œ ì•ˆë‚´ ìë§‰ì„ ë‹¤ì‹œ ë³¼ ìˆ˜ ìˆìŠµë‹ˆë‹¤.
+        if (!RemoveIfTargetQuestIsActive())
+            isTriggered = false;
+    }
+
+    private void HandleQuestStepChanged()
+    {
+        RemoveIfTargetQuestIsActive();
+    }
+
+    private bool RemoveIfTargetQuestIsActive()
+    {
+        if (subscribedQuestManager == null ||
+            string.IsNullOrWhiteSpace(removeWhenQuestId) ||
+            !subscribedQuestManager.IsQuestActive(removeWhenQuestId))
+        {
+            return false;
+        }
+
+        subscribedQuestManager.onQuestStepChanged -= HandleQuestStepChanged;
+        subscribedQuestManager = null;
         Destroy(gameObject);
+        return true;
+    }
+
+    private void OnDestroy()
+    {
+        if (subscribedQuestManager != null)
+            subscribedQuestManager.onQuestStepChanged -= HandleQuestStepChanged;
     }
 }
