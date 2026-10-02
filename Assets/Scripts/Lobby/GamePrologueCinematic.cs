@@ -16,6 +16,13 @@ using UnityEngine.Video;
 public sealed class GamePrologueCinematic : MonoBehaviour
 {
     private const string ClipResource = "Prologue/Prologue_Cinematic";
+    private const string SoundResource = "Prologue/Prologue_Audio";
+    // Start only after the first scene has stopped hitching, or the decoder starts behind and stalls.
+    private const float SettleSeconds = 0.6f;
+    private const int SettleFrames = 12;
+    private const float SettleFrameTime = 0.05f;
+    // The picture follows the soundtrack; beyond this drift it is re-seeked.
+    private const float MaxDriftSeconds = 0.2f;
     private const int SortingOrder = 32700;
     private const float HoldToSkipSeconds = 1.2f;
     private const float PrepareTimeout = 8f;
@@ -60,7 +67,7 @@ public sealed class GamePrologueCinematic : MonoBehaviour
         }
         var host = new GameObject("Game Prologue Cinematic");
         DontDestroyOnLoad(host);
-        host.AddComponent<GamePrologueCinematic>().Play(clip);
+        host.AddComponent<GamePrologueCinematic>().Play(clip, Resources.Load<AudioClip>(SoundResource));
     }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -72,13 +79,14 @@ public sealed class GamePrologueCinematic : MonoBehaviour
         var host = new GameObject("Game Prologue Cinematic (Test)");
         DontDestroyOnLoad(host);
         var cinematic = host.AddComponent<GamePrologueCinematic>();
-        cinematic.Play(clip);
+        cinematic.Play(clip, Resources.Load<AudioClip>(SoundResource));
         return cinematic;
     }
 
     public double TimeForTesting => player != null ? player.time : -1;
     public long FrameForTesting => player != null ? player.frame : -1;
     public bool AudioPlayingForTesting => audioSource != null && audioSource.isPlaying;
+    public float AudioTimeForTesting => audioSource != null ? audioSource.time : -1f;
 #endif
 
     private enum Phase { Preparing, Playing, FadingOut, Done }
@@ -97,8 +105,10 @@ public sealed class GamePrologueCinematic : MonoBehaviour
     private bool listenerWasPaused;
     private long lastFrame = -1;
     private float lastFrameTime;
+    private float settleStart;
+    private int calmFrames;
 
-    private void Play(VideoClip clip)
+    private void Play(VideoClip clip, AudioClip sound)
     {
         IsPlaying = true;
         listenerWasPaused = AudioListener.pause;
@@ -113,6 +123,8 @@ public sealed class GamePrologueCinematic : MonoBehaviour
         audioSource.playOnAwake = false;
         audioSource.spatialBlend = 0f;
         audioSource.ignoreListenerPause = true;
+        audioSource.clip = sound;
+        if (sound != null) sound.LoadAudioData();
 
         player = gameObject.AddComponent<VideoPlayer>();
         player.playOnAwake = false;
@@ -122,16 +134,11 @@ public sealed class GamePrologueCinematic : MonoBehaviour
         player.targetTexture = texture;
         player.isLooping = false;
         player.waitForFirstFrame = true;
-        player.skipOnDrop = true; // keep picture and sound in sync
+        // The soundtrack is a separate AudioClip: the VideoPlayer's own audio output overflowed and
+        // stuttered when the first scene hitched, and its picture froze waiting for it.
+        player.skipOnDrop = false;
         player.timeUpdateMode = VideoTimeUpdateMode.UnscaledGameTime;
-        if (clip.audioTrackCount > 0)
-        {
-            player.audioOutputMode = VideoAudioOutputMode.AudioSource;
-            player.controlledAudioTrackCount = 1;
-            player.EnableAudioTrack(0, true);
-            player.SetTargetAudioSource(0, audioSource);
-        }
-        else player.audioOutputMode = VideoAudioOutputMode.None;
+        player.audioOutputMode = VideoAudioOutputMode.None;
         player.loopPointReached += _ => BeginFadeOut();
         player.errorReceived += (_, message) =>
         {
@@ -141,6 +148,7 @@ public sealed class GamePrologueCinematic : MonoBehaviour
         player.Prepare();
         prepareDeadline = Time.realtimeSinceStartup + PrepareTimeout;
         phase = Phase.Preparing;
+        settleStart = Time.unscaledTime;
     }
 
     private void Update()
@@ -148,9 +156,13 @@ public sealed class GamePrologueCinematic : MonoBehaviour
         switch (phase)
         {
             case Phase.Preparing:
-                if (player.isPrepared)
+                calmFrames = Time.unscaledDeltaTime < SettleFrameTime ? calmFrames + 1 : 0;
+                bool soundReady = audioSource.clip == null || audioSource.clip.loadState == AudioDataLoadState.Loaded;
+                if (player.isPrepared && soundReady && calmFrames >= SettleFrames &&
+                    Time.unscaledTime - settleStart >= SettleSeconds)
                 {
                     player.Play();
+                    if (audioSource.clip != null) audioSource.Play();
                     phase = Phase.Playing;
                     lastFrameTime = Time.unscaledTime;
                 }
@@ -163,7 +175,7 @@ public sealed class GamePrologueCinematic : MonoBehaviour
                 break;
             case Phase.Playing:
                 UpdateSkip();
-                WatchForStall();
+                KeepInSync();
                 break;
             case Phase.FadingOut:
                 float k = Mathf.Clamp01((Time.unscaledTime - fadeStart) / FadeOutSeconds);
@@ -186,19 +198,29 @@ public sealed class GamePrologueCinematic : MonoBehaviour
         if (progress >= 1f) BeginFadeOut();
     }
 
-    /// <summary>A decoder that fell behind can sit on one frame; nudge it back to the playback clock.</summary>
-    private void WatchForStall()
+    /// <summary>The soundtrack is the clock: re-seek the picture when it drifts or stalls.</summary>
+    private void KeepInSync()
     {
-        if (!player.isPlaying) return;
         if (player.frame != lastFrame)
         {
             lastFrame = player.frame;
             lastFrameTime = Time.unscaledTime;
         }
-        else if (Time.unscaledTime - lastFrameTime > StallSeconds)
+        if (audioSource.clip == null || !audioSource.isPlaying)
+        {
+            if (Time.unscaledTime - lastFrameTime > StallSeconds)
+            {
+                lastFrameTime = Time.unscaledTime;
+                player.time = player.clockTime;
+            }
+            return;
+        }
+        double drift = player.time - audioSource.time;
+        bool stalled = Time.unscaledTime - lastFrameTime > 0.5f;
+        if (System.Math.Abs(drift) > MaxDriftSeconds || stalled)
         {
             lastFrameTime = Time.unscaledTime;
-            player.time = player.clockTime;
+            player.time = audioSource.time + 0.05;
         }
     }
 
