@@ -403,6 +403,25 @@
   - filter_complex 안의 표현식에 쉼표가 있으면 따옴표로 감싸야 한다.
   - 그레인 때문에 CRF만 쓰면 260MB가 나온다. 비트레이트 상한이 필요하다.
 
+**씬 전환 시네마틱 + B1F 비상구 탈출** (2026-10-03 메인 PC)
+- **규칙 (사용자 지시):** 층 이동 영상은 다음 씬을 **로딩하는 동안** 재생한다. 성공 직후 게임이 멈춰 보이지 않게 한다. 엘리베이터(LobbyF→B1F), 비상구(B1F→B2F), MainLobby 스테이지 선택(B1F·B2F) 모두 같은 규칙이다.
+- **구조 (`Scripts/SceneFlow/`):**
+  - `SceneTransitionCinematicLibrary`: 목적지 씬 이름 → 영상, 사운드트랙, 플레이스홀더 카드. 에셋은 `Resources/SceneFlow/SceneTransitionCinematics.asset`.
+  - `SceneTransitionCinematicDirector`: 런타임 부트스트랩(DDOL). NGO `OnSceneEvent`의 Load(내 ClientId)를 보고 오버레이를 띄운다. 네트워크 메시지는 보내지 않고, 팀원의 씬 전환 코드는 건드리지 않았다.
+  - `UI/CinematicLoadingOverlay` (사용자 원본 확장): 사운드트랙이 시계이고 그림을 재동기화한다(프롤로그 방식). 영상이 끝나고(Space 1.2초 스킵 가능) **목적지 씬 로드 + 내 플레이어 스폰**이 끝나야 0.8초 페이드로 걷힌다. 옛 씬의 AudioListener가 사라지는 동안은 자체 리스너를 켠다.
+  - `CinematicPlayback.IsCoveringGameplay`: 씬 시작 자막(`SubtitleIntroPresentation`, `SubtitleSceneEntryPresentation`, `SubtitleTrigger`)이 시네마틱이 끝날 때까지 기다린다.
+- **엘리베이터 영상:** `python Tools/Claude/render_elevator_cinematic.py`가 기존 LobbyIntroCinematic 타임라인(클립 10개, 캡션, 자막, B1 타이틀)을 한 편으로 굽는다. 결과는 `Movies/B1F/ElevatorIntro/B1F_Elevator_Cinematic.mp4`(40.6초, 무음, 트랜스코딩 끔)와 `Resources/SceneFlow/B1F_Elevator_Cinematic_Audio.wav`. B1F 씬의 `B1F Elevator Intro Cinematic` 오브젝트는 비활성화했다(삭제 안 함).
+  - 이유: VideoPlayer 10개 + AudioSource 출력은 씬 로딩 끊김에서 프롤로그 때와 같은 오디오 오버플로가 난다.
+- **B1F 비상구 (`CinematicSceneTrigger`, 사용자 원본 확장):** 씬 오브젝트 `SutitleTriggers/다음 씬으로` (6.25, 1.91, -169.16), 3.9×5×5m 트리거.
+  - 원래는 컴포넌트가 붙어 있지 않은 회색 상자(일반 콜라이더, 통로를 막음)였다.
+  - 서버가 플레이어 **위치**로 판정한다 (원격 플레이어·락커 안에서는 트리거 이벤트를 믿을 수 없음). EscapeReady 이후 전원이 0.6초 머물면 `B1F_EXIT_REACHED` 보고 → B2F 로드.
+  - `ExitZoneWaitingHud`: 혼자 도착하면 "비상구 도착 · 동료를 기다리는 중 (1/2)".
+- **퀘스트 버그 원인:** `b1f_escape`가 AfterSubtitle 공개 + Persist Until Scene Change였다. 공개해 줄 자막이 없어서 다운로드 완료 뒤 퀘스트가 숨겨진 채 멈췄다. Immediate, Target 1, Persist 끔으로 바꿨다.
+- **B2F 스폰:** B2F에는 `GameplaySpawnPointRegistry`가 없어서 `LobbyManager.SpawnGameplayPlayers`가 플레이어를 아예 만들지 않았다. `PlayerSpawnPoints`(Host (4.2, -0.95, -19.5), Client (5.8, …))를 사용자의 `SpawnPoint1` 옆 바닥에 추가했다.
+- **함정:**
+  - 플레이어는 `SpawnAsPlayerObject(…, destroyWithScene: true)`라서 씬마다 파괴·재생성된다. 오버레이는 새 씬에 내 플레이어가 생길 때까지 기다린다.
+  - 에디터에서 `GetComponent<T>() ?? AddComponent` 패턴은 쓰지 않는다 (가짜 null). 이번엔 다행히 동작했다.
+
 **LobbyF 엘리베이터 코드 퍼즐 완화 + OFFICE2 이스터에그** (2026-10-02 메인 PC)
 - **정답은 그대로 `7H36BE`다.** 칸 구성: ID 7(명찰 07) · ZONE H(근무표 07번) · CH 3, 6(OFFICE3 TV에서 괴물이 나오는 채널) · LOG B, E(OFFICE2 화이트보드 290807 → 메모장 표 290=B, 807=E).
 - **키패드 (`ElevatorKeypad3D`, `ElevatorKeypadDisplay`):**
@@ -425,6 +444,12 @@
   - 폰트(Galmuri11, NanumSquareB, DungGeunMo)에 빠진 글자가 없는 것을 확인했다.
 
 ## 현재 상태 (최신화할 것)
+
+- **씬 전환 시네마틱 + B1F 비상구 탈출 (2026-10-03 메인 PC, 미커밋, B1F·B2F 씬 저장 필요):** 위 "씬 전환 시네마틱" 섹션 참고.
+  - **B1F→B2F "B1F 탈출 시네마틱" 영상은 아직 없다.** 지금은 검은 "B2 / NEXUS · SUBLEVEL 2" 카드(4초)가 대신 나온다. 영상이 생기면 목록 에셋의 B2F 항목 `video`(+ 가능하면 `soundtrack`)만 채우면 된다. 제작하려면 스토리보드 → 사용자 허가 순서를 따른다.
+  - 플레이 모드에서 확인: 엘리베이터 영상이 B2F 로딩(0.6초 끊김 포함) 중에도 그림·소리 차이 0.01초로 끝까지 재생되고, 로드 뒤 걷혔다. 플레이스홀더 카드도 확인했다.
+  - 확인 못 한 것: 실제 2인 네트워크에서 다운로드 완료 → 탈출 퀘스트 표시 → 두 사람 도착 → B2F 스폰 전체 흐름, LobbyF 엘리베이터에서의 전환, MainLobby 스테이지 선택, 빌드. B2F는 맵에 벽 충돌체가 거의 없고 게임 시스템이 없다 (사용자 작업 범위).
+  - B2F 씬은 에디터에서 B1F와 함께 **추가로 열려 있다**. 둘 다 저장해야 한다.
 
 - **#2 탈출구 열림 시네마틱 (2026-10-02~03 메인 PC, 미커밋, B1F 씬 저장 필요):** 완성해서 `B1F Escape Sequence`의 `exitVideo` 슬롯에 연결했다. 다운로드 100% 직후 재생된다.
   - 결과: `Assets/Movies/B1F/ExitCinematic/B1F_Exit_Cinematic.mp4` (21초, 1920×1080, 24fps, H.264 Baseline + AAC, 17MB, 트랜스코딩 끔, importAudio 켬).
@@ -449,7 +474,7 @@
     - 더 고치려면 재생성이 필요하다 (Veo 3.1 Lite, 소리 포함 376). 사용자 추가 허가가 필요하다. "violently yanked", "scream" 같은 표현은 안전 필터에 걸린다 (실패 시 크레딧은 차감되지 않음).
   - 확인 못 한 것: 소리를 귀로 들어 본 것(믹스 균형), 실제 빌드의 첫 실행 흐름(스플래시 → 프롤로그 → MainLobby), 스킵 키 입력(코드로만 확인).
 - **B1F 진입 엘리베이터 시네마틱 (2026-10-02 노트북, 미커밋, B1F 씬 저장 필요).** Unity 조립을 마쳤고 플레이 모드 캡처로 확인했다.
-  - 씬 오브젝트: B1F 루트의 `B1F Elevator Intro Cinematic`. `LobbyIntroCinematic` 컴포넌트를 재사용한다.
+  - 씬 오브젝트: B1F 루트의 `B1F Elevator Intro Cinematic`. `LobbyIntroCinematic` 컴포넌트를 재사용한다. **2026-10-03부터 비활성화**: 같은 타임라인을 구운 영상이 LobbyF→B1F 로딩 중에 재생된다 ("씬 전환 시네마틱" 섹션). 타이밍을 바꾸려면 `render_elevator_cinematic.py`의 표를 고쳐 다시 굽는다.
   - 타이틀 카드 색을 직렬화 필드로 추가했다: `titleCardColor`, `titleInk`, `titleSubInk`, `titleRuleColor`. 로비는 기존 흰색 기본값 그대로이고, B1F는 검은 카드에 빨간 선이다.
   - 영상: `Assets/Movies/B1F/ElevatorIntro/Elev_01~10.mp4` (클링 3.0, 1280×720, 24fps, 오디오 포함). 트랜스코딩과 importAudio를 켰다.
   - 음성: `Assets/SoundSources/B1F/ElevatorCinematic/Elevator_VO_AgentA/B.mp3` (MiniMax, 3.55초와 4.08초). 타이틀 효과음은 LobbyF의 `Intro_TitleHit.wav`를 재사용했다.
@@ -570,6 +595,15 @@
 - **문 파손 2:** 0크레딧 (효과음은 코드로 합성).
 
 ## 작업 로그 (최신이 위)
+
+### 2026-10-03 · 메인 PC (EUNSEO) · B1F 탈출 퀘스트 연결, 비상구 2인 판정, 로딩 중 시네마틱
+- **사용자 요청:** 다운로드 완료 → 탈출구 영상 뒤 "괴물을 피해 지하로 탈출하라" 퀘스트로 넘어가지 않음. 두 명이 비상구에 닿으면 탈출 성공 → B1F 탈출 시네마틱 → B2F 이동(플레이어 스폰). 영상은 다음 씬 로딩 중에 재생하고, 엘리베이터(LobbyF→B1F)와 스테이지 선택도 같은 규칙.
+- **한 일:** 위 "씬 전환 시네마틱 + B1F 비상구 탈출" 섹션 참고.
+  - 새 파일: `Scripts/SceneFlow/{SceneTransitionCinematicLibrary, SceneTransitionCinematicDirector, CinematicPlayback}.cs`, `Scripts/UI/ExitZoneWaitingHud.cs`, `Tools/Claude/render_elevator_cinematic.py`, `Resources/SceneFlow/`(목록 에셋, 엘리베이터 사운드트랙), `Movies/B1F/ElevatorIntro/B1F_Elevator_Cinematic.mp4`.
+  - 수정: `CinematicSceneTrigger`, `CinematicLoadingOverlay`(사용자 코드), 자막 3곳의 시네마틱 대기 조건, `SubtitleSceneEntryPresentation.OnDisable` 널 검사(씬을 떠날 때마다 MissingReferenceException이 났다).
+  - B1F 씬(MCP, 저장 안 함): 비상구 트리거 설정, `b1f_escape` 퀘스트 설정, 엘리베이터 씬 시네마틱 비활성화. B2F 씬(추가로 열림, 저장 안 함): `PlayerSpawnPoints`.
+- **검증한 것:** 오프라인·Unity 컴파일 에러 0. 플레이 모드에서 오버레이 + 실제 씬 로딩(엘리베이터 영상, 플레이스홀더). 렌더 스틸 9장. Artlist 0크레딧.
+- **검증 못 한 것:** 2인 네트워크 전체 흐름, 빌드, 소리 청취.
 
 ### 2026-10-02~03 · 메인 PC (EUNSEO) · 팀원 탈출 시퀀스 영상 색보정
 - **배경:** 팀원이 만든 `문 파손 연출 1-1`(관제실 두 요원, 붉은 경고등)과 `CutScene_김영주`(복도 접근, 빨간 TV 몬스터)를 B1F 톤에 맞추려는 작업. 원본은 `G:\내 드라이브\바빠도 게임은 해야지\Story CutScene\`. 사용자 결정: 이 둘만 활용하고, 몬스터 모양은 그대로 쓴다(우리 게임과 비슷하다고 판단).

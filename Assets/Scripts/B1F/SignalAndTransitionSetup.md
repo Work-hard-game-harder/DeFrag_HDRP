@@ -18,13 +18,13 @@
 - Camera receiver: LocalSignalAudio is installed alongside the scanner; optional Pulse Clip overrides the generated tone. These pulses do not emit WorldNoiseSystem events.
 - Terminal/generator/scanner panels use a shared teal frame and distinct command-input surface. Existing runtime UI and input behaviour remain in place.
 
-## Cinematic hookup required
-1. Stop Play mode. Select the B1F object `다음 씬으로`.
-2. Add CinematicSceneTrigger (adds NetworkObject if missing). Enable BoxCollider / Is Trigger.
-3. Assign the actual transition VideoClip to Cinematic. Destination Scene is B2F, now enabled in Build Settings.
+## Cinematic hookup (done 2026-10-03)
+1. `다음 씬으로` has NetworkObject + CinematicSceneTrigger + ExitZoneWaitingHud; its BoxCollider is a 3.9 x 5 x 5 m trigger covering the exit dead end, renderer off.
+2. The whole connected party must stand inside (server checks player positions, not trigger callbacks) after EscapeReady.
+3. Loading cinematics are listed per destination scene in `Resources/SceneFlow/SceneTransitionCinematics.asset`. `SceneTransitionCinematicDirector` starts the entry on every peer when its NGO scene Load event begins, so elevator, exit and stage-selection loads all behave the same. An entry without a video shows a title card.
 4. Save B1F; use the same scene version on both peers. This is a scene NetworkObject, not a dynamic prefab registration.
 
-The server initiates NGO scene loading while each client keeps a persistent full-screen video overlay. The overlay closes only after its video ends and its destination scene has loaded. This is loading behind a video, not deferred scene activation: B2F server simulation starts as soon as NGO activates the scene. If B2F requires delaying enemies/story timers until both viewers finish, a separate server-ready barrier must be connected to those systems.
+Each peer keeps a persistent full-screen overlay (`CinematicLoadingOverlay`). It closes only after its video ends (or is skipped) AND the destination scene has loaded with this peer's player spawned in it. This is loading behind a video, not deferred scene activation: B2F server simulation starts as soon as NGO activates the scene. If B2F requires delaying enemies/story timers until both viewers finish, a separate server-ready barrier must be connected to those systems.
 
 ## Play-test checklist
 - Host and client can each pick up/drop fuel; carrying slows only the carrier and dropping restores speed.

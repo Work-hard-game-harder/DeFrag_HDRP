@@ -71,7 +71,7 @@ public sealed class SubtitleIntroPresentation : MonoBehaviour
         yield return null;
 
         // LobbyF 오프닝 시네마틱이 재생 중이면 끝난 뒤에 시작합니다.
-        while (LobbyIntroCinematic.IsPlaying)
+        while (CinematicPlayback.IsCoveringGameplay)
             yield return null;
 
         if (startDelay > 0f)

@@ -99,7 +99,7 @@ public class SubtitleTrigger : MonoBehaviour
     {
         if (hasTriggered || playbackRequested) return;
         // LobbyF 오프닝 시네마틱 중에는 대기했다가, 끝난 뒤 OnTriggerStay로 이어서 재생합니다.
-        if (LobbyIntroCinematic.IsPlaying) return;
+        if (CinematicPlayback.IsCoveringGameplay) return;
         var player = other.GetComponentInParent<StarterAssets.PersonController>();
         if (player != null && player.IsSpawned && !player.IsOwner) return;
         if (player != null || other.CompareTag("Player"))
