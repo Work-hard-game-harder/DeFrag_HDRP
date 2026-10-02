@@ -13,6 +13,8 @@ public class SubtitlesScript : MonoBehaviour
         public SubtitleAudioOverride[] AudioOverrides;
         public Action OnFinished;
         public Action OnStarted;
+        public int PauseAfterIndex = -1;
+        public Action<Action> PlayInterlude;
     }
 
     public static event Action PlaybackStarted;
@@ -34,6 +36,11 @@ public class SubtitlesScript : MonoBehaviour
     private bool ownsCutsceneLock;
     private SubtitleColorOverride[] activeColorOverrides;
     private SubtitleAudioOverride[] activeAudioOverrides;
+    private int activePauseAfterIndex = -1;
+    private Action<Action> activeInterlude;
+    private bool interludePlayed;
+    private bool interludePending;
+    private int playbackVersion;
     private Color defaultSubtitleColor;
     private readonly Queue<PlaybackRequest> playbackQueue = new();
 
@@ -131,11 +138,57 @@ public class SubtitlesScript : MonoBehaviour
         StartPlayback(request);
     }
 
+    /// <summary>
+    /// 하나의 자막 목록을 유지한 채 지정한 Element 뒤에서 로컬 연출을 실행하고,
+    /// 연출이 resume 콜백을 호출하면 다음 Element부터 계속 재생합니다.
+    /// </summary>
+    public void PlaySubtitlesWithInterlude(
+        string[] newSubtitles,
+        SubtitleColorOverride[] colorOverrides,
+        SubtitleAudioOverride[] audioOverrides,
+        int pauseAfterIndex,
+        Action<Action> playInterlude,
+        Action callback,
+        Action onStarted)
+    {
+        if (newSubtitles == null || newSubtitles.Length == 0)
+        {
+            onStarted?.Invoke();
+            callback?.Invoke();
+            return;
+        }
+
+        PlaybackRequest request = new()
+        {
+            Subtitles = newSubtitles,
+            ColorOverrides = colorOverrides,
+            AudioOverrides = audioOverrides,
+            OnFinished = callback,
+            OnStarted = onStarted,
+            PauseAfterIndex = pauseAfterIndex,
+            PlayInterlude = playInterlude
+        };
+
+        if (IsPlaying || playbackQueue.Count > 0)
+        {
+            playbackQueue.Enqueue(request);
+            TryStartNextQueuedPlayback();
+            return;
+        }
+
+        StartPlayback(request);
+    }
+
     private void StartPlayback(PlaybackRequest request)
     {
         subtitles = request.Subtitles;
         activeColorOverrides = request.ColorOverrides;
         activeAudioOverrides = request.AudioOverrides;
+        activePauseAfterIndex = request.PauseAfterIndex;
+        activeInterlude = request.PlayInterlude;
+        interludePlayed = false;
+        interludePending = false;
+        playbackVersion++;
 
         index = 0;
         onFinished = request.OnFinished;
@@ -263,10 +316,51 @@ public class SubtitlesScript : MonoBehaviour
         subtitlesText.color = defaultSubtitleColor;
         activeColorOverrides = null;
         activeAudioOverrides = null;
+        activePauseAfterIndex = -1;
+        activeInterlude = null;
+        interludePlayed = false;
+        interludePending = false;
+        playbackVersion++;
         playbackQueue.Clear();
     }
 
     private void NextSubtitle()
+    {
+        if (TryStartInterlude())
+            return;
+
+        AdvanceAfterCurrentSubtitle();
+    }
+
+    private bool TryStartInterlude()
+    {
+        if (interludePlayed || interludePending || activeInterlude == null ||
+            index != activePauseAfterIndex)
+            return false;
+
+        interludePlayed = true;
+        interludePending = true;
+        ignoreClick = true;
+        StopTypewriterSound();
+        subtitlesText.text = string.Empty;
+
+        int version = playbackVersion;
+        activeInterlude.Invoke(() => ResumeAfterInterlude(version));
+        return true;
+    }
+
+    private void ResumeAfterInterlude(int version)
+    {
+        if (version != playbackVersion || !interludePending || subtitles == null)
+            return;
+
+        interludePending = false;
+        ignoreClick = false;
+        AdvanceAfterCurrentSubtitle();
+        StartCoroutine(IgnoreClickThisFrame());
+    }
+
+    private void AdvanceAfterCurrentSubtitle()
     {
         if (index < subtitles.Length - 1)
         {
@@ -294,6 +388,10 @@ public class SubtitlesScript : MonoBehaviour
         subtitlesText.color = defaultSubtitleColor;
         activeColorOverrides = null;
         activeAudioOverrides = null;
+        activePauseAfterIndex = -1;
+        activeInterlude = null;
+        interludePlayed = false;
+        interludePending = false;
 
         TryStartNextQueuedPlayback();
     }

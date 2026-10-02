@@ -88,6 +88,11 @@ public sealed class LobbyIntroCinematic : MonoBehaviour
     [SerializeField] private Vector2 titleTime = new(17.2f, 21.2f);
     [SerializeField] private string titleText = "NEXUS";
     [SerializeField] private string titleSubtext = "DATA SCIENCES  ·  1F LOBBY";
+    [Tooltip("타이틀 카드 배경. 로비는 흰색, 지하층은 검은색처럼 씬 분위기에 맞춥니다.")]
+    [SerializeField] private Color titleCardColor = new(0.965f, 0.973f, 0.98f, 1f);
+    [SerializeField] private Color titleInk = new(0.15f, 0.19f, 0.23f, 1f);
+    [SerializeField] private Color titleSubInk = new(0.36f, 0.41f, 0.47f, 1f);
+    [SerializeField] private Color titleRuleColor = new(0.23f, 0.62f, 0.88f, 1f);
     [Tooltip("Second at which the view starts fading into gameplay.")]
     [Min(0f)] [SerializeField] private float revealAt = 21.8f;
     [Min(0.05f)] [SerializeField] private float revealDuration = 1.2f;
@@ -494,7 +499,7 @@ public sealed class LobbyIntroCinematic : MonoBehaviour
         subtitleRect.sizeDelta = new Vector2(0f, 60f);
         subtitle.fontStyle = FontStyles.Normal;
 
-        white = Panel("White", root.transform, new Color(0.965f, 0.973f, 0.98f, 0f));
+        white = Panel("White", root.transform, new Color(titleCardColor.r, titleCardColor.g, titleCardColor.b, 0f));
         Stretch(white.rectTransform);
 
         var titleRoot = new GameObject("Title Card", typeof(RectTransform), typeof(CanvasGroup));
@@ -502,14 +507,13 @@ public sealed class LobbyIntroCinematic : MonoBehaviour
         Stretch((RectTransform)titleRoot.transform);
         titleGroup = titleRoot.GetComponent<CanvasGroup>();
         titleGroup.alpha = 0f;
-        Color ink = new(0.15f, 0.19f, 0.23f);
-        title = Label("Title", titleRoot.transform, 150f, TextAlignmentOptions.Center, ink, 34f);
+        title = Label("Title", titleRoot.transform, 150f, TextAlignmentOptions.Center, titleInk, 34f);
         title.text = titleText;
         Place(title.rectTransform, new Vector2(0f, 0.48f), new Vector2(1f, 0.68f));
-        TMP_Text sub = Label("Subtitle", titleRoot.transform, 34f, TextAlignmentOptions.Center, new Color(0.36f, 0.41f, 0.47f), 26f);
+        TMP_Text sub = Label("Subtitle", titleRoot.transform, 34f, TextAlignmentOptions.Center, titleSubInk, 26f);
         sub.text = titleSubtext;
         Place(sub.rectTransform, new Vector2(0f, 0.38f), new Vector2(1f, 0.46f));
-        Image rule = Panel("Rule", titleRoot.transform, new Color(0.23f, 0.62f, 0.88f));
+        Image rule = Panel("Rule", titleRoot.transform, titleRuleColor);
         rule.rectTransform.anchorMin = rule.rectTransform.anchorMax = new Vector2(0.5f, 0.47f);
         rule.rectTransform.sizeDelta = new Vector2(520f, 3f);
 
