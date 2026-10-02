@@ -1,4 +1,5 @@
 using System;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -14,9 +15,27 @@ public sealed class MonitorDesktopUI : MonoBehaviour
         public Button closeButton;
     }
 
+    [Serializable]
+    private sealed class DesktopFileBinding
+    {
+        public string name;
+        public Button icon;
+        public string title;
+        [TextArea(4, 16)] public string body;
+    }
+
     [SerializeField] private DesktopWindowBinding[] windows;
 
+    [Header("File Viewer")]
+    [Tooltip("창 안의 파일 아이콘(예: 휴지통 속 문서). 누르면 뷰어 창이 그 창 위에 열린다.")]
+    [SerializeField] private DesktopFileBinding[] files;
+    [SerializeField] private GameObject fileViewerWindow;
+    [SerializeField] private TMP_Text fileViewerTitle;
+    [SerializeField] private TMP_Text fileViewerBody;
+    [SerializeField] private Button fileViewerCloseButton;
+
     private Canvas desktopCanvas;
+    private DesktopFileBinding openFile;
     private int buttonHandledFrame = -1;
 
     private void Awake()
@@ -34,6 +53,22 @@ public sealed class MonitorDesktopUI : MonoBehaviour
             ConfigureButton(captured.closeButton, () => Close(captured));
             if (captured.window != null) captured.window.SetActive(false);
         }
+
+        if (files != null)
+        {
+            foreach (DesktopFileBinding file in files)
+            {
+                if (file == null) continue;
+                DesktopFileBinding captured = file;
+                ConfigureButton(captured.icon, () =>
+                {
+                    buttonHandledFrame = Time.frameCount;
+                    OpenFile(captured);
+                });
+            }
+        }
+        ConfigureButton(fileViewerCloseButton, CloseFileViewer);
+        CloseFileViewer();
     }
 
     private void Update()
@@ -54,6 +89,8 @@ public sealed class MonitorDesktopUI : MonoBehaviour
                              desktopCanvas.renderMode != RenderMode.ScreenSpaceOverlay
             ? desktopCanvas.worldCamera
             : null;
+
+        if (TryResolveFileClick(screenPosition, eventCamera)) yield break;
 
         foreach (DesktopWindowBinding binding in windows)
         {
@@ -85,6 +122,54 @@ public sealed class MonitorDesktopUI : MonoBehaviour
         {
             if (binding?.window != null) binding.window.SetActive(false);
         }
+        CloseFileViewer();
+    }
+
+    private bool TryResolveFileClick(Vector2 screenPosition, Camera eventCamera)
+    {
+        if (files == null) return false;
+
+        // Clicks on the open viewer belong to the viewer, not to icons hidden behind it.
+        if (fileViewerWindow != null && fileViewerWindow.activeInHierarchy &&
+            RectTransformUtility.RectangleContainsScreenPoint(
+                (RectTransform)fileViewerWindow.transform, screenPosition, eventCamera))
+            return true;
+
+        foreach (DesktopFileBinding file in files)
+        {
+            if (file?.icon == null || !file.icon.gameObject.activeInHierarchy) continue;
+            if (RectTransformUtility.RectangleContainsScreenPoint(
+                    (RectTransform)file.icon.transform, screenPosition, eventCamera))
+            {
+                OpenFile(file);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void OpenFile(DesktopFileBinding file)
+    {
+        if (fileViewerWindow == null)
+        {
+            Debug.LogError("[MonitorDesktopUI] File viewer window is not assigned.", this);
+            return;
+        }
+
+        // The rect fallback (mouse down) and the Button (mouse up) can both open the same file.
+        if (openFile == file && fileViewerWindow.activeSelf) return;
+        openFile = file;
+        if (fileViewerTitle != null) fileViewerTitle.text = string.IsNullOrEmpty(file.title) ? file.name : file.title;
+        if (fileViewerBody != null) fileViewerBody.text = file.body;
+        fileViewerWindow.SetActive(true);
+        fileViewerWindow.transform.SetAsLastSibling();
+        UiSfx.Play(UiCue.MenuConfirm, 0.45f);
+    }
+
+    private void CloseFileViewer()
+    {
+        openFile = null;
+        if (fileViewerWindow != null) fileViewerWindow.SetActive(false);
     }
 
     private void Open(DesktopWindowBinding selected)

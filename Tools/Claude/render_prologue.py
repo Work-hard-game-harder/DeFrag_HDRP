@@ -437,6 +437,8 @@ def main():
     with open(os.path.join(WORK, 'audio_graph.txt'), 'w', encoding='utf-8') as f:
         f.write(afc + ';[mix]aresample=48000:async=1[aout]')
     run(ain + ['-filter_complex_script', 'audio_graph.txt', '-map', '[aout]', '-c:a', 'pcm_s16le', 'mix.wav'])
+    # The game plays the soundtrack as its own AudioClip (VideoPlayer audio output stalls after load hitches).
+    shutil.copy(os.path.join(WORK, 'mix.wav'), os.path.join(OUT_DIR, 'Prologue_Audio.wav'))
     with open(os.path.join(WORK, 'graph.txt'), 'w', encoding='utf-8') as f:
         f.write('[0:v]' + ',\n'.join(global_filters()) + '[v]')
     run(['-i', 'base.mp4', '-i', 'mix.wav', '-filter_complex_script', 'graph.txt', '-map', '[v]', '-map', '1:a',

@@ -49,6 +49,23 @@ public sealed class ElevatorKeypad3D : MonoBehaviour
     [SerializeField] private string promptText = "코드를 입력하세요  |  ENTER 확인  |  ESC 닫기";
     [SerializeField] private string idleText = "TOUCH TO AUTHENTICATE";
 
+    [Header("Code guide")]
+    [Tooltip("각 코드 칸 위에 표시할 이름. 코드가 무엇으로 이루어졌는지 알려 준다.")]
+    [SerializeField] private string[] slotLabels = { "ID", "ZONE", "CH", "CH", "LOG", "LOG" };
+    [Tooltip("오답이 누적되면 가장 왼쪽의 틀린 칸에 해당하는 안내를 SYSTEM 줄에 띄운다. 칸 순서와 같다.")]
+    [SerializeField, TextArea(1, 2)] private string[] slotHints =
+    {
+        "ID → 바닥에 떨어진 사원증의 번호",
+        "ZONE → 근무표에서 그 사원의 담당 구역",
+        "CH → 회의실 TV에 '그것'이 비친 채널 번호 (앞)",
+        "CH → 회의실 TV에 '그것'이 비친 채널 번호 (뒤)",
+        "LOG → OFFICE 2 화이트보드 마지막 기록 + 팀장 PC 메모장",
+        "LOG → OFFICE 2 화이트보드 마지막 기록 + 팀장 PC 메모장"
+    };
+    [Tooltip("이 횟수만큼 틀리면 안내를 보여 준다. 0이면 끈다.")]
+    [SerializeField, Min(0)] private int hintAfterWrongAttempts = 2;
+    [SerializeField] private Color hintColor = new(1f, 0.78f, 0.32f);
+
     private ElevatorKeypadDisplay display;
     private KeypadTouchPad pad;
     private KeypadTouchHand hand;
@@ -68,6 +85,7 @@ public sealed class ElevatorKeypad3D : MonoBehaviour
     private float alertUntil;
     private Color alertColor;
     private float fingerprintPulse;
+    private int wrongAttempts;
 
     public bool IsFocused => focus != null && focus.IsFocused;
 
@@ -156,6 +174,17 @@ public sealed class ElevatorKeypad3D : MonoBehaviour
         pad.Touch(new Vector2(0.5f, 0.5f), wrongColor, 2.4f, 1f);
         UiSfx.Play(UiCue.AccessDenied, 0.9f);
         focus?.Shake(0.55f);
+        wrongAttempts++;
+        ShowSlotHint();
+    }
+
+    /// <summary>After repeated misses, point at the clue behind the left-most wrong slot.</summary>
+    private void ShowSlotHint()
+    {
+        if (hintAfterWrongAttempts <= 0 || wrongAttempts < hintAfterWrongAttempts || slotHints == null) return;
+        int slot = Array.IndexOf(judgedSlots, false);
+        if (slot < 0 || slot >= slotHints.Length || string.IsNullOrWhiteSpace(slotHints[slot])) return;
+        display.SetSystemLine($"HINT {slot + 1}/{codeLength}  {slotHints[slot]}", hintColor);
     }
 
     public void ShowGranted(string message)
@@ -180,7 +209,12 @@ public sealed class ElevatorKeypad3D : MonoBehaviour
 
     // ───────────────────────── Build ─────────────────────────
 
-    private void Start() => EnsureBuilt();
+    private void Start()
+    {
+        // Scene reload is disabled in this project, so per-run counters must be reset here.
+        wrongAttempts = 0;
+        EnsureBuilt();
+    }
 
     private void EnsureBuilt()
     {
@@ -199,7 +233,7 @@ public sealed class ElevatorKeypad3D : MonoBehaviour
         foreach (float x in new[] { -stripX, stripX })
             AddSlab("LED Strip", new Vector2(x, 0f), new Vector2(0.0025f, stripHeight), 0.00124f, 0f, bodyDepth - 0.002f, 0f, ledMaterial);
 
-        display = new ElevatorKeypadDisplay(font, 6, accent, correctColor, wrongColor, systemLine);
+        display = new ElevatorKeypadDisplay(font, 6, accent, correctColor, wrongColor, systemLine, slotLabels);
         Material displayMaterial = DeviceScreenQuad.CreateMaterial(display.Texture, "Keypad Display");
         SetSurface(displayMaterial, new Color(0.08f, 0.09f, 0.1f), 0f, 0.95f);
         DeviceScreenQuad.SetGlow(displayMaterial, Color.white, displayGlow);

@@ -17,6 +17,7 @@ public sealed class ElevatorKeypadDisplay : IDisposable
 
     private readonly OffscreenUiSurface surface;
     private readonly List<(RectTransform rect, Image fill, Outline frame, TMP_Text glyph)> slots = new();
+    private readonly List<TMP_Text> slotLabels = new();
     private readonly TMP_Text header;
     private readonly TMP_Text lockLabel;
     private readonly TMP_Text system;
@@ -34,7 +35,9 @@ public sealed class ElevatorKeypadDisplay : IDisposable
 
     public Texture Texture => surface.Texture;
 
-    public ElevatorKeypadDisplay(TMP_FontAsset font, int slotCount, Color accent, Color correct, Color wrong, string systemLine)
+    /// <param name="labels">Optional caption above each code cell (what the slot stands for).</param>
+    public ElevatorKeypadDisplay(TMP_FontAsset font, int slotCount, Color accent, Color correct, Color wrong, string systemLine,
+        IReadOnlyList<string> labels = null)
     {
         this.accent = accent;
         this.correct = correct;
@@ -69,6 +72,16 @@ public sealed class ElevatorKeypadDisplay : IDisposable
             frame.effectDistance = new Vector2(2f, -2f);
             TMP_Text glyph = Label(rect, font, 92f, TextAlignmentOptions.Center, accent, Vector2.zero, Vector2.one);
             slots.Add((rect, fill, frame, glyph));
+
+            // Caption naming what the cell holds, so players know how the code is composed.
+            TMP_Text caption = Label(root, font, 19f, TextAlignmentOptions.Bottom, dimAccent,
+                new Vector2(rect.anchorMin.x - 0.01f, 0.71f), new Vector2(rect.anchorMax.x + 0.01f, 0.8f));
+            caption.textWrappingMode = TextWrappingModes.NoWrap;
+            caption.enableAutoSizing = true;
+            caption.fontSizeMin = 10f;
+            caption.fontSizeMax = 19f;
+            caption.text = labels != null && i < labels.Count ? labels[i] : string.Empty;
+            slotLabels.Add(caption);
         }
         for (int side = 0; side < 2; side++)
         {
@@ -124,6 +137,8 @@ public sealed class ElevatorKeypadDisplay : IDisposable
             fill.color = judged ? new Color(tint.r, tint.g, tint.b, 0.3f) : new Color(accent.r, accent.g, accent.b, state == KeypadSlotState.Empty ? 0.06f : 0.12f);
             frame.effectColor = new Color(tint.r, tint.g, tint.b, judged ? 0.95f : state == KeypadSlotState.Empty ? 0.25f : 0.6f);
             glyph.color = judged ? Color.Lerp(tint, Color.white, 0.25f) : accent;
+            if (i < slotLabels.Count)
+                slotLabels[i].color = judged ? new Color(tint.r, tint.g, tint.b, 0.9f) : new Color(accent.r, accent.g, accent.b, 0.7f);
         }
         foreach (TMP_Text bracket in brackets) bracket.color = allGranted ? correct : accent;
     }
@@ -135,6 +150,12 @@ public sealed class ElevatorKeypadDisplay : IDisposable
     }
 
     public void SetHeader(string text) => header.text = text;
+
+    public void SetSystemLine(string text, Color color)
+    {
+        system.text = text;
+        system.color = color;
+    }
 
     public void SetLock(string text, Color color)
     {
