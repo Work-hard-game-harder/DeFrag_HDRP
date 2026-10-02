@@ -373,6 +373,11 @@
   - 키프레임 원본: `Assets/Art/B1F/ElevatorCinematic/Source~/Keyframes/KF01~12.jpg` (v6 격자를 1920×1080으로 자른 것).
   - 확인 못 한 것: 소리 청취, 2인 네트워크(디버그 체크포인트로 B1F에 들어가도 재생된다. 필요하면 Space를 길게 눌러 스킵), 빌드.
   - 남은 아쉬움: 클립 길이가 3~5초라 컷 전환이 잦다. 다음에는 10~15초 롱테이크로 만든다 (사용자 요청).
+  - **팀원 커밋 3e4f000과 병합 (2026-10-02):** `B1F.unity` 충돌 10곳을 정리했다.
+    - 팀원 쪽을 따랐다: 새 필드 `subtitleInterlude`, 자막 색·오디오, `playOnPlayerEnter: 0`.
+    - SceneRoots에는 양쪽 새 오브젝트(시네마틱과 팀원의 `Map`)를 모두 남겼다.
+    - Unity에서 다시 열어 누락 스크립트 0, 시네마틱이 그대로 있는 것을 확인했다. 백업은 `Temp/B1F_conflict_backup.unity`.
+    - 팀원의 새 `SubtitleSceneEntryPresentation`에도 시네마틱이 끝날 때까지 기다리는 한 줄을 넣었다.
   - 흐름: 엘리베이터 앞 두 요원 → 키패드 입력 → 초록 승인 → 흰 문이 열림 → 탑승 → 내부 버튼은 G와 B1뿐 → B1을 누르면 빨간 불 → 문이 닫히고 하강 → 대화 → 층 표시 B1 → 페이드아웃.
   - 대사(영어 음성, 한국어 자막):
     - 요원 A: "Didn't expect a way down to be this close." (의외로 가까운 곳에 지하로 내려갈 수단이 있었군.)

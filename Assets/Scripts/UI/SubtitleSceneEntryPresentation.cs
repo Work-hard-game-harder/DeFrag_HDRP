@@ -54,6 +54,10 @@ public sealed class SubtitleSceneEntryPresentation : MonoBehaviour
         // SubtitlesScript.Start가 초기 UI 상태를 정리한 다음 재생합니다.
         yield return null;
 
+        // 씬 시작 시네마틱(LobbyF·B1F)이 재생 중이면 끝난 뒤에 시작합니다.
+        while (LobbyIntroCinematic.IsPlaying)
+            yield return null;
+
         if (startDelay > 0f)
             yield return new WaitForSecondsRealtime(startDelay);
 
