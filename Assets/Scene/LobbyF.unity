@@ -1162,7 +1162,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 142446262}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -1212,6 +1212,63 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 142446262}
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &165400325
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 165400326}
+  - component: {fileID: 165400327}
+  m_Layer: 0
+  m_Name: Trigger7
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &165400326
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 165400325}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: 4.72, y: 1.95, z: -31.17}
+  m_LocalScale: {x: 8.542474, y: 4.6727524, z: 2.069176}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3198835308442206272}
+  m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
+--- !u!114 &165400327
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 165400325}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 517b6eaf78ce4324fa21739d8507f731, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SubtitleTrigger
+  subtitlesScript: {fileID: 8430087059669167798}
+  mySubtitles:
+  - "\uB2E8\uC11C\uB97C \uB2E4 \uCC3E\uC740 \uAC83 \uAC19\uC544 "
+  - "\uB2E8\uC11C\uB4E4\uC744 \uC870\uD569\uD558\uBA74 \uBCF4\uC548 \uCF54\uB4DC\uB97C
+    \uC54C \uC218 \uC788\uC9C0 \uC54A\uC744\uAE4C?"
+  walkietakie: {fileID: 0}
+  revealPendingQuestAfterSubtitle: 1
+  requiredQuestId: 
+  completionQuestSignal: 
+  colorOverrides: []
+  audioOverrides: []
+  triggerVisual: {fileID: 0}
+  playOnPlayerEnter: 0
 --- !u!1 &174929879
 GameObject:
   m_ObjectHideFlags: 0
@@ -2289,6 +2346,11 @@ MonoBehaviour:
   questProgressHintId: EmployeeBadge
   questProgressSignal: LOBBY_EMPLOYEE_BADGE_INSPECTED
   questProgressSourceId: LOBBY_EMPLOYEE_BADGE
+  allHintsRequiredCount: 6
+  allHintsConfirmedSignal: LOBBY_ALL_HINTS_CONFIRMED
+  allHintsConfirmedSourceId: LOBBY_ALL_HINTS
+  allHintsCompletedSubtitleTrigger: {fileID: 165400327}
+  allHintsFollowupQuestId: lobby_find_elevator
   deferredPresentationHintId: EmployeeBadge
   sharedBroadcastId: TV
   sharedBroadcastPresentation: {fileID: 8424344033849766708}
@@ -7836,8 +7898,18 @@ MonoBehaviour:
     rejectDuplicateSources: 1
     persistUntilSceneChange: 0
     currentCount: 0
-  - questId: lobby_find_elevator
+  - questId: lobby_inspect_all_hints
     questTitle: "\uC5D8\uB9AC\uBCA0\uC774\uD130 \uBCF4\uC548 \uCF54\uB4DC\uB97C \uC54C\uC544\uB0B4\uB77C"
+    requiredSignal: LOBBY_ALL_HINTS_CONFIRMED
+    progressScope: 0
+    revealMode: 0
+    targetCount: 1
+    rejectDuplicateSources: 1
+    persistUntilSceneChange: 0
+    currentCount: 0
+  - questId: lobby_find_elevator
+    questTitle: "\uC54C\uC544\uB0B8 \uB2E8\uC11C\uB97C \uD1B5\uD574 \uBCF4\uC548
+      \uCF54\uB4DC\uB97C \uC785\uB825\uD574\uB77C"
     requiredSignal: 
     progressScope: 1
     revealMode: 0
@@ -15490,11 +15562,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 680091480917800900, guid: 6e2477ebacb9b8c47816f3edbdf5ba08, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 0.9366722
+      value: 0.82412624
       objectReference: {fileID: 0}
     - target: {fileID: 680091480917800900, guid: 6e2477ebacb9b8c47816f3edbdf5ba08, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0.35020736
+      value: 0.56640625
       objectReference: {fileID: 0}
     - target: {fileID: 680091480917800900, guid: 6e2477ebacb9b8c47816f3edbdf5ba08, type: 3}
       propertyPath: m_LocalRotation.y
@@ -15506,7 +15578,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 680091480917800900, guid: 6e2477ebacb9b8c47816f3edbdf5ba08, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 41
+      value: 69
       objectReference: {fileID: 0}
     - target: {fileID: 680091480917800900, guid: 6e2477ebacb9b8c47816f3edbdf5ba08, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
@@ -15586,11 +15658,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4803340593279672233, guid: 6e2477ebacb9b8c47816f3edbdf5ba08, type: 3}
       propertyPath: m_SpotAngle
-      value: 45
+      value: 62
       objectReference: {fileID: 0}
     - target: {fileID: 4803340593279672233, guid: 6e2477ebacb9b8c47816f3edbdf5ba08, type: 3}
       propertyPath: m_AreaSize.x
-      value: 1.8
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4803340593279672233, guid: 6e2477ebacb9b8c47816f3edbdf5ba08, type: 3}
       propertyPath: m_ShapeRadius
@@ -15602,7 +15674,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4803340593279672233, guid: 6e2477ebacb9b8c47816f3edbdf5ba08, type: 3}
       propertyPath: m_InnerSpotAngle
-      value: 73.415276
+      value: 61.999973
       objectReference: {fileID: 0}
     - target: {fileID: 4803340593279672233, guid: 6e2477ebacb9b8c47816f3edbdf5ba08, type: 3}
       propertyPath: m_BounceIntensity
@@ -15630,11 +15702,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4803340593279672233, guid: 6e2477ebacb9b8c47816f3edbdf5ba08, type: 3}
       propertyPath: m_Shadows.m_CullingMatrixOverride.e00
-      value: 1.3412297
+      value: 1.6642793
       objectReference: {fileID: 0}
     - target: {fileID: 4803340593279672233, guid: 6e2477ebacb9b8c47816f3edbdf5ba08, type: 3}
       propertyPath: m_Shadows.m_CullingMatrixOverride.e11
-      value: 2.4142134
+      value: 1.6642785
       objectReference: {fileID: 0}
     - target: {fileID: 4803340593279672233, guid: 6e2477ebacb9b8c47816f3edbdf5ba08, type: 3}
       propertyPath: m_Shadows.m_CullingMatrixOverride.e22
@@ -25749,6 +25821,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ElevatorTrigger
   subtitleTrigger: {fileID: 6454744873083920272}
+  removeWhenQuestId: lobby_find_elevator
 --- !u!33 &49305362350758513
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -31312,7 +31385,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3650377660924838687}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -33256,6 +33329,7 @@ Transform:
   - {fileID: 5502030899337054075}
   - {fileID: 2558918827389908169}
   - {fileID: 5940567036728046099}
+  - {fileID: 165400326}
   m_Father: {fileID: 2759103029071624131}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!64 &3199818444831700015
@@ -43085,7 +43159,7 @@ MonoBehaviour:
   colorOverrides: []
   audioOverrides: []
   triggerVisual: {fileID: 0}
-  playOnPlayerEnter: 1
+  playOnPlayerEnter: 0
 --- !u!4 &6484141456905887658
 Transform:
   m_ObjectHideFlags: 0
@@ -47159,7 +47233,7 @@ GameObject:
   - component: {fileID: 8736550563334665738}
   - component: {fileID: 8736550563334665739}
   m_Layer: 0
-  m_Name: Trigger0
+  m_Name: AssistTrigger1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -47890,7 +47964,7 @@ MeshCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 1
   m_ProvidesContacts: 0
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 5
   m_Convex: 1
   m_CookingOptions: 30
