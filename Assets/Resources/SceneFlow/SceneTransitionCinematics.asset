@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 41986291b5da0034db82f75d20190dcd, type: 3}
+  m_Name: SceneTransitionCinematics
+  m_EditorClassIdentifier: Assembly-CSharp::SceneTransitionCinematicLibrary
+  entries:
+  - destinationScene: B1F
+    video: {fileID: 32900000, guid: 1f6e6b2c9054c5e4a9e83eb7a61dd580, type: 3}
+    soundtrack: {fileID: 8300000, guid: 59b1a5b5b90285a4a972482b3ed0a358, type: 3}
+    placeholderTitle: B1
+    placeholderSubtitle: "NEXUS  \xB7  SUBLEVEL 1  \xB7  RESTRICTED"
+    placeholderSeconds: 4
+    allowSkip: 1
+  - destinationScene: B2F
+    video: {fileID: 0}
+    soundtrack: {fileID: 0}
+    placeholderTitle: B2
+    placeholderSubtitle: "NEXUS  \xB7  SUBLEVEL 2  \xB7  RESTRICTED"
+    placeholderSeconds: 4
+    allowSkip: 1

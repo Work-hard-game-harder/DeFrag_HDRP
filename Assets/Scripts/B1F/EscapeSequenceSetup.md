@@ -18,7 +18,7 @@ Play Mode를 종료하고 메인 에디터에서 설정한다. B1F 씬에 사용
 | 기존/추가 | b1f_escape | B1F_EXIT_REACHED | 비상구로 탈출하라 |
 
 7. B1FPowerController의 PowerOff/EmergencyPower/FullPower 루트가 실제 조명 루트에 연결되어야 한다. 이야기 정전은 PowerOff로 전환하되 발전기 복구를 허용한다. Sequence와 Generator는 이 루트들의 자식이면 안 된다.
-8. 기존 CinematicSceneTrigger의 Escape Sequence에 이 Sequence를 연결한다. 연결하면 EscapeReady 전에는 B2F 이동을 거절한다. Destination Scene과 기존 전환 영상도 연결한다. 비상구 영상만으로 씬 이동하지 않으며 플레이어가 탈출 트리거에 닿으면 기존 전환을 사용한다.
+8. 비상구 판정은 `SutitleTriggers/다음 씬으로`의 CinematicSceneTrigger다 (2026-10-03 연결). Escape Sequence가 EscapeReady가 되기 전에는 닫혀 있고, 접속한 플레이어 **전원**이 영역 안에 0.6초 머물면 서버가 `B1F_EXIT_REACHED`를 보고하고 B2F를 로드한다. 혼자 먼저 도착하면 `ExitZoneWaitingHud`가 "동료를 기다리는 중 (1/2)"를 띄운다. 로딩 중 영상은 트리거가 아니라 `Resources/SceneFlow/SceneTransitionCinematics`(목적지 씬별 목록)가 정한다.
 
 기본 진행: 경고 → 다운로드 35% → 접근/충돌/파손 영상 → 중단 안내 2초 → 전체 정전/발전기 퀘스트 → FullPower 확인 → 35%부터 재개 → 100% → 비상구 영상 → 탈출 퀘스트/서버 문 개방 이벤트.
 

@@ -55,7 +55,7 @@ public sealed class SubtitleSceneEntryPresentation : MonoBehaviour
         yield return null;
 
         // 씬 시작 시네마틱(LobbyF·B1F)이 재생 중이면 끝난 뒤에 시작합니다.
-        while (LobbyIntroCinematic.IsPlaying)
+        while (CinematicPlayback.IsCoveringGameplay)
             yield return null;
 
         if (startDelay > 0f)
@@ -108,6 +108,7 @@ public sealed class SubtitleSceneEntryPresentation : MonoBehaviour
         }
 
         hasPlayed = false;
-        entryVisual?.StopAndHide();
+        // 씬 언로드 중에는 entryVisual이 먼저 파괴될 수 있습니다 (?.는 Unity의 파괴된 오브젝트를 거르지 못함).
+        if (entryVisual != null) entryVisual.StopAndHide();
     }
 }

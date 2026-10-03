@@ -1,4 +1,5 @@
 using EasyPeasyFirstPersonController;
+using System.Collections;
 using UnityEngine;
 
 [System.Serializable]
@@ -21,6 +22,7 @@ public class SubtitleTrigger : MonoBehaviour
     public string[] mySubtitles;            // 이 트리거에서 재생할 기존 자막 목록
     private bool hasTriggered = false;
     private bool playbackRequested;
+    private bool followUpRequested;
     public GameObject walkietakie; // 워키토키 획득 시 활성화할 오브젝트
 
     [Header("Quest UI Link")]
@@ -44,9 +46,15 @@ public class SubtitleTrigger : MonoBehaviour
     [Tooltip("비어 있으면 기존처럼 모든 자막을 연속 재생합니다.")]
     [SerializeField] private SubtitleCameraInterlude subtitleInterlude;
 
+    [Header("Optional Follow-up Subtitle")]
+    [Tooltip("이 Trigger의 자막이 모두 끝난 직후 이어서 재생할 SubtitleTrigger입니다.")]
+    [SerializeField] private SubtitleTrigger playAfterCompletion;
+
     [Header("Trigger Activation")]
     [Tooltip("플레이어가 Collider에 진입했을 때 자막을 자동으로 재생합니다.")]
     [SerializeField] private bool playOnPlayerEnter = true;
+    [Tooltip("지정하면 해당 퀘스트가 자막 공개 대기 상태일 때만 Collider 자동 재생을 허용합니다.")]
+    [SerializeField] private string requiredPendingQuestId;
 
     public UISpriteSequencePlayer TriggerVisual => triggerVisual;
 
@@ -61,6 +69,7 @@ public class SubtitleTrigger : MonoBehaviour
         {
             trigger.hasTriggered = false;
             trigger.playbackRequested = false;
+            trigger.followUpRequested = false;
         }
     }
 
@@ -90,13 +99,15 @@ public class SubtitleTrigger : MonoBehaviour
     {
         if (hasTriggered || playbackRequested) return;
         // LobbyF 오프닝 시네마틱 중에는 대기했다가, 끝난 뒤 OnTriggerStay로 이어서 재생합니다.
-        if (LobbyIntroCinematic.IsPlaying) return;
+        if (CinematicPlayback.IsCoveringGameplay) return;
         var player = other.GetComponentInParent<StarterAssets.PersonController>();
         if (player != null && player.IsSpawned && !player.IsOwner) return;
         if (player != null || other.CompareTag("Player"))
         {
             if (!string.IsNullOrWhiteSpace(requiredQuestId) &&
                 (QuestManager.Instance == null || !QuestManager.Instance.IsQuestActive(requiredQuestId))) return;
+            if (!string.IsNullOrWhiteSpace(requiredPendingQuestId) &&
+                (QuestManager.Instance == null || !QuestManager.Instance.IsQuestPending(requiredPendingQuestId))) return;
             // 퀘스트 공개용 트리거는 실제로 공개를 기다리는 퀘스트가 있을 때만
             // 실행되게 하여, 플레이어가 순서보다 먼저 진입해 트리거를 소모하지 않게 합니다.
             if (revealPendingQuestAfterSubtitle && string.IsNullOrWhiteSpace(completionQuestSignal) &&
@@ -125,6 +136,27 @@ public class SubtitleTrigger : MonoBehaviour
 
         if (revealPendingQuestAfterSubtitle)
             QuestManager.Instance?.RequestPendingQuestRevealAfterSubtitle();
+
+        QueueFollowUpSubtitle();
+    }
+
+    private void QueueFollowUpSubtitle()
+    {
+        if (followUpRequested || playAfterCompletion == null || playAfterCompletion == this)
+            return;
+
+        followUpRequested = true;
+        StartCoroutine(PlayFollowUpNextFrame(playAfterCompletion));
+    }
+
+    private static IEnumerator PlayFollowUpNextFrame(SubtitleTrigger followUp)
+    {
+        // SubtitlesScript가 현재 재생 상태를 완전히 정리한 다음 시작해야
+        // 새 자막의 색상/오디오 상태가 이전 자막 정리에 의해 덮이지 않습니다.
+        yield return null;
+
+        if (followUp != null)
+            followUp.PlaySubtitleFromInteract();
     }
 
     // 무전기 등 UnityEvent(인스펙터)에서 연결하는 용도 - 매개변수 없음
