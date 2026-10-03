@@ -153,6 +153,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 357fe45b3ee11584f8c403db44dc5e3c, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 927f30008fa986541b1724e976fccd17, type: 2}
     - target: {fileID: -5863131659185700277, guid: 357fe45b3ee11584f8c403db44dc5e3c, type: 3}
       propertyPath: m_Layer
       value: 9
@@ -189,6 +193,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1784837506411870287, guid: 357fe45b3ee11584f8c403db44dc5e3c, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 927f30008fa986541b1724e976fccd17, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
@@ -266,14 +274,21 @@ MonoBehaviour:
   doorCloseDuration: 0.3
   hiddenDoorAjar: 0.01
   movementDoorLead: 0.25
-  enterDuration: 1.2
-  exitDuration: 1.1
+  enterDuration: 2
+  exitDuration: 2.2
   useDistance: 3
   interactionCollider: {fileID: 0}
+  frontApproachAngle: 40
+  frontViewAngle: 50
+  serverAngleTolerance: 10
   enterState: Base Layer.LockerEnter
   hiddenState: Base Layer.LockerHidden
   exitState: Base Layer.LockerExit
   returnState: Base Layer.Idle Walk Run Blend
+  motionSpeedParameter: LockerMotionSpeed
+  enterClip: {fileID: 6165553400957861818, guid: ac47992f3c7ff104a9925e26e3ff70e5, type: 3}
+  exitClip: {fileID: -4791504522942941401, guid: 10c42f6bea215aa42a1d084497dffae4, type: 3}
+  motionSpeedRange: {x: 0.5, y: 4}
   cameraBob: 0.04
   cameraRoll: 3
   forcedDoorOpenDuration: 0.08

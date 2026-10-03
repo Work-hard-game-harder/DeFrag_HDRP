@@ -189,6 +189,14 @@ public class PlayerInteraction : MonoBehaviour
                         return;
                     }
 
+                    // 정면에서만 쓸 수 있는 대상(락커 등)은 위치와 시선 방향을 직접 판정합니다.
+                    if (interactable is IInteractionDirectionFilter directionFilter &&
+                        !directionFilter.CanInteractFrom(ray.origin, ray.direction))
+                    {
+                        ResetTarget();
+                        return;
+                    }
+
                     targetInteractable = interactable;
 
                     if (interactionHUD != null && !interactionHUD.activeSelf)

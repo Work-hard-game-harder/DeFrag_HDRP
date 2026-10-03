@@ -91,7 +91,9 @@ public static class LockerVentDoorBuilder
         Vector3[] n = source.normals;
         Vector2[] uv = source.uv;
         int[] tris = source.triangles;
-        Bounds b = source.bounds;
+        // The prefab stretches the model non-uniformly; give the padlock its true proportions.
+        LockerMeshParts.UnsquashLock(v, n, tris, door.lossyScale);
+        Bounds b = GeometryUtility.CalculateBounds(v, Matrix4x4.identity);
         Rect2 slab = new() { x0 = b.min.x, x1 = b.max.x, z0 = b.min.z, z1 = b.max.z };
 
         // The door is a bevelled panel, not a flat slab. The handle is the part that

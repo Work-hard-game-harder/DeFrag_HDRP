@@ -232,6 +232,17 @@
   - `Locker.fbx`의 문 메시를 View Anchor 높이에서 62×42cm로 잘라내고, 루버 6개와 창틀을 붙인다.
   - 결과는 `Art/Locker/Door_Locker2_Vented.asset`이고, `Locker.prefab`에 연결했다.
   - 원본 FBX는 건드리지 않았다.
+- **2026-10-03 캐비넷 개선 (사용자 요청 4건):**
+  - **정면 전용 상호작용:** 새 인터페이스 `IInteractionDirectionFilter`를 `PlayerInteraction`이 확인한다. `LockerHiding`은 문 정면 ±40°(`frontApproachAngle`) 안에 서서 문을 ±50°(`frontViewAngle`) 안으로 볼 때만 E 안내를 띄운다. 서버 `EnterServerRpc`도 위치 각도(+10° 여유)를 다시 검사한다.
+  - 숨을 때 몸 방향은 들어온 각도와 상관없이 `Outward`(문 바깥)를 본다. 나올 때도 바깥을 본 채 끝난다 (예전에는 락커 쪽으로 다시 돌아섰다).
+  - **자물쇠 비율:** 프리팹 루트 스케일 (250, 150, 130)이 자물쇠를 가로로 1.9배 늘리고 있었다. `Editor/LockerMeshParts.UnsquashLock`이 문 메시의 작은 조각(자물쇠)만 역보정하고, `LockerVentDoorBuilder`가 이를 적용해 `Door_Locker2_Vented.asset`을 다시 굽는다. 캐비넷 크기는 그대로다.
+  - **들어가기·나오기 모션:** `Assets/Animation/캐비넷 모션/` (사용자 추가). FBX를 Humanoid로 바꾸고, 원본 자세가 팔을 내린 자세라 아바타 기준 자세를 T포즈로 고쳐 넣었다 (importer humanDescription.skeleton).
+    - 클립: `Locker_Enter` (intocabinet 두 번째 테이크 0–108프레임), `Locker_Hidden` (첫 테이크, 루프), `Locker_Exit` (opencabinet 15–170프레임).
+    - `StarterAssetsThirdPerson.controller`의 `LockerEnter`(예전 Generic 클립 교체), `LockerHidden`, `LockerExit` 상태와 float 파라미터 `LockerMotionSpeed`를 넣었다. `LockerHiding.ApplyMotionSpeed`가 클립 길이 ÷ 단계 길이로 속도를 맞춘다.
+    - `enterDuration` 2.0초, `exitDuration` 2.2초로 늘렸다 (프리팹). 원격 플레이어에게만 보이는 기존 구조 그대로다.
+    - 확인 요령: 에디터 미리보기는 `AnimationMode.SampleAnimationClip`을 실제 플레이어 프리팹에 써야 한다. FBX 모델에 PlayableGraph를 붙이면 팔이 T자로 나와 잘못 판단하게 된다.
+  - **금속 텍스처:** 메뉴 `DEFRAG > Locker > Bake Metal Textures` (`Editor/LockerMetalTextureBaker.cs`). UV 텍셀마다 실제 위치를 역산해 흰 은색 브러시드 금속, 긁힘, 모서리 마모, 바닥 쪽 때를 그린다. 자물쇠와 안쪽 선반은 어두운 건메탈이다.
+    - 출력: `Art/Locker/Locker_Metal_BaseColor/Mask/Normal.png` (4096), `Locker_Metal.mat`. 프리팹의 몸통과 문에 연결했다. Artlist 0크레딧.
 - **소리:** `SoundSources/B1F/Locker/`, `SoundSources/B1F/TvMonster/`.
   - Artlist 생성: 몬스터 그르렁·킁킁·숨소리·비명(MONSTER 효과), 한국어 라디오 속삭임 "거기… 있지? / 숨소리… 들려… / 나와… / 찾았다", 플레이어 헐떡임, Lyria 긴장 BGM(27.9초 루프).
   - 나머지는 `gen_locker_sfx.py`로 합성했다.
@@ -363,6 +374,9 @@
 - **함정:** 이 프로젝트는 Enter Play Mode Options로 도메인·씬 리로드가 꺼져 있다. 정적 값과 직렬화 안 된 필드가 이전 실행에서 남으므로, `RuntimeInitializeOnLoadMethod(SubsystemRegistration)`로 정적 값을, `Start`에서 phase를 초기화한다. 새 컴포넌트도 같은 처리가 필요하다.
 
 ## 현재 상태 (최신화할 것)
+
+- **캐비넷 개선 (2026-10-03 노트북, 미커밋):** 위 "락커 숨기" 섹션의 2026-10-03 항목 참고. 프리팹·에셋 저장까지 끝났고 씬 변경은 없다.
+  - 확인 못 한 것: 실제 플레이 모드와 2인 네트워크(정면 판정 체감, 원격 플레이어에게 들어가기·나오기 모션이 보이는지, NetworkAnimator와 충돌하지 않는지), 실제 게임 조명에서 텍스처가 보이는 모습.
 
 - **B1F 진입 엘리베이터 시네마틱 (2026-10-02 노트북, 미커밋, B1F 씬 저장 필요).** Unity 조립을 마쳤고 플레이 모드 캡처로 확인했다.
   - 씬 오브젝트: B1F 루트의 `B1F Elevator Intro Cinematic`. `LobbyIntroCinematic` 컴포넌트를 재사용한다.
@@ -501,6 +515,17 @@
 - **문 파손 2:** 0크레딧 (효과음은 코드로 합성).
 
 ## 작업 로그 (최신이 위)
+
+### 2026-10-03 · 노트북 · 캐비넷(Locker) 정면 상호작용, 자물쇠 비율, 모션, 금속 텍스처
+- **한 일:** 위 "락커 숨기" 섹션의 2026-10-03 항목 참고.
+  - 코드: `IInteractionDirectionFilter`(새 파일), `PlayerInteraction`(필터 확인 몇 줄), `LockerHiding`, `LockerLocalSession`.
+  - 에디터: `LockerMeshParts`, `LockerMetalTextureBaker`(새 파일), `LockerVentDoorBuilder`.
+  - 에셋: 모션 FBX 2개의 임포트 설정, 플레이어 컨트롤러, `Locker.prefab`, `Door_Locker2_Vented.asset`, `Art/Locker/` 텍스처 3장과 재질.
+- **검증한 것:**
+  - 컴파일 에러 0, 콘솔 에러 0.
+  - 렌더로 확인: 둥근 자물쇠, 흰 은색 금속, 플레이어 프리팹에서 세 클립의 자세.
+  - 씬의 락커 18개 모두 프리팹 스케일 그대로이고, 재질·메시 오버라이드가 없다.
+- **검증 못 한 것:** 플레이 모드, 2인 네트워크.
 
 ### 2026-10-01 · 노트북 · LobbyF 오프닝 시네마틱
 - **한 일:** 위 "LobbyF 오프닝 시네마틱" 참고.

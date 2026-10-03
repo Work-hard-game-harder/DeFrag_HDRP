@@ -9,7 +9,7 @@ public enum LockerPhase : byte { Empty, Entering, Hidden, Exiting, ForcedOpen }
 /// <summary>Server-owned occupancy. Player movement remains on its existing owning client.</summary>
 [RequireComponent(typeof(NetworkObject))]
 [DisallowMultipleComponent]
-public sealed class LockerHiding : NetworkBehaviour, IInteractable
+public sealed class LockerHiding : NetworkBehaviour, IInteractable, IInteractionDirectionFilter
 {
     private const ulong Nobody = ulong.MaxValue;
     private static readonly HashSet<LockerHiding> lockers = new();
@@ -35,11 +35,23 @@ public sealed class LockerHiding : NetworkBehaviour, IInteractable
     [Header("Interaction validation")]
     [Tooltip("Distance is measured from this collider's surface instead of the imported model pivot.")]
     [SerializeField] private Collider interactionCollider;
+    [Header("Front-only interaction")]
+    [Tooltip("문 정면 방향에서 이 각도 안에 서 있을 때만 숨기 안내가 뜹니다.")]
+    [SerializeField, Range(5f, 89f)] private float frontApproachAngle = 40f;
+    [Tooltip("시선이 문 정면에서 이 각도 안일 때만 숨기 안내가 뜹니다.")]
+    [SerializeField, Range(5f, 89f)] private float frontViewAngle = 50f;
+    [Tooltip("서버 판정에 더하는 여유 각도입니다 (복제 위치 오차 허용).")]
+    [SerializeField, Range(0f, 30f)] private float serverAngleTolerance = 10f;
     [Header("Remote player Animator full state paths")]
     [SerializeField] private string enterState = "Base Layer.LockerEnter";
     [SerializeField] private string hiddenState = "Base Layer.LockerHidden";
     [SerializeField] private string exitState = "Base Layer.LockerExit";
     [SerializeField] private string returnState = "Base Layer.Idle Walk Run Blend";
+    [Tooltip("들어가기·나오기 클립 재생 속도를 단계 길이에 맞추는 Animator float 파라미터입니다.")]
+    [SerializeField] private string motionSpeedParameter = "LockerMotionSpeed";
+    [SerializeField] private AnimationClip enterClip;
+    [SerializeField] private AnimationClip exitClip;
+    [SerializeField] private Vector2 motionSpeedRange = new(0.5f, 4f);
     [Header("First person motion")]
     [SerializeField] private float cameraBob = 0.04f;
     [SerializeField] private float cameraRoll = 3f;
@@ -180,6 +192,23 @@ public sealed class LockerHiding : NetworkBehaviour, IInteractable
     public string GetInteractionText() => Phase == LockerPhase.Empty
         ? "락커에 숨기 (E 꾹 누르기)" : "이미 누가 있는 듯 하다";
     public bool IsHoldInteraction() => Phase == LockerPhase.Empty;
+
+    /// <summary>Local HUD filter: only offer the locker when standing in front of the door and facing it.</summary>
+    public bool CanInteractFrom(Vector3 viewerPosition, Vector3 viewDirection)
+    {
+        if (!IsInFrontOfDoor(viewerPosition, frontApproachAngle)) return false;
+        Vector3 flatView = viewDirection;
+        flatView.y = 0f;
+        return flatView.sqrMagnitude > 1e-4f && Vector3.Angle(-Outward, flatView) <= frontViewAngle;
+    }
+
+    private bool IsInFrontOfDoor(Vector3 position, float maxAngle)
+    {
+        Vector3 offset = position - DoorCenter;
+        offset.y = 0f;
+        return offset.sqrMagnitude > 1e-4f && Vector3.Angle(Outward, offset) <= maxAngle;
+    }
+
     public void Interact(PlayerInteraction player)
     {
         if (IsSpawned && Phase == LockerPhase.Empty && !GameplayInputGate.IsBlocked) EnterServerRpc();
@@ -216,6 +245,7 @@ public sealed class LockerHiding : NetworkBehaviour, IInteractable
         if (!NetworkManager.ConnectedClients.TryGetValue(rpc.Receive.SenderClientId, out var client)) return;
         NetworkObject player = client.PlayerObject;
         if (player == null || !player.IsSpawned || !IsPlayerWithinUseDistance(player.transform.position)) return;
+        if (!IsInFrontOfDoor(player.transform.position, frontApproachAngle + serverAngleTolerance)) return;
         if (player.TryGetComponent<PlayerStats>(out var stats) && stats.IsDead) return;
         foreach (var locker in lockers)
             if (locker != null && locker.occupant.Value == player.NetworkObjectId) return;
@@ -343,6 +373,7 @@ public sealed class LockerHiding : NetworkBehaviour, IInteractable
             string requestedState = Phase == LockerPhase.Entering
                 ? enterState
                 : Phase == LockerPhase.Hidden ? hiddenState : exitState;
+            ApplyMotionSpeed();
             if (!PlayState(requestedState) && Phase == LockerPhase.Hidden)
                 PlayState(returnState);
         }
@@ -428,6 +459,24 @@ public sealed class LockerHiding : NetworkBehaviour, IInteractable
         if (doorPivot != null)
             doorPivot.localRotation = Quaternion.Slerp(doorClosedRotation, doorOpenRotation, doorBlend);
     }
+    // The enter/exit clips are longer than the gameplay phases; play them faster so the
+    // remote body finishes the motion exactly when the replicated phase ends.
+    private void ApplyMotionSpeed()
+    {
+        if (remoteAnimator == null || string.IsNullOrWhiteSpace(motionSpeedParameter)) return;
+        AnimationClip clip = Phase == LockerPhase.Entering ? enterClip
+            : Phase == LockerPhase.Exiting || Phase == LockerPhase.ForcedOpen ? exitClip : null;
+        if (clip == null) return;
+        int hash = Animator.StringToHash(motionSpeedParameter);
+        foreach (AnimatorControllerParameter parameter in remoteAnimator.parameters)
+        {
+            if (parameter.nameHash != hash || parameter.type != AnimatorControllerParameterType.Float) continue;
+            float speed = clip.length / Mathf.Max(0.05f, Duration);
+            remoteAnimator.SetFloat(hash, Mathf.Clamp(speed, motionSpeedRange.x, motionSpeedRange.y));
+            return;
+        }
+    }
+
     private bool PlayState(string state)
     {
         if (remoteAnimator == null || string.IsNullOrWhiteSpace(state)) return false;

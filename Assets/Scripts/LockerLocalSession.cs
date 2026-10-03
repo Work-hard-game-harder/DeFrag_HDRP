@@ -28,7 +28,7 @@ public sealed class LockerLocalSession : MonoBehaviour
     private Vector3 entryPosition, cameraLocalPosition, cameraStartPosition;
     private Vector3 eyeOffset;
     private Quaternion entryRotation, cameraLocalRotation, cameraStartRotation;
-    private Quaternion hiddenBodyRotation, hiddenViewRotation;
+    private Quaternion hiddenBodyRotation, hiddenViewRotation, finishRotation;
     private bool cursorVisible;
     private CursorLockMode cursorLock;
     private float lookYaw, lookPitch;
@@ -51,9 +51,10 @@ public sealed class LockerLocalSession : MonoBehaviour
         cameraView = switcher != null ? switcher.ActiveCamera : interaction != null ? interaction.GetComponent<Camera>() : null;
         if (cameraView == null) { switcher?.SetInteractionLocked(false); GameplayInputGate.Release(this); return false; }
         entryPosition = transform.position; entryRotation = transform.rotation;
-        // The player approaches while looking into the locker. Once hidden, both
-        // the replicated body and the owning camera face back toward the door.
-        hiddenBodyRotation = entryRotation * Quaternion.Euler(0f, 180f, 0f);
+        // Once hidden, both the replicated body and the owning camera face straight
+        // out through the door, regardless of the exact angle the player came from.
+        hiddenBodyRotation = Quaternion.LookRotation(target.Outward, Vector3.up);
+        finishRotation = entryRotation;
         hiddenViewRotation = hiddenBodyRotation * cameraView.transform.localRotation;
         cameraLocalPosition = cameraView.transform.localPosition; cameraLocalRotation = cameraView.transform.localRotation;
         cameraStartPosition = cameraView.transform.position; cameraStartRotation = cameraView.transform.rotation;
@@ -89,19 +90,22 @@ public sealed class LockerLocalSession : MonoBehaviour
 
         bool forced = locker.Phase == LockerPhase.ForcedOpen;
         bool leaving = locker.Phase == LockerPhase.Exiting || forced;
+        // Stepping out keeps facing away from the locker (the exit motion pushes the door
+        // and walks forward), so the player ends up looking into the room.
+        if (leaving) finishRotation = hiddenBodyRotation;
         float t = hidden ? 1f : Mathf.SmoothStep(0f, 1f, locker.Progress);
         float movementT = forced ? t : Mathf.InverseLerp(locker.MovementDoorLead, 1f, t);
         movementT = Mathf.SmoothStep(0f, 1f, movementT);
         transform.SetPositionAndRotation(
             Vector3.Lerp(leaving ? locker.Inside.position : entryPosition, leaving ? entryPosition : locker.Inside.position, movementT),
-            Quaternion.Slerp(leaving ? hiddenBodyRotation : entryRotation, leaving ? entryRotation : hiddenBodyRotation, movementT));
-        Vector3 outsideEye = entryPosition + entryRotation * eyeOffset;
+            leaving ? hiddenBodyRotation : Quaternion.Slerp(entryRotation, hiddenBodyRotation, movementT));
+        Vector3 outsideEye = entryPosition + hiddenBodyRotation * eyeOffset;
         Quaternion look = Quaternion.Euler(lookPitch, lookYaw, 0f);
         Vector3 shake = forced ? Random.insideUnitSphere * ForcedOpenShake * (1f - t) : Vector3.zero;
         cameraView.transform.SetPositionAndRotation(
             Vector3.Lerp(leaving ? locker.View.position : cameraStartPosition, leaving ? outsideEye : locker.View.position, movementT) +
                 Vector3.up * (Mathf.Sin(movementT * Mathf.PI * 2f) * locker.Bob) + shake,
-            Quaternion.Slerp(leaving ? hiddenViewRotation * look : cameraStartRotation, leaving ? entryRotation * cameraLocalRotation : hiddenViewRotation * look, movementT) *
+            Quaternion.Slerp(leaving ? hiddenViewRotation * look : cameraStartRotation, leaving ? hiddenViewRotation : hiddenViewRotation * look, movementT) *
                 Quaternion.Euler(0f, 0f, Mathf.Sin(movementT * Mathf.PI * 2f) * locker.Roll));
     }
 
@@ -154,7 +158,7 @@ public sealed class LockerLocalSession : MonoBehaviour
         // Return to the pose from which this local player entered. Imported locker
         // hierarchies may carry axis conversion and large scale values, so using a
         // child Exit Anchor directly can launch the character far above the map.
-        transform.SetPositionAndRotation(entryPosition, entryRotation);
+        transform.SetPositionAndRotation(entryPosition, finishRotation);
         if (cameraView != null) cameraView.transform.SetLocalPositionAndRotation(cameraLocalPosition, cameraLocalRotation);
         if (body != null) body.enabled = bodyEnabled;
         bool alive = !TryGetComponent<PlayerStats>(out var stats) || !stats.IsDead;
